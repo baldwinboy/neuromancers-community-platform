@@ -1,7 +1,7 @@
 {% load static wagtailcore_tags navigation_tags %}
-<header class="base__header bg-black width-full">
+<header class="base__header bg-black width-full padding-y-sm padding-x-md">
     {% get_site_root as site_root %}
-    <nav class="base__header__nav flex width-full">
+    <nav class="base__header__nav flex width-full container horizontal-center">
         <p class="base__header__nav-wrapper flex justify-space-between items-center width-full">
             <a class="base__header__nav-home" href="{% pageurl site_root %}">
                 <span class="visually-hidden">Home</span>

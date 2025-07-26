@@ -4,13 +4,15 @@
     template-homepage
 {% endblock body_class %}
 {% block content %}
-    <div>
-        <h1>{{ page.title }}</h1>
-        {% image page.image fill-480x320 %}
-        <p>{{ page.hero_text }}</p>
-        {% if page.hero_cta_link %}
-            <a href="{% pageurl page.hero_cta_link %}">{% firstof page.hero_cta page.hero_cta_link.title %}</a>
-        {% endif %}
+    <div class="width-full container horizontal-center padding-y-sm padding-x-md">
+        <div>
+            <h1>{{ page.title }}</h1>
+            {% image page.image fill-480x320 %}
+            <p>{{ page.hero_text }}</p>
+            {% if page.hero_cta_link %}
+                <a href="{% pageurl page.hero_cta_link %}">{% firstof page.hero_cta page.hero_cta_link.title %}</a>
+            {% endif %}
+        </div>
+        {{ page.body|richtext }}
     </div>
-    {{ page.body|richtext }}
 {% endblock content %}

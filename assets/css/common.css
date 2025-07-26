@@ -62,6 +62,18 @@ a {
     width: 100%;
 }
 
+.horizontal-center {
+    margin: 0 auto;
+}
+
+.padding-y-sm {
+    padding-block: 2rem;
+}
+
+.padding-x-md {
+    padding-inline: 4.75rem;
+}
+
 .visually-hidden,
 .visually-hidden-focusable:not(:focus, :focus-within) {
 	border: 0 !important;
@@ -93,4 +105,10 @@ a {
 .visually-hidden *,
 .visually-hidden-focusable:not(:focus, :focus-within) * {
 	overflow: hidden !important;
+}
+
+@media (min-width: 1280px) {
+    .container {
+        max-width: calc(100% - 35.5rem);
+    }
 }
