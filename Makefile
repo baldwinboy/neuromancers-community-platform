@@ -4,6 +4,12 @@ SHELL=/bin/bash
 help: ## Show this help.
 	@grep -E '^[a-zA-Z0-9 -]+:.*#'  Makefile | sort | while read -r l; do printf "\033[1;32m$$(echo $$l | cut -f 1 -d':')\033[00m:$$(echo $$l | cut -f 2- -d'#')\n"; done
 
+venv: # Create virtual environment
+	uv venv .venv/neuromancers
+
+venv-delete: # Delete virtual environment
+	rm -rf .venv/neuromancers
+
 django-migrate: # Run Django migrations
 	python ./manage.py migrate
 
@@ -34,12 +40,17 @@ django-runserver: # Start Django server
 django-test:
 	python ./manage.py test --noinput . apps
 
+django-shell: # Create a Django shell
+	python ./manage.py shell
+
 update-python-dev-requirements: # Update Python development requirements
-	pip freeze > requirements/development.txt
+	uv pip freeze > requirements/development.txt
 update-python-prod-requirements: # Update Python production requirements
 	pipreqs --savepath requirements/production.txt --ignore .venv
 
 install-python-dev-requirements: # Install Python development requirements
-	pip install -r requirements/development.txt
+	uv pip install -r requirements/development.txt
 install-python-prod-requirements: # Install Python production requirements
-	pip install -r requirements/production.txt
+	uv pip install -r requirements/production.txt
+
+dev: install-python-dev-requirements django-makemigrations django-migrate django-collectstatic django-runserver
