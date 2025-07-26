@@ -25,13 +25,17 @@
               type="image/png"
               href="{% static 'images/favicon.png' %}">
         {# Global stylesheets #}
-        <link rel="stylesheet" type="text/css" href="{% static 'css/core.css' %}">
+        <link rel="stylesheet" type="text/css" href="{% static 'css/fonts.css' %}">
+        <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}">
         {% block extra_css %}
             {# Override this in templates to add extra stylesheets #}
         {% endblock extra_css %}
     </head>
     <body class="{% block body_class %}{% endblock body_class %}">
         {% wagtailuserbar %}
+        {% block top_navigation_bar %}
+            {% include "includes/header.html" %}
+        {% endblock top_navigation_bar %}
         {% block content %}
         {% endblock content %}
         {# Global javascript #}

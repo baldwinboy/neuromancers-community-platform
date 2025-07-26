@@ -1,0 +1,26 @@
+.base__header {
+   padding: 2rem 4.75rem;
+}
+
+.base__header__nav {
+    margin: 0 auto;
+}
+
+.base__header__nav-list {
+    gap: 2rem;
+}
+
+.base__header__nav-link {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    font-family: 'Handjet', sans-serif;
+    font-size: 1.25rem;
+    color: var(--safeLightAccent-hsl);
+}
+
+@media (min-width: 1280px) {
+    .base__header__nav {
+        max-width: calc(100% - 35.5rem);
+    }
+}
