@@ -2,4 +2,5 @@
 max-line-length = 88
 per-file-ignores =
     neuromancers/settings/*:F405 F403 F401
+    **/models.py: F403 F401
 ignore = E501, W503
