@@ -21,3 +21,16 @@ django-createsuperuser:
 	@echo
 	@echo "    $(DJANGO_SUPER_USERNAME):$(DJANGO_SUPER_PASSWORD)"
 	@echo
+
+django-test:
+	python ./manage.py test --noinput . apps
+
+update-python-dev-requirements: # Update Python development requirements
+	pip freeze > requirements/development.txt
+update-python-prod-requirements: # Update Python production requirements
+	pipreqs --savepath requirements/production.txt --ignore .venv
+
+install-python-dev-requirements: # Install Python development requirements
+	pip install -r requirements/development.txt
+install-python-prod-requirements: # Install Python production requirements
+	pip install -r requirements/production.txt
