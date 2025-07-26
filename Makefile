@@ -22,6 +22,12 @@ django-createsuperuser:
 	@echo "    $(DJANGO_SUPER_USERNAME):$(DJANGO_SUPER_PASSWORD)"
 	@echo
 
+django-findstatic: # Find files that will be added when a `static` directory is generated
+	python ./manage.py findstatic
+
+django-collectstatic: # Generate `static` directory
+	python ./manage.py collectstatic
+
 django-runserver: # Start Django server
 	python ./manage.py runserver
 

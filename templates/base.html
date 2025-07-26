@@ -4,6 +4,7 @@
     <head>
         <meta charset="utf-8" />
         <title>
+            x
             {% block title %}
                 {% if page.seo_title %}
                     {{ page.seo_title }}
@@ -20,6 +21,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {# Force all links in the live preview panel to be opened in a new tab #}
         {% if request.in_preview_panel %}<base target="_blank">{% endif %}
+        {# Favicon #}
+        <link rel="shortcut icon"
+              type="image/png"
+              href="{% static 'images/favicon.png' %}">
         {# Global stylesheets #}
         <link rel="stylesheet" type="text/css" href="{% static 'css/core.css' %}">
         {% block extra_css %}
