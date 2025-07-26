@@ -22,6 +22,9 @@ django-createsuperuser:
 	@echo "    $(DJANGO_SUPER_USERNAME):$(DJANGO_SUPER_PASSWORD)"
 	@echo
 
+django-runserver: # Start Django server
+	python ./manage.py runserver
+
 django-test:
 	python ./manage.py test --noinput . apps
 

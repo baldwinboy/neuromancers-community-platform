@@ -49,6 +49,7 @@ DEFAULT_APPS = [
 THIRD_PARTY_APPS = [
     "guardian",
     "rest_framework",
+    "wagtail_modeladmin",
 ]
 
 PROJECT_APPS = [
