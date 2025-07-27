@@ -15,6 +15,7 @@ import os
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
 
 # Quick-start development settings - unsuitable for production
@@ -236,3 +237,13 @@ REST_FRAMEWORK = {
 USERNAME_BANNED_WORDLIST = os.path.join(
     BASE_DIR, "data", "username_banned_wordlist.txt"
 )
+
+# Redirect users to homepage after login without `next` query
+LOGIN_REDIRECT_URL = "/"
+
+# Django Allauth
+ACCOUNT_LOGIN_BY_CODE_ENABLED = True  # Users can be sent a code to login
+# Handle logins with Django Allauth
+LOGIN_URL = "/login"
+WAGTAILADMIN_LOGIN_URL = LOGIN_URL
+WAGTAIL_FRONTEND_LOGIN_URL = LOGIN_URL

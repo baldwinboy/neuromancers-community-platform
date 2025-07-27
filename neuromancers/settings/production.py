@@ -1,5 +1,7 @@
 from .base import *
 
+ENVIRONMENT = "development"
+
 DEBUG = False
 
 try:

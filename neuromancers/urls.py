@@ -1,20 +1,36 @@
+from allauth import urls as allauth_urls
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+from django.views.generic import RedirectView
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+# Load all other app admins
+admin.autodiscover()
+
 urlpatterns = [
-    path("django-admin/", admin.site.urls),
-    path("admin/", include(wagtailadmin_urls)),
-    path("documents/", include(wagtaildocs_urls)),
+    path("admin/", include(wagtailadmin_urls), name="wagtailadmin"),
+    path("documents/", include(wagtaildocs_urls), name="wagtaildocs"),
     # For Django REST Framework
-    path("api-auth/", include("rest_framework.urls")),
-    # For site user login
-    path("accounts/", include("allauth.urls")),
+    path("api-auth/", include("rest_framework.urls"), name="drf"),
+    # Redirect 'accounts' path to default site
+    re_path(
+        r"^accounts/(?P<subpath>.*)$",
+        RedirectView.as_view(
+            pattern_name=None,  # Not using named URL pattern
+            url="/%(subpath)s",  # Use the captured subpath in the redirect
+            permanent=True,
+        ),
+        name="accounts_redirect",
+    ),
 ]
 
+if settings.ENVIRONMENT == "development":
+    urlpatterns = [
+        path("django-admin/", admin.site.urls),
+    ] + urlpatterns
 
 if settings.DEBUG:
     from django.conf.urls.static import static
@@ -25,6 +41,9 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns = urlpatterns + [
+    # For anything not caught by a more specific rule above, hand over to
+    # Django Allauth for user management
+    path("", include(allauth_urls)),
     # For anything not caught by a more specific rule above, hand over to
     # Wagtail's page serving mechanism. This should be the last pattern in
     # the list:
