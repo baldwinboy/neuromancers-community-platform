@@ -1,0 +1,23 @@
+@use "../../variables" as *;
+@use "../../mixins" as *;
+
+.auth_button {
+    cursor: pointer;
+    width: fit-content;
+    padding: 1rem;
+    border: 0;
+    border-radius: 5px;
+    background: $safeLightAccent;
+    color: $black;
+    font-family: $subheading;
+    font-size: 140%;
+    text-transform: uppercase;
+}
+
+.auth_button__signin_panel {
+    width: 100%;
+    margin-top: 1rem;
+    @include interact {
+        background: $lightAccent;
+    }
+}

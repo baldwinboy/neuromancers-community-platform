@@ -307,6 +307,7 @@
 * @param {String} $key - List map key
 *
 */
+/* Interaction mixin */
 /* Colors */
 .bg-white {
   background: hsl(0, 0%, 100%);
@@ -402,123 +403,123 @@
 }
 
 /* Spacing */
-.gap-sm {
+.gap-s {
   gap: 2.175rem;
 }
 
-.mt-sm {
+.mt-s {
   margin-top: 2.175rem;
 }
 
-.mr-sm {
+.mr-s {
   margin-right: 2.175rem;
 }
 
-.mb-sm {
+.mb-s {
   margin-bottom: 2.175rem;
 }
 
-.ml-sm {
+.ml-s {
   margin-left: 2.175rem;
 }
 
-.mx-sm {
+.mx-s {
   margin-inline: 2.175rem;
 }
 
-.my-sm {
+.my-s {
   margin-block: 2.175rem;
 }
 
-.m-sm {
+.m-s {
   margin: 2.175rem;
 }
 
-.pt-sm {
+.pt-s {
   padding-top: 2.175rem;
 }
 
-.pr-sm {
+.pr-s {
   padding-right: 2.175rem;
 }
 
-.pb-sm {
+.pb-s {
   padding-bottom: 2.175rem;
 }
 
-.pl-sm {
+.pl-s {
   padding-left: 2.175rem;
 }
 
-.px-sm {
+.px-s {
   padding-inline: 2.175rem;
 }
 
-.py-sm {
+.py-s {
   padding-block: 2.175rem;
 }
 
-.p-sm {
+.p-s {
   padding: 2.175rem;
 }
 
-.gap-md {
+.gap-m {
   gap: 4.75rem;
 }
 
-.mt-md {
+.mt-m {
   margin-top: 4.75rem;
 }
 
-.mr-md {
+.mr-m {
   margin-right: 4.75rem;
 }
 
-.mb-md {
+.mb-m {
   margin-bottom: 4.75rem;
 }
 
-.ml-md {
+.ml-m {
   margin-left: 4.75rem;
 }
 
-.mx-md {
+.mx-m {
   margin-inline: 4.75rem;
 }
 
-.my-md {
+.my-m {
   margin-block: 4.75rem;
 }
 
-.m-md {
+.m-m {
   margin: 4.75rem;
 }
 
-.pt-md {
+.pt-m {
   padding-top: 4.75rem;
 }
 
-.pr-md {
+.pr-m {
   padding-right: 4.75rem;
 }
 
-.pb-md {
+.pb-m {
   padding-bottom: 4.75rem;
 }
 
-.pl-md {
+.pl-m {
   padding-left: 4.75rem;
 }
 
-.px-md {
+.px-m {
   padding-inline: 4.75rem;
 }
 
-.py-md {
+.py-m {
   padding-block: 4.75rem;
 }
 
-.p-md {
+.p-m {
   padding: 4.75rem;
 }
 
@@ -584,8 +585,40 @@
   width: 100%;
 }
 
+.width-auto {
+  width: auto;
+}
+
+.width-fit {
+  width: fit-content;
+}
+
+.width-min {
+  width: min-content;
+}
+
+.width-max {
+  width: max-content;
+}
+
 .height-full {
   height: 100%;
+}
+
+.height-auto {
+  height: auto;
+}
+
+.height-fit {
+  height: fit-content;
+}
+
+.height-min {
+  height: min-content;
+}
+
+.height-max {
+  height: max-content;
 }
 
 @media (min-width: 1280px) {
@@ -626,6 +659,26 @@
   overflow: hidden !important;
 }
 
+/* Text */
+.text-center {
+  text-align: center;
+}
+
+.text-darken:not([disabled]):hover, .text-darken:not([disabled]):focus-visible {
+  filter: brightness(85%);
+}
+
+.text-brighten:not([disabled]):hover, .text-brighten:not([disabled]):focus-visible {
+  filter: brightness(115%);
+}
+
+.link {
+  color: hsl(342.63, 80.85%, 81.57%);
+}
+.link:not([disabled]):hover, .link:not([disabled]):focus-visible {
+  color: hsl(343.29, 95.89%, 71.37%);
+}
+
 .base__header {
   height: 7.6875rem;
   font-size: 1.4rem;
@@ -639,8 +692,121 @@
 .base__header__nav-link {
   font-weight: 200;
 }
-.base__header__nav-link:hover, .base__header__nav-link:focus-visible {
-  filter: brightness(85%);
+
+.auth_button {
+  cursor: pointer;
+  width: fit-content;
+  padding: 1rem;
+  border: 0;
+  border-radius: 5px;
+  background: hsl(342.63, 80.85%, 81.57%);
+  color: hsl(0, 100%, 0.78%);
+  font-family: "Roboto", sans-serif;
+  font-size: 140%;
+  text-transform: uppercase;
+}
+
+.auth_button__signin_panel {
+  width: 100%;
+  margin-top: 1rem;
+}
+.auth_button__signin_panel:not([disabled]):hover, .auth_button__signin_panel:not([disabled]):focus-visible {
+  background: hsl(343.29, 95.89%, 71.37%);
+}
+
+.auth_panel {
+  border-radius: 10px;
+  max-width: 38.5rem;
+}
+.auth_panel .auth_form {
+  display: flex;
+  flex-flow: column;
+  justify-content: start;
+  width: 100%;
+  text-align: left;
+}
+.auth_panel .auth_form p input[type=text],
+.auth_panel .auth_form p input[type=password] {
+  border: 1px solid hsl(342.63, 80.85%, 81.57%);
+  border-top: 0;
+  border-right: 0;
+  background: transparent;
+  color: hsl(0, 0%, 100%);
+  width: 100%;
+  padding-block: 1rem;
+  padding-left: 1rem;
+}
+.auth_panel .auth_form p input[type=text]::placeholder,
+.auth_panel .auth_form p input[type=password]::placeholder {
+  color: hsl(0, 0%, 100%);
+  opacity: 0.8;
+}
+.auth_panel .auth_form p input[type=checkbox] {
+  cursor: pointer;
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid hsl(0, 0%, 100%);
+  background-color: transparent;
+  appearance: none;
+  vertical-align: top;
+}
+.auth_panel .auth_form p input[type=checkbox]:checked {
+  border: 1px solid hsl(343.29, 95.89%, 71.37%);
+}
+.auth_panel .auth_form p input[type=checkbox]:checked:before, .auth_panel .auth_form p input[type=checkbox]:checked:after {
+  top: 50%;
+  position: absolute;
+  left: 15px;
+  content: " ";
+  height: 33px;
+  width: 2px;
+  background-color: hsl(343.29, 95.89%, 71.37%);
+}
+.auth_panel .auth_form p input[type=checkbox]:checked:before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.auth_panel .auth_form p input[type=checkbox]:checked:after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+.auth_panel .auth_form p input[type=checkbox]:not([disabled]):hover, .auth_panel .auth_form p input[type=checkbox]:not([disabled]):focus-visible {
+  border: 1px solid hsl(343.29, 95.89%, 71.37%);
+}
+.auth_panel .auth_form p input[type=checkbox]:not([disabled]):hover:before, .auth_panel .auth_form p input[type=checkbox]:not([disabled]):hover:after, .auth_panel .auth_form p input[type=checkbox]:not([disabled]):focus-visible:before, .auth_panel .auth_form p input[type=checkbox]:not([disabled]):focus-visible:after {
+  top: 50%;
+  position: absolute;
+  left: 15px;
+  content: " ";
+  height: 33px;
+  width: 2px;
+  background-color: hsl(343.29, 95.89%, 71.37%);
+}
+.auth_panel .auth_form p input[type=checkbox]:not([disabled]):hover:before, .auth_panel .auth_form p input[type=checkbox]:not([disabled]):focus-visible:before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.auth_panel .auth_form p input[type=checkbox]:not([disabled]):hover:after, .auth_panel .auth_form p input[type=checkbox]:not([disabled]):focus-visible:after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+.auth_panel .auth_form p label {
+  margin-bottom: 1rem;
+  margin-right: 1rem;
+}
+.auth_panel .auth_form p label + input[type=text], .auth_panel .auth_form p label + input[type=password] {
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+}
+.auth_panel .auth_form p input, .auth_panel .auth_form p label {
+  font-family: "Open Dyslexic", sans-serif;
+}
+.auth_panel .auth_form p input[type=password] + .helptext a {
+  font-size: 110%;
+  font-weight: 200;
+}
+.auth_panel .auth_form p input[type=password] + .helptext a:not([disabled]):hover, .auth_panel .auth_form p input[type=password] + .helptext a:not([disabled]):focus-visible {
+  color: hsl(343.29, 95.89%, 71.37%);
+}
+.auth_panel p + p, .auth_panel .auth_form {
+  margin-top: 2rem;
 }
 
 * {

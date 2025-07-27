@@ -1,8 +1,8 @@
 @use "fonts";
+@use "variables" as *;
 @use "common";
 @use "includes";
-
-@use "variables" as *;
+@use "allauth/elements";
 
 * {
   margin: 0;

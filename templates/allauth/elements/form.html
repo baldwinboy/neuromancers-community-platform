@@ -1,5 +1,6 @@
 {% load allauth %}
-<form method="{{ attrs.method }}"
+<form class="auth_form font-body"
+      method="{{ attrs.method }}"
       {% if attrs.action %}action="{{ attrs.action }}"{% endif %}>
     {% slot body %}
 {% endslot %}

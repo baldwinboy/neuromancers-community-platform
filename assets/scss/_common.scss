@@ -146,9 +146,42 @@
     width: 100%;
 }
 
+.width-auto {
+	width: auto;
+}
+
+.width-fit {
+	width: fit-content;
+}
+
+.width-min {
+	width: min-content;
+}
+
+.width-max {
+	width: max-content;
+}
+
 .height-full {
     height: 100%;
 }
+
+.height-auto {
+	height: auto;
+}
+
+.height-fit {
+	height: fit-content;
+}
+
+.height-min {
+	height: min-content;
+}
+
+.height-max {
+	height: max-content;
+}
+
 
 .container {
     @include media(xl) {
@@ -186,4 +219,28 @@
 .visually-hidden *,
 .visually-hidden-focusable:not(:focus, :focus-within) * {
 	overflow: hidden !important;
+}
+
+/* Text */
+.text-center {
+	text-align: center;
+}
+
+.text-darken {
+	@include interact {
+        filter: brightness(85%);
+    }
+}
+
+.text-brighten {
+	@include interact {
+        filter: brightness(115%);
+    }
+}
+
+.link {
+	color: $safeLightAccent;
+	@include interact {
+        color: $lightAccent;
+    }
 }

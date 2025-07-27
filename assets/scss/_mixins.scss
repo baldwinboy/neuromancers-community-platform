@@ -75,3 +75,11 @@
     }
   }
 }
+
+/* Interaction mixin */
+@mixin interact {
+  &:not([disabled]):hover,
+  &:not([disabled]):focus-visible {
+    @content;
+  }
+}

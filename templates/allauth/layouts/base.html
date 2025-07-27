@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n static wagtailcore_tags wagtailuserbar %}
 {% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
@@ -8,14 +8,28 @@
         <title>
             {% block head_title %}
             {% endblock head_title %}
+            {% block head_title_suffix %}
+                {% wagtail_site as current_site %}
+                {% if current_site and current_site.site_name %}- {{ current_site.site_name }}{% endif %}
+            {% endblock head_title_suffix %}
         </title>
         {% block head_description %}
-            <meta name="description" content="" />
-        {% endblock head__description %}
+        {% endblock head_description %}
+        <meta name="description" content="" />
+        {# Favicon #}
+        <link rel="shortcut icon"
+              type="image/png"
+              href="{% static 'images/favicon.png' %}">
+        {# Global stylesheets #}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
         {% block extra_head %}
         {% endblock extra_head %}
     </head>
-    <body>
+    <body class="{% block body_class %}{% endblock body_class %}">
+        {% wagtailuserbar %}
+        {% block top_navigation_bar %}
+            {% include "includes/header.html" %}
+        {% endblock top_navigation_bar %}
         {% block body %}
             {% if messages %}
                 <div>
@@ -25,66 +39,17 @@
                     </ul>
                 </div>
             {% endif %}
-            <div>
-                <strong>{% trans "Menu:" %}</strong>
-                <ul>
-                    {% if user.is_authenticated %}
-                        {% url 'account_email' as email_url_ %}
-                        {% if email_url_ %}
-                            <li>
-                                <a href="{{ email_url_ }}">{% trans "Change Email" %}</a>
-                            </li>
-                        {% endif %}
-                        {% url 'account_change_password' as change_password_url_ %}
-                        {% if change_password_url_ %}
-                            <li>
-                                <a href="{{ change_password_url_ }}">{% trans "Change Password" %}</a>
-                            </li>
-                        {% endif %}
-                        {% url 'socialaccount_connections' as connections_url_ %}
-                        {% if connections_url_ %}
-                            <li>
-                                <a href="{{ connections_url_ }}">{% trans "Account Connections" %}</a>
-                            </li>
-                        {% endif %}
-                        {% url 'mfa_index' as mfa_url_ %}
-                        {% if mfa_url_ %}
-                            <li>
-                                <a href="{{ mfa_url_ }}">{% trans "Two-Factor Authentication" %}</a>
-                            </li>
-                        {% endif %}
-                        {% url 'usersessions_list' as usersessions_list_url_ %}
-                        {% if usersessions_list_url_ %}
-                            <li>
-                                <a href="{{ usersessions_list_url_ }}">{% trans "Sessions" %}</a>
-                            </li>
-                        {% endif %}
-                        {% url 'account_logout' as logout_url_ %}
-                        {% if logout_url_ %}
-                            <li>
-                                <a href="{{ logout_url_ }}">{% trans "Sign Out" %}</a>
-                            </li>
-                        {% endif %}
-                    {% else %}
-                        {% url 'account_login' as login_url_ %}
-                        {% if login_url_ %}
-                            <li>
-                                <a href="{{ login_url_ }}">{% trans "Sign In" %}</a>
-                            </li>
-                        {% endif %}
-                        {% url 'account_signup' as signup_url_ %}
-                        {% if signup_url_ %}
-                            <li>
-                                <a href="{{ signup_url_ }}">{% trans "Sign Up" %}</a>
-                            </li>
-                        {% endif %}
-                    {% endif %}
-                </ul>
+            <div class="width-full container mx-auto py-s">
+                {% block content %}
+                {% endblock content %}
             </div>
-            {% block content %}
-            {% endblock content %}
         {% endblock body %}
         {% block extra_body %}
         {% endblock extra_body %}
+        {# Global javascript #}
+        <script type="text/javascript" src="{% static 'js/core.js' %}"></script>
+        {% block extra_js %}
+            {# Override this in templates to add extra javascript #}
+        {% endblock extra_js %}
     </body>
 </html>

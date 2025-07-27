@@ -1,0 +1,117 @@
+@use "../../variables" as *;
+@use "../../mixins" as *;
+
+.auth_panel {
+    border-radius: 10px;
+    max-width: 38.5rem;
+
+    .auth_form {
+        display: flex;
+        flex-flow: column;
+        justify-content: start;
+        width: 100%;
+        text-align: left;
+
+        p {
+            input[type=text],
+            input[type=password] {
+                border: 1px solid $safeLightAccent;
+                border-top: 0;
+                border-right: 0;
+                background: transparent;
+                color: $white;
+                width: 100%;
+                padding-block: 1rem;
+                padding-left: 1rem;
+
+                &::placeholder {
+                    color: $white;
+                    opacity: 0.8;
+                }
+            }
+
+            input[type="checkbox"] {
+                cursor: pointer;
+                position: relative;
+                width: 2rem;
+                height: 2rem;
+                border: 1px solid $white;
+                background-color: transparent;
+                appearance: none;
+                vertical-align: top;
+
+                &:checked {
+                    border: 1px solid $lightAccent;
+                    &:before, &:after {
+                        top: 50%;
+                        position: absolute;
+                        left: 15px;
+                        content: ' ';
+                        height: 33px;
+                        width: 2px;
+                        background-color: $lightAccent;
+                    }
+
+                    &:before {
+                        transform: translate(-50%, -50%) rotate(45deg);
+                    }
+
+                    &:after {
+                        transform: translate(-50%, -50%) rotate(-45deg);
+                    }
+                }
+
+                @include interact {
+                    border: 1px solid $lightAccent;
+                    &:before, &:after {
+                        top: 50%;
+                        position: absolute;
+                        left: 15px;
+                        content: ' ';
+                        height: 33px;
+                        width: 2px;
+                        background-color: $lightAccent;
+                    }
+
+                    &:before {
+                        transform: translate(-50%, -50%) rotate(45deg);
+                    }
+
+                    &:after {
+                        transform: translate(-50%, -50%) rotate(-45deg);
+                    }
+                }
+
+            }
+
+            label {
+                margin-bottom: 1rem;
+                margin-right: 1rem;
+
+                & + input[type=text],
+                & + input[type=password] {
+                    margin-top: 0.25rem;
+                    margin-bottom: 1rem;
+                }
+            }
+
+            input, label {
+                font-family: $body;
+            }
+
+            input[type=password] + .helptext {
+                a {
+                    font-size: 110%;
+                    font-weight: 200;
+                    @include interact {
+                        color: $lightAccent;
+                    }
+                }
+            }
+        }
+    }
+
+    p + p, .auth_form {
+        margin-top: 2rem;
+    }
+}

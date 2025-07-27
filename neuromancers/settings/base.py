@@ -249,3 +249,6 @@ ACCOUNT_LOGIN_BY_CODE_ENABLED = True  # Users can be sent a code to login
 LOGIN_URL = "/login"
 WAGTAILADMIN_LOGIN_URL = LOGIN_URL
 WAGTAIL_FRONTEND_LOGIN_URL = LOGIN_URL
+# Decoy field for spam detection
+# Requires a field not used on sign up
+ACCOUNT_SIGNUP_FORM_HONEYPOT_FIELD = "profile_bio"
