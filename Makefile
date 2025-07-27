@@ -51,6 +51,7 @@ update-python-dev-requirements: # Update Python development requirements
 	uv pip freeze > requirements/development.txt
 update-python-prod-requirements: # Update Python production requirements
 	pipreqs --savepath requirements/production.txt --ignore .venv
+update-python-requirements: update-python-dev-requirements update-python-prod-requirements
 
 install-python-dev-requirements: # Install Python development requirements
 	uv pip install -r requirements/development.txt
