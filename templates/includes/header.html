@@ -1,20 +1,22 @@
 {% load static wagtailcore_tags navigation_tags %}
-<header class="base__header bg-black width-full padding-y-sm padding-x-md">
+<header class="base__header flex items-center width-full px-md bg-black text-safeLightAccent">
     {% get_site_root as site_root %}
-    <nav class="base__header__nav flex width-full container horizontal-center">
+    <nav class="base__header__nav flex mx-auto width-full container">
         <p class="base__header__nav-wrapper flex justify-space-between items-center width-full">
-            <a class="base__header__nav-home" href="{% pageurl site_root %}">
-                <span class="visually-hidden">Home</span>
+            <a class="base__header__nav-home inline-flex items-center"
+               href="{% pageurl site_root %}">
                 <img src="{% static 'images/favicon.png' %}"
                      width="50"
                      height="50"
                      alt=""
                      aria-hidden="true">
+                <span>Sessions</span>
             </a>
-            <ul class="base__header__nav-list flex items-center">
+            <ul class="base__header__nav-list flex items-center gap-sm">
                 {% for menuitem in site_root.get_children.live.in_menu %}
                     <li class="base__header__nav-item">
-                        <a class="base__header__nav-link" href="{% pageurl menuitem %}">{{ menuitem.title }}</a>
+                        <a class="base__header__nav-link inline-block width-full height-full"
+                           href="{% pageurl menuitem %}">{{ menuitem.title }}</a>
                     </li>
                 {% endfor %}
             </ul>

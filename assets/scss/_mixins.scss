@@ -1,0 +1,77 @@
+@use "sass:list";
+@use "sass:map";
+@use "sass:meta";
+@use "variables" as *;
+
+/*
+* Sass mobile-first media queries mixins
+* @author Franco Moya - @iamravenous
+*/
+
+
+/*
+* Default mobile-first mixin
+* @param {String} $breakpoint - Breakpoint key in Sass map
+* @param {Map} $map - Sass list map of breakpoints
+*/
+
+@mixin media($breakpoint, $map: $breakpoints) {
+  @if meta.type-of($map) == map {
+    @if map.has-key($map, $breakpoint) {
+      @media (min-width: #{map.get($map, $breakpoint)}) {
+        @content;
+      }
+    }
+    @else {
+      @warn "Unfortunately, no value could be retrieved from `#{$breakpoint}`. " + "Please make sure it is defined in breakpoints map.";
+    }
+  }
+  @else {
+    @warn "Unfortunately, the map `#{$map}` isn't defined or is invalid.";
+  }
+}
+
+
+/*
+* Hack mobile-first mixin
+* @param {String} $breakpoint - Breakpoint key in Sass map
+*/
+
+@mixin media-max($breakpoint) {
+  $max-width: get-next($breakpoint, $map: $breakpoints);
+  @media (max-width: ($max-width - 1)) {
+    @content;
+  }
+}
+
+/*
+* Function to get next map item
+* @author Simon Koch
+*
+* @param {Map} $map - Sass list map
+* @param {String} $key - List map key
+*
+*/
+
+@function get-next($key, $map) {
+  @if map.has-key($map, $key) {
+    $i: 0;
+    $key-index: false;
+
+    @each $map-key, $map-value in $map {
+      $i: $i + 1;
+
+      @if $map-key == $key {
+        $key-index: $i;
+      }
+
+      @if $i == $key-index + 1 {
+        @return $map-value;
+      }
+
+      @if $i == list.length($map) {
+        @return $map-value;
+      }
+    }
+  }
+}

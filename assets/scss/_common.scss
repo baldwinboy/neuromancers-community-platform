@@ -1,0 +1,189 @@
+@use "variables" as *;
+@use "mixins" as *;
+
+/* Colors */
+@each $key, $value in $colors {
+  .bg-#{$key} {
+    background: $value;
+  }
+
+  .text-#{$key} {
+    color: $value;
+  }
+}
+
+/* Font families */
+@each $key, $value in $fonts {
+	.font-#{$key} {
+    font-family: $value;
+  }
+}
+
+/* Spacing */
+@each $key, $value in $spacing {
+	.gap-#{$key} {
+		gap: $value;
+	}
+
+	.mt-#{$key} {
+		margin-top: $value;
+	}
+
+	.mr-#{$key} {
+		margin-right: $value;
+	}
+
+	.mb-#{$key} {
+		margin-bottom: $value;
+	}
+
+	.ml-#{$key} {
+		margin-left: $value;
+	}
+
+	.mx-#{$key} {
+		margin-inline: $value;
+	}
+
+	.my-#{$key} {
+		margin-block: $value;
+	}
+
+	.m-#{$key} {
+		margin: $value;
+	}
+
+	.pt-#{$key} {
+		padding-top: $value;
+	}
+
+	.pr-#{$key} {
+		padding-right: $value;
+	}
+
+	.pb-#{$key} {
+		padding-bottom: $value;
+	}
+
+	.pl-#{$key} {
+		padding-left: $value;
+	}
+
+	.px-#{$key} {
+		padding-inline: $value;
+	}
+
+	.py-#{$key} {
+		padding-block: $value;
+	}
+
+	.p-#{$key} {
+		padding: $value;
+	}
+}
+
+.mt-auto {
+	margin-top: auto;
+}
+
+.mr-auto {
+	margin-right: auto;
+}
+
+.mb-auto {
+	margin-bottom: auto;
+}
+
+.ml-auto {
+	margin-left: auto;
+}
+
+.mx-auto {
+	margin-inline: auto;
+}
+
+.my-auto {
+	margin-block: auto;
+}
+
+
+/* Display */
+.hidden {
+	display: hidden;
+}
+
+.block {
+	display: block;
+}
+
+.flex {
+    display: flex;
+}
+
+.inline-block {
+	display: inline-block;
+}
+
+.inline-flex {
+	display: inline-flex;
+}
+
+/* Flexbox */
+
+.items-center {
+    align-items: center;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.justify-space-between {
+    justify-content: space-between;
+}
+
+.width-full {
+    width: 100%;
+}
+
+.height-full {
+    height: 100%;
+}
+
+.container {
+    @include media(xl) {
+        max-width: 75rem;
+    }
+}
+
+.visually-hidden,
+.visually-hidden-focusable:not(:focus, :focus-within) {
+	border: 0 !important;
+	clip-path: inset(50%) !important; /* 2 */
+	height: 1px !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	padding: 0 !important;
+	width: 1px !important;
+	white-space: nowrap !important; /* 3 */
+}
+
+/*
+	Prevent visually hidden caption from breaking table's collapsing borders
+	@author Louis-Maxime Piton
+	@see https://github.com/twbs/bootstrap/pull/37533
+*/
+.visually-hidden:not(caption),
+.visually-hidden-focusable:not(caption):not(:focus, :focus-within) {
+	position: absolute !important;
+}
+
+/*
+	Prevent overflowing children from being focusable.
+	@author Django Janny
+	@see https://github.com/twbs/bootstrap/pull/41286
+*/
+.visually-hidden *,
+.visually-hidden-focusable:not(:focus, :focus-within) * {
+	overflow: hidden !important;
+}

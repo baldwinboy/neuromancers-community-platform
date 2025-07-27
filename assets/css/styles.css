@@ -1,0 +1,707 @@
+@font-face {
+  font-family: "Open Dyslexic";
+  src: url("/static/fonts/OpenDyslexic/OpenDyslexic-Regular.eot");
+  src: url("/static/fonts/OpenDyslexic/OpenDyslexic-Regular.eot?#iefix") format("embedded-opentype"), url("/static/fonts/OpenDyslexic/OpenDyslexic-Regular.woff2") format("woff2"), url("/static/fonts/OpenDyslexic/OpenDyslexic-Regular.woff") format("woff"), url("/static/fonts/OpenDyslexic/OpenDyslexic-Regular.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Dyslexic";
+  src: url("/static/fonts/OpenDyslexic/OpenDyslexic-Bold-Italic.eot");
+  src: url("/static/fonts/OpenDyslexic/OpenDyslexic-Bold-Italic.eot?#iefix") format("embedded-opentype"), url("/static/fonts/OpenDyslexic/OpenDyslexic-Bold-Italic.woff2") format("woff2"), url("/static/fonts/OpenDyslexic/OpenDyslexic-Bold-Italic.woff") format("woff"), url("/static/fonts/OpenDyslexic/OpenDyslexic-Bold-Italic.otf") format("opentype");
+  font-weight: bold;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Dyslexic";
+  src: url("/static/fonts/OpenDyslexic/OpenDyslexic-Bold.eot");
+  src: url("/static/fonts/OpenDyslexic/OpenDyslexic-Bold.eot?#iefix") format("embedded-opentype"), url("/static/fonts/OpenDyslexic/OpenDyslexic-Bold.woff2") format("woff2"), url("/static/fonts/OpenDyslexic/OpenDyslexic-Bold.woff") format("woff"), url("/static/fonts/OpenDyslexic/OpenDyslexic-Bold.otf") format("opentype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Dyslexic";
+  src: url("/static/fonts/OpenDyslexic/OpenDyslexic-Italic.eot");
+  src: url("/static/fonts/OpenDyslexic/OpenDyslexic-Italic.eot?#iefix") format("embedded-opentype"), url("/static/fonts/OpenDyslexic/OpenDyslexic-Italic.woff2") format("woff2"), url("/static/fonts/OpenDyslexic/OpenDyslexic-Italic.woff") format("woff"), url("/static/fonts/OpenDyslexic/OpenDyslexic-Italic.otf") format("opentype");
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Handjet";
+  src: url("/static/fonts/Handjet/Handjet-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Handjet";
+  src: url("/static/fonts/Handjet/Handjet-Thin.ttf") format("truetype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Handjet";
+  src: url("/static/fonts/Handjet/Handjet-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Handjet";
+  src: url("/static/fonts/Handjet/Handjet-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Handjet";
+  src: url("/static/fonts/Handjet/Handjet-Bold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Handjet";
+  src: url("/static/fonts/Handjet/Handjet-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Handjet";
+  src: url("/static/fonts/Handjet/Handjet-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Handjet";
+  src: url("/static/fonts/Handjet/Handjet-ExtraBold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Handjet";
+  src: url("/static/fonts/Handjet/Handjet-ExtraLight.ttf") format("truetype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("/static/fonts/Roboto/Roboto-ExtraLight.ttf") format("truetype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("/static/fonts/Roboto/Roboto-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("/static/fonts/Roboto/Roboto-Thin.ttf") format("truetype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("/static/fonts/Roboto/Roboto-ExtraBold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("/static/fonts/Roboto/Roboto-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("/static/fonts/Roboto/Roboto-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("/static/fonts/Roboto/Roboto-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("/static/fonts/Roboto/Roboto-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url("/static/fonts/Roboto/Roboto-Bold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto SemiCondensed";
+  src: url("/static/fonts/Roboto/Roboto_SemiCondensed-ExtraLight.ttf") format("truetype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto SemiCondensed";
+  src: url("/static/fonts/Roboto/Roboto_SemiCondensed-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  src: url("/static/fonts/Roboto/Roboto_Condensed-Bold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  src: url("/static/fonts/Roboto/Roboto_Condensed-ExtraBold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto SemiCondensed";
+  src: url("/static/fonts/Roboto/Roboto_SemiCondensed-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto SemiCondensed";
+  src: url("/static/fonts/Roboto/Roboto_SemiCondensed-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto SemiCondensed";
+  src: url("/static/fonts/Roboto/Roboto_SemiCondensed-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto SemiCondensed";
+  src: url("/static/fonts/Roboto/Roboto_SemiCondensed-ExtraBold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto SemiCondensed";
+  src: url("/static/fonts/Roboto/Roboto_SemiCondensed-Bold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto SemiCondensed";
+  src: url("/static/fonts/Roboto/Roboto_SemiCondensed-Thin.ttf") format("truetype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto SemiCondensed";
+  src: url("/static/fonts/Roboto/Roboto_SemiCondensed-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  src: url("/static/fonts/Roboto/Roboto_Condensed-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  src: url("/static/fonts/Roboto/Roboto_Condensed-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  src: url("/static/fonts/Roboto/Roboto_Condensed-ExtraLight.ttf") format("truetype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  src: url("/static/fonts/Roboto/Roboto_Condensed-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  src: url("/static/fonts/Roboto/Roboto_Condensed-Thin.ttf") format("truetype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  src: url("/static/fonts/Roboto/Roboto_Condensed-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  src: url("/static/fonts/Roboto/Roboto_Condensed-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+/* Colors */
+/* Font Families */
+/* Screen sizes */
+/* Spacing */
+/*
+* Sass mobile-first media queries mixins
+* @author Franco Moya - @iamravenous
+*/
+/*
+* Default mobile-first mixin
+* @param {String} $breakpoint - Breakpoint key in Sass map
+* @param {Map} $map - Sass list map of breakpoints
+*/
+/*
+* Hack mobile-first mixin
+* @param {String} $breakpoint - Breakpoint key in Sass map
+*/
+/*
+* Function to get next map item
+* @author Simon Koch
+*
+* @param {Map} $map - Sass list map
+* @param {String} $key - List map key
+*
+*/
+/* Colors */
+.bg-white {
+  background: hsl(0, 0%, 100%);
+}
+
+.text-white {
+  color: hsl(0, 0%, 100%);
+}
+
+.bg-black {
+  background: hsl(0, 100%, 0.78%);
+}
+
+.text-black {
+  color: hsl(0, 100%, 0.78%);
+}
+
+.bg-safeLightAccent {
+  background: hsl(342.63, 80.85%, 81.57%);
+}
+
+.text-safeLightAccent {
+  color: hsl(342.63, 80.85%, 81.57%);
+}
+
+.bg-safeDarkAccent {
+  background: hsl(0, 0%, 0%);
+}
+
+.text-safeDarkAccent {
+  color: hsl(0, 0%, 0%);
+}
+
+.bg-safeInverseAccent {
+  background: hsl(0, 0%, 0%);
+}
+
+.text-safeInverseAccent {
+  color: hsl(0, 0%, 0%);
+}
+
+.bg-safeInverseLightAccent {
+  background: hsl(0, 0%, 0%);
+}
+
+.text-safeInverseLightAccent {
+  color: hsl(0, 0%, 0%);
+}
+
+.bg-safeInverseDarkAccent {
+  background: hsl(0, 0%, 100%);
+}
+
+.text-safeInverseDarkAccent {
+  color: hsl(0, 0%, 100%);
+}
+
+.bg-accent {
+  background: hsl(342.63, 80.85%, 81.57%);
+}
+
+.text-accent {
+  color: hsl(342.63, 80.85%, 81.57%);
+}
+
+.bg-lightAccent {
+  background: hsl(343.29, 95.89%, 71.37%);
+}
+
+.text-lightAccent {
+  color: hsl(343.29, 95.89%, 71.37%);
+}
+
+.bg-darkAccent {
+  background: hsl(342.11, 40.43%, 27.65%);
+}
+
+.text-darkAccent {
+  color: hsl(342.11, 40.43%, 27.65%);
+}
+
+/* Font families */
+.font-heading {
+  font-family: "Handjet", monospace;
+}
+
+.font-subheading {
+  font-family: "Roboto", sans-serif;
+}
+
+.font-body {
+  font-family: "Open Dyslexic", sans-serif;
+}
+
+/* Spacing */
+.gap-sm {
+  gap: 2.175rem;
+}
+
+.mt-sm {
+  margin-top: 2.175rem;
+}
+
+.mr-sm {
+  margin-right: 2.175rem;
+}
+
+.mb-sm {
+  margin-bottom: 2.175rem;
+}
+
+.ml-sm {
+  margin-left: 2.175rem;
+}
+
+.mx-sm {
+  margin-inline: 2.175rem;
+}
+
+.my-sm {
+  margin-block: 2.175rem;
+}
+
+.m-sm {
+  margin: 2.175rem;
+}
+
+.pt-sm {
+  padding-top: 2.175rem;
+}
+
+.pr-sm {
+  padding-right: 2.175rem;
+}
+
+.pb-sm {
+  padding-bottom: 2.175rem;
+}
+
+.pl-sm {
+  padding-left: 2.175rem;
+}
+
+.px-sm {
+  padding-inline: 2.175rem;
+}
+
+.py-sm {
+  padding-block: 2.175rem;
+}
+
+.p-sm {
+  padding: 2.175rem;
+}
+
+.gap-md {
+  gap: 4.75rem;
+}
+
+.mt-md {
+  margin-top: 4.75rem;
+}
+
+.mr-md {
+  margin-right: 4.75rem;
+}
+
+.mb-md {
+  margin-bottom: 4.75rem;
+}
+
+.ml-md {
+  margin-left: 4.75rem;
+}
+
+.mx-md {
+  margin-inline: 4.75rem;
+}
+
+.my-md {
+  margin-block: 4.75rem;
+}
+
+.m-md {
+  margin: 4.75rem;
+}
+
+.pt-md {
+  padding-top: 4.75rem;
+}
+
+.pr-md {
+  padding-right: 4.75rem;
+}
+
+.pb-md {
+  padding-bottom: 4.75rem;
+}
+
+.pl-md {
+  padding-left: 4.75rem;
+}
+
+.px-md {
+  padding-inline: 4.75rem;
+}
+
+.py-md {
+  padding-block: 4.75rem;
+}
+
+.p-md {
+  padding: 4.75rem;
+}
+
+.mt-auto {
+  margin-top: auto;
+}
+
+.mr-auto {
+  margin-right: auto;
+}
+
+.mb-auto {
+  margin-bottom: auto;
+}
+
+.ml-auto {
+  margin-left: auto;
+}
+
+.mx-auto {
+  margin-inline: auto;
+}
+
+.my-auto {
+  margin-block: auto;
+}
+
+/* Display */
+.hidden {
+  display: hidden;
+}
+
+.block {
+  display: block;
+}
+
+.flex {
+  display: flex;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+.inline-flex {
+  display: inline-flex;
+}
+
+/* Flexbox */
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-space-between {
+  justify-content: space-between;
+}
+
+.width-full {
+  width: 100%;
+}
+
+.height-full {
+  height: 100%;
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 75rem;
+  }
+}
+
+.visually-hidden,
+.visually-hidden-focusable:not(:focus, :focus-within) {
+  border: 0 !important;
+  clip-path: inset(50%) !important; /* 2 */
+  height: 1px !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  width: 1px !important;
+  white-space: nowrap !important; /* 3 */
+}
+
+/*
+	Prevent visually hidden caption from breaking table's collapsing borders
+	@author Louis-Maxime Piton
+	@see https://github.com/twbs/bootstrap/pull/37533
+*/
+.visually-hidden:not(caption),
+.visually-hidden-focusable:not(caption):not(:focus, :focus-within) {
+  position: absolute !important;
+}
+
+/*
+	Prevent overflowing children from being focusable.
+	@author Django Janny
+	@see https://github.com/twbs/bootstrap/pull/41286
+*/
+.visually-hidden *,
+.visually-hidden-focusable:not(:focus, :focus-within) * {
+  overflow: hidden !important;
+}
+
+.base__header {
+  height: 7.6875rem;
+  font-size: 1.4rem;
+}
+
+.base__header__nav-home span {
+  font-size: 200%;
+  font-weight: 300;
+}
+
+.base__header__nav-link {
+  font-weight: 200;
+}
+.base__header__nav-link:hover, .base__header__nav-link:focus-visible {
+  filter: brightness(85%);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Handjet", monospace;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: hsl(0, 0%, 100%);
+  color: hsl(0, 100%, 0.78%);
+}
+
+h1 {
+  margin: 0;
+  padding: 0;
+  font-family: "Handjet", monospace;
+}
+
+/* Set default styles for tags h2 - h6 */
+h6 {
+  margin: 0;
+  padding: 0;
+  font-family: "Roboto", sans-serif;
+}
+
+h5 {
+  margin: 0;
+  padding: 0;
+  font-family: "Roboto", sans-serif;
+}
+
+h4 {
+  margin: 0;
+  padding: 0;
+  font-family: "Roboto", sans-serif;
+}
+
+h3 {
+  margin: 0;
+  padding: 0;
+  font-family: "Roboto", sans-serif;
+}
+
+h2 {
+  margin: 0;
+  padding: 0;
+  font-family: "Roboto", sans-serif;
+}
+
+ul {
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/*# sourceMappingURL=styles.css.map */

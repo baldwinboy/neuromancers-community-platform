@@ -10,6 +10,10 @@ venv: # Create virtual environment
 venv-delete: # Delete virtual environment
 	rm -rf .venv/neuromancers
 
+venv-shortcut: # Creates a shortcut to activate virtual environment
+	@alias venv_activate="source .venv/neruomancers/bin/activate"
+	@echo "Run `venv_activate` to activate the virtual environment"
+
 django-migrate: # Run Django migrations
 	python ./manage.py migrate
 
@@ -32,7 +36,7 @@ django-findstatic: # Find files that will be added when a `static` directory is 
 	python ./manage.py findstatic
 
 django-collectstatic: # Generate `static` directory
-	python ./manage.py collectstatic
+	sass assets/scss/styles.scss assets/css/styles.css && python ./manage.py collectstatic -i scss
 
 django-runserver: # Start Django server
 	python ./manage.py runserver
@@ -54,3 +58,6 @@ install-python-prod-requirements: # Install Python production requirements
 	uv pip install -r requirements/production.txt
 
 dev: install-python-dev-requirements django-makemigrations django-migrate django-collectstatic django-runserver
+
+sass-watch: # Compile Sass on demand
+	sass --watch assets/scss/styles.scss assets/css/styles.css

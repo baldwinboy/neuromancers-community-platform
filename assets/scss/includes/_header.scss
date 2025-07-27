@@ -1,0 +1,18 @@
+.base__header {
+    height: 7.6875rem;
+    font-size: 1.4rem;
+}
+
+.base__header__nav-home {
+    span {
+        font-size: 200%;
+        font-weight: 300;
+    }
+}
+
+.base__header__nav-link {
+    font-weight: 200;
+    &:hover, &:focus-visible {
+        filter: brightness(85%);
+    }
+}

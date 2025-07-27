@@ -1,0 +1,51 @@
+/* Colors */
+$white: hsl(0,0%,100%);
+$black: hsl(0,100%, 0.78%);
+$safeLightAccent: hsl(342.63,80.85%,81.57%);
+$safeDarkAccent: hsl(0,0%,0%);
+$safeInverseAccent: hsl(0,0%,0%);
+$safeInverseLightAccent: hsl(0,0%,0%);
+$safeInverseDarkAccent: hsl(0,0%,100%);
+$accent: hsl(342.63,80.85%,81.57%);
+$lightAccent: hsl(343.29,95.89%,71.37%);
+$darkAccent: hsl(342.11,40.43%,27.65%);
+
+$colors: (
+"white": $white,
+"black": $black,
+safeLightAccent: $safeLightAccent,
+safeDarkAccent: $safeDarkAccent,
+safeInverseAccent: $safeInverseAccent,
+safeInverseLightAccent: $safeInverseLightAccent,
+safeInverseDarkAccent: $safeInverseDarkAccent,
+accent: $accent,
+lightAccent: $lightAccent,
+darkAccent: $darkAccent
+);
+
+/* Font Families */
+$heading: 'Handjet', monospace;
+$subheading: 'Roboto', sans-serif;
+$body: 'Open Dyslexic', sans-serif;
+
+$fonts: (
+  heading: $heading,
+  subheading: $subheading,
+  body: $body
+);
+
+/* Screen sizes */
+$breakpoints: (
+  xs: 0,
+  sm: 480px,
+  md: 768px,
+  lg: 1024px,
+  xl: 1280px,
+  xxl: 1366px
+) !default;
+
+/* Spacing */
+$spacing: (
+    sm: 2.175rem,
+    md: 4.75rem
+);
