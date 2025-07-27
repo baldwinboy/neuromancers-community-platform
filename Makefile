@@ -21,7 +21,7 @@ django-makemigrations: # Create Django migrations
 	python ./manage.py makemigrations
 
 django-createsuperuser: # Create a default superuser
-django-createsuperuser: DJANGO_SUPER_USERNAME ?= _default@neuromancers
+django-createsuperuser: DJANGO_SUPER_USERNAME ?= _neuro
 django-createsuperuser: DJANGO_SUPER_PASSWORD ?= _default_password
 django-createsuperuser: DJANGO_SUPER_EMAIL ?= _default@neuromancers.org.uk
 django-createsuperuser:
@@ -62,3 +62,6 @@ dev: install-python-dev-requirements django-makemigrations django-migrate django
 
 sass-watch: # Compile Sass on demand
 	sass --watch assets/scss/styles.scss assets/css/styles.css
+
+lint-git-files: # Lint files tracked by Git
+	git status -s | cut -c4- | xargs pre-commit run --files

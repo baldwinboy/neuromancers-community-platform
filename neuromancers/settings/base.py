@@ -220,3 +220,8 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly",
     ]
 }
+
+# List of words banned from usernames
+USERNAME_BANNED_WORDLIST = os.path.join(
+    BASE_DIR, "data", "username_banned_wordlist.txt"
+)
