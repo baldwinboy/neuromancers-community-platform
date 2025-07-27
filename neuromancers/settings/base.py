@@ -240,6 +240,8 @@ USERNAME_BANNED_WORDLIST = os.path.join(
 
 # Redirect users to homepage after login without `next` query
 LOGIN_REDIRECT_URL = "/"
+# Redirect users to homepage after logou
+LOGOUT_REDIRECT_URL = "/"
 
 # Django Allauth
 ACCOUNT_LOGIN_BY_CODE_ENABLED = True  # Users can be sent a code to login

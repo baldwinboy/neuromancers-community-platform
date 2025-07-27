@@ -11,6 +11,16 @@ from wagtail.documents import urls as wagtaildocs_urls
 admin.autodiscover()
 
 urlpatterns = [
+    # Redirect admin login/logout to default
+    re_path(
+        r"^admin/(?P<action>login|logout)/(?P<subpath>.*)$",
+        RedirectView.as_view(
+            pattern_name=None,  # Not using named URL pattern
+            url="/%(action)s/%(subpath)s",  # Use the captured subpath in the redirect
+            permanent=True,
+        ),
+        name="admin_login_logout_redirect",
+    ),
     path("admin/", include(wagtailadmin_urls), name="wagtailadmin"),
     path("documents/", include(wagtaildocs_urls), name="wagtaildocs"),
     # For Django REST Framework
