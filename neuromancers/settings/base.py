@@ -47,10 +47,16 @@ DEFAULT_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    # For object-level permissions
     "guardian",
     "rest_framework",
+    # For placing non-page models on the Admin page easily
     "wagtail_modeladmin",
+    # For site navigation bars
     "wagtailmenus",
+    # For site user login
+    "allauth",
+    "allauth.account",
 ]
 
 PROJECT_APPS = [
@@ -71,6 +77,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
+    # For site user login
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "neuromancers.urls"
@@ -212,7 +220,10 @@ AUTH_USER_MODEL = "accounts.User"
 
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
+    # For object-level permissions
     "guardian.backends.ObjectPermissionBackend",
+    # For site user login
+    "allauth.account.auth_backends.AuthenticationBackend",
 )
 
 REST_FRAMEWORK = {

@@ -12,3 +12,4 @@ NEUROMANCERS community platform for attending and scheduling support sessions. B
 [Django](https://docs.djangoproject.com/en/5.2/)
 [Wagtail](https://wagtail.org/)
 [wagtailmenus](https://wagtailmenus.readthedocs.io/en/stable/index.html)
+[allauth](https://docs.allauth.org/en/latest/index.html)

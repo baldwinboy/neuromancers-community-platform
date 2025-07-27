@@ -9,7 +9,10 @@ urlpatterns = [
     path("django-admin/", admin.site.urls),
     path("admin/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
+    # For Django REST Framework
     path("api-auth/", include("rest_framework.urls")),
+    # For site user login
+    path("accounts/", include("allauth.urls")),
 ]
 
 
