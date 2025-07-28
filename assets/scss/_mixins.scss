@@ -38,7 +38,7 @@
 */
 
 @mixin media-max($breakpoint) {
-  $max-width: get-next($breakpoint, $map: $breakpoints);
+  $max-width: -get-next($breakpoint, $map: $breakpoints);
   @media (max-width: ($max-width - 1)) {
     @content;
   }
@@ -53,7 +53,7 @@
 *
 */
 
-@function get-next($key, $map) {
+@function -get-next($key, $map) {
   @if map.has-key($map, $key) {
     $i: 0;
     $key-index: false;
@@ -89,4 +89,12 @@
   @media (prefers-reduced-motion) {
     @content
   }
+}
+
+/* Line clamp mixin */
+@mixin line-clamp($lines) {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
 }

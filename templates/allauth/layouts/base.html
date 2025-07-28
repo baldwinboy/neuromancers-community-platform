@@ -6,13 +6,16 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>
+
             {% block head_title %}
             {% endblock head_title %}
+
             {% block head_title_suffix %}
                 {% wagtail_site as current_site %}
                 {% if current_site and current_site.site_name %}- {{ current_site.site_name }}{% endif %}
             {% endblock head_title_suffix %}
         </title>
+
         {% block head_description %}
         {% endblock head_description %}
         <meta name="description" content="" />
@@ -22,34 +25,45 @@
               href="{% static 'images/favicon.png' %}">
         {# Global stylesheets #}
         <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+
         {% block extra_head %}
         {% endblock extra_head %}
     </head>
+    {# djlint:off #}
     <body class="{% block body_class %}{% endblock body_class %}">
-        {% wagtailuserbar %}
-        {% block top_navigation_bar %}
-            {% include "includes/header.html" %}
-        {% endblock top_navigation_bar %}
-        {% block body %}
-            {% if messages %}
-                <div>
-                    <strong>{% trans "Messages:" %}</strong>
+    {# djlint:on #}
+    {% wagtailuserbar %}
+
+    {% block top_navigation_bar %}
+
+        {% include "includes/header.html" %}
+    {% endblock top_navigation_bar %}
+
+    {% block body %}
+        {% if messages %}
+            <div class="bg-lightAccent">
+                <div class="width-full container mx-auto py-9">
+                    <strong class="visually-hidden">{% trans "Messages:" %}</strong>
                     <ul>
                         {% for message in messages %}<li>{{ message }}</li>{% endfor %}
                     </ul>
                 </div>
-            {% endif %}
-            <div class="width-full container mx-auto py-s">
-                {% block content %}
-                {% endblock content %}
             </div>
-        {% endblock body %}
-        {% block extra_body %}
-        {% endblock extra_body %}
-        {# Global javascript #}
-        <script type="text/javascript" src="{% static 'js/core.js' %}"></script>
-        {% block extra_js %}
-            {# Override this in templates to add extra javascript #}
-        {% endblock extra_js %}
-    </body>
+        {% endif %}
+        <div class="width-full container mx-auto py-9">
+
+            {% block content %}
+            {% endblock content %}
+        </div>
+    {% endblock body %}
+
+    {% block extra_body %}
+    {% endblock extra_body %}
+    {# Global javascript #}
+    <script type="text/javascript" src="{% static 'js/core.js' %}"></script>
+
+    {% block extra_js %}
+        {# Override this in templates to add extra javascript #}
+    {% endblock extra_js %}
+</body>
 </html>

@@ -5,6 +5,7 @@
     <head>
         <meta charset="utf-8" />
         <title>
+
             {% block title %}
                 {% if page.seo_title %}
                     {{ page.seo_title }}
@@ -12,6 +13,7 @@
                     {{ page.title }}
                 {% endif %}
             {% endblock title %}
+
             {% block title_suffix %}
                 {% wagtail_site as current_site %}
                 {% if current_site and current_site.site_name %}- {{ current_site.site_name }}{% endif %}
@@ -27,21 +29,38 @@
               href="{% static 'images/favicon.png' %}">
         {# Global stylesheets #}
         <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+
         {% block extra_css %}
             {# Override this in templates to add extra stylesheets #}
         {% endblock extra_css %}
     </head>
+    {# djlint:off #}
     <body class="{% block body_class %}{% endblock body_class %}">
-        {% wagtailuserbar %}
-        {% block top_navigation_bar %}
-            {% include "includes/header.html" %}
-        {% endblock top_navigation_bar %}
-        {% block content %}
-        {% endblock content %}
-        {# Global javascript #}
-        <script type="text/javascript" src="{% static 'js/core.js' %}"></script>
-        {% block extra_js %}
-            {# Override this in templates to add extra javascript #}
-        {% endblock extra_js %}
-    </body>
+    {# djlint:on #}
+    {% wagtailuserbar %}
+
+    {% block top_navigation_bar %}
+
+        {% include "includes/header.html" %}
+    {% endblock top_navigation_bar %}
+    {% if messages %}
+        <div class="bg-lightAccent">
+            <div class="width-full container mx-auto py-9">
+                <strong class="visually-hidden">{% trans "Messages:" %}</strong>
+                <ul>
+                    {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+
+    {% block content %}
+    {% endblock content %}
+    {# Global javascript #}
+    <script type="text/javascript" src="{% static 'js/core.js' %}"></script>
+
+    {% block extra_js %}
+        {# Override this in templates to add extra javascript #}
+    {% endblock extra_js %}
+</body>
 </html>

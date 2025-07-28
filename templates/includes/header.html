@@ -1,5 +1,5 @@
 {% load i18n static allauth account wagtailcore_tags navigation_tags %}
-<header class="base__header flex items-center width-full px-m bg-black text-safeLightAccent">
+<header class="base__header flex items-center width-full px-19 bg-black text-safeLightAccent">
     {% get_site_root as site_root %}
     {% url 'account_login' as login_url %}
     <nav class="base__header__nav flex mx-auto width-full container">
@@ -13,7 +13,7 @@
                      aria-hidden="true">
                 <span>Sessions</span>
             </a>
-            <ul class="base__header__nav-list flex items-center gap-s">
+            <ul class="base__header__nav-list flex items-center gap-9">
                 {% for menuitem in site_root.get_children.live.in_menu %}
                     <li class="base__header__nav-item">
                         <a class="base__header__nav-link link inline-block width-full height-full"
@@ -22,7 +22,7 @@
                 {% endfor %}
             </ul>
             {#  When site registration is available #}
-            {% if not SOCIALACCOUNT_ONLY %}
+            {% if not SOCIALACCOUNT_ONLY and not user.is_authenticated %}
 
                 {% element button type="submit" tags="prominent,login" class="auth_button__navbar block text-center" href=login_url %}
                     {% trans "Sign In" %}

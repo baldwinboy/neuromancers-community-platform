@@ -1,3 +1,5 @@
+@use 'sass:list';
+@use 'sass:math';
 @use "variables" as *;
 @use "mixins" as *;
 
@@ -20,65 +22,103 @@
 }
 
 /* Spacing */
-@each $key, $value in $spacing {
-	.gap-#{$key} {
-		gap: $value;
+$spacers: ();
+@for $i from 0 through 96 {
+	$spacers: list.append($spacers, $i * math.div($spacer, 4));
+	$current-spacer: list.nth($spacers, $i + 1);
+
+	.inset-#{$i} {
+		inset: $current-spacer;
 	}
 
-	.mt-#{$key} {
-		margin-top: $value;
+	.inset-x-#{$i} {
+		inset-inline: $current-spacer;
 	}
 
-	.mr-#{$key} {
-		margin-right: $value;
+	.inset-y-#{$i} {
+		inset-block: $current-spacer;
 	}
 
-	.mb-#{$key} {
-		margin-bottom: $value;
+	.top-#{$i} {
+		top: $current-spacer;
 	}
 
-	.ml-#{$key} {
-		margin-left: $value;
+	.right-#{$i} {
+		right: $current-spacer;
 	}
 
-	.mx-#{$key} {
-		margin-inline: $value;
+	.bottom-#{$i} {
+		bottom: $current-spacer;
 	}
 
-	.my-#{$key} {
-		margin-block: $value;
+	.left-#{$i} {
+		right: $current-spacer;
 	}
 
-	.m-#{$key} {
-		margin: $value;
+	.w-#{$i} {
+		width: $current-spacer;
+	}
+	.h-#{$i} {
+		height: $current-spacer;
+	}
+	.gap-#{$i} {
+		gap: $current-spacer;
 	}
 
-	.pt-#{$key} {
-		padding-top: $value;
+	.mt-#{$i} {
+		margin-top: $current-spacer;
 	}
 
-	.pr-#{$key} {
-		padding-right: $value;
+	.mr-#{$i} {
+		margin-right: $current-spacer;
 	}
 
-	.pb-#{$key} {
-		padding-bottom: $value;
+	.mb-#{$i} {
+		margin-bottom: $current-spacer;
 	}
 
-	.pl-#{$key} {
-		padding-left: $value;
+	.ml-#{$i} {
+		margin-left: $current-spacer;
 	}
 
-	.px-#{$key} {
-		padding-inline: $value;
+	.mx-#{$i} {
+		margin-inline: $current-spacer;
 	}
 
-	.py-#{$key} {
-		padding-block: $value;
+	.my-#{$i} {
+		margin-block: $current-spacer;
 	}
 
-	.p-#{$key} {
-		padding: $value;
+	.m-#{$i} {
+		margin: $current-spacer;
+	}
+
+	.pt-#{$i} {
+		padding-top: $current-spacer;
+	}
+
+	.pr-#{$i} {
+		padding-right: $current-spacer;
+	}
+
+	.pb-#{$i} {
+		padding-bottom: $current-spacer;
+	}
+
+	.pl-#{$i} {
+		padding-left: $current-spacer;
+	}
+
+	.px-#{$i} {
+		padding-inline: $current-spacer;
+	}
+
+	.py-#{$i} {
+		padding-block: $current-spacer;
+	}
+
+	.p-#{$i} {
+		padding: $current-spacer;
 	}
 }
 
@@ -247,4 +287,10 @@
 	@include interact {
         color: $lightAccent;
     }
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

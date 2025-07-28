@@ -1,16 +1,18 @@
 {% load allauth %}
 {% spaceless %}
-    <section class="auth_panel mx-auto p-s bg-black text-white text-center {% if attrs.class %}{{ attrs.class }}{% endif %}">
+    <section class="auth_panel mx-auto p-9 bg-black text-white text-center {% if attrs.class %}{{ attrs.class }}{% endif %}">
         <h2 class="auth_panel__heading block width-fit mx-auto mb-s">
+
             {% slot title %}
+            {% endslot %}
+        </h2>
+
+        {% slot body %}
         {% endslot %}
-    </h2>
-    {% slot body %}
-{% endslot %}
-{% if slots.actions %}
-    <ul class="auth_panel__list">
-        {% for action in slots.actions %}<li class="auth_panel__list-item">{{ action }}</li>{% endfor %}
-    </ul>
-{% endif %}
-</section>
+        {% if slots.actions %}
+            <ul class="auth_panel__list">
+                {% for action in slots.actions %}<li class="auth_panel__list-item">{{ action }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+    </section>
 {% endspaceless %}
