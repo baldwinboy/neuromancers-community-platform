@@ -11,13 +11,24 @@
     color: $black;
     font-family: $subheading;
     font-size: 140%;
+    font-weight: 300;
     text-transform: uppercase;
-}
-
-.auth_button__signin_panel {
-    width: 100%;
-    margin-top: 1rem;
+    transition: all 0.25s ease-in-out;
     @include interact {
         background: $lightAccent;
     }
+    @include reduced-motion {
+        transition: none;
+    }
+}
+
+.auth_button__signin_panel,
+.auth_button__signup_panel {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.auth_button__navbar {
+    min-width: 8rem;
+    font-size: 100%;
 }

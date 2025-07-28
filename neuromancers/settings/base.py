@@ -252,3 +252,5 @@ WAGTAIL_FRONTEND_LOGIN_URL = LOGIN_URL
 # Decoy field for spam detection
 # Requires a field not used on sign up
 ACCOUNT_SIGNUP_FORM_HONEYPOT_FIELD = "profile_bio"
+# Default account sign up fields
+ACCOUNT_SIGNUP_FIELDS = ["username*", "email*", "email2*", "password1*", "password2*"]

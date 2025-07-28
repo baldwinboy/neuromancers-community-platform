@@ -1,6 +1,7 @@
-{% load static wagtailcore_tags navigation_tags %}
+{% load i18n static allauth account wagtailcore_tags navigation_tags %}
 <header class="base__header flex items-center width-full px-m bg-black text-safeLightAccent">
     {% get_site_root as site_root %}
+    {% url 'account_login' as login_url %}
     <nav class="base__header__nav flex mx-auto width-full container">
         <p class="base__header__nav-wrapper flex justify-space-between items-center width-full">
             <a class="base__header__nav-home inline-flex items-center"
@@ -20,6 +21,13 @@
                     </li>
                 {% endfor %}
             </ul>
+            {#  When site registration is available #}
+            {% if not SOCIALACCOUNT_ONLY %}
+
+                {% element button type="submit" tags="prominent,login" class="auth_button__navbar block text-center" href=login_url %}
+                    {% trans "Sign In" %}
+                {% endelement %}
+            {% endif %}
         </p>
     </nav>
 </header>

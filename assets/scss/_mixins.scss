@@ -83,3 +83,10 @@
     @content;
   }
 }
+
+/* Reduced motion mixin */
+@mixin reduced-motion {
+  @media (prefers-reduced-motion) {
+    @content
+  }
+}

@@ -308,6 +308,7 @@
 *
 */
 /* Interaction mixin */
+/* Reduced motion mixin */
 /* Colors */
 .bg-white {
   background: hsl(0, 0%, 100%);
@@ -674,6 +675,12 @@
 
 .link {
   color: hsl(342.63, 80.85%, 81.57%);
+  transition: all 0.25s ease-in-out;
+}
+@media (prefers-reduced-motion) {
+  .link {
+    transition: none;
+  }
 }
 .link:not([disabled]):hover, .link:not([disabled]):focus-visible {
   color: hsl(343.29, 95.89%, 71.37%);
@@ -703,15 +710,28 @@
   color: hsl(0, 100%, 0.78%);
   font-family: "Roboto", sans-serif;
   font-size: 140%;
+  font-weight: 300;
   text-transform: uppercase;
+  transition: all 0.25s ease-in-out;
+}
+.auth_button:not([disabled]):hover, .auth_button:not([disabled]):focus-visible {
+  background: hsl(343.29, 95.89%, 71.37%);
+}
+@media (prefers-reduced-motion) {
+  .auth_button {
+    transition: none;
+  }
 }
 
-.auth_button__signin_panel {
+.auth_button__signin_panel,
+.auth_button__signup_panel {
   width: 100%;
   margin-top: 1rem;
 }
-.auth_button__signin_panel:not([disabled]):hover, .auth_button__signin_panel:not([disabled]):focus-visible {
-  background: hsl(343.29, 95.89%, 71.37%);
+
+.auth_button__navbar {
+  min-width: 8rem;
+  font-size: 100%;
 }
 
 .auth_panel {
@@ -726,6 +746,7 @@
   text-align: left;
 }
 .auth_panel .auth_form p input[type=text],
+.auth_panel .auth_form p input[type=email],
 .auth_panel .auth_form p input[type=password] {
   border: 1px solid hsl(342.63, 80.85%, 81.57%);
   border-top: 0;
@@ -737,6 +758,7 @@
   padding-left: 1rem;
 }
 .auth_panel .auth_form p input[type=text]::placeholder,
+.auth_panel .auth_form p input[type=email]::placeholder,
 .auth_panel .auth_form p input[type=password]::placeholder {
   color: hsl(0, 0%, 100%);
   opacity: 0.8;

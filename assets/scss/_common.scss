@@ -240,6 +240,10 @@
 
 .link {
 	color: $safeLightAccent;
+	transition: all 0.25s ease-in-out;
+	@include reduced-motion {
+        transition: none;
+    }
 	@include interact {
         color: $lightAccent;
     }
