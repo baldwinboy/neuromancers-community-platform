@@ -724,8 +724,24 @@
 }
 
 .auth_button__signin_panel,
-.auth_button__signup_panel {
+.auth_button__signup_panel,
+.auth_button__signin_code_panel {
   width: 100%;
+  margin-top: 1rem;
+}
+
+.auth_button_alt {
+  border: 1px solid transparent;
+  background: transparent;
+  color: hsl(342.63, 80.85%, 81.57%);
+}
+.auth_button_alt:not([disabled]):hover, .auth_button_alt:not([disabled]):focus-visible {
+  border: 1px solid hsl(343.29, 95.89%, 71.37%);
+  background: transparent;
+  color: hsl(343.29, 95.89%, 71.37%);
+}
+
+.auth_button_alt__signin_code_panel {
   margin-top: 1rem;
 }
 

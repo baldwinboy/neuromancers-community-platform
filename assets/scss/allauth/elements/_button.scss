@@ -23,8 +23,25 @@
 }
 
 .auth_button__signin_panel,
-.auth_button__signup_panel {
+.auth_button__signup_panel,
+.auth_button__signin_code_panel {
     width: 100%;
+    margin-top: 1rem;
+}
+
+.auth_button_alt {
+    border: 1px solid transparent;
+    background: transparent;
+    color: $safeLightAccent;
+
+    @include interact {
+        border: 1px solid $lightAccent;
+        background: transparent;
+        color: $lightAccent;
+    }
+}
+
+.auth_button_alt__signin_code_panel {
     margin-top: 1rem;
 }
 
