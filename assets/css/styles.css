@@ -725,7 +725,8 @@
 
 .auth_button__signin_panel,
 .auth_button__signup_panel,
-.auth_button__signin_code_panel {
+.auth_button__signin_code_panel,
+.auth_button__password_reset_panel {
   width: 100%;
   margin-top: 1rem;
 }
@@ -843,7 +844,7 @@
 .auth_panel .auth_form p input[type=password] + .helptext a:not([disabled]):hover, .auth_panel .auth_form p input[type=password] + .helptext a:not([disabled]):focus-visible {
   color: hsl(343.29, 95.89%, 71.37%);
 }
-.auth_panel p + p, .auth_panel .auth_form {
+.auth_panel p + p, .auth_panel .auth_form, .auth_panel .auth_form + p {
   margin-top: 2rem;
 }
 

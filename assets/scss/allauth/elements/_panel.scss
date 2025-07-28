@@ -112,7 +112,7 @@
         }
     }
 
-    p + p, .auth_form {
+    p + p, .auth_form, .auth_form + p {
         margin-top: 2rem;
     }
 }
