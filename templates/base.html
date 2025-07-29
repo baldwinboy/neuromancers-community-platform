@@ -44,14 +44,16 @@
         {% include "includes/header.html" %}
     {% endblock top_navigation_bar %}
     {% if messages %}
-        <div class="bg-lightAccent">
-            <div class="width-full container mx-auto py-9">
-                <strong class="visually-hidden">{% trans "Messages:" %}</strong>
-                <ul>
-                    {% for message in messages %}<li>{{ message }}</li>{% endfor %}
-                </ul>
-            </div>
-        </div>
+        <section class="width-full">
+            <h2 class="visually-hidden">{% trans "Messages:" %}</h2>
+            <ul class="width-full">
+                {% for message in messages %}
+                    <li class="base_message width-full bg-lightAccent">
+                        <span>{{ message }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
     {% endif %}
 
     {% block content %}

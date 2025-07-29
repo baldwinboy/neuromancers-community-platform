@@ -9763,6 +9763,10 @@
 }
 
 /* Flexbox */
+.flex-col {
+  flex-flow: column;
+}
+
 .items-center {
   align-items: center;
 }
@@ -9877,6 +9881,20 @@
 }
 .link:not([disabled]):hover, .link:not([disabled]):focus-visible {
   color: hsl(343.29, 95.89%, 71.37%);
+}
+
+.base_message > span {
+  display: block;
+  padding-block: 2rem;
+  margin-inline: auto;
+}
+@media (min-width: 1280px) {
+  .base_message > span {
+    max-width: 75rem;
+  }
+}
+.base_message .wagtailadmin_messages {
+  display: none;
 }
 
 .truncate {

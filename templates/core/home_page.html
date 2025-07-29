@@ -5,6 +5,8 @@
 {% block body_class %}
     template-homepage
 {% endblock body_class %}
+{# Protect against path sniffing #}
+{% querystring next=None %}
 
 {% block content %}
     <div class="width-full container mx-auto py-9">

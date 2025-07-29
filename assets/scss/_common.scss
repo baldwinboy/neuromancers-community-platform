@@ -170,6 +170,10 @@ $spacers: ();
 
 /* Flexbox */
 
+.flex-col {
+	flex-flow: column;
+}
+
 .items-center {
     align-items: center;
 }
@@ -287,6 +291,21 @@ $spacers: ();
 	@include interact {
         color: $lightAccent;
     }
+}
+
+.base_message {
+	& > span {
+		display: block;
+		padding-block: list.nth($spacers, 9);;
+		margin-inline: auto;
+		@include media(xl) {
+			max-width: 75rem;
+		}
+	}
+
+	.wagtailadmin_messages {
+		display: none;
+	}
 }
 
 .truncate {

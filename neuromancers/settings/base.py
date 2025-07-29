@@ -243,14 +243,14 @@ USER_GROUPS = "apps.core.utils.groups"
 
 # Redirect users to homepage after login without `next` query
 LOGIN_REDIRECT_URL = "/"
-# Redirect users to homepage after logou
+# Redirect users to homepage after logout
 LOGOUT_REDIRECT_URL = "/"
 
 # Django Allauth
 ACCOUNT_LOGIN_BY_CODE_ENABLED = True  # Users can be sent a code to login
 # Handle logins with Django Allauth
 LOGIN_URL = "/login"
-WAGTAILADMIN_LOGIN_URL = LOGIN_URL
+WAGTAILADMIN_LOGIN_URL = "/"  # Redirect to homepage to prevent too many redirects
 WAGTAIL_FRONTEND_LOGIN_URL = LOGIN_URL
 # Decoy field for spam detection
 # Requires a field not used on sign up
