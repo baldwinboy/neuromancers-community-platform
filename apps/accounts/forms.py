@@ -2,7 +2,7 @@ from allauth.account.forms import SignupForm as AllauthSignupForm
 from django import forms
 from django.utils.translation import gettext as _
 
-from .validators import username_no_banned_words, username_safe_characters
+from .validators import name_no_banned_words, name_safe_characters
 
 
 class SignupForm(AllauthSignupForm):
@@ -10,14 +10,14 @@ class SignupForm(AllauthSignupForm):
         required=True,
         label=_("First name"),
         max_length=150,
-        validators=[username_no_banned_words, username_safe_characters],
+        validators=[name_no_banned_words, name_safe_characters],
         widget=forms.TextInput(attrs={"placeholder": _("First name")}),
     )
     last_name = forms.CharField(
         required=True,
         label=_("Last name"),
         max_length=150,
-        validators=[username_no_banned_words, username_safe_characters],
+        validators=[name_no_banned_words, name_safe_characters],
         widget=forms.TextInput(attrs={"placeholder": _("Last name")}),
     )
 

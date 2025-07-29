@@ -22,6 +22,12 @@ username_safe_characters_message = _(
 
 username_min_length_message = _("A username must have at least five (5) characters")
 
+name_banned_words_message = _("A name must not contain rude or banned words")
+
+name_safe_characters_message = _(
+    "A name may only contain alphanumeric characters (A-Z, 0-9), underscores (_), and dashes (-)"
+)
+
 username_no_banned_words = RegexValidator(
     regex=username_banned_words_re,
     inverse_match=True,
@@ -44,3 +50,16 @@ username_validators = [
     username_safe_characters,
     username_no_banned_words,
 ]
+
+name_no_banned_words = RegexValidator(
+    regex=username_banned_words_re,
+    inverse_match=True,
+    message=name_banned_words_message,
+    code="name_no_banned_words",
+)
+
+name_safe_characters = RegexValidator(
+    regex=username_safe_characters_re,
+    message=name_safe_characters_message,
+    code="name_safe_characters",
+)
