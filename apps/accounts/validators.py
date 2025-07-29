@@ -1,8 +1,11 @@
 import re
 
 from django.conf import settings
-from django.core.validators import MinLengthValidator, RegexValidator
+from django.core.validators import BaseValidator, MinLengthValidator, RegexValidator
+from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext as _
+
+from .utils import calculate_age
 
 with open(settings.USERNAME_BANNED_WORDLIST) as f:
     USERNAME_BANNED_WORDS = set(line.strip().lower() for line in f if line.strip())
@@ -63,3 +66,15 @@ name_safe_characters = RegexValidator(
     message=name_safe_characters_message,
     code="name_safe_characters",
 )
+
+
+@deconstructible
+class MinAgeValidator(BaseValidator):
+    message = _("You must be at least %(limit_value)d to use this platform")
+    code = "min_age"
+
+    def compare(self, a, b):
+        return calculate_age(a) < b
+
+
+user_over_18 = MinAgeValidator(18)

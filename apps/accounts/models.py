@@ -36,7 +36,7 @@ class User(AbstractUser):
             username_safe_characters,
         ],
     )
-    is_verified = models.BooleanField(default=False)
+    date_of_birth = models.DateField(null=True, blank=True)
 
     class Meta:
         verbose_name = _("user")

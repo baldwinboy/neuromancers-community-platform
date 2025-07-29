@@ -109,6 +109,22 @@
                     }
                 }
             }
+
+            select {
+                background: transparent;
+                color: $lightAccent;
+                font-size: 140%;
+                font-weight: 300;
+
+                & + select {
+                    margin-left: 1rem;
+                }
+            }
+        }
+
+        ul li {
+            font-size: 140%;
+            font-weight: 300;
         }
     }
 

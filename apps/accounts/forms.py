@@ -2,7 +2,8 @@ from allauth.account.forms import SignupForm as AllauthSignupForm
 from django import forms
 from django.utils.translation import gettext as _
 
-from .validators import name_no_banned_words, name_safe_characters
+from .utils import current_birth_years
+from .validators import name_no_banned_words, name_safe_characters, user_over_18
 
 
 class SignupForm(AllauthSignupForm):
@@ -20,10 +21,17 @@ class SignupForm(AllauthSignupForm):
         validators=[name_no_banned_words, name_safe_characters],
         widget=forms.TextInput(attrs={"placeholder": _("Last name")}),
     )
+    date_of_birth = forms.DateField(
+        required=True,
+        label=_("Date of birth"),
+        validators=[user_over_18],
+        widget=forms.SelectDateWidget(years=current_birth_years),
+    )
 
     field_order = [
         "first_name",
         "last_name",
+        "date_of_birth",
         "username",
         "email",
         "email2",
@@ -35,5 +43,6 @@ class SignupForm(AllauthSignupForm):
         user = super(SignupForm, self).save(request)
         user.first_name = self.cleaned_data["first_name"]
         user.last_name = self.cleaned_data["last_name"]
+        user.date_of_birth = self.cleaned_data["date_of_birth"]
         user.save()
         return user

@@ -260,6 +260,7 @@ ACCOUNT_SIGNUP_FIELDS = [
     "username*",
     "first_name",
     "last_name",
+    "date_of_birth",
     "email*",
     "email2*",
     "password1*",

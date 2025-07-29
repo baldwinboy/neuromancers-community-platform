@@ -10061,6 +10061,19 @@
 .auth_panel .auth_form p input[type=password] + .helptext a:not([disabled]):hover, .auth_panel .auth_form p input[type=password] + .helptext a:not([disabled]):focus-visible {
   color: hsl(343.29, 95.89%, 71.37%);
 }
+.auth_panel .auth_form p select {
+  background: transparent;
+  color: hsl(343.29, 95.89%, 71.37%);
+  font-size: 140%;
+  font-weight: 300;
+}
+.auth_panel .auth_form p select + select {
+  margin-left: 1rem;
+}
+.auth_panel .auth_form ul li {
+  font-size: 140%;
+  font-weight: 300;
+}
 .auth_panel p + p, .auth_panel .auth_form, .auth_panel .auth_form + p {
   margin-top: 2rem;
 }
