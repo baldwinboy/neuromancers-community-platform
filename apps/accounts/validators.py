@@ -14,21 +14,33 @@ with open(settings.USERNAME_BANNED_WORDLIST) as f:
 
 username_safe_characters_re = r"^[\w-]+$"
 
+username_banned_words_message = _("A username must not contain rude or banned words")
+
+username_safe_characters_message = _(
+    "A username may only contain alphanumeric characters (A-Z, 0-9), underscores (_), and dashes (-)"
+)
+
+username_min_length_message = _("A username must have at least five (5) characters")
+
 username_no_banned_words = RegexValidator(
     regex=username_banned_words_re,
     inverse_match=True,
-    message=_("A username must not contain certain words, i.e. 'admin'"),
+    message=username_banned_words_message,
     code="username_no_banned_words",
 )
 
 username_safe_characters = RegexValidator(
     regex=username_safe_characters_re,
-    message=_(
-        "A username may only contain alphanumeric characters (A-Z, 0-9), underscores (_), and dashes (-)"
-    ),
+    message=username_safe_characters_message,
     code="username_safe_characters",
 )
 
 username_min_length = MinLengthValidator(
-    limit_value=5, message=_("A username must have at least five (5) characters")
+    limit_value=5, message=username_min_length_message
 )
+
+username_validators = [
+    username_min_length,
+    username_safe_characters,
+    username_no_banned_words,
+]

@@ -251,6 +251,18 @@ WAGTAILADMIN_LOGIN_URL = LOGIN_URL
 WAGTAIL_FRONTEND_LOGIN_URL = LOGIN_URL
 # Decoy field for spam detection
 # Requires a field not used on sign up
-ACCOUNT_SIGNUP_FORM_HONEYPOT_FIELD = "profile_bio"
+ACCOUNT_SIGNUP_FORM_HONEYPOT_FIELD = "display_picture"
 # Default account sign up fields
-ACCOUNT_SIGNUP_FIELDS = ["username*", "email*", "email2*", "password1*", "password2*"]
+ACCOUNT_SIGNUP_FIELDS = [
+    "username*",
+    "first_name",
+    "last_name",
+    "email*",
+    "email2*",
+    "password1*",
+    "password2*",
+]
+# Custom username validators
+ACCOUNT_USERNAME_VALIDATORS = "apps.accounts.validators.username_validators"
+# Custom sign up form
+ACCOUNT_FORMS = {"signup": "apps.accounts.forms.SignupForm"}
