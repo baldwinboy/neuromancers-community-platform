@@ -238,6 +238,9 @@ USERNAME_BANNED_WORDLIST = os.path.join(
     BASE_DIR, "data", "username_banned_wordlist.txt"
 )
 
+# User groups
+USER_GROUPS = "apps.core.utils.groups"
+
 # Redirect users to homepage after login without `next` query
 LOGIN_REDIRECT_URL = "/"
 # Redirect users to homepage after logou
