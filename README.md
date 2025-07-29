@@ -13,3 +13,5 @@ NEUROMANCERS community platform for attending and scheduling support sessions. B
 [Wagtail](https://wagtail.org/)
 [wagtailmenus](https://wagtailmenus.readthedocs.io/en/stable/index.html)
 [allauth](https://docs.allauth.org/en/latest/index.html)
+[Stripe](https://docs.stripe.com/)
+[Whereby](https://docs.whereby.com/)

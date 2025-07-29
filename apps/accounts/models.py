@@ -4,10 +4,7 @@ from django.db.models import Q
 from django.utils.translation import gettext as _
 
 from .validators import (
-    username_banned_words_message,
-    username_banned_words_re,
     username_min_length,
-    username_no_banned_words,
     username_safe_characters,
     username_safe_characters_message,
     username_safe_characters_re,
@@ -32,21 +29,14 @@ class User(AbstractUser):
         validators=[
             AbstractUser.username_validator,
             username_min_length,
-            username_no_banned_words,
             username_safe_characters,
         ],
     )
-    date_of_birth = models.DateField(null=True, blank=True)
 
     class Meta:
         verbose_name = _("user")
         verbose_name_plural = _("users")
         constraints = [
-            models.CheckConstraint(
-                condition=~Q(username__regex=username_banned_words_re),
-                name="username_no_banned_words_check",
-                violation_error_message=username_banned_words_message,
-            ),
             models.CheckConstraint(
                 condition=Q(username__regex=username_safe_characters_re),
                 name="username_safe_characters_check",

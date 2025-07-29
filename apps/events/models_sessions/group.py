@@ -5,12 +5,9 @@ from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext as _
 
-from .abstract import (
-    AbstractSession,
-    AbstractSessionRequest,
-    AbstractSessionRequestStatusChoices,
-    User,
-)
+from apps.events.choices import SessionRequestStatusChoices
+
+from .abstract import AbstractSession, AbstractSessionRequest, User
 
 
 class GroupSession(AbstractSession):
@@ -86,7 +83,7 @@ class GroupSession(AbstractSession):
         Gets attendees based on support seekers who have requested to join and have been approved
         """
         return self.support_seekers.filter(
-            requests__status=AbstractSessionRequestStatusChoices.APPROVED
+            requests__status=SessionRequestStatusChoices.APPROVED
         )
 
 

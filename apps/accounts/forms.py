@@ -1,9 +1,18 @@
+import re
+
 from allauth.account.forms import SignupForm as AllauthSignupForm
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 
 from .utils import current_birth_years
-from .validators import name_no_banned_words, name_safe_characters, user_over_18
+from .validators import (
+    name_no_banned_words,
+    name_safe_characters,
+    user_over_18,
+    username_banned_words_message,
+    username_banned_words_re,
+)
 
 
 class SignupForm(AllauthSignupForm):
@@ -38,6 +47,15 @@ class SignupForm(AllauthSignupForm):
         "password1",
         "password2",
     ]
+
+    def clean_username(self):
+        value = super().clean_username()
+        if re.match(username_banned_words_re, value):
+            raise ValidationError(
+                username_banned_words_message, code="signup_username_no_banned_words"
+            )
+
+        return value
 
     def save(self, request):
         user = super(SignupForm, self).save(request)

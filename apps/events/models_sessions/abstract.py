@@ -1,8 +1,15 @@
 import uuid
 
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext as _
+
+from apps.events.choices import (
+    SessionAvailabilityOccurrenceChoices,
+    SessionRequestStatusChoices,
+    currency_choices,
+)
 
 User = get_user_model()
 
@@ -15,12 +22,22 @@ class AbstractSession(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=320)
     description = models.TextField(null=True, blank=True)
-    price = models.PositiveSmallIntegerField(default=0)
-    concessionary_price = models.PositiveSmallIntegerField(
+    currency = models.CharField(max_length=3, choices=currency_choices, default="GBP")
+    price = models.DecimalField(
+        default=0,
+        max_digits=7,
+        decimal_places=2,
+        validators=[MinValueValidator(0, message=_("Cannot charge negative values"))],
+    )
+    concessionary_price = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        validators=[MinValueValidator(0, message=_("Cannot charge negative values"))],
         help_text=_(
             "Support seekers will be charged at this price if they are allowed to pay a reduced price"
         ),
         null=True,
+        blank=True,
     )
     access_before_payment = models.BooleanField(
         help_text=_(
@@ -54,18 +71,6 @@ class AbstractSession(models.Model):
         return self.title
 
 
-class AbstractSessionAvailabilityOccurrenceChoices(models.IntegerChoices):
-    """
-    Session availability may occur hourly, daily, weekly, monthly, or yearly
-    """
-
-    HOURLY = 0, "Hourly"
-    DAILY = 1, "Daily"
-    WEEKLY = 2, "Weekly"
-    MONTHLY = 3, "Monthly"
-    YEARLY = 4, "Yearly"
-
-
 class AbstractSessionAvailability(models.Model):
     """
     Session availability provides windows of time a peer session may be requested or a group session may be attended
@@ -75,7 +80,7 @@ class AbstractSessionAvailability(models.Model):
     starts_at = models.DateTimeField(null=True, blank=True)
     ends_at = models.DateTimeField(null=True, blank=True)
     occurrence = models.PositiveSmallIntegerField(
-        choices=AbstractSessionAvailabilityOccurrenceChoices, null=True
+        choices=SessionAvailabilityOccurrenceChoices, null=True
     )
     occurrence_starts_at = models.DateTimeField(
         help_text="This is the start of the date range during which the availability occurs. If occurrence is set and this field is not, the specified availbility will occur forever.",
@@ -90,22 +95,12 @@ class AbstractSessionAvailability(models.Model):
         abstract = True
 
 
-class AbstractSessionRequestStatusChoices(models.IntegerChoices):
-    """
-    Session requests may be approved, rejected, or left pending
-    """
-
-    APPROVED = 0, "Approved"
-    REJECTED = 1, "Rejected"
-    PENDING = 2, "Pending"
-
-
 class AbstractSessionRequest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.PositiveSmallIntegerField(
         help_text="By default, this will be pending unless the session does not require approval, then it will be automatically approved. If the request is left pending until the start of the session, the request will be automatically rejected",
-        choices=AbstractSessionRequestStatusChoices,
-        default=AbstractSessionRequestStatusChoices.PENDING,
+        choices=SessionRequestStatusChoices,
+        default=SessionRequestStatusChoices.PENDING,
     )
     rejection_message = models.TextField(
         help_text="This message will be displayed to the attendee if their request is rejected if set",

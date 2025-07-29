@@ -238,6 +238,12 @@ USERNAME_BANNED_WORDLIST = os.path.join(
     BASE_DIR, "data", "username_banned_wordlist.txt"
 )
 
+# List of ISO currencies
+CURRENCIES = os.path.join(BASE_DIR, "data", "currencies.json")
+
+# List of ISO currencies supported by Stripe
+STRIPE_CURRENCIES = os.path.join(BASE_DIR, "data", "stripe_currencies.txt")
+
 # User groups
 USER_GROUPS = "apps.core.utils.groups"
 

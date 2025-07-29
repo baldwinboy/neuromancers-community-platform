@@ -103,6 +103,7 @@ six==1.17.0
 soupsieve==2.7
 sqlparse==0.5.3
 stack-data==0.6.3
+stripe==12.3.0
 telepath==0.3.1
 tinycss2==1.4.0
 tornado==6.5.1

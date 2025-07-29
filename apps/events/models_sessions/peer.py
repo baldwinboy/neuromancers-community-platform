@@ -2,16 +2,17 @@ import uuid
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
-from django.core.validators import int_list_validator
+from django.core.validators import MinValueValidator, int_list_validator
 from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext as _
+
+from apps.events.choices import SessionRequestStatusChoices
 
 from .abstract import (
     AbstractSession,
     AbstractSessionAvailability,
     AbstractSessionRequest,
-    AbstractSessionRequestStatusChoices,
     User,
 )
 
@@ -28,17 +29,25 @@ class PeerSession(AbstractSession):
         max_length=320,
         validators=[int_list_validator(sep=",", message=(_("Only digits allowed")))],
     )
-    per_hour_price = models.PositiveSmallIntegerField(
+    per_hour_price = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        validators=[MinValueValidator(0, message=_("Cannot charge negative values"))],
         help_text=_(
             "Support seekers will be charged this price based on the duration of their requested session if set"
         ),
         null=True,
+        blank=True,
     )
-    concessionary_per_hour_price = models.PositiveSmallIntegerField(
+    concessionary_per_hour_price = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        validators=[MinValueValidator(0, message=_("Cannot charge negative values"))],
         help_text=_(
             "Support seekers will be charged this price based on the duration of their requested session if set and if they are allowed to pay a reduced price"
         ),
         null=True,
+        blank=True,
     )
     is_published = models.BooleanField(default=False, unique_for_date="starts_at")
     host = models.ForeignKey(
@@ -126,7 +135,7 @@ class PeerSessionRequest(AbstractSessionRequest):
             | Q(starts_at__gte=self.starts_at, ends_at__lte=self.ends_at),
             attendee=self.attendee,
             session=self.session,
-            status=AbstractSessionRequestStatusChoices.APPROVED,
+            status=SessionRequestStatusChoices.APPROVED,
         )
 
         if overlapping_requests.exists():
