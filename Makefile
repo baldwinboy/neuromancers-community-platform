@@ -1,18 +1,19 @@
 SHELL=/bin/bash
 .DEFAULT_GOAL := help
+NEUROMANCERS_VENV := .venv/neuromancers/bin/activate
+NEUROMANCERS_VENV_PATH := .venv/neuromancers
 
 help: ## Show this help.
 	@grep -E '^[a-zA-Z0-9 -]+:.*#'  Makefile | sort | while read -r l; do printf "\033[1;32m$$(echo $$l | cut -f 1 -d':')\033[00m:$$(echo $$l | cut -f 2- -d'#')\n"; done
 
 venv: # Create virtual environment
-	uv venv .venv/neuromancers
+	uv venv $(NEUROMANCERS_VENV_PATH)
 
 venv-delete: # Delete virtual environment
-	rm -rf .venv/neuromancers
+	rm -rf $(NEUROMANCERS_VENV_PATH)
 
-venv-shortcut: # Creates a shortcut to activate virtual environment
-	@alias venv_activate="source .venv/neruomancers/bin/activate"
-	@echo "Run `venv_activate` to activate the virtual environment"
+venv-shortcut: # Provides command to activate virtual environment
+	@echo "Run 'source $(NEUROMANCERS_VENV)' to activate the virtual environment"
 
 django-migrate: # Run Django migrations
 	python ./manage.py migrate

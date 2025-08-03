@@ -41,6 +41,7 @@ fastjsonschema==2.21.1
 filelock==3.18.0
 filetype==1.2.0
 flake8==7.3.0
+heroicons==2.11.0
 identify==2.6.12
 idna==3.10
 importlib-metadata==8.7.0

@@ -58,6 +58,8 @@ THIRD_PARTY_APPS = [
     # For site user login
     "allauth",
     "allauth.account",
+    # For heroicons
+    "heroicons",
 ]
 
 PROJECT_APPS = [

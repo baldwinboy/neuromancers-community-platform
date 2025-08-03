@@ -24,5 +24,5 @@ class AccountAdapter(DefaultAccountAdapter):
         if not support_seeker_group_name:
             raise ImproperlyConfigured("USER_GROUPS is expected to have SUPPORT_SEEKER")
 
-        support_seeker_group = Group.objects.get(name=user_groups.SUPPORT_SEEKER)
+        support_seeker_group = Group.objects.get(name=support_seeker_group_name)
         email_address.user.groups.add(support_seeker_group)

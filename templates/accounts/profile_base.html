@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% load heroicons %}
+
+{% block body_class %}
+    template-accounts-profile
+{% endblock body_class %}
+
+{% block content %}
+    <main class="width-full container mx-auto py-9 px-6 lg:px-0">
+        <div class="flex flex-col items-center gap-4 mb-4 lg:flex-row">
+            <div class="accounts-profile__display_picture flex items-center justify-center bg-accent border-lightAccent overflow-hidden"
+                 aria-hidden="true">
+                {% if user.display_picture %}
+                    <img src={{ user.display_picture }} width="128" height="128" alt="" />
+                {% else %}
+                    {% heroicon_solid "user" size=64 class="text-lightAccent" %}
+                {% endif %}
+            </div>
+            <h1>{{ user }}</h1>
+        </div>
+        <section class="mb-4">
+            <h2 class="font-light">About me</h2>
+            <hr class="w-60" />
+            <p class="font-body mt-2">{{ user.profile_bio }}</p>
+        </section>
+    </main>
+{% endblock content %}

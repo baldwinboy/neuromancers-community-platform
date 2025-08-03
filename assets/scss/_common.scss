@@ -1,5 +1,6 @@
 @use 'sass:list';
 @use 'sass:math';
+@use "sass:string";
 @use "variables" as *;
 @use "mixins" as *;
 
@@ -12,7 +13,35 @@
   .text-#{$key} {
     color: $value;
   }
+
+  .border-#{$key} {
+    border-color: $value;
+  }
 }
+
+/* Responsive colors */
+@each $ckey, $cvalue in $colors {
+	@each $key, $value in $breakpoints {
+		.#{$key}\:bg-#{$ckey} {
+			@include media($key) {
+				background: $cvalue;
+			}
+		}
+
+		.#{$key}\:text-#{$ckey} {
+			@include media($key) {
+				color: $cvalue;
+			}
+		}
+
+		.#{$key}\:border-#{$ckey} {
+			@include media($key) {
+				border-color: $cvalue;
+			}
+		}
+	}
+}
+
 
 /* Font families */
 @each $key, $value in $fonts {
@@ -21,157 +50,98 @@
   }
 }
 
+/* Font weight */
+@each $key, $value in $font-weights {
+	.font-#{$key} {
+		font-weight: $value;
+	}
+}
+
 /* Spacing */
 $spacers: ();
 @for $i from 0 through 96 {
 	$spacers: list.append($spacers, $i * math.div($spacer, 4));
 	$current-spacer: list.nth($spacers, $i + 1);
 
-	.inset-#{$i} {
-		inset: $current-spacer;
-	}
+	@each $name, $property in $spacing {
+		.#{$name}-#{$i} {
+			#{$property}: $current-spacer;
+		}
 
-	.inset-x-#{$i} {
-		inset-inline: $current-spacer;
-	}
-
-	.inset-y-#{$i} {
-		inset-block: $current-spacer;
-	}
-
-	.top-#{$i} {
-		top: $current-spacer;
-	}
-
-	.right-#{$i} {
-		right: $current-spacer;
-	}
-
-	.bottom-#{$i} {
-		bottom: $current-spacer;
-	}
-
-	.left-#{$i} {
-		right: $current-spacer;
-	}
-
-	.w-#{$i} {
-		width: $current-spacer;
-	}
-	.h-#{$i} {
-		height: $current-spacer;
-	}
-	.gap-#{$i} {
-		gap: $current-spacer;
-	}
-
-	.mt-#{$i} {
-		margin-top: $current-spacer;
-	}
-
-	.mr-#{$i} {
-		margin-right: $current-spacer;
-	}
-
-	.mb-#{$i} {
-		margin-bottom: $current-spacer;
-	}
-
-	.ml-#{$i} {
-		margin-left: $current-spacer;
-	}
-
-	.mx-#{$i} {
-		margin-inline: $current-spacer;
-	}
-
-	.my-#{$i} {
-		margin-block: $current-spacer;
-	}
-
-	.m-#{$i} {
-		margin: $current-spacer;
-	}
-
-	.pt-#{$i} {
-		padding-top: $current-spacer;
-	}
-
-	.pr-#{$i} {
-		padding-right: $current-spacer;
-	}
-
-	.pb-#{$i} {
-		padding-bottom: $current-spacer;
-	}
-
-	.pl-#{$i} {
-		padding-left: $current-spacer;
-	}
-
-	.px-#{$i} {
-		padding-inline: $current-spacer;
-	}
-
-	.py-#{$i} {
-		padding-block: $current-spacer;
-	}
-
-	.p-#{$i} {
-		padding: $current-spacer;
+		@if string.index($property, "margin") == 1 {
+			.#{$name}-auto {
+				#{$property}: auto;
+			}
+		}
 	}
 }
 
-.mt-auto {
-	margin-top: auto;
-}
+@for $i from 0 through 96 {
+	/* Responsive spacing */
+	$spacers: list.append($spacers, $i * math.div($spacer, 4));
+	$current-spacer: list.nth($spacers, $i + 1);
 
-.mr-auto {
-	margin-right: auto;
-}
+	@each $name, $property in $spacing {
+		@each $key, $value in $breakpoints {
+			.#{$key}\:#{$name}-#{$i} {
+				@include media($key) {
+					#{$property}: $current-spacer;
+				}
+			}
 
-.mb-auto {
-	margin-bottom: auto;
+			@if string.index($property, "margin") == 1 {
+				.#{$name}-auto {
+					#{$property}: auto;
+				}
+			}
+		}
+	}
 }
-
-.ml-auto {
-	margin-left: auto;
-}
-
-.mx-auto {
-	margin-inline: auto;
-}
-
-.my-auto {
-	margin-block: auto;
-}
-
 
 /* Display */
 .hidden {
 	display: hidden;
 }
 
-.block {
-	display: block;
+@each $d in $display {
+  .#{$d} {
+    display: $d;
+  }
 }
 
-.flex {
-    display: flex;
-}
+/* Responsive display */
+@each $key, $value in $breakpoints {
+	.#{$key}\:hidden {
+		@include media($key) {
+			display: hidden;
+		}
+	}
 
-.inline-block {
-	display: inline-block;
-}
-
-.inline-flex {
-	display: inline-flex;
+	@each $d in $display {
+		.#{$key}\:#{$d} {
+			@include media($key) {
+				display: $d;
+			}
+		}
+	}
 }
 
 /* Flexbox */
+@each $key, $value in $flex-flow {
+  .flex-#{$key} {
+    flex-flow: $value;
+  }
+}
 
-.flex-col {
-	flex-flow: column;
+/* Responsive flexbox */
+@each $fkey, $fvalue in $flex-flow {
+ 	@each $key, $value in $breakpoints {
+		.#{$key}\:flex-#{$fkey} {
+			@include media($key) {
+				flex-flow: $fvalue;
+			}
+		}
+	}
 }
 
 .items-center {
@@ -226,6 +196,9 @@ $spacers: ();
 	height: max-content;
 }
 
+.overflow-hidden {
+	overflow: hidden;
+}
 
 .container {
     @include media(xl) {

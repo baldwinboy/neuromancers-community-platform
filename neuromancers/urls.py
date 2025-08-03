@@ -7,6 +7,8 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from apps.accounts.views import ProfileView, UserView
+
 # Load all other app admins
 admin.autodiscover()
 
@@ -35,6 +37,8 @@ urlpatterns = [
         ),
         name="accounts_redirect",
     ),
+    path("profile/", ProfileView.as_view(), name="accounts_profile"),
+    path("profile/<str:username>", UserView.as_view(), name="accounts_user_profile"),
 ]
 
 if settings.ENVIRONMENT == "development":

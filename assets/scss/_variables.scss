@@ -20,7 +20,8 @@ safeInverseLightAccent: $safeInverseLightAccent,
 safeInverseDarkAccent: $safeInverseDarkAccent,
 accent: $accent,
 lightAccent: $lightAccent,
-darkAccent: $darkAccent
+darkAccent: $darkAccent,
+current: currentColor
 );
 
 /* Font Families */
@@ -34,6 +35,19 @@ $fonts: (
   body: $body
 );
 
+/* Font weights */
+$font-weights: (
+	"thin": 100,
+	"extralight": 200,
+	"light": 300,
+	"normal": 400,
+	"medium": 500,
+	"semibold": 600,
+	"bold": 700,
+	"extrabold": 800,
+	"black": 900,
+) !default;
+
 /* Screen sizes */
 $breakpoints: (
   xs: 0,
@@ -46,3 +60,47 @@ $breakpoints: (
 
 /* Spacing */
 $spacer: 1rem;
+$spacing: (
+  	"inset": "inset",
+	"inset-x": "inset-inline",
+	"inset-y": "inset-block",
+	"top": "top",
+	"right": "right",
+	"bottom": "bottom",
+	"left": "right",
+	"w": "width",
+	"h": "height",
+	"gap": "gap",
+	"mt": "margin-top",
+	"mr": "margin-right",
+	"mb": "margin-bottom",
+	"ml": "margin-left",
+	"mx": "margin-inline",
+	"my": "margin-block",
+	"m": "margin",
+	"pt": "padding-top",
+	"pr": "padding-right",
+	"pb": "padding-bottom",
+	"pl": "padding-left",
+	"px": "padding-inline",
+	"py": "padding-block",
+	"p": "padding"
+) !default;
+
+/* Display */
+$display: "block", "inline-block", "flex", "inline-flex";
+
+/* Flexbox */
+$flex-flow: (
+	wrap: wrap,
+	wrap-reverse: wrap-reverse,
+	nowrap: nowrap,
+	row: row,
+	row-wrap: row wrap,
+	row-wrap-reverse: row wrap-reverse,
+	row-nowrap: row nowrap,
+	col: column,
+	col-wrap: column wrap,
+	col-wrap-reverse: column wrap-reverse,
+	col-nowrap: column nowrap
+) !default;
