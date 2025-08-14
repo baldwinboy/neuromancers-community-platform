@@ -144,6 +144,26 @@ $spacers: ();
 	}
 }
 
+
+/* Cursor */
+@each $c in $cursor {
+  .cursor-#{$c} {
+    cursor: $c;
+  }
+}
+
+/* Responsive cursor */
+@each $key, $value in $breakpoints {
+	@each $c in $cursor  {
+		.#{$key}\:cursor-#{$c} {
+			@include media($key) {
+				cursor: $c;
+			}
+		}
+	}
+}
+
+
 .items-center {
     align-items: center;
 }

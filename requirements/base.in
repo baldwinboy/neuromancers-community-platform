@@ -22,6 +22,7 @@ django-allauth==65.10.0
 django-appconf==1.1.0
 django-cogwheels==0.3
 django-compressor==4.5.1
+django-environ==0.12.0
 django-filter==25.1
 django-guardian==3.0.3
 django-modelcluster==6.4

@@ -103,6 +103,7 @@ django==5.2.5
     #   django-allauth
     #   django-appconf
     #   django-compressor
+    #   django-debug-toolbar
     #   django-filter
     #   django-guardian
     #   django-modelcluster
@@ -126,6 +127,10 @@ django-cogwheels==0.3
     #   -r /Users/gillian.akpeki/neuromancers-community-platform/requirements/base.in
     #   wagtailmenus
 django-compressor==4.5.1
+    # via -r /Users/gillian.akpeki/neuromancers-community-platform/requirements/base.in
+django-debug-toolbar==6.0.0
+    # via -r requirements/development.in
+django-environ==0.12.0
     # via -r /Users/gillian.akpeki/neuromancers-community-platform/requirements/base.in
 django-filter==25.1
     # via
@@ -449,6 +454,7 @@ sqlparse==0.5.3
     # via
     #   -r /Users/gillian.akpeki/neuromancers-community-platform/requirements/base.in
     #   django
+    #   django-debug-toolbar
 stack-data==0.6.3
     # via
     #   -r /Users/gillian.akpeki/neuromancers-community-platform/requirements/base.in

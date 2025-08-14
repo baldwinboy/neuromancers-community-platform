@@ -4,6 +4,7 @@ black==25.1.0
 cfgv==3.4.0
 colorama==0.4.6
 cssbeautifier==1.15.4
+django-debug-toolbar==6.0.0
 djlint==1.36.4
 docopt==0.6.2
 editorconfig==0.17.1

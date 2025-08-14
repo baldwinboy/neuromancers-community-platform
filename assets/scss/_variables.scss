@@ -104,3 +104,6 @@ $flex-flow: (
 	col-wrap-reverse: column wrap-reverse,
 	col-nowrap: column nowrap
 ) !default;
+
+/* Cursor */
+$cursor: auto, default, pointer, wait, text, move, help, not-allowed;

@@ -1,4 +1,5 @@
 from allauth import urls as allauth_urls
+from debug_toolbar.toolbar import debug_toolbar_urls
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path, re_path
@@ -42,9 +43,13 @@ urlpatterns = [
 ]
 
 if settings.ENVIRONMENT == "development":
-    urlpatterns = [
-        path("django-admin/", admin.site.urls),
-    ] + urlpatterns
+    urlpatterns = (
+        [
+            path("django-admin/", admin.site.urls),
+        ]
+        + urlpatterns
+        + debug_toolbar_urls()
+    )
 
 if settings.DEBUG:
     from django.conf.urls.static import static

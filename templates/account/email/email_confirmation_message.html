@@ -1,0 +1,73 @@
+{% load static i18n account %}
+
+{% block content %}
+    {% comment %} djlint:off H021 {% endcomment %}
+    <div style=" display: block; text-align: center; background: #fc7097; ">
+        <header style="display: block;
+                       text-align: center;
+                       width: 100%;
+                       background: black;
+                       color: white">
+            <img width="75"
+                 height="75"
+                 src="https://images.squarespace-cdn.com/content/v1/60ed8680f8be342c4089b398/0703eae8-9a71-4e74-a8b5-486103e73f3a/NM+Pixel+Brain.png?format=1500w"
+                 alt=""
+                 fetchpriority="high"
+                 loading="eager"
+                 decoding="async"
+                 data-loader="raw"
+                 style="display: inline-block;
+                        width: 75px;
+                        height: 75px" />
+            <h1 style="display:inline-block; font-family: monospace; font-size: 3rem">NEUROMANCERS</h1>
+        </header>
+        <div style="background: #fc7097">
+            <h2 style="font-family: sans-serif">
+                {% blocktrans %}Confirm your email address{% endblocktrans %}
+            </h2>
+            <p style="font-family: monospace; font-weight: 900">
+                {% user_display user as user_display %}
+                {% blocktrans %}Hey, {{ user_display }}!{% endblocktrans %}
+            </p>
+            <p style="font-family: monospace; font-weight: 500">
+                {% blocktrans with site_name=current_site.name  %}Welcome to <span style="font-weight: 900">{{ site_name }}</span>!{% endblocktrans %}
+            </p>
+            <p style="font-family: monospace; font-weight: 500">
+                {% blocktrans with site_name=current_site.name  %}Get started on <span style="font-weight: 900">{{ site_name }}</span> by verifying your email address.{% endblocktrans %}
+            </p>
+            <p style="display: block; padding: 1rem">
+                <a href="#"
+                   style="padding: 1rem;
+                          border: 0;
+                          border-radius: 5px;
+                          text-transform: uppercase;
+                          font-family: sans-serif;
+                          font-weight: 700;
+                          color: #fc7097;
+                          background: black;
+                          text-decoration: none">{% blocktrans %}Verify my email address{% endblocktrans %}</a>
+            </p>
+            <small style=" font-family: monospace; font-weight: 900; color: #632a3b; ">
+                {% blocktrans with url=activate_url %}Don't worry if the button doesn't work. Just head to <a href="{{ url }}" style="color: 	#632a3b">{{ url }}</a>.{% endblocktrans %}
+            </small>
+            <p style="font-family: monospace; font-weight: 500; padding: 1rem;">
+                {% blocktrans with site_name=current_site.name  %}
+      If you didn't sign up to
+      <span style="font-weight: 900">{{ site_name }}</span>, you can ignore this
+      message.
+      {% endblocktrans %}
+            </p>
+            <p style="font-family: monospace;
+                      font-weight: 500;
+                      padding-bottom: 1rem">
+                {% blocktrans with site_name=current_site.name  %}
+      Thank you from <span style="font-weight: 900">{{ site_name }}</span>!
+      {% endblocktrans %}
+            </p>
+        </div>
+        <footer style="width: 100%; padding: 1rem; background: black; color: white">
+            <small style="font-family: monospace; font-weight: 900">example.com</small>
+        </footer>
+    </div>
+    {% comment %} djlint:on {% endcomment %}
+{% endblock content %}

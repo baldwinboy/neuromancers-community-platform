@@ -4,13 +4,19 @@ import re
 from .base import *
 from .bots import bots
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(", ")
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, False),
+    ENVIRONMENT=(str, "production"),
+)
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
+ALLOWED_HOSTS = env("DJANGO_ALLOWED_HOSTS", "").split(", ")
 
-ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
+SECRET_KEY = env("DJANGO_SECRET_KEY")
 
-DEBUG = False
+ENVIRONMENT = env("ENVIRONMENT")
+
+DEBUG = env("DEBUG")
 
 STATICFILES_FINDERS.append("compressor.finders.CompressorFinder")
 
@@ -48,6 +54,8 @@ ACCOUNT_EMAIL_NOTIFICATIONS = True
 ACCOUNT_CHANGE_EMAIL = True
 
 EMAIL_USE_TLS = True
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 try:
     from .local import *

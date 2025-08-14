@@ -1,10 +1,10 @@
-{% load i18n static allauth account wagtailcore_tags navigation_tags %}
+{% load i18n static allauth account wagtailcore_tags navigation_tags menu_tags %}
 <header class="base__header flex items-center width-full px-6 bg-black text-safeLightAccent lg:px-19">
     {% get_site_root as site_root %}
     {% url 'account_login' as login_url %}
     {% url 'account_logout' as logout_url %}
     <nav class="base__header__nav flex mx-auto width-full container">
-        <p class="base__header__nav-wrapper flex justify-space-between items-center width-full">
+        <p class="base__header__nav-wrapper flex justify-space-between items-center cursor-pointer mr-auto">
             <a class="base__header__nav-home inline-flex items-center"
                href="{% pageurl site_root %}">
                 <img src="{% static 'images/favicon.png' %}"
@@ -15,23 +15,18 @@
                 <span>Sessions</span>
             </a>
             <ul class="base__header__nav-list flex items-center gap-9">
-                {% for menuitem in site_root.get_children.live.in_menu %}
-                    <li class="base__header__nav-item">
-                        <a class="base__header__nav-link link inline-block width-full height-full"
-                           href="{% pageurl menuitem %}">{{ menuitem.title }}</a>
-                    </li>
-                {% endfor %}
+                {% main_menu %}
             </ul>
             {#  When site registration is available #}
             {% if not SOCIALACCOUNT_ONLY and not user.is_authenticated %}
 
-                {% element button type="submit" tags="prominent,login" class="auth_button__navbar block text-center" href=login_url %}
+                {% element button type="submit" tags="prominent,login" class="auth_button__navbar block text-center xl:ml-9" href=login_url %}
                     {% trans "Sign In" %}
                 {% endelement %}
             {% endif %}
             {% if user.is_authenticated %}
 
-                {% element button type="submit" tags="prominent,logout" class="auth_button__navbar block text-center" href=logout_url %}
+                {% element button type="submit" tags="prominent,logout" class="auth_button__navbar block text-center xl:ml-9" href=logout_url %}
                     {% trans "Log Out" %}
                 {% endelement %}
             {% endif %}
