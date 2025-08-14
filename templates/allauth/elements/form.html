@@ -2,8 +2,10 @@
 <form class="auth_form font-body"
       method="{{ attrs.method }}"
       {% if attrs.action %}action="{{ attrs.action }}"{% endif %}>
+
     {% slot body %}
-{% endslot %}
-{% slot actions %}
-{% endslot %}
+    {% endslot %}
+
+    {% slot actions %}
+    {% endslot %}
 </form>
