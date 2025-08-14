@@ -10,13 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+
+from .currencies import currencies
+from .name_blacklist import name_blacklist
+from .stripe_currencies import stripe_currencies
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -241,13 +245,10 @@ USERNAME_BANNED_WORDLIST = os.path.join(
 )
 
 # List of ISO currencies
-CURRENCIES = os.path.join(BASE_DIR, "data", "currencies.json")
+CURRENCIES = currencies
 
 # List of ISO currencies supported by Stripe
-STRIPE_CURRENCIES = os.path.join(BASE_DIR, "data", "stripe_currencies.txt")
-
-# User groups
-USER_GROUPS = "apps.core.utils.groups"
+STRIPE_CURRENCIES = stripe_currencies
 
 # Redirect users to homepage after login without `next` query
 LOGIN_REDIRECT_URL = "/"
@@ -255,6 +256,7 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 # Django Allauth
+ACCOUNT_USERNAME_BLACKLIST = name_blacklist
 ACCOUNT_LOGIN_BY_CODE_ENABLED = True  # Users can be sent a code to login
 # Handle logins with Django Allauth
 LOGIN_URL = "/login"
@@ -262,7 +264,7 @@ WAGTAILADMIN_LOGIN_URL = "/"  # Redirect to homepage to prevent too many redirec
 WAGTAIL_FRONTEND_LOGIN_URL = LOGIN_URL
 # Decoy field for spam detection
 # Requires a field not used on sign up
-ACCOUNT_SIGNUP_FORM_HONEYPOT_FIELD = "display_picture"
+ACCOUNT_SIGNUP_FORM_HONEYPOT_FIELD = "phone_number"
 # Default account sign up fields
 ACCOUNT_SIGNUP_FIELDS = [
     "username*",
@@ -278,3 +280,10 @@ ACCOUNT_SIGNUP_FIELDS = [
 ACCOUNT_USERNAME_VALIDATORS = "apps.accounts.validators.username_validators"
 # Custom sign up form
 ACCOUNT_FORMS = {"signup": "apps.accounts.forms.SignupForm"}
+
+# Django Guardian
+GUARDIAN_GET_INIT_ANONYMOUS_USER = "apps.accounts.models.get_anonymous_user_instance"
+GUARDIAN_MONKEY_PATCH_GROUP = False
+GUARDIAN_MONKEY_PATCH_USER = False
+GUARDIAN_USER_OBJ_PERMS_MODEL = "accounts.BigUserObjectPermission"
+GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"

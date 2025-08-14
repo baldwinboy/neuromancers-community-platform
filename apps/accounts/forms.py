@@ -50,6 +50,9 @@ class SignupForm(AllauthSignupForm):
 
     def clean_username(self):
         value = super().clean_username()
+        # Force usernames to be lowercase
+        value = value.lower()
+        # Check for banned words
         if re.match(username_banned_words_re, value):
             raise ValidationError(
                 username_banned_words_message, code="signup_username_no_banned_words"

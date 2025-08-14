@@ -7,13 +7,11 @@ from django.utils.translation import gettext as _
 
 from .utils import calculate_age
 
-with open(settings.USERNAME_BANNED_WORDLIST) as f:
-    USERNAME_BANNED_WORDS = set(line.strip().lower() for line in f if line.strip())
-    username_banned_words_re = (
-        r"(?i)^(.?)(?:"
-        + "|".join(re.escape(word) for word in USERNAME_BANNED_WORDS)
-        + r")(.?)$"
-    )
+username_banned_words_re = (
+    r"(?i)^(.?)(?:"
+    + "|".join(re.escape(word) for word in settings.ACCOUNT_USERNAME_BLACKLIST)
+    + r")(.?)$"
+)
 
 username_safe_characters_re = r"^[\w-]+$"
 

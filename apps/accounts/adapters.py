@@ -1,10 +1,8 @@
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account.models import EmailAddress
-from allauth.utils import import_attribute
-from django.conf import settings
-from django.contrib.auth.models import Group
-from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest
+
+from .models import UserGroup
 
 
 class AccountAdapter(DefaultAccountAdapter):
@@ -14,15 +12,5 @@ class AccountAdapter(DefaultAccountAdapter):
         """
         super().confirm_email(request=request, email_address=email_address)
 
-        user_groups = import_attribute(settings.USER_GROUPS)
-
-        if not isinstance(user_groups, tuple):
-            raise ImproperlyConfigured("USER_GROUPS is expected to be a tuple")
-
-        support_seeker_group_name = user_groups.SUPPORT_SEEKER
-
-        if not support_seeker_group_name:
-            raise ImproperlyConfigured("USER_GROUPS is expected to have SUPPORT_SEEKER")
-
-        support_seeker_group = Group.objects.get(name=support_seeker_group_name)
+        support_seeker_group = UserGroup.objects.get(name="Support Seeker")
         email_address.user.groups.add(support_seeker_group)

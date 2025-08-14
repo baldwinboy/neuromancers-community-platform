@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator, int_list_validator
 from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext as _
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
 from apps.events.choices import SessionRequestStatusChoices
 
@@ -70,6 +71,20 @@ class PeerSession(AbstractSession):
             ),
         ]
 
+        permissions = [
+            ("request_session", "Request session"),
+            ("manage_availability", "Manage Availability"),
+            ("schedule_session", "Schedule session"),
+        ]
+
+
+class PeerSessionUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(PeerSession, on_delete=models.CASCADE)
+
+
+class PeerSessionGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(PeerSession, on_delete=models.CASCADE)
+
 
 class PeerSessionAvailability(AbstractSessionAvailability):
     """
@@ -94,6 +109,18 @@ class PeerSessionAvailability(AbstractSessionAvailability):
             if self.occurrence
             else f"{self.session.title}: from {self.starts_at} to {self.ends_at} {self.occurrence}"
         )
+
+
+class PeerSessionAvailabilityUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(
+        PeerSessionAvailability, on_delete=models.CASCADE
+    )
+
+
+class PeerSessionAvailabilityGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(
+        PeerSessionAvailability, on_delete=models.CASCADE
+    )
 
 
 class PeerSessionRequest(AbstractSessionRequest):
@@ -148,6 +175,14 @@ class PeerSessionRequest(AbstractSessionRequest):
         super(PeerSessionRequest, self).validate_unique(*args, **kwargs)
 
 
+class PeerSessionRequestUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(PeerSessionRequest, on_delete=models.CASCADE)
+
+
+class PeerSessionRequestGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(PeerSessionRequest, on_delete=models.CASCADE)
+
+
 class PeerScheduledSession(models.Model):
     """
     Peer scheduled sessions may be created after requests are sent and approved
@@ -165,3 +200,11 @@ class PeerScheduledSession(models.Model):
 
     def __str__(self):
         return str(self.request)
+
+
+class PeerScheduledSessionUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(PeerScheduledSession, on_delete=models.CASCADE)
+
+
+class PeerScheduledSessionGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(PeerScheduledSession, on_delete=models.CASCADE)

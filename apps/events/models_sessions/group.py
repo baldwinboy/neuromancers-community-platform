@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext as _
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
 from apps.events.choices import SessionRequestStatusChoices
 
@@ -58,6 +59,10 @@ class GroupSession(AbstractSession):
             ),
         ]
 
+        permissions = [
+            ("request_join_session", "Request join session"),
+        ]
+
     def validate_unique(self, *args, **kwargs):
         """
         Published group sessions should not conflict with existing published group sessions from the same host
@@ -87,6 +92,14 @@ class GroupSession(AbstractSession):
         )
 
 
+class GroupSessionUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(GroupSession, on_delete=models.CASCADE)
+
+
+class GroupSessionGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(GroupSession, on_delete=models.CASCADE)
+
+
 class GroupSessionRequest(AbstractSessionRequest):
     attendee = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="group_session_requests"
@@ -104,3 +117,11 @@ class GroupSessionRequest(AbstractSessionRequest):
 
     def __str__(self):
         return f"{self.session.title} for {self.attendee.username}"
+
+
+class GroupSessionRequestUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(GroupSessionRequest, on_delete=models.CASCADE)
+
+
+class GroupSessionRequestGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(GroupSessionRequest, on_delete=models.CASCADE)

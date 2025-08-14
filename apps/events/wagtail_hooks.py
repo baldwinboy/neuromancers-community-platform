@@ -1,9 +1,10 @@
+from guardian.admin import GuardedModelAdmin
 from wagtail_modeladmin.options import ModelAdmin, ModelAdminGroup, modeladmin_register
 
 from .models import GroupSession, PeerSession
 
 
-class PeerSessionAdmin(ModelAdmin):
+class PeerSessionAdmin(ModelAdmin, GuardedModelAdmin):
     model = PeerSession
     menu_icon = "radio-empty"
     list_display = ("title", "host")
@@ -11,7 +12,7 @@ class PeerSessionAdmin(ModelAdmin):
     search_fields = ("title", "host")
 
 
-class GroupSessionAdmin(ModelAdmin):
+class GroupSessionAdmin(ModelAdmin, GuardedModelAdmin):
     model = GroupSession
     menu_icon = "radio-full"
     list_display = ("title", "host")

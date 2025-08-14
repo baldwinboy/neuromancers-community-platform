@@ -21,6 +21,10 @@ django-migrate: # Run Django migrations
 django-makemigrations: # Create Django migrations
 	python ./manage.py makemigrations
 
+django-setupdefaultgroups: # Setup default groups
+	python ./manage.py setup_default_groups
+
+
 django-createsuperuser: # Create a default superuser
 django-createsuperuser: DJANGO_SUPER_USERNAME ?= _neuro
 django-createsuperuser: DJANGO_SUPER_PASSWORD ?= _default_password

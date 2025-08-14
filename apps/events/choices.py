@@ -1,5 +1,3 @@
-import json
-
 from django.conf import settings
 from django.db import models
 
@@ -26,18 +24,11 @@ class SessionAvailabilityOccurrenceChoices(models.IntegerChoices):
     YEARLY = 4, "Yearly"
 
 
-# Create currency choices
-with open(settings.STRIPE_CURRENCIES) as f:
-    # Stripe only allows certain currencies
-    STRIPE_CURRENCIES = set(line.strip().upper() for line in f if line.strip())
-
-with open(settings.CURRENCIES) as f:
-    # Ideal complete list of currencies with details
-    CURRENCIES = json.load(f)
-
 # Filter currencies
 filtered_currencies = {
-    iso: details for iso, details in CURRENCIES.items() if iso in STRIPE_CURRENCIES
+    iso: details
+    for iso, details in settings.CURRENCIES.items()
+    if iso in settings.STRIPE_CURRENCIES
 }
 
 currency_choices = [
