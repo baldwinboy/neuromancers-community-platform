@@ -64,6 +64,8 @@ THIRD_PARTY_APPS = [
     "allauth.account",
     # For heroicons
     "heroicons",
+    # For static file compression
+    "compressor",
 ]
 
 PROJECT_APPS = [
@@ -239,11 +241,6 @@ REST_FRAMEWORK = {
     ]
 }
 
-# List of words banned from usernames
-USERNAME_BANNED_WORDLIST = os.path.join(
-    BASE_DIR, "data", "username_banned_wordlist.txt"
-)
-
 # List of ISO currencies
 CURRENCIES = currencies
 
@@ -282,8 +279,18 @@ ACCOUNT_USERNAME_VALIDATORS = "apps.accounts.validators.username_validators"
 ACCOUNT_FORMS = {"signup": "apps.accounts.forms.SignupForm"}
 
 # Django Guardian
+ANONYMOUS_USER_NAME = "nonny"
 GUARDIAN_GET_INIT_ANONYMOUS_USER = "apps.accounts.models.get_anonymous_user_instance"
 GUARDIAN_MONKEY_PATCH_GROUP = False
 GUARDIAN_MONKEY_PATCH_USER = False
 GUARDIAN_USER_OBJ_PERMS_MODEL = "accounts.BigUserObjectPermission"
 GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
+
+# Email
+# https://docs.djangoproject.com/en/5.2/ref/settings/#email-host
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+EMAIL_PORT = os.environ.get("EMAIL_PORT", 587)
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

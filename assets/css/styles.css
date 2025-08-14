@@ -113921,19 +113921,19 @@
 }
 
 .block {
-  display: "block";
+  display: block;
 }
 
 .inline-block {
-  display: "inline-block";
+  display: inline-block;
 }
 
 .flex {
-  display: "flex";
+  display: flex;
 }
 
 .inline-flex {
-  display: "inline-flex";
+  display: inline-flex;
 }
 
 /* Responsive display */
@@ -113945,25 +113945,25 @@
 
 @media (min-width: 0) {
   .xs\:block {
-    display: "block";
+    display: block;
   }
 }
 
 @media (min-width: 0) {
   .xs\:inline-block {
-    display: "inline-block";
+    display: inline-block;
   }
 }
 
 @media (min-width: 0) {
   .xs\:flex {
-    display: "flex";
+    display: flex;
   }
 }
 
 @media (min-width: 0) {
   .xs\:inline-flex {
-    display: "inline-flex";
+    display: inline-flex;
   }
 }
 
@@ -113975,25 +113975,25 @@
 
 @media (min-width: 480px) {
   .sm\:block {
-    display: "block";
+    display: block;
   }
 }
 
 @media (min-width: 480px) {
   .sm\:inline-block {
-    display: "inline-block";
+    display: inline-block;
   }
 }
 
 @media (min-width: 480px) {
   .sm\:flex {
-    display: "flex";
+    display: flex;
   }
 }
 
 @media (min-width: 480px) {
   .sm\:inline-flex {
-    display: "inline-flex";
+    display: inline-flex;
   }
 }
 
@@ -114005,25 +114005,25 @@
 
 @media (min-width: 768px) {
   .md\:block {
-    display: "block";
+    display: block;
   }
 }
 
 @media (min-width: 768px) {
   .md\:inline-block {
-    display: "inline-block";
+    display: inline-block;
   }
 }
 
 @media (min-width: 768px) {
   .md\:flex {
-    display: "flex";
+    display: flex;
   }
 }
 
 @media (min-width: 768px) {
   .md\:inline-flex {
-    display: "inline-flex";
+    display: inline-flex;
   }
 }
 
@@ -114035,25 +114035,25 @@
 
 @media (min-width: 1024px) {
   .lg\:block {
-    display: "block";
+    display: block;
   }
 }
 
 @media (min-width: 1024px) {
   .lg\:inline-block {
-    display: "inline-block";
+    display: inline-block;
   }
 }
 
 @media (min-width: 1024px) {
   .lg\:flex {
-    display: "flex";
+    display: flex;
   }
 }
 
 @media (min-width: 1024px) {
   .lg\:inline-flex {
-    display: "inline-flex";
+    display: inline-flex;
   }
 }
 
@@ -114065,25 +114065,25 @@
 
 @media (min-width: 1280px) {
   .xl\:block {
-    display: "block";
+    display: block;
   }
 }
 
 @media (min-width: 1280px) {
   .xl\:inline-block {
-    display: "inline-block";
+    display: inline-block;
   }
 }
 
 @media (min-width: 1280px) {
   .xl\:flex {
-    display: "flex";
+    display: flex;
   }
 }
 
 @media (min-width: 1280px) {
   .xl\:inline-flex {
-    display: "inline-flex";
+    display: inline-flex;
   }
 }
 
@@ -114095,25 +114095,25 @@
 
 @media (min-width: 1366px) {
   .xxl\:block {
-    display: "block";
+    display: block;
   }
 }
 
 @media (min-width: 1366px) {
   .xxl\:inline-block {
-    display: "inline-block";
+    display: inline-block;
   }
 }
 
 @media (min-width: 1366px) {
   .xxl\:flex {
-    display: "flex";
+    display: flex;
   }
 }
 
 @media (min-width: 1366px) {
   .xxl\:inline-flex {
-    display: "inline-flex";
+    display: inline-flex;
   }
 }
 

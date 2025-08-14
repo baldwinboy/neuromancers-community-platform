@@ -129,6 +129,6 @@ class BigGroupObjectPermission(GroupObjectPermissionAbstract):
 
 def get_anonymous_user_instance(User):
     return User(
-        username="anonymous",
+        username="nonny",
         date_of_birth=datetime.date(1970, 1, 1),
     )

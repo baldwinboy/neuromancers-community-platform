@@ -52,18 +52,17 @@ django-test:
 django-shell: # Create a Django shell
 	python ./manage.py shell
 
-update-python-dev-requirements: # Update Python development requirements
-	uv pip freeze > requirements/development.txt
-update-python-prod-requirements: # Update Python production requirements
-	pipreqs --savepath requirements/production.txt --ignore .venv
-update-python-requirements: update-python-dev-requirements update-python-prod-requirements
+update-requirements: # Compile and update requirements from .in files
+	pip-compile requirements/base.in
+	pip-compile requirements/development.in
+	pip-compile requirements/production.in
 
-install-python-dev-requirements: # Install Python development requirements
+install: # Install Python development requirements
 	uv pip install -r requirements/development.txt
-install-python-prod-requirements: # Install Python production requirements
+install-prod: # Install Python production requirements
 	uv pip install -r requirements/production.txt
 
-dev: install-python-dev-requirements django-makemigrations django-migrate django-collectstatic django-runserver
+dev: install django-makemigrations django-migrate django-collectstatic django-runserver
 
 sass-watch: # Compile Sass on demand
 	sass --watch assets/scss/styles.scss assets/css/styles.css
