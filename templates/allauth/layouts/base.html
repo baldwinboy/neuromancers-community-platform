@@ -42,7 +42,7 @@
     {% block body %}
         {% if messages %}
             <div class="bg-lightAccent">
-                <div class="width-full container mx-auto py-9">
+                <div class="w-full container mx-auto py-9">
                     <strong class="visually-hidden">{% trans "Messages:" %}</strong>
                     <ul>
                         {% for message in messages %}<li>{{ message }}</li>{% endfor %}
@@ -50,7 +50,7 @@
                 </div>
             </div>
         {% endif %}
-        <div class="width-full container mx-auto py-9">
+        <div class="w-full container mx-auto py-9">
 
             {% block content %}
             {% endblock content %}

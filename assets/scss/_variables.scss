@@ -1,51 +1,120 @@
+@use "sass:map";
+@use "sass:math";
+
 /* Colors */
-$white: hsl(0,0%,100%);
-$black: hsl(0,100%, 0.78%);
-$safeLightAccent: hsl(342.63,80.85%,81.57%);
-$safeDarkAccent: hsl(0,0%,0%);
-$safeInverseAccent: hsl(0,0%,0%);
-$safeInverseLightAccent: hsl(0,0%,0%);
-$safeInverseDarkAccent: hsl(0,0%,100%);
-$accent: hsl(342.63,80.85%,81.57%);
-$lightAccent: hsl(343.29,95.89%,71.37%);
-$darkAccent: hsl(342.11,40.43%,27.65%);
+$white: hsl(0, 0%, 100%);
+$black: hsl(0, 100%, 0.78%);
+$safeLightAccent: hsl(342.63, 80.85%, 81.57%);
+$safeDarkAccent: hsl(0, 0%, 0%);
+$safeInverseAccent: hsl(0, 0%, 0%);
+$safeInverseLightAccent: hsl(0, 0%, 0%);
+$safeInverseDarkAccent: hsl(0, 0%, 100%);
+$accent: hsl(342.63, 80.85%, 81.57%);
+$lightAccent: hsl(343.29, 95.89%, 71.37%);
+$darkAccent: hsl(342.11, 40.43%, 27.65%);
 
 $colors: (
-"white": $white,
-"black": $black,
-safeLightAccent: $safeLightAccent,
-safeDarkAccent: $safeDarkAccent,
-safeInverseAccent: $safeInverseAccent,
-safeInverseLightAccent: $safeInverseLightAccent,
-safeInverseDarkAccent: $safeInverseDarkAccent,
-accent: $accent,
-lightAccent: $lightAccent,
-darkAccent: $darkAccent,
-current: currentColor
-);
+  "white": $white,
+  "black": $black,
+  safeLightAccent: $safeLightAccent,
+  safeDarkAccent: $safeDarkAccent,
+  safeInverseAccent: $safeInverseAccent,
+  safeInverseLightAccent: $safeInverseLightAccent,
+  safeInverseDarkAccent: $safeInverseDarkAccent,
+  accent: $accent,
+  lightAccent: $lightAccent,
+  darkAccent: $darkAccent,
+  current: currentColor,
+) !default;
 
 /* Font Families */
-$heading: 'Handjet', monospace;
-$subheading: 'Roboto', sans-serif;
-$body: 'Open Dyslexic', sans-serif;
+$heading: "Handjet", monospace;
+$subheading: "Roboto", sans-serif;
+$body: "Open Dyslexic", sans-serif;
 
 $fonts: (
   heading: $heading,
   subheading: $subheading,
-  body: $body
-);
+  body: $body,
+) !default;
+
+/* Font sizes */
+$text-sizes: (
+  xs: (
+    font-size: 0.75rem,
+    line-height: 1rem,
+  ),
+  sm: (
+    font-size: 0.875rem,
+    line-height: 1.25rem,
+  ),
+  base: (
+    font-size: 1rem,
+    line-height: 1.5rem,
+  ),
+  lg: (
+    font-size: 1.125rem,
+    line-height: 1.75rem,
+  ),
+  xl: (
+    font-size: 1.25rem,
+    line-height: 1.75rem,
+  ),
+  2xl: (
+    font-size: 1.5rem,
+    line-height: 2rem,
+  ),
+  3xl: (
+    font-size: 1.875rem,
+    line-height: 2.25rem,
+  ),
+  4xl: (
+    font-size: 2.25rem,
+    line-height: 2.5rem,
+  ),
+  5xl: (
+    font-size: 3rem,
+    line-height: 1,
+  ),
+  6xl: (
+    font-size: 3.75rem,
+    line-height: 1,
+  ),
+  7xl: (
+    font-size: 4.5rem,
+    line-height: 1,
+  ),
+  8xl: (
+    font-size: 6rem,
+    line-height: 1,
+  ),
+  9xl: (
+    font-size: 8rem,
+    line-height: 1,
+  ),
+) !default;
 
 /* Font weights */
 $font-weights: (
-	"thin": 100,
-	"extralight": 200,
-	"light": 300,
-	"normal": 400,
-	"medium": 500,
-	"semibold": 600,
-	"bold": 700,
-	"extrabold": 800,
-	"black": 900,
+  "thin": 100,
+  "extralight": 200,
+  "light": 300,
+  "normal": 400,
+  "medium": 500,
+  "semibold": 600,
+  "bold": 700,
+  "extrabold": 800,
+  "black": 900,
+) !default;
+
+/* Tracking */
+$tracking-sizes: (
+  tighter: -0.05em,
+  tight: -0.025em,
+  normal: 0em,
+  wide: 0.025em,
+  wider: 0.05em,
+  widest: 0.1em,
 ) !default;
 
 /* Screen sizes */
@@ -55,36 +124,44 @@ $breakpoints: (
   md: 768px,
   lg: 1024px,
   xl: 1280px,
-  xxl: 1366px
+  xxl: 1366px,
 ) !default;
 
 /* Spacing */
 $spacer: 1rem;
+$spacers: ();
+@for $i from 0 through 96 {
+  @if $i <= 20 {
+    $spacers: map.set($spacers, $i, $i * math.div($spacer, 4));
+  } @else if $i > 20 and $i % 8 == 0 {
+    $spacers: map.set($spacers, $i, $i * math.div($spacer, 4));
+  }
+}
 $spacing: (
-  	"inset": "inset",
-	"inset-x": "inset-inline",
-	"inset-y": "inset-block",
-	"top": "top",
-	"right": "right",
-	"bottom": "bottom",
-	"left": "right",
-	"w": "width",
-	"h": "height",
-	"gap": "gap",
-	"mt": "margin-top",
-	"mr": "margin-right",
-	"mb": "margin-bottom",
-	"ml": "margin-left",
-	"mx": "margin-inline",
-	"my": "margin-block",
-	"m": "margin",
-	"pt": "padding-top",
-	"pr": "padding-right",
-	"pb": "padding-bottom",
-	"pl": "padding-left",
-	"px": "padding-inline",
-	"py": "padding-block",
-	"p": "padding"
+  "inset": "inset",
+  "inset-x": "inset-inline",
+  "inset-y": "inset-block",
+  "top": "top",
+  "right": "right",
+  "bottom": "bottom",
+  "left": "right",
+  "w": "width",
+  "h": "height",
+  "gap": "gap",
+  "mt": "margin-top",
+  "mr": "margin-right",
+  "mb": "margin-bottom",
+  "ml": "margin-left",
+  "mx": "margin-inline",
+  "my": "margin-block",
+  "m": "margin",
+  "pt": "padding-top",
+  "pr": "padding-right",
+  "pb": "padding-bottom",
+  "pl": "padding-left",
+  "px": "padding-inline",
+  "py": "padding-block",
+  "p": "padding",
 ) !default;
 
 /* Display */
@@ -92,17 +169,17 @@ $display: block, inline-block, flex, inline-flex;
 
 /* Flexbox */
 $flex-flow: (
-	wrap: wrap,
-	wrap-reverse: wrap-reverse,
-	nowrap: nowrap,
-	row: row,
-	row-wrap: row wrap,
-	row-wrap-reverse: row wrap-reverse,
-	row-nowrap: row nowrap,
-	col: column,
-	col-wrap: column wrap,
-	col-wrap-reverse: column wrap-reverse,
-	col-nowrap: column nowrap
+  wrap: wrap,
+  wrap-reverse: wrap-reverse,
+  nowrap: nowrap,
+  row: row,
+  row-wrap: row wrap,
+  row-wrap-reverse: row wrap-reverse,
+  row-nowrap: row nowrap,
+  col: column,
+  col-wrap: column wrap,
+  col-wrap-reverse: column wrap-reverse,
+  col-nowrap: column nowrap,
 ) !default;
 
 /* Cursor */

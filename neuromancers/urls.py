@@ -28,9 +28,9 @@ urlpatterns = [
     path("documents/", include(wagtaildocs_urls), name="wagtaildocs"),
     # For Django REST Framework
     path("api-auth/", include("rest_framework.urls"), name="drf"),
-    # Redirect 'accounts' path to default site
+    # Redirect 'accounts' or 'home' path to default site
     re_path(
-        r"^accounts/(?P<subpath>.*)$",
+        r"^(accounts|home)/(?P<subpath>.*)$",
         RedirectView.as_view(
             pattern_name=None,  # Not using named URL pattern
             url="/%(subpath)s",  # Use the captured subpath in the redirect

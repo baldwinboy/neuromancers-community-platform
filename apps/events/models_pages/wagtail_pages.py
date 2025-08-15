@@ -1,10 +1,12 @@
 import heapq
 
+from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.shortcuts import redirect, render
+from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from wagtail.admin.panels import FieldPanel, PanelPlaceholder
 from wagtail.contrib.routable_page.models import RoutablePage, route
@@ -88,7 +90,13 @@ class SessionsIndexPage(RoutablePage):
     ]
 
     @route(r"^create/$")
+    @method_decorator(login_required)
     def choose_session_type(self, request):
+        if not request.user.has_perm(
+            "events.add_peersession"
+        ) or not request.user.has_perm("events.add_groupsession"):
+            return render(request, "404.html", status=404)
+
         return render(
             request,
             "events/choose_session_type.html",
@@ -98,7 +106,10 @@ class SessionsIndexPage(RoutablePage):
         )
 
     @route(r"^create/peer/$")
+    @method_decorator(login_required)
     def create_peer_sesion(self, request):
+        if not request.user.has_perm("events.add_peersession"):
+            return render(request, "404.html", status=404)
         if request.method == "POST":
             form = PeerSessionForm(request.POST)
             if form.is_valid():
@@ -116,7 +127,10 @@ class SessionsIndexPage(RoutablePage):
         )
 
     @route(r"^create/group/$")
+    @method_decorator(login_required)
     def create_group_sesion(self, request):
+        if not request.user.has_perm("events.add_groupsession"):
+            return render(request, "404.html", status=404)
         if request.method == "POST":
             form = GroupSessionForm(request.POST)
             if form.is_valid():
@@ -130,25 +144,6 @@ class SessionsIndexPage(RoutablePage):
                 "page": self,
                 "form": form,
                 "session_type": "Group",
-            },
-        )
-
-    @route(r"^create/$")
-    def create_session(self, request):
-        if request.method == "POST":
-            form = PeerSessionForm(request.POST)
-            if form.is_valid():
-                form.save()
-                return redirect(self.url)  # Redirect to index page
-        else:
-            form = PeerSessionForm()
-
-        return render(
-            request,
-            "events/create_session.html",
-            {
-                "page": self,  # so template has access to Wagtail page context
-                "form": form,
             },
         )
 

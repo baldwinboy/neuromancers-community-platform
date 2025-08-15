@@ -61,10 +61,12 @@
                 {% element button tags="secondary" type="submit" name="action_send" %}
                     {% trans "Re-send Verification" %}
                 {% endelement %}
+                {% if emailaddress_radios|length > 1 %}
 
-                {% element button tags="danger,delete" type="submit" name="action_remove" %}
-                    {% trans "Remove" %}
-                {% endelement %}
+                    {% element button tags="danger,delete" type="submit" name="action_remove" %}
+                        {% trans "Remove" %}
+                    {% endelement %}
+                {% endif %}
             {% endslot %}
         {% endelement %}
     {% else %}

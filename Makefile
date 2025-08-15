@@ -44,7 +44,9 @@ django-findstatic: # Find files that will be added when a `static` directory is 
 	python ./manage.py findstatic
 
 django-collectstatic: # Generate `static` directory
-	sass assets/scss/styles.scss assets/css/styles.css && python ./manage.py collectstatic -i scss
+	sass assets/scss/styles.scss assets/css/styles.css
+	scripts/load_icons.sh assets/icons templates/includes/sprite.svg
+	python ./manage.py collectstatic -i scss -i icons
 
 django-runserver: # Start Django server
 	python ./manage.py runserver
@@ -69,6 +71,9 @@ dev: install django-makemigrations django-migrate django-collectstatic django-ru
 
 sass-watch: # Compile Sass on demand
 	sass --watch assets/scss/styles.scss assets/css/styles.css
+
+sprite: # Load custom SVGs
+	scripts/load_icons.sh assets/icons templates/includes/sprite.svg
 
 lint-git-files: # Lint files tracked by Git
 	git status -s | cut -c4- | xargs pre-commit run --files

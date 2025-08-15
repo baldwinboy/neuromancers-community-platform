@@ -1,14 +1,28 @@
 {% extends "base.html" %}
 
+{% load i18n wagtailcore_tags %}
+
 {% block title %}
     Page not found
 {% endblock title %}
 
 {% block body_class %}
-    template-404
+    flex flex-col template-404
 {% endblock body_class %}
 
 {% block content %}
-    <h1>Page not found</h1>
-    <h2>Sorry, this page could not be found.</h2>
+    <div class="flex flex-col flex-grow justify-center items-center gap-4 w-full bg-black text-safeLightAccent">
+
+        {% include "includes/icon.html" with icon="search-remove" iconclass="icon shake-vertical w-15 h-15 text-safeLightAccent mb-5" width=50 height=50 %}
+        <h1 class="text-5xl tracking-wide uppercase containter mx-auto">
+            {% trans "The page you've navigated to doesn't exist" %}
+        </h1>
+        <h2 class="containter w-1/5 mx-auto text-center">
+            {% trans "The page you're looking for might have been moved or destroyed" %}
+        </h2>
+        <p>
+            {% wagtail_site as current_site %}<a href="{{ current_site.root_page.url_path }}"
+   class="auth_button auth_button__navbar block text-center">{% trans "Go to the homepage" %}</a>
+        </p>
+    </div>
 {% endblock content %}

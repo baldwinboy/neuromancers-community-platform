@@ -1,8 +1,117 @@
-@use 'sass:list';
-@use 'sass:math';
+@use "sass:list";
+@use "sass:map";
+@use "sass:math";
 @use "sass:string";
 @use "variables" as *;
 @use "mixins" as *;
+
+/* Cursor */
+@each $c in $cursor {
+  .cursor-#{$c} {
+    cursor: $c;
+  }
+}
+
+/* Display */
+@each $d in $display {
+  .#{$d} {
+    display: $d;
+  }
+}
+
+.hidden {
+  display: hidden;
+}
+
+/* Flexbox */
+.flex-grow {
+  flex-grow: 1;
+}
+
+.flex-grow-0 {
+  flex-grow: 0;
+}
+
+@each $key, $value in $flex-flow {
+  .flex-#{$key} {
+    flex-flow: $value;
+  }
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-start {
+  justify-content: start;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-space-between {
+  justify-content: space-between;
+}
+
+/* Spacing */
+@each $sKey, $sValue in $spacers {
+  @each $name, $property in $spacing {
+    .#{$name}-#{$sKey} {
+      #{$property}: $sValue;
+    }
+  }
+}
+
+@each $name, $property in $spacing {
+  @if (string.index($property, "width") == 1 or string.index($property, "height") == 1) {
+    .#{$name}-px {
+      #{$property}: 1px;
+    }
+
+    .#{$name}-fit {
+      #{$property}: fit-content;
+    }
+
+    .#{$name}-min {
+      #{$property}: min-content;
+    }
+
+    .#{$name}-max {
+      #{$property}: max-content;
+    }
+
+    .#{$name}-full {
+      #{$property}: 100%;
+    }
+
+    .#{$name}-auto {
+      #{$property}: auto;
+    }
+
+    @for $i from 1 through 11 {
+      .#{$name}-#{$i}\/12 {
+        #{$property}: math.percentage(math.div($i, 12));
+      }
+
+      @for $j from 2 through 11 {
+        $denom: 12 - $j;
+
+        @if $denom > $i and ($denom <= 5 or ($denom > 5 and $denom % 2 == 0)) {
+          .#{$name}-#{$i}\/#{$denom} {
+            #{$property}: math.percentage(math.div($i, $denom));
+          }
+        }
+      }
+    }
+  }
+
+  @if string.index($property, "margin") == 1 {
+    .#{$name}-auto {
+      #{$property}: auto;
+    }
+  }
+}
 
 /* Colors */
 @each $key, $value in $colors {
@@ -19,247 +128,63 @@
   }
 }
 
-/* Responsive colors */
-@each $ckey, $cvalue in $colors {
-	@each $key, $value in $breakpoints {
-		.#{$key}\:bg-#{$ckey} {
-			@include media($key) {
-				background: $cvalue;
-			}
-		}
-
-		.#{$key}\:text-#{$ckey} {
-			@include media($key) {
-				color: $cvalue;
-			}
-		}
-
-		.#{$key}\:border-#{$ckey} {
-			@include media($key) {
-				border-color: $cvalue;
-			}
-		}
-	}
-}
-
-
 /* Font families */
 @each $key, $value in $fonts {
-	.font-#{$key} {
+  .font-#{$key} {
     font-family: $value;
   }
 }
 
 /* Font weight */
 @each $key, $value in $font-weights {
-	.font-#{$key} {
-		font-weight: $value;
-	}
-}
-
-/* Spacing */
-$spacers: ();
-@for $i from 0 through 96 {
-	$spacers: list.append($spacers, $i * math.div($spacer, 4));
-	$current-spacer: list.nth($spacers, $i + 1);
-
-	@each $name, $property in $spacing {
-		.#{$name}-#{$i} {
-			#{$property}: $current-spacer;
-		}
-
-		@if string.index($property, "margin") == 1 {
-			.#{$name}-auto {
-				#{$property}: auto;
-			}
-		}
-	}
-}
-
-@for $i from 0 through 96 {
-	/* Responsive spacing */
-	$spacers: list.append($spacers, $i * math.div($spacer, 4));
-	$current-spacer: list.nth($spacers, $i + 1);
-
-	@each $name, $property in $spacing {
-		@each $key, $value in $breakpoints {
-			.#{$key}\:#{$name}-#{$i} {
-				@include media($key) {
-					#{$property}: $current-spacer;
-				}
-			}
-
-			@if string.index($property, "margin") == 1 {
-				.#{$name}-auto {
-					#{$property}: auto;
-				}
-			}
-		}
-	}
-}
-
-/* Display */
-.hidden {
-	display: hidden;
-}
-
-@each $d in $display {
-  .#{$d} {
-    display: $d;
+  .font-#{$key} {
+    font-weight: $value;
   }
 }
 
-/* Responsive display */
-@each $key, $value in $breakpoints {
-	.#{$key}\:hidden {
-		@include media($key) {
-			display: hidden;
-		}
-	}
-
-	@each $d in $display {
-		.#{$key}\:#{$d} {
-			@include media($key) {
-				display: $d;
-			}
-		}
-	}
-}
-
-/* Flexbox */
-@each $key, $value in $flex-flow {
-  .flex-#{$key} {
-    flex-flow: $value;
+/* Font sizes */
+@each $key, $props in $text-sizes {
+  .text-#{$key} {
+    font-size: map.get($props, font-size);
+    line-height: map.get($props, line-height);
   }
 }
 
-/* Responsive flexbox */
-@each $fkey, $fvalue in $flex-flow {
- 	@each $key, $value in $breakpoints {
-		.#{$key}\:flex-#{$fkey} {
-			@include media($key) {
-				flex-flow: $fvalue;
-			}
-		}
-	}
-}
-
-
-/* Cursor */
-@each $c in $cursor {
-  .cursor-#{$c} {
-    cursor: $c;
+/* Tracking */
+@each $key, $value in $tracking-sizes {
+  .tracking-#{$key} {
+    letter-spacing: $value;
   }
 }
 
-/* Responsive cursor */
-@each $key, $value in $breakpoints {
-	@each $c in $cursor  {
-		.#{$key}\:cursor-#{$c} {
-			@include media($key) {
-				cursor: $c;
-			}
-		}
-	}
-}
-
-
-.items-center {
-    align-items: center;
-}
-
-.justify-start {
-	justify-content: start;
-}
-
-.justify-center {
-    justify-content: center;
-}
-
-.justify-space-between {
-    justify-content: space-between;
-}
-
-@each $key, $value in $breakpoints {
-	.#{$key}\:items-center {
-		@include media($key) {
-			align-items: center;
-		}
-	}
-
-	.#{$key}\:justify-start {
-		@include media($key) {
-			justify-content: start;
-		}
-	}
-
-	.#{$key}\:justify-space-between {
-		@include media($key) {
-			justify-content: space-between;
-		}
-	}
-}
-
-.width-full {
-    width: 100%;
-}
-
-.width-auto {
-	width: auto;
-}
-
-.width-fit {
-	width: fit-content;
-}
-
-.width-min {
-	width: min-content;
-}
-
-.width-max {
-	width: max-content;
-}
-
-.height-full {
-    height: 100%;
-}
-
-.height-auto {
-	height: auto;
-}
-
-.height-fit {
-	height: fit-content;
-}
-
-.height-min {
-	height: min-content;
-}
-
-.height-max {
-	height: max-content;
+@for $i from 1 through 5 {
+  h#{7 - $i} {
+    margin: 0;
+    padding: 0;
+    font-family: $subheading;
+  }
 }
 
 .overflow-hidden {
-	overflow: hidden;
+  overflow: hidden;
 }
 
 .container {
-    @include media(xl) {
-        max-width: 75rem;
-    }
+  @include media(xl) {
+    max-width: 75rem;
+  }
 }
 
 .visually-hidden,
 .visually-hidden-focusable:not(:focus, :focus-within) {
-	border: 0 !important;
-	clip-path: inset(50%) !important; /* 2 */
-	height: 1px !important;
-	margin: -1px !important;
-	overflow: hidden !important;
-	padding: 0 !important;
-	width: 1px !important;
-	white-space: nowrap !important; /* 3 */
+  border: 0 !important;
+  clip-path: inset(50%) !important; /* 2 */
+  height: 1px !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  width: 1px !important;
+  white-space: nowrap !important; /* 3 */
 }
 
 /*
@@ -269,7 +194,7 @@ $spacers: ();
 */
 .visually-hidden:not(caption),
 .visually-hidden-focusable:not(caption):not(:focus, :focus-within) {
-	position: absolute !important;
+  position: absolute !important;
 }
 
 /*
@@ -279,50 +204,50 @@ $spacers: ();
 */
 .visually-hidden *,
 .visually-hidden-focusable:not(:focus, :focus-within) * {
-	overflow: hidden !important;
+  overflow: hidden !important;
 }
 
 /* Text */
 .text-center {
-	text-align: center;
+  text-align: center;
 }
 
 .text-darken {
-	@include interact {
-        filter: brightness(85%);
-    }
+  @include interact {
+    filter: brightness(85%);
+  }
 }
 
 .text-brighten {
-	@include interact {
-        filter: brightness(115%);
-    }
+  @include interact {
+    filter: brightness(115%);
+  }
 }
 
 .link {
-	color: $safeLightAccent;
-	transition: all 0.25s ease-in-out;
-	@include reduced-motion {
-        transition: none;
-    }
-	@include interact {
-        color: $lightAccent;
-    }
+  color: $safeLightAccent;
+  transition: all 0.25s ease-in-out;
+  @include reduced-motion {
+    transition: none;
+  }
+  @include interact {
+    color: $lightAccent;
+  }
 }
 
 .base_message {
-	& > span {
-		display: block;
-		padding-block: list.nth($spacers, 9);;
-		margin-inline: auto;
-		@include media(xl) {
-			max-width: 75rem;
-		}
-	}
+  & > span {
+    display: block;
+    padding-block: list.nth($spacers, 9);
+    margin-inline: auto;
+    @include media(xl) {
+      max-width: 75rem;
+    }
+  }
 
-	.wagtailadmin_messages {
-		display: none;
-	}
+  .wagtailadmin_messages {
+    display: none;
+  }
 }
 
 .truncate {
@@ -332,5 +257,143 @@ $spacers: ();
 }
 
 .uppercase {
- text-transform: uppercase;
+  text-transform: uppercase;
+}
+
+.icon {
+  aspect-ratio: 1;
+}
+
+/* Responsive */
+@each $key, $value in $breakpoints {
+  @include media($key) {
+    /* Cursor */
+    @each $c in $cursor {
+      .#{$key}\:cursor-#{$c} {
+        cursor: $c;
+      }
+    }
+
+    /* Display */
+    @each $d in $display {
+      .#{$key}\:#{$d} {
+        display: $d;
+      }
+    }
+
+    .#{$key}\:hidden {
+      display: hidden;
+    }
+
+    /* Flexbox */
+    @each $fkey, $fvalue in $flex-flow {
+      .#{$key}\:flex-#{$fkey} {
+        flex-flow: $fvalue;
+      }
+    }
+
+    .#{$key}\:flex-grow {
+      flex-grow: 1;
+    }
+
+    .#{$key}\:flex-grow-0 {
+      flex-grow: 0;
+    }
+
+    .#{$key}\:items-center {
+      align-items: center;
+    }
+
+    .#{$key}\:justify-start {
+      justify-content: start;
+    }
+
+    .#{$key}\:justify-space-between {
+      justify-content: space-between;
+    }
+
+    /* Spacing */
+    @each $sKey, $sValue in $spacers {
+      @each $name, $property in $spacing {
+        .#{$key}\:#{$name}-#{$sKey} {
+          #{$property}: $sValue;
+        }
+      }
+    }
+
+    @each $name, $property in $spacing {
+      @if (string.index($property, "width") == 1 or string.index($property, "height") == 1) {
+        .#{$key}\:#{$name}-px {
+          #{$property}: 1px;
+        }
+
+        .#{$key}\:#{$name}-fit {
+          #{$property}: fit-conent;
+        }
+
+        .#{$key}\:#{$name}-min {
+          #{$property}: min-conent;
+        }
+
+        .#{$key}\:#{$name}-max {
+          #{$property}: max-conent;
+        }
+
+        .#{$key}\:#{$name}-full {
+          #{$property}: 100%;
+        }
+
+        .#{$key}\:#{$name}-auto {
+          #{$property}: auto;
+        }
+
+        @for $i from 1 through 11 {
+          .#{$key}\:#{$name}-#{$i}\/12 {
+            #{$property}: math.percentage(math.div($i, 12));
+          }
+
+          @for $j from 2 through 11 {
+            $denom: 12 - $j;
+
+            @if (
+              $denom > $i and ($denom <= 5 or ($denom > 5 and $denom % 2 == 0))
+            ) {
+              .#{$key}\:#{$name}-#{$i}\/#{$denom} {
+                #{$property}: math.percentage(math.div($i, $denom));
+              }
+            }
+          }
+        }
+      }
+
+      @if string.index($property, "margin") == 1 {
+        .#{$key}\:#{$name}-auto {
+          #{$property}: auto;
+        }
+      }
+    }
+
+    /* Colors */
+    @each $ckey, $cvalue in $colors {
+      .#{$key}\:bg-#{$ckey} {
+        background: $cvalue;
+      }
+
+      .#{$key}\:text-#{$ckey} {
+        color: $cvalue;
+      }
+
+      .#{$key}\:border-#{$ckey} {
+        border-color: $cvalue;
+      }
+    }
+
+    /* Font sizes */
+    @each $tkey, $props in $text-sizes {
+      .#{$key}\:text-#{$tkey} {
+        font-size: map.get($props, font-size);
+        line-height: map.get($props, line-heiht);
+      }
+    }
+  }
 }

@@ -1,0 +1,7 @@
+{% load static %}
+<svg class="{{ iconclass|default:'icon' }}"
+     aria-hidden="{{ ariahidden|default:'true' }}"
+     width="{{ width|default:24 }}"
+     height="{{ height|default:24 }}">
+    <use xlink:href="#{{ icon }}" />
+</svg>

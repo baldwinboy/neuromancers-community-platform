@@ -18,8 +18,6 @@ ENVIRONMENT = env("ENVIRONMENT")
 
 DEBUG = env("DEBUG")
 
-STATICFILES_FINDERS.append("compressor.finders.CompressorFinder")
-
 IGNORABLE_404_URLS = [
     re.compile(r"^/cpc/"),
     re.compile(r"^/cpanel/"),

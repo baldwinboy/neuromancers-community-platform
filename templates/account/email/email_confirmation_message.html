@@ -27,7 +27,7 @@
             </h2>
             <p style="font-family: monospace; font-weight: 900">
                 {% user_display user as user_display %}
-                {% blocktrans %}Hey, {{ user_display }}!{% endblocktrans %}
+                {% blocktrans with user_display=u %}Hey, {{ u }}!{% endblocktrans %}
             </p>
             <p style="font-family: monospace; font-weight: 500">
                 {% blocktrans with site_name=current_site.name  %}Welcome to <span style="font-weight: 900">{{ site_name }}</span>!{% endblocktrans %}

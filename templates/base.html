@@ -1,4 +1,4 @@
-{% load i18n static wagtailcore_tags wagtailuserbar %}
+{% load i18n static wagtailcore_tags wagtailuserbar compress %}
 {% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
@@ -27,12 +27,14 @@
         <link rel="shortcut icon"
               type="image/png"
               href="{% static 'images/favicon.png' %}">
-        {# Global stylesheets #}
-        <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+        {% compress css %}
+            {# Global stylesheets #}
+            <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
 
-        {% block extra_css %}
-            {# Override this in templates to add extra stylesheets #}
-        {% endblock extra_css %}
+            {% block extra_css %}
+                {# Override this in templates to add extra stylesheets #}
+            {% endblock extra_css %}
+        {% endcompress %}
     </head>
     {# djlint:off #}
     <body class="{% block body_class %}{% endblock body_class %}">
@@ -44,11 +46,11 @@
         {% include "includes/header.html" %}
     {% endblock top_navigation_bar %}
     {% if messages and messages|length >= 1 %}
-        <section class="width-full">
+        <section class="w-full">
             <h2 class="visually-hidden">{% trans "Messages:" %}</h2>
-            <ul class="width-full">
+            <ul class="w-full">
                 {% for message in messages %}
-                    <li class="base_message width-full bg-lightAccent">
+                    <li class="base_message w-full bg-lightAccent">
                         <span>{{ message }}</span>
                     </li>
                 {% endfor %}
@@ -58,11 +60,15 @@
 
     {% block content %}
     {% endblock content %}
-    {# Global javascript #}
-    <script type="text/javascript" src="{% static 'js/core.js' %}"></script>
 
-    {% block extra_js %}
-        {# Override this in templates to add extra javascript #}
-    {% endblock extra_js %}
+    {% include "includes/sprite.svg" %}
+    {% compress js %}
+        {# Global javascript #}
+        <script type="text/javascript" src="{% static 'js/core.js' %}"></script>
+
+        {% block extra_js %}
+            {# Override this in templates to add extra javascript #}
+        {% endblock extra_js %}
+    {% endcompress %}
 </body>
 </html>

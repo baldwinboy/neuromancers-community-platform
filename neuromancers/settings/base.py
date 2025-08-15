@@ -33,6 +33,8 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 ENVIRONMENT = env("ENVIRONMENT")
 
+DEBUG = env("DEBUG")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -42,6 +44,7 @@ ENVIRONMENT = env("ENVIRONMENT")
 DEFAULT_APPS = [
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
+    "wagtail.contrib.routable_page",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -175,6 +178,7 @@ USE_TZ = True
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    "compressor.finders.CompressorFinder",
 ]
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "assets")]
@@ -299,6 +303,8 @@ GUARDIAN_MONKEY_PATCH_GROUP = False
 GUARDIAN_MONKEY_PATCH_USER = False
 GUARDIAN_USER_OBJ_PERMS_MODEL = "accounts.BigUserObjectPermission"
 GUARDIAN_GROUP_OBJ_PERMS_MODEL = "accounts.BigGroupObjectPermission"
+RENDER_404 = True
+RAISE_404 = False
 
 # Email
 # https://docs.djangoproject.com/en/5.2/ref/settings/#email-host
