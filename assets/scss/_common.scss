@@ -165,6 +165,10 @@
   }
 }
 
+.overflow {
+  overflow: auto;
+}
+
 .overflow-hidden {
   overflow: hidden;
 }
@@ -232,6 +236,17 @@
   }
   @include interact {
     color: $lightAccent;
+  }
+}
+
+.link_alt {
+  color: $black;
+  transition: all 0.25s ease-in-out;
+  @include reduced-motion {
+    transition: none;
+  }
+  @include interact {
+    opacity: 0.6;
   }
 }
 

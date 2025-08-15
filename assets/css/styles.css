@@ -4132,6 +4132,10 @@ h2 {
   font-family: "Roboto", sans-serif;
 }
 
+.overflow {
+  overflow: auto;
+}
+
 .overflow-hidden {
   overflow: hidden;
 }
@@ -4198,6 +4202,19 @@ h2 {
 }
 .link:not([disabled]):hover, .link:not([disabled]):focus-visible {
   color: hsl(343.29, 95.89%, 71.37%);
+}
+
+.link_alt {
+  color: hsl(0, 100%, 0.78%);
+  transition: all 0.25s ease-in-out;
+}
+@media (prefers-reduced-motion) {
+  .link_alt {
+    transition: none;
+  }
+}
+.link_alt:not([disabled]):hover, .link_alt:not([disabled]):focus-visible {
+  opacity: 0.6;
 }
 
 .base_message > span {

@@ -1,14 +1,48 @@
 {% extends "base.html" %}
 
+{% load i18n account %}
+
+{% block title %}
+    Host a session
+{% endblock title %}
+
+{% block body_class %}
+    flex flex-col sessions_indexpage
+{% endblock body_class %}
+
 {% block content %}
-    <h1>Create a Session</h1>
-    <p>Choose the type of session you'd like to create:</p>
-    <ul>
-        <li>
-            <a href="{{ page.url }}create/peer/">Create Peer Session</a>
-        </li>
-        <li>
-            <a href="{{ page.url }}create/group/">Create Group Session</a>
-        </li>
-    </ul>
+    {% if user.is_authenticated %}
+        {% if perms.events.add_groupsession or perms.events.add_groupsession %}
+            <div class="flex flex-col flex-grow items-center gap-4 w-full bg-lightAccent overflow">
+                <h1 class="py-9 uppercase">{% trans "Host a Session" %}</h1>
+                <main class="flex flex-col items-center gap-8 w-full h-full container mx-auto py-9 px-6 lg:px-0">
+                    <p class="font-body">{% trans "What type of session do you want to host?" %}</p>
+                    <ul class="flex flex-col items-center gap-16 w-full my-auto pb-20 lg:flex-row lg:justify-space-between lg:gap-4">
+                        {% if perms.events.add_peersession %}
+                            <li class="lg:w-1/2">
+                                <a class="link_alt flex flex-col items-center gap-2 text-center"
+                                   href="{{ page.url }}create/peer/">
+
+                                    {% include "includes/icon.html" with icon="handshake" iconclass="icon shake-vertical" width=128 height=128 %}
+                                    <span class="pt-5 text-5xl uppercase">{% trans "Peer" %}</span>
+                                    <small class="w-1/2 font-body text-base">{% trans "One-to-one workshop with individual support seekers. These won't be scheduled until a support seeker requests a session from you." %}</small>
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% if perms.events.add_groupsession %}
+                            <li class="lg:w-1/2">
+                                <a class="link_alt flex flex-col items-center gap-2 text-center"
+                                   href="{{ page.url }}create/group/">
+
+                                    {% include "includes/icon.html" with icon="multiple-user" iconclass="icon shake-vertical" width=128 height=128 %}
+                                    <span class="pt-5 text-5xl uppercase">{% trans "Group" %}</span>
+                                    <small class="w-1/2 font-body text-base">{% trans "Group workshop with any number of support seekers. You'll control the number of support seekers that can join and when the workshop is scheduled." %}</small>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </main>
+            </div>
+        {% endif %}
+    {% endif %}
 {% endblock content %}

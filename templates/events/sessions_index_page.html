@@ -2,13 +2,21 @@
 
 {% load i18n account %}
 
+{% block title %}
+    Sessions
+{% endblock title %}
+
+{% block body_class %}
+    flex flex-col sessions_indexpage
+{% endblock body_class %}
+
 {% block content %}
-    <div class="w-full h-full bg-lightAccent">
-        <header class="flex flex-col justify-start items-center gap-4 container mx-auto py-9 px-6 lg:px-0 lg:flex-row lg:justify-space-between">
+    <div class="flex flex-col flex-grow items-center gap-4 w-full h-full bg-lightAccent">
+        <header class="flex flex-col justify-start items-center gap-4 w-full container mx-auto py-9 px-6 lg:px-0 lg:flex-row lg:justify-space-between">
             <h1 class="uppercase">{{ page.title }}</h1>
             {% if user.is_authenticated and perms.events.add_peersession or perms.events.add_groupsession %}
                 <a href="{{ page.url }}create/"
-                   class="auth_button auth_button__sessions block text-center">{% trans "Create your own session" %}</a>
+                   class="auth_button auth_button__sessions block text-center">{% trans "Host your own session" %}</a>
             {% endif %}
         </header>
         <main class="flex flex-col w-full h-full container mx-auto py-9 px-6 lg:px-0">
