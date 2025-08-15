@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block content %}
+    <div class="width-full height-full bg-lightAccent">
+        <header class="flex flex-col justify-start items-center gap-4 container mx-auto py-9 px-6 lg:px-0 lg:flex-row lg:justify-space-between">
+            <h1 class="uppercase">{{ page.title }}</h1>
+            <a href="{{ page.url }}create/"
+               class="auth_button auth_button__sessions block text-center">{% trans "Create your own session" %}</a>
+        </header>
+        <main class="flex flex-col width-full height-full container mx-auto py-9 px-6 lg:px-0">
+            <ul class="m-auto">
+                {% for session in sessions %}
+                    <li>
+                        <a href="{{ page.url }}{{ session.pk }}">{{ session.title }}</a>
+                    </li>
+                {% empty %}
+                    <li>No sessions yet.</li>
+                {% endfor %}
+            </ul>
+        </main>
+    </div>
+{% endblock content %}

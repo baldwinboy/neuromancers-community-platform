@@ -50,3 +50,15 @@
     min-width: 8rem;
     font-size: 100%;
 }
+
+.auth_button__sessions {
+    border: 1px solid transparent;
+    background: $black;
+    color: $lightAccent;
+
+    @include interact {
+        border: 1px solid $black;
+        background: transparent;
+        color: $black;
+    }
+}

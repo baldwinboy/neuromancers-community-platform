@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Create a Session</h1>
+    <p>Choose the type of session you'd like to create:</p>
+    <ul>
+        <li>
+            <a href="{{ page.url }}create/peer/">Create Peer Session</a>
+        </li>
+        <li>
+            <a href="{{ page.url }}create/group/">Create Group Session</a>
+        </li>
+    </ul>
+{% endblock content %}

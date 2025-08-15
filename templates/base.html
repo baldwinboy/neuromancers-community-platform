@@ -43,7 +43,7 @@
 
         {% include "includes/header.html" %}
     {% endblock top_navigation_bar %}
-    {% if messages %}
+    {% if messages and messages|length >= 1 %}
         <section class="width-full">
             <h2 class="visually-hidden">{% trans "Messages:" %}</h2>
             <ul class="width-full">

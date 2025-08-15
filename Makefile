@@ -24,6 +24,9 @@ django-makemigrations: # Create Django migrations
 django-setupdefaultgroups: # Setup default groups
 	python ./manage.py setup_default_groups
 
+django-publishsessionsindex: # Publish all unpublished SessionsIndexPages
+	python ./manage.py publish_sessions_index
+
 
 django-createsuperuser: # Create a default superuser
 django-createsuperuser: DJANGO_SUPER_USERNAME ?= _neuro

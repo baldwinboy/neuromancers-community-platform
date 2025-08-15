@@ -168,12 +168,36 @@ $spacers: ();
     align-items: center;
 }
 
+.justify-start {
+	justify-content: start;
+}
+
 .justify-center {
     justify-content: center;
 }
 
 .justify-space-between {
     justify-content: space-between;
+}
+
+@each $key, $value in $breakpoints {
+	.#{$key}\:items-center {
+		@include media($key) {
+			align-items: center;
+		}
+	}
+
+	.#{$key}\:justify-start {
+		@include media($key) {
+			justify-content: start;
+		}
+	}
+
+	.#{$key}\:justify-space-between {
+		@include media($key) {
+			justify-content: space-between;
+		}
+	}
 }
 
 .width-full {
@@ -305,4 +329,8 @@ $spacers: ();
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.uppercase {
+ text-transform: uppercase;
 }

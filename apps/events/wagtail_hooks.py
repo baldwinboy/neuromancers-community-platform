@@ -1,7 +1,19 @@
+from django.dispatch import receiver
 from guardian.admin import GuardedModelAdmin
+from wagtail.signals import page_published
 from wagtail_modeladmin.options import ModelAdmin, ModelAdminGroup, modeladmin_register
 
-from .models import GroupSession, PeerSession
+from .models import GroupSession, PeerSession, SessionsIndexPage
+
+
+@receiver(page_published)
+def enforce_sessions_slug(sender, instance, **kwargs):
+    if isinstance(instance, SessionsIndexPage) and instance.slug != "sessions":
+        instance.slug = "sessions"
+        instance.save()
+        # Publish only if needed
+        if not instance.live:
+            instance.save_revision().publish()
 
 
 class PeerSessionAdmin(ModelAdmin, GuardedModelAdmin):

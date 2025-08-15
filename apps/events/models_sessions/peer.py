@@ -50,7 +50,7 @@ class PeerSession(AbstractSession):
         null=True,
         blank=True,
     )
-    is_published = models.BooleanField(default=False, unique_for_date="starts_at")
+    is_published = models.BooleanField(default=False)
     host = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="peer_sessions"
     )
@@ -63,7 +63,7 @@ class PeerSession(AbstractSession):
             ),
             models.CheckConstraint(
                 # If the session is free, access before payment can't be withheld
-                condition=Q(access_before_payment=True) & Q(price=0),
+                condition=Q(price=0, access_before_payment=False) | ~Q(price=0),
                 name="peer_access_before_payment_price_zero",
                 violation_error_message=_(
                     "Free sessions can't require access before payment"

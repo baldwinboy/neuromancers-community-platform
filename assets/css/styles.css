@@ -114886,12 +114886,124 @@
   align-items: center;
 }
 
+.justify-start {
+  justify-content: start;
+}
+
 .justify-center {
   justify-content: center;
 }
 
 .justify-space-between {
   justify-content: space-between;
+}
+
+@media (min-width: 0) {
+  .xs\:items-center {
+    align-items: center;
+  }
+}
+
+@media (min-width: 0) {
+  .xs\:justify-start {
+    justify-content: start;
+  }
+}
+
+@media (min-width: 0) {
+  .xs\:justify-space-between {
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 480px) {
+  .sm\:items-center {
+    align-items: center;
+  }
+}
+
+@media (min-width: 480px) {
+  .sm\:justify-start {
+    justify-content: start;
+  }
+}
+
+@media (min-width: 480px) {
+  .sm\:justify-space-between {
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 768px) {
+  .md\:items-center {
+    align-items: center;
+  }
+}
+
+@media (min-width: 768px) {
+  .md\:justify-start {
+    justify-content: start;
+  }
+}
+
+@media (min-width: 768px) {
+  .md\:justify-space-between {
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:items-center {
+    align-items: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:justify-start {
+    justify-content: start;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:justify-space-between {
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 1280px) {
+  .xl\:items-center {
+    align-items: center;
+  }
+}
+
+@media (min-width: 1280px) {
+  .xl\:justify-start {
+    justify-content: start;
+  }
+}
+
+@media (min-width: 1280px) {
+  .xl\:justify-space-between {
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 1366px) {
+  .xxl\:items-center {
+    align-items: center;
+  }
+}
+
+@media (min-width: 1366px) {
+  .xxl\:justify-start {
+    justify-content: start;
+  }
+}
+
+@media (min-width: 1366px) {
+  .xxl\:justify-space-between {
+    justify-content: space-between;
+  }
 }
 
 .width-full {
@@ -115022,6 +115134,10 @@
   white-space: nowrap;
 }
 
+.uppercase {
+  text-transform: uppercase;
+}
+
 .base__header {
   height: 7.6875rem;
   font-size: 1.4rem;
@@ -115085,6 +115201,17 @@
 .auth_button__navbar {
   min-width: 8rem;
   font-size: 100%;
+}
+
+.auth_button__sessions {
+  border: 1px solid transparent;
+  background: hsl(0, 100%, 0.78%);
+  color: hsl(343.29, 95.89%, 71.37%);
+}
+.auth_button__sessions:not([disabled]):hover, .auth_button__sessions:not([disabled]):focus-visible {
+  border: 1px solid hsl(0, 100%, 0.78%);
+  background: transparent;
+  color: hsl(0, 100%, 0.78%);
 }
 
 .auth_panel {
