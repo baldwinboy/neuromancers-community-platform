@@ -51,7 +51,7 @@ class GroupSession(AbstractSession):
             ),
             models.CheckConstraint(
                 # If the session is free, access before payment can't be withheld
-                condition=Q(price=0, access_before_payment=False) | ~Q(price=0),
+                condition=Q(price=0, access_before_payment=False),
                 name="group_access_before_payment_price_zero",
                 violation_error_message=_(
                     "Free sessions can't require access before payment"

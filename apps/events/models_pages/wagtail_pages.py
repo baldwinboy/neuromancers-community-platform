@@ -1,14 +1,13 @@
 import heapq
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from wagtail.admin.panels import FieldPanel, PanelPlaceholder
+from guardian.shortcuts import assign_perm
+from wagtail.admin.panels import PanelPlaceholder
 from wagtail.contrib.routable_page.models import RoutablePage, route
 from wagtail.models import Page
 
@@ -17,25 +16,13 @@ from apps.events.models_sessions.group import GroupSession
 from apps.events.models_sessions.peer import PeerSession
 
 
-class SessionDetailPage(Page):
-    session_content_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.PROTECT,
-        limit_choices_to=models.Q(
-            app_label="events", model__in=["peersession", "groupsession"]
-        ),
-        verbose_name=_("Session type"),
+class PeerSessionDetailPage(Page):
+    session = models.ForeignKey(
+        PeerSession, on_delete=models.PROTECT, related_name="page"
     )
-    session_object_id = models.UUIDField()
-    session = GenericForeignKey("session_content_type", "session_object_id")
 
     parent_page_types = ["events.SessionsIndexPage"]
     subpage_types = []  # No child pages under SessionDetailPage
-
-    content_panels = Page.content_panels + [
-        FieldPanel("session_content_type"),
-        FieldPanel("session_object_id"),
-    ]
 
     promote_panels = [
         PanelPlaceholder(
@@ -51,28 +38,41 @@ class SessionDetailPage(Page):
     ]
 
     def save(self, *args, **kwargs):
-        if self.session and not self.slug:
-            model_name = self.session.__class__.__name__.lower()
-            if model_name == "peersession":
-                prefix = "peer"
-            elif model_name == "groupsession":
-                prefix = "group"
-            else:
-                prefix = "session"
-
-            self.slug = f"{prefix}-{self.session.pk}"
+        self.slug = f"peer-{self.session.pk}"
         super().save(*args, **kwargs)
 
-    @property
-    def is_session_published(self):
-        return getattr(self.session, "is_published", False)
+
+class GroupSessionDetailPage(Page):
+    session = models.ForeignKey(
+        GroupSession, on_delete=models.PROTECT, related_name="page"
+    )
+
+    parent_page_types = ["events.SessionsIndexPage"]
+    subpage_types = []  # No child pages under SessionDetailPage
+
+    promote_panels = [
+        PanelPlaceholder(
+            "wagtail.admin.panels.MultiFieldPanel",
+            [
+                [
+                    "show_in_menus",
+                ],
+                _("For site menus"),
+            ],
+            {},
+        ),
+    ]
+
+    def save(self, *args, **kwargs):
+        self.slug = f"group-{self.session.pk}"
+        super().save(*args, **kwargs)
 
 
 class SessionsIndexPage(RoutablePage):
     max_count = 1
 
     parent_page_types = ["core.HomePage"]
-    subpage_types = ["events.SessionDetailPage"]
+    subpage_types = ["events.PeerSessionDetailPage", "events.GroupSessionDetailPage"]
 
     # Optional Wagtail fields (e.g. intro text, image, etc.) can go here.
 
@@ -113,7 +113,9 @@ class SessionsIndexPage(RoutablePage):
         if request.method == "POST":
             form = PeerSessionForm(request.POST)
             if form.is_valid():
-                return self._create_session_page(form.cleaned_data, "peer")
+                return self._create_peer_session_page(
+                    form.cleaned_data, user=request.user
+                )
         else:
             form = PeerSessionForm()
         return render(
@@ -134,7 +136,9 @@ class SessionsIndexPage(RoutablePage):
         if request.method == "POST":
             form = GroupSessionForm(request.POST)
             if form.is_valid():
-                return self._create_session_page(form.cleaned_data, "group")
+                return self._create_peer_session_page(
+                    form.cleaned_data, user=request.user
+                )
         else:
             form = GroupSessionForm()
         return render(
@@ -231,50 +235,24 @@ class SessionsIndexPage(RoutablePage):
             "filter_type": filter_type,
         }
 
-    def _create_session_page(form_data, session_type: str, parent_page=None):
-        """
-        Create an SessionDetailPage for a given PeerSession or GroupSession instance.
-        Only publish it if the session is considered live (e.g. is_published=True).
-        """
-        if session_type == "group":
-            session_model = GroupSession
-        elif session_type == "peer":
-            session_model = PeerSession
-        else:
-            raise ValueError(f"Unknown event type: {session_type}")
-
+    def _create_peer_session_page(self, form_data, user, parent_page=None):
         # Create the event instance
-        session_instance = session_model.objects.create(**form_data)
+        session_instance = PeerSession.objects.create(**form_data, host=user)
 
-        # Get or infer parent
-        if parent_page is None:
-            parent_page = SessionsIndexPage.objects.first()
-            if not parent_page:
-                raise Exception(
-                    "No SessionsIndexPage exists to add the event page under."
-                )
-
-        # Build content type for GenericForeignKey
-        session_content_type = ContentType.objects.get_for_model(
-            session_instance.__class__
-        )
-
-        # Create slug from UUID
-        model_name = session_instance.__class__.__name__.lower()
-        if model_name == "peersession":
-            prefix = "peer"
-        elif model_name == "groupsession":
-            prefix = "group"
-        else:
-            prefix = "session"
-        slug = f"{prefix}-{session_instance.id}"
+        # Assign permissions to user
+        for perm in [
+            "manage_availability",
+            "schedule_session",
+            "change_peersession",
+            "delete_peersession",
+        ]:
+            assign_perm(perm, user, session_instance)
 
         # Create the page
-        session_page = SessionDetailPage(
+        session_page = PeerSessionDetailPage(
             title=session_instance.title,
-            slug=slug,
-            session_content_type=session_content_type,
-            session_object_id=session_instance.id,
+            slug=f"peer-{session_instance.pk}",
+            session=session_instance,
         )
 
         # Add the page as a child of the index page
@@ -284,7 +262,34 @@ class SessionsIndexPage(RoutablePage):
         revision = session_page.save_revision()
 
         # Only publish the page if the linked event is published
-        if getattr(session_page, "is_published", True):
+        if session_page.is_session_published:
+            revision.publish()
+
+        return session_page
+
+    def _create_group_session_page(self, form_data, user, parent_page=None):
+        # Create the event instance
+        session_instance = GroupSession.objects.create(**form_data, host=user)
+
+        # Assign permissions to user
+        for perm in ["change_groupsession", "delete_groupsession"]:
+            assign_perm(perm, user, session_instance)
+
+        # Create the page
+        session_page = GroupSessionDetailPage(
+            title=session_instance.title,
+            slug=f"group-{session_instance.pk}",
+            session=session_instance,
+        )
+
+        # Add the page as a child of the index page
+        parent_page.add_child(instance=session_page)
+
+        # Save revision
+        revision = session_page.save_revision()
+
+        # Only publish the page if the linked event is published
+        if session_page.is_session_published:
             revision.publish()
 
         return session_page

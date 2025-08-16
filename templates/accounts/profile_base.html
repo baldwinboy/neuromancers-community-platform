@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load heroicons %}
+{% load i18n heroicons %}
 
 {% block body_class %}
     template-accounts-profile
@@ -23,6 +23,11 @@
             <h2 class="font-light">About me</h2>
             <hr class="w-60" />
             <p class="font-body mt-2">{{ user.profile_bio }}</p>
+        </section>
+        <section class="mb-4">
+            <h2 class="font-light">{% trans "Workshops" %}</h2>
+            <hr class="w-60" />
+            {% for event in user.get_hosted_sessions %}<p class="font-body mt-2">{{ event }}</p>{% endfor %}
         </section>
     </main>
 {% endblock content %}

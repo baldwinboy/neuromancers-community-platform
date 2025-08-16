@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from guardian.mixins import GuardianGroupMixin, GuardianUserMixin
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
+from guardian.shortcuts import get_objects_for_user
 
 from .mixins import UserGroupPermissionsMixin
 from .validators import (
@@ -105,6 +106,19 @@ class User(AbstractBaseUser, GuardianUserMixin, UserGroupPermissionsMixin):
     def email_user(self, subject, message, from_email=None, **kwargs):
         """Send an email to this user."""
         send_mail(subject, message, from_email, [self.email], **kwargs)
+
+    @property
+    def get_hosted_sessions(self):
+        perms = [
+            ["events.change_peersession", "events.delete_peersession"],
+            ["events.change_groupsession", "events.delete_groupsession"],
+        ]
+
+        return [
+            obj
+            for perm in perms
+            for obj in get_objects_for_user(self, perm, accept_global_perms=False)
+        ]
 
 
 class BigUserObjectPermission(UserObjectPermissionAbstract):
