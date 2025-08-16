@@ -1,0 +1,99 @@
+@use "../variables" as *;
+@use "../mixins" as *;
+
+.create_session__field_group {
+    border-top: 1px solid $black;
+    &:last-of-type {
+        border-bottom: 1px solid $black;
+    }
+
+    & > summary {
+        position: relative;
+        list-style: none;
+        &::after {
+            content: "+";
+            position: absolute;
+            right: 0;
+            font-family: $subheading;
+            font-weight: 200;
+        }
+    }
+
+    &[open] > summary {
+        &::after {
+            content: "\2212";
+        }
+    }
+}
+
+.create_session__field_item {
+    input, label {
+        font-family: $body;
+    }
+
+    label {
+        order: 0;
+    }
+
+    input[type=text],
+    input[type=email],
+    input[type=password],
+    input[type=url],
+    input[type=time],
+    input[type=date],
+    input[type=number],
+    textarea {
+        order: 2;
+        border: 1px solid $black;
+        border-top: 0;
+        border-right: 0;
+        background: transparent;
+        color: $black;
+        width: 100%;
+        padding-block: 1rem;
+        padding-left: 1rem;
+
+        &::placeholder {
+            color: $black;
+            opacity: 0.8;
+        }
+    }
+
+    .create_session__field_item_help_text {
+        order: 1;
+    }
+
+    input[type=number] {
+        width: fit-content;
+    }
+
+    input[type="checkbox"] {
+        @include checkbox;
+
+        &:checked {
+           @include cross-lines;
+        }
+
+        @include interact {
+            @include cross-lines;
+        }
+    }
+
+    select {
+        order: 2;
+        border: 1px solid $black;
+        border-top: 0;
+        border-right: 0;
+        width: 100%;
+        padding-block: 1rem;
+        padding-left: 1rem;
+        background: transparent;
+        color: $black;
+        font-size: 140%;
+        font-weight: 300;
+
+        & + select {
+            margin-left: 1rem;
+        }
+    }
+}

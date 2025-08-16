@@ -1,3 +1,4 @@
+@charset "UTF-8";
 @font-face {
   font-family: "Open Dyslexic";
   src: url("/static/fonts/OpenDyslexic/OpenDyslexic-Regular.eot");
@@ -316,6 +317,8 @@
 /* Interaction mixin */
 /* Reduced motion mixin */
 /* Line clamp mixin */
+/* Checkbox mixin */
+/* Cross mixin */
 /* Cursor */
 .cursor-auto {
   cursor: auto;
@@ -4243,6 +4246,10 @@ h2 {
 
 .icon {
   aspect-ratio: 1;
+}
+
+.select-none {
+  user-select: none;
 }
 
 /* Responsive */
@@ -21038,6 +21045,7 @@ h2 {
   width: 2rem;
   height: 2rem;
   border: 1px solid hsl(0, 0%, 100%);
+  margin-left: auto;
   background-color: transparent;
   appearance: none;
   vertical-align: top;
@@ -21119,6 +21127,132 @@ h2 {
   border-radius: 100%;
   width: 128px;
   height: 128px;
+}
+
+.create_session__field_group {
+  border-top: 1px solid hsl(0, 100%, 0.78%);
+}
+.create_session__field_group:last-of-type {
+  border-bottom: 1px solid hsl(0, 100%, 0.78%);
+}
+.create_session__field_group > summary {
+  position: relative;
+  list-style: none;
+}
+.create_session__field_group > summary::after {
+  content: "+";
+  position: absolute;
+  right: 0;
+  font-family: "Roboto", sans-serif;
+  font-weight: 200;
+}
+.create_session__field_group[open] > summary::after {
+  content: "−";
+}
+
+.create_session__field_item input, .create_session__field_item label {
+  font-family: "Open Dyslexic", sans-serif;
+}
+.create_session__field_item label {
+  order: 0;
+}
+.create_session__field_item input[type=text],
+.create_session__field_item input[type=email],
+.create_session__field_item input[type=password],
+.create_session__field_item input[type=url],
+.create_session__field_item input[type=time],
+.create_session__field_item input[type=date],
+.create_session__field_item input[type=number],
+.create_session__field_item textarea {
+  order: 2;
+  border: 1px solid hsl(0, 100%, 0.78%);
+  border-top: 0;
+  border-right: 0;
+  background: transparent;
+  color: hsl(0, 100%, 0.78%);
+  width: 100%;
+  padding-block: 1rem;
+  padding-left: 1rem;
+}
+.create_session__field_item input[type=text]::placeholder,
+.create_session__field_item input[type=email]::placeholder,
+.create_session__field_item input[type=password]::placeholder,
+.create_session__field_item input[type=url]::placeholder,
+.create_session__field_item input[type=time]::placeholder,
+.create_session__field_item input[type=date]::placeholder,
+.create_session__field_item input[type=number]::placeholder,
+.create_session__field_item textarea::placeholder {
+  color: hsl(0, 100%, 0.78%);
+  opacity: 0.8;
+}
+.create_session__field_item .create_session__field_item_help_text {
+  order: 1;
+}
+.create_session__field_item input[type=number] {
+  width: fit-content;
+}
+.create_session__field_item input[type=checkbox] {
+  cursor: pointer;
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid hsl(0, 100%, 0.78%);
+  margin-left: auto;
+  background-color: transparent;
+  appearance: none;
+  vertical-align: top;
+}
+.create_session__field_item input[type=checkbox]:checked {
+  border: 1px solid hsl(0, 100%, 0.78%);
+}
+.create_session__field_item input[type=checkbox]:checked:before, .create_session__field_item input[type=checkbox]:checked:after {
+  top: 50%;
+  position: absolute;
+  left: 15px;
+  content: " ";
+  height: 33px;
+  width: 2px;
+  background-color: hsl(0, 100%, 0.78%);
+}
+.create_session__field_item input[type=checkbox]:checked:before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.create_session__field_item input[type=checkbox]:checked:after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+.create_session__field_item input[type=checkbox]:not([disabled]):hover, .create_session__field_item input[type=checkbox]:not([disabled]):focus-visible {
+  border: 1px solid hsl(0, 100%, 0.78%);
+}
+.create_session__field_item input[type=checkbox]:not([disabled]):hover:before, .create_session__field_item input[type=checkbox]:not([disabled]):hover:after, .create_session__field_item input[type=checkbox]:not([disabled]):focus-visible:before, .create_session__field_item input[type=checkbox]:not([disabled]):focus-visible:after {
+  top: 50%;
+  position: absolute;
+  left: 15px;
+  content: " ";
+  height: 33px;
+  width: 2px;
+  background-color: hsl(0, 100%, 0.78%);
+}
+.create_session__field_item input[type=checkbox]:not([disabled]):hover:before, .create_session__field_item input[type=checkbox]:not([disabled]):focus-visible:before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.create_session__field_item input[type=checkbox]:not([disabled]):hover:after, .create_session__field_item input[type=checkbox]:not([disabled]):focus-visible:after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+.create_session__field_item select {
+  order: 2;
+  border: 1px solid hsl(0, 100%, 0.78%);
+  border-top: 0;
+  border-right: 0;
+  width: 100%;
+  padding-block: 1rem;
+  padding-left: 1rem;
+  background: transparent;
+  color: hsl(0, 100%, 0.78%);
+  font-size: 140%;
+  font-weight: 300;
+}
+.create_session__field_item select + select {
+  margin-left: 1rem;
 }
 
 * {

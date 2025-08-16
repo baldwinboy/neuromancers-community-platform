@@ -279,6 +279,10 @@
   aspect-ratio: 1;
 }
 
+.select-none {
+  user-select: none;
+}
+
 /* Responsive */
 @each $key, $value in $breakpoints {
   @include media($key) {

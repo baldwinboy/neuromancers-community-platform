@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext as _
 
 
 class SessionRequestStatusChoices(models.IntegerChoices):
@@ -7,9 +8,9 @@ class SessionRequestStatusChoices(models.IntegerChoices):
     Session requests may be approved, rejected, or left pending
     """
 
-    APPROVED = 0, "Approved"
-    REJECTED = 1, "Rejected"
-    PENDING = 2, "Pending"
+    APPROVED = 0, _("Approved")
+    REJECTED = 1, _("Rejected")
+    PENDING = 2, _("Pending")
 
 
 class SessionAvailabilityOccurrenceChoices(models.IntegerChoices):
@@ -17,11 +18,11 @@ class SessionAvailabilityOccurrenceChoices(models.IntegerChoices):
     Session availability may occur hourly, daily, weekly, monthly, or yearly
     """
 
-    HOURLY = 0, "Hourly"
-    DAILY = 1, "Daily"
-    WEEKLY = 2, "Weekly"
-    MONTHLY = 3, "Monthly"
-    YEARLY = 4, "Yearly"
+    HOURLY = 0, _("Hourly")
+    DAILY = 1, _("Daily")
+    WEEKLY = 2, _("Weekly")
+    MONTHLY = 3, _("Monthly")
+    YEARLY = 4, _("Yearly")
 
 
 # Filter currencies

@@ -122,7 +122,7 @@ class SessionsIndexPage(RoutablePage):
             {
                 "page": self,
                 "form": form,
-                "session_type": "Peer",
+                "session_type": _("Peer"),
             },
         )
 
@@ -143,7 +143,7 @@ class SessionsIndexPage(RoutablePage):
             {
                 "page": self,
                 "form": form,
-                "session_type": "Group",
+                "session_type": _("Group"),
             },
         )
 

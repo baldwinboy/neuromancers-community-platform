@@ -1,13 +1,56 @@
 {% extends "base.html" %}
 
+{% load i18n account %}
+
+{% block title %}
+    Host a {{ session_type }} session
+{% endblock title %}
+
+{% block body_class %}
+    flex flex-col sessions_create
+{% endblock body_class %}
+
 {% block content %}
-    <h1>Create a {{ session_type }} Session</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Create Session</button>
-    </form>
-    <p>
-        <a href="{{ page.url }}create/">Back to type selection</a>
-    </p>
+    {% if user.is_authenticated %}
+        {% if perms.events.add_groupsession or perms.events.add_groupsession %}
+            <div class="flex flex-col flex-grow items-center gap-4 w-full bg-lightAccent overflow">
+                <h1 class="py-9 uppercase">
+                    {% blocktrans with st=session_type %}Host a {{ st }} Session{% endblocktrans %}
+                </h1>
+                <main class="flex flex-col items-center gap-8 w-full h-full container mx-auto pt-9 px-6 pb-15 lg:px-0">
+                    <form method="post" class="w-full">
+                        {% csrf_token %}
+                        {{ form.non_field_errors }}
+                        {% for group_title, fields in form.get_field_groups %}
+                            <details name="field-group"
+                                     class="create_session__field_group w-full select-none">
+                                <summary class="w-full py-7 text-4xl">{{ group_title }}</summary>
+                                {% for field in fields %}
+                                    <div class="create_session__field_item pb-7">
+                                        {{ field.errors }}
+                                        <div class="flex flex-wrap">
+                                            {% if field.id_for_label %}
+                                                <label for="{{ field.id_for_label }}" class="text-2xl">{{ field.label }}</label>
+                                            {% else %}
+                                                <label for="id_{{ field.name }}_0" class="text-2xl">{{ field.label }}</label>
+                                            {% endif %}
+                                            {{ field }}
+                                            <p class="create_session__field_item_help_text w-full font-subheading font-light">{{ field.help_text }}</p>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </details>
+                        {% endfor %}
+                        <button type="submit"
+                                class="auth_button auth_button__sessions block mt-8 mx-auto text-center">
+                            Add Session
+                        </button>
+                    </form>
+                    <p>
+                        <a href="{{ page.url }}create/" class="link_alt font-body text-sm">{% trans "Want to host a different type of workshop? Click here." %}</a>
+                    </p>
+                </main>
+            </div>
+        {% endif %}
+    {% endif %}
 {% endblock content %}

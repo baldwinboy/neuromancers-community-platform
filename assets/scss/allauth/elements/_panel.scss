@@ -32,55 +32,14 @@
             }
 
             input[type="checkbox"] {
-                cursor: pointer;
-                position: relative;
-                width: 2rem;
-                height: 2rem;
-                border: 1px solid $white;
-                background-color: transparent;
-                appearance: none;
-                vertical-align: top;
+                @include checkbox($white);
 
                 &:checked {
-                    border: 1px solid $lightAccent;
-                    &:before, &:after {
-                        top: 50%;
-                        position: absolute;
-                        left: 15px;
-                        content: ' ';
-                        height: 33px;
-                        width: 2px;
-                        background-color: $lightAccent;
-                    }
-
-                    &:before {
-                        transform: translate(-50%, -50%) rotate(45deg);
-                    }
-
-                    &:after {
-                        transform: translate(-50%, -50%) rotate(-45deg);
-                    }
+                    @include cross-lines($lightAccent);
                 }
 
                 @include interact {
-                    border: 1px solid $lightAccent;
-                    &:before, &:after {
-                        top: 50%;
-                        position: absolute;
-                        left: 15px;
-                        content: ' ';
-                        height: 33px;
-                        width: 2px;
-                        background-color: $lightAccent;
-                    }
-
-                    &:before {
-                        transform: translate(-50%, -50%) rotate(45deg);
-                    }
-
-                    &:after {
-                        transform: translate(-50%, -50%) rotate(-45deg);
-                    }
+                    @include cross-lines($lightAccent);
                 }
 
             }

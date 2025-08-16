@@ -98,3 +98,39 @@
   -webkit-line-clamp: $lines;
   -webkit-box-orient: vertical;
 }
+
+/* Checkbox mixin */
+@mixin checkbox($color: $black) {
+    cursor: pointer;
+    position: relative;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid $color;
+    margin-left: auto;
+    background-color: transparent;
+    appearance: none;
+    vertical-align: top;
+}
+
+/* Cross mixin */
+@mixin cross-lines($color: $black) {
+  border: 1px solid $color;
+  &:before,
+  &:after {
+    top: 50%;
+    position: absolute;
+    left: 15px;
+    content: ' ';
+    height: 33px;
+    width: 2px;
+    background-color: $color;
+  }
+
+  &:before {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  &:after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+  }
+}
