@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block body_class %}
+    flex flex-col sessions_create
+{% endblock body_class %}
+
+{% block extra_head_js %}
+    {{ form.media }}
+{% endblock extra_head_js %}
+
+{% block content %}
+    <div class="flex flex-col flex-grow items-center gap-4 w-full bg-lightAccent overflow">
+        <h1 class="py-9 uppercase">
+
+            {% block form_title %}
+            {% endblock form_title %}
+        </h1>
+        <main class="flex flex-col items-center gap-8 w-full h-full container mx-auto pt-9 px-6 pb-15 lg:px-0">
+
+            {% block form %}
+            {% endblock form %}
+
+            {% block redirect_help %}
+            {% endblock redirect_help %}
+        </main>
+    </div>
+{% endblock content %}

@@ -5,6 +5,8 @@ from wagtail.models import Page
 
 
 class HomePage(Page):
+    max_count = 1
+
     # add the Hero section of HomePage:
     image = models.ForeignKey(
         "wagtailimages.Image",
@@ -34,6 +36,8 @@ class HomePage(Page):
     )
 
     body = RichTextField(blank=True)
+
+    subpage_types = ["events.SessionsIndexPage"]
 
     # modify your content_panels:
     content_panels = Page.content_panels + [

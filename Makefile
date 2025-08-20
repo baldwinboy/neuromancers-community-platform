@@ -67,7 +67,7 @@ install: # Install Python development requirements
 install-prod: # Install Python production requirements
 	uv pip install -r requirements/production.txt
 
-dev: install django-makemigrations django-migrate django-collectstatic django-runserver
+dev: install django-makemigrations django-migrate django-createsuperuser django-setupdefaultgroups django-publishsessionsindex django-collectstatic django-runserver
 
 sass-watch: # Compile Sass on demand
 	sass --watch assets/scss/styles.scss assets/css/styles.css

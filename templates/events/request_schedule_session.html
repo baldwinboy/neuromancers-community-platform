@@ -1,0 +1,53 @@
+{% extends "events/create_base.html" %}
+
+{% load i18n account guardian_tags wagtailcore_tags %}
+
+{% block title %}
+    Schedule a session for {{ hosted_session.title }}
+{% endblock title %}
+
+{% block form_title %}
+    {% blocktrans with ft=hosted_session.title %}Schedule a session for {{ ft }}{% endblocktrans %}
+{% endblock form_title %}
+
+{% block form %}
+    {% if user.is_authenticated %}
+        {% if perms.events.request_session %}
+            {% if available_slots %}
+                <form method="post" class="w-full pb-8">
+                    {% csrf_token %}
+                    {{ form.starts_at }}
+                    {{ form.ends_at }}
+                    <div class="create_session__field_item create_session__field_item_solo w-fit mx-auto pb-8">
+                        {{ form.pay_concessionary_price.errors }}
+                        <div class="flex flex-wrap">
+                            {% if form.pay_concessionary_price.id_for_label %}
+                                <label for="{{ form.pay_concessionary_price.id_for_label }}" class="text-2xl">{{ form.pay_concessionary_price.label }}</label>
+                            {% else %}
+                                <label for="id_{{ form.pay_concessionary_price.name }}_0" class="text-2xl">{{ form.pay_concessionary_price.label }}</label>
+                            {% endif %}
+                            {{ form.pay_concessionary_price }}
+                            <p class="create_session__field_item_help_text w-full font-subheading font-light">{{ form.pay_concessionary_price.help_text }}</p>
+                        </div>
+                    </div>
+                    {% with starts_at_id=form.starts_at.id_for_label ends_at_id=form.ends_at.id_for_label %}
+                        {% request_calendar available_slots=available_slots durations=hosted_session.durations / %}
+                    {% endwith %}
+                    <button type="submit" class="auth_button auth_button__sessions block mt-8 mx-auto text-center" name="_preview" value="_preview">
+                        {% trans "Preview request" %}
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% pageurl session.page %}">{% trans "This session is all booked up. Head back to sessions." %}</a>
+            {% endif %}
+        {% else %}
+            <p>
+                <a href="{% pageurl session.page %}">{% trans "Oops, you're on the wrong page. Head back to sessions." %}</a>
+            </p>
+        {% endif %}
+    {% else %}
+        <p>
+            <a href="{% url 'account_login' %}">{% trans "Oops, you're on the wrong page. Log in to continue." %}</a>
+        </p>
+    {% endif %}
+{% endblock form %}

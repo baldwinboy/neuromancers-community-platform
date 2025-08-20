@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load i18n account %}
+{% load i18n account wagtailcore_tags wagtailroutablepage_tags %}
 
 {% block title %}
     Sessions
@@ -15,7 +15,7 @@
         <header class="flex flex-col justify-start items-center gap-4 w-full container mx-auto py-9 px-6 lg:px-0 lg:flex-row lg:justify-space-between">
             <h1 class="uppercase">{{ page.title }}</h1>
             {% if user.is_authenticated and perms.events.add_peersession or perms.events.add_groupsession %}
-                <a href="{{ page.url }}create/"
+                <a href="{% routablepageurl page "choose_session_type" %}"
                    class="auth_button auth_button__sessions block text-center">{% trans "Host your own session" %}</a>
             {% endif %}
         </header>
@@ -23,7 +23,7 @@
             <ul class="m-auto">
                 {% for session in sessions %}
                     <li>
-                        <a href="{{ page.url }}{{ session.pk }}">{{ session.title }}</a>
+                        <a href="{% pageurl session.page %}">{{ session.title }}</a>
                     </li>
                 {% empty %}
                     <li>No sessions yet.</li>

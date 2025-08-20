@@ -20,7 +20,7 @@
 }
 
 .hidden {
-  display: hidden;
+  display: none;
 }
 
 /* Flexbox */
@@ -301,7 +301,7 @@
     }
 
     .#{$key}\:hidden {
-      display: hidden;
+      display: none;
     }
 
     /* Flexbox */

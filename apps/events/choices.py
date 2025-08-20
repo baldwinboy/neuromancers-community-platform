@@ -15,14 +15,12 @@ class SessionRequestStatusChoices(models.IntegerChoices):
 
 class SessionAvailabilityOccurrenceChoices(models.IntegerChoices):
     """
-    Session availability may occur hourly, daily, weekly, monthly, or yearly
+    Session availability may occur hourly, daily, weekly, or monthly
     """
 
-    HOURLY = 0, _("Hourly")
-    DAILY = 1, _("Daily")
-    WEEKLY = 2, _("Weekly")
-    MONTHLY = 3, _("Monthly")
-    YEARLY = 4, _("Yearly")
+    DAILY = 0, _("Daily")
+    WEEKLY = 1, _("Weekly")
+    MONTHLY = 2, _("Monthly")
 
 
 # Filter currencies

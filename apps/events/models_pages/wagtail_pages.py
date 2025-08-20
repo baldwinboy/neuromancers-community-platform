@@ -1,71 +1,60 @@
 import heapq
+import uuid
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.db import models
-from django.shortcuts import render
+from django.http import HttpRequest
+from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from guardian.shortcuts import assign_perm
 from wagtail.admin.panels import PanelPlaceholder
-from wagtail.contrib.routable_page.models import RoutablePage, route
-from wagtail.models import Page
+from wagtail.contrib.routable_page.models import RoutablePage, path, route
 
-from apps.events.forms import GroupSessionForm, PeerSessionForm
+from apps.events.forms import (
+    GroupSessionForm,
+    PeerSessionAvailabilityForm,
+    PeerSessionForm,
+    PeerSessionRequestForm,
+)
+from apps.events.models_pages.wagtail_detail_pages import (
+    GroupSessionDetailPage,
+    PeerSessionDetailPage,
+)
 from apps.events.models_sessions.group import GroupSession
-from apps.events.models_sessions.peer import PeerSession
+from apps.events.models_sessions.peer import PeerSession, PeerSessionAvailability
 
+User = get_user_model()
 
-class PeerSessionDetailPage(Page):
-    session = models.ForeignKey(
-        PeerSession, on_delete=models.PROTECT, related_name="page"
-    )
-
-    parent_page_types = ["events.SessionsIndexPage"]
-    subpage_types = []  # No child pages under SessionDetailPage
-
-    promote_panels = [
-        PanelPlaceholder(
-            "wagtail.admin.panels.MultiFieldPanel",
-            [
-                [
-                    "show_in_menus",
-                ],
-                _("For site menus"),
-            ],
-            {},
-        ),
-    ]
-
-    def save(self, *args, **kwargs):
-        self.slug = f"peer-{self.session.pk}"
-        super().save(*args, **kwargs)
-
-
-class GroupSessionDetailPage(Page):
-    session = models.ForeignKey(
-        GroupSession, on_delete=models.PROTECT, related_name="page"
-    )
-
-    parent_page_types = ["events.SessionsIndexPage"]
-    subpage_types = []  # No child pages under SessionDetailPage
-
-    promote_panels = [
-        PanelPlaceholder(
-            "wagtail.admin.panels.MultiFieldPanel",
-            [
-                [
-                    "show_in_menus",
-                ],
-                _("For site menus"),
-            ],
-            {},
-        ),
-    ]
-
-    def save(self, *args, **kwargs):
-        self.slug = f"group-{self.session.pk}"
-        super().save(*args, **kwargs)
+SESSION_TYPE_MAP = {
+    "peer": {
+        "ModelCls": PeerSession,
+        "ModelFormCls": PeerSessionForm,
+        "PageModelCls": PeerSessionDetailPage,
+        "add_perm": "events.add_peersession",
+        "change_perm": "events.change_peersession",
+        "assign_perms": [
+            "manage_availability",
+            "schedule_session",
+            "change_peersession",
+            "delete_peersession",
+            "view_peersession",
+        ],
+    },
+    "group": {
+        "ModelCls": GroupSession,
+        "ModelFormCls": GroupSessionForm,
+        "PageModelCls": GroupSessionDetailPage,
+        "add_perm": "events.add_groupsession",
+        "change_perm": "events.change_groupsession",
+        "assign_perms": [
+            "change_groupsession",
+            "delete_groupsession",
+            "view_groupsession",
+        ],
+    },
+}
 
 
 class SessionsIndexPage(RoutablePage):
@@ -89,9 +78,9 @@ class SessionsIndexPage(RoutablePage):
         ),
     ]
 
-    @route(r"^create/$")
+    @route(r"^create/$", "choose_session_type")
     @method_decorator(login_required)
-    def choose_session_type(self, request):
+    def choose_session_type(self, request: HttpRequest):
         if not request.user.has_perm(
             "events.add_peersession"
         ) or not request.user.has_perm("events.add_groupsession"):
@@ -105,50 +94,161 @@ class SessionsIndexPage(RoutablePage):
             },
         )
 
-    @route(r"^create/peer/$")
+    @path("create/<str:session_type>/", "create_session")
+    @path("edit/<str:session_type>/<uuid:session_id>/", "edit_session")
     @method_decorator(login_required)
-    def create_peer_sesion(self, request):
-        if not request.user.has_perm("events.add_peersession"):
+    def manage_session(
+        self,
+        request: HttpRequest,
+        session_type: str | None = None,
+        session_id: uuid.UUID | None = None,
+    ):
+        if not session_type or session_type not in list(SESSION_TYPE_MAP.keys()):
             return render(request, "404.html", status=404)
+
+        session_type_map = SESSION_TYPE_MAP[session_type]
+
+        url_name = request.resolver_match.url_name
+
+        if (
+            url_name == "create_session"
+            and not request.user.has_perm(session_type_map["add_perm"])
+        ) or (
+            url_name == "edit_session"
+            and (
+                not session_id
+                or not request.user.has_perm(session_type_map["change_perm"])
+            )
+        ):
+            return render(request, "404.html", status=404)
+
+        template_name = "events/create_session.html"
+        instance = None
+
+        if url_name == "edit_session":
+            template_name = "events/edit_session.html"
+            ModelCls = session_type_map["ModelCls"]
+            try:
+                instance = ModelCls.objects.get(pk=session_id)
+            except ModelCls.DoesNotExist:
+                return render(request, "404.html", status=404)
+
+        ModelFormCls = session_type_map["ModelFormCls"]
+
         if request.method == "POST":
-            form = PeerSessionForm(request.POST)
+            form = ModelFormCls(request.POST)
+            if instance:
+                form = ModelFormCls(request.POST, instance=instance)
+                if form.is_valid():
+                    form.save()
+                    return redirect(instance.page.full_url)
+
             if form.is_valid():
-                return self._create_peer_session_page(
-                    form.cleaned_data, user=request.user
+                session_page = self._create_session_page(
+                    form.cleaned_data, request.user, session_type
                 )
-        else:
-            form = PeerSessionForm()
+                if session_page:
+                    return redirect(session_page.full_url)
+                else:
+                    return render(request, "404.html", status=404)
+
+        form = ModelFormCls()
+        if instance:
+            form = ModelFormCls(instance=instance)
+
         return render(
             request,
-            "events/create_session.html",
+            template_name,
             {
                 "page": self,
                 "form": form,
-                "session_type": _("Peer"),
+                "session_type": _(session_type.capitalize()),
             },
         )
 
-    @route(r"^create/group/$")
+    @path(
+        "availability/<uuid:session_id>/",
+        "manage_availability",
+    )
     @method_decorator(login_required)
-    def create_group_sesion(self, request):
-        if not request.user.has_perm("events.add_groupsession"):
+    def manage_availability(
+        self, request: HttpRequest, session_id: uuid.UUID | None = None
+    ):
+        try:
+            session = PeerSession.objects.get(pk=session_id)
+        except PeerSession.DoesNotExist:
             return render(request, "404.html", status=404)
+        if not request.user.has_perm("manage_availability", session):
+            return render(request, "404.html", status=404)
+        
         if request.method == "POST":
-            form = GroupSessionForm(request.POST)
+            form = PeerSessionAvailabilityForm(request.POST)
             if form.is_valid():
-                return self._create_peer_session_page(
-                    form.cleaned_data, user=request.user
-                )
+                form.save(session=session)
+                return redirect(session.page.full_url)
         else:
-            form = GroupSessionForm()
+            form = PeerSessionAvailabilityForm()
+
         return render(
             request,
-            "events/create_session.html",
-            {
-                "page": self,
-                "form": form,
-                "session_type": _("Group"),
-            },
+            "events/manage_session_availability.html",
+            {"page": self, "form": form, "hosted_session": session},
+        )
+
+    @path(
+        "availability/delete/<uuid:availability_id>/",
+        "delete_availability",
+    )
+    @method_decorator(login_required)
+    def delete_availability(
+        self, request: HttpRequest, availability_id: uuid.UUID | None = None
+    ):
+        try:
+            availability = PeerSessionAvailability.objects.get(pk=availability_id)
+        except PeerSessionAvailability.DoesNotExist:
+            return render(request, "404.html", status=404)
+
+        session = availability.session
+
+        if not request.user.has_perm("manage_availability", session):
+            return redirect("events:choose_session_type")
+
+        PeerSessionAvailability.objects.filter(pk=availability_id).delete()
+        return redirect("events:manage_availability", session_id=session.id)
+
+    @path(
+        "request/schedule/<uuid:session_id>/",
+        "request_schedule_session",
+    )
+    @method_decorator(login_required)
+    def request_schedule_session(
+        self, request: HttpRequest, session_id: uuid.UUID | None = None
+    ):
+        try:
+            session = PeerSession.objects.get(pk=session_id)
+        except PeerSession.DoesNotExist:
+            return render(request, "404.html", status=404)
+        
+        if request.method == "POST":
+            form = PeerSessionRequestForm(request.user, session, request.POST)
+            if form.is_valid():
+                if request.POST.get('_preview', None):
+                    instance = form.save(commit=False)
+                    return render(
+                        request,
+                        "events/request_schedule_session_preview.html",
+                        {"page": self, "form": form, "session_request": instance},
+                    )
+
+                form.save()
+                return redirect(session.page.full_url)
+        else:
+            form = PeerSessionRequestForm(request.user, session)
+
+        return render(
+            request,
+            "events/request_schedule_session.html",
+            {"page": self, "form": form, "hosted_session": session, "available_slots": session.available_slots},
         )
 
     def clean(self):
@@ -235,61 +335,62 @@ class SessionsIndexPage(RoutablePage):
             "filter_type": filter_type,
         }
 
-    def _create_peer_session_page(self, form_data, user, parent_page=None):
+    def _create_session_page(
+        self, form_data, user, session_type: str, parent_page=None
+    ):
+        if (session_type not in list(SESSION_TYPE_MAP.keys())) or not isinstance(
+            user, User
+        ):
+            return None
+
+        if session_type == "peer":
+            ModelCls = PeerSession
+            PageModelCls = PeerSessionDetailPage
+            add_perm = "events.add_peersession"
+            assign_perms = [
+                "manage_availability",
+                "schedule_session",
+                "change_peersession",
+                "delete_peersession",
+                "view_peersession",
+            ]
+        else:
+            ModelCls = GroupSession
+            PageModelCls = GroupSessionDetailPage
+            add_perm = "events.add_groupsession"
+            assign_perms = [
+                "change_groupsession",
+                "delete_groupsession",
+                "view_groupsession",
+            ]
+
+        if not user.has_perm(add_perm):
+            return None
+
         # Create the event instance
-        session_instance = PeerSession.objects.create(**form_data, host=user)
+        session_instance = ModelCls.objects.create(**form_data, host=user)
+        session_instance.save()
+
+        # Get or infer parent
+        if parent_page is None:
+            parent_page = SessionsIndexPage.objects.first()
+            if not parent_page:
+                raise Exception(
+                    "No SessionsIndexPage exists to add the event page under."
+                )
 
         # Assign permissions to user
-        for perm in [
-            "manage_availability",
-            "schedule_session",
-            "change_peersession",
-            "delete_peersession",
-        ]:
+        for perm in assign_perms:
             assign_perm(perm, user, session_instance)
 
         # Create the page
-        session_page = PeerSessionDetailPage(
+        session_page = PageModelCls(
             title=session_instance.title,
-            slug=f"peer-{session_instance.pk}",
+            slug=f"{session_type}-{session_instance.pk}",
             session=session_instance,
         )
-
-        # Add the page as a child of the index page
         parent_page.add_child(instance=session_page)
-
-        # Save revision
-        revision = session_page.save_revision()
-
-        # Only publish the page if the linked event is published
-        if session_page.is_session_published:
-            revision.publish()
-
-        return session_page
-
-    def _create_group_session_page(self, form_data, user, parent_page=None):
-        # Create the event instance
-        session_instance = GroupSession.objects.create(**form_data, host=user)
-
-        # Assign permissions to user
-        for perm in ["change_groupsession", "delete_groupsession"]:
-            assign_perm(perm, user, session_instance)
-
-        # Create the page
-        session_page = GroupSessionDetailPage(
-            title=session_instance.title,
-            slug=f"group-{session_instance.pk}",
-            session=session_instance,
-        )
-
-        # Add the page as a child of the index page
-        parent_page.add_child(instance=session_page)
-
-        # Save revision
-        revision = session_page.save_revision()
-
-        # Only publish the page if the linked event is published
-        if session_page.is_session_published:
-            revision.publish()
+        session_page.save_revision().publish()
+        session_page.set_url_path(parent_page)
 
         return session_page

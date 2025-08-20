@@ -27,7 +27,11 @@
         <section class="mb-4">
             <h2 class="font-light">{% trans "Workshops" %}</h2>
             <hr class="w-60" />
-            {% for event in user.get_hosted_sessions %}<p class="font-body mt-2">{{ event }}</p>{% endfor %}
+            {% for event in user.get_hosted_sessions %}
+                <a href="{{ event.page.full_url }}">
+                    <p class="font-body mt-2">{{ event }}</p>
+                </a>
+            {% endfor %}
         </section>
     </main>
 {% endblock content %}

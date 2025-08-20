@@ -45,13 +45,16 @@ class GroupSession(AbstractSession):
                 name="unique_published_group_session",
             ),
             models.CheckConstraint(
-                condition=Q(ends_at__gte=(F("starts_at") + timedelta(minutes=5))),
+                condition=Q(ends_at__gte=(F("starts_at") + timedelta(minutes=5)))
+                & Q(ends_at__lte=(F("starts_at") + timedelta(minutes=120))),
                 name="group_ends_at_gte_starts_at",
-                violation_error_message=_("Group session must last at least 5 minutes"),
+                violation_error_message=_(
+                    "Group session must last between 5 and 120 minutes"
+                ),
             ),
             models.CheckConstraint(
                 # If the session is free, access before payment can't be withheld
-                condition=Q(price=0, access_before_payment=False),
+                condition=Q(price__gt=0) | Q(access_before_payment=True),
                 name="group_access_before_payment_price_zero",
                 violation_error_message=_(
                     "Free sessions can't require access before payment"
@@ -113,6 +116,10 @@ class GroupSessionRequest(AbstractSessionRequest):
             models.UniqueConstraint(
                 fields=["attendee", "session"], name="unique_group_request"
             )
+        ]
+
+        permissions = [
+            ("approve_group_request", "Approve group request"),
         ]
 
     def __str__(self):

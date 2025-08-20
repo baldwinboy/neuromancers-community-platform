@@ -8,7 +8,7 @@ from django.utils.translation import gettext as _
 from apps.events.choices import (
     SessionAvailabilityOccurrenceChoices,
     SessionRequestStatusChoices,
-    currency_choices,
+    currency_choices
 )
 
 User = get_user_model()
@@ -80,15 +80,20 @@ class AbstractSessionAvailability(models.Model):
     starts_at = models.DateTimeField(null=True, blank=True)
     ends_at = models.DateTimeField(null=True, blank=True)
     occurrence = models.PositiveSmallIntegerField(
-        choices=SessionAvailabilityOccurrenceChoices, null=True
+        choices=SessionAvailabilityOccurrenceChoices, null=True, blank=True
     )
     occurrence_starts_at = models.DateTimeField(
-        help_text="This is the start of the date range during which the availability occurs. If occurrence is set and this field is not, the specified availbility will occur forever.",
+        help_text=_(
+            "This is the start of the date range during which the availability occurs. If occurrence is set and this field is not, the specified availbility will occur forever."
+        ),
         null=True,
     )
     occurrence_ends_at = models.DateTimeField(
-        "This is the start of the date range during which the availability occurs. If occurrence is set and this field is not, the specified availbility will occur from the start date until forever.",
+        help_text=_(
+            "This is the start of the date range during which the availability occurs. If occurrence is set and this field is not, the specified availbility will occur from the start date until forever."
+        ),
         null=True,
+        verbose_name=_("Occurrence ends at"),
     )
 
     class Meta:
@@ -98,21 +103,27 @@ class AbstractSessionAvailability(models.Model):
 class AbstractSessionRequest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.PositiveSmallIntegerField(
-        help_text="By default, this will be pending unless the session does not require approval, then it will be automatically approved. If the request is left pending until the start of the session, the request will be automatically rejected",
+        help_text=_("By default, this will be pending unless the session does not require approval, then it will be automatically approved. If the request is left pending until the start of the session, the request will be automatically rejected"),
         choices=SessionRequestStatusChoices,
         default=SessionRequestStatusChoices.PENDING,
     )
     rejection_message = models.TextField(
-        help_text="This message will be displayed to the attendee if their request is rejected if set",
+        help_text=_("This message will be displayed to the attendee if their request is rejected if set"),
         null=True,
     )
     stripe_payment_intent_id = models.CharField(
-        help_text="This is set when the user pays for a session",
+        help_text=_("This is set when the user pays for a session"),
         null=True,
         max_length=320,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    pay_concessionary_price = models.BooleanField(
+        help_text=_(
+            "You'll be able to pay a reduced price if the session peer approves."
+        ),
+        default=False
+    )
 
     class Meta:
         abstract = True

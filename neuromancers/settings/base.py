@@ -15,6 +15,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 
 import environ
+from django_components import ComponentsSettings
 
 from .currencies import currencies
 from .name_blacklist import name_blacklist
@@ -64,6 +65,7 @@ DEFAULT_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    "django.forms",
 ]
 
 THIRD_PARTY_APPS = [
@@ -81,6 +83,8 @@ THIRD_PARTY_APPS = [
     "heroicons",
     # For static file compression
     "compressor",
+    # For reusable components
+    "django_components",
 ]
 
 PROJECT_APPS = [
@@ -113,7 +117,6 @@ TEMPLATES = [
         "DIRS": [
             os.path.join(BASE_DIR, "templates"),
         ],
-        "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -123,9 +126,27 @@ TEMPLATES = [
                 "wagtailmenus.context_processors.wagtailmenus",
                 "apps.core.context_processors.unverified_email_warning",
             ],
+            "loaders": [
+                (
+                    "django.template.loaders.cached.Loader",
+                    [
+                        # Default Django loader
+                        "django.template.loaders.filesystem.Loader",
+                        # Including this is the same as APP_DIRS=True
+                        "django.template.loaders.app_directories.Loader",
+                        # Components loader
+                        "django_components.template_loader.Loader",
+                    ],
+                )
+            ],
+            "builtins": [
+                "django_components.templatetags.component_tags",
+            ],
         },
     },
 ]
+
+FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 WSGI_APPLICATION = "neuromancers.wsgi.application"
 
@@ -169,7 +190,7 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -179,6 +200,7 @@ STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     "compressor.finders.CompressorFinder",
+    "django_components.finders.ComponentsFileSystemFinder",
 ]
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "assets")]
@@ -315,3 +337,10 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_USE_TLS = True
+
+# Django components
+COMPONENTS = ComponentsSettings(
+    tag_formatter="django_components.component_shorthand_formatter",
+    dirs=[os.path.join(BASE_DIR, "templates/includes")],
+    reload_on_file_change=DEBUG,
+)

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% load i18n account wagtailroutablepage_tags %}
+
+{% block title %}
+    {{ page.session.title }}
+{% endblock title %}
+
+{% block description %}
+    {{ page.session.description }}
+{% endblock description %}
+
+{% block body_class %}
+    flex flex-col sessions_view
+{% endblock body_class %}
+
+{% block content %}
+    <div class="flex flex-col flex-grow items-center gap-4 w-full h-full">
+        <div class="w-full bg-lightAccent  py-9 ">
+            <header class="flex flex-col justify-start items-center gap-4 w-full container mx-auto px-6 lg:px-0 lg:flex-row lg:justify-space-between">
+                <h1 class="uppercase">{{ page.session.title }}</h1>
+                {% if user.is_authenticated and perms.events.change_peersession or perms.events.change_groupsession %}
+                    <div class="flex gap-4">
+                        <a href="{% routablepageurl sessions_index "edit_session" session_type=page.session_type session_id=page.session.id %}"
+                           class="auth_button auth_button__sessions block text-center">{% trans "Edit" %}</a>
+                        {% if page.session_type == "peer" %}
+                            <a href="{% routablepageurl sessions_index "manage_availability" session_id=page.session.id %}"
+                               class="auth_button auth_button__sessions block text-center">{% trans "Manage availability" %}</a>
+                        {% endif %}
+                        {% if form %}
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="hidden" aria-hidden="true">{{ form.is_published }}</div>
+                                <button class="auth_button auth_button__sessions block text-center">
+                                    {% if page.session.is_published %}
+                                        {% trans "Unpublish" %}
+                                    {% else %}
+                                        {% trans "Publish" %}
+                                    {% endif %}
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </header>
+            <a href="{% url "accounts_user_profile" username=page.session.host.username %}">
+                <h2 class="w-full container mx-auto px-6 text-darkAccent lg:px-0">{{ page.session.host }}</h2>
+            </a>
+        </div>
+        <main class="flex flex-col w-full h-full container mx-auto py-9 px-6 lg:px-0">
+            {% trans "Introduction" as accordion_heading %}
+            {% with accordion_name="details-group" accordion_classes="view_session__details_group" %}
+                {% accordion %}
+                <p class="font-body">{{ page.session.description }}</p>
+            {% endaccordion %}
+        {% endwith %}
+        {% if page.session_type == "peer" %}
+            <a href="{% routablepageurl sessions_index "request_schedule_session" session_id=page.session.id %}"
+               class="auth_button auth_button__sessions block text-center mt-8 mx-auto">{% trans "Schedule a session" %}</a>
+        {% else %}
+            <a href="#"
+               class="auth_button auth_button__sessions block text-center mt-8 mx-auto">{% trans "Join session" %}</a>
+        {% endif %}
+    </main>
+</div>
+{% endblock content %}

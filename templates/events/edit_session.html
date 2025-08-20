@@ -1,18 +1,19 @@
 {% extends "events/create_base.html" %}
 
-{% load i18n account wagtailcore_tags wagtailroutablepage_tags %}
+{% load i18n account guardian_tags %}
 
 {% block title %}
-    Host a {{ session_type }} session
+    Update {{ hosted_session.title }}
 {% endblock title %}
 
 {% block form_title %}
-    {% blocktrans with st=session_type %}Host a {{ st }} Session{% endblocktrans %}
+    {% blocktrans with ft=hosted_session.title %}Update {{ ft }}{% endblocktrans %}
 {% endblock form_title %}
 
 {% block form %}
     {% if user.is_authenticated %}
-        {% if perms.events.add_groupsession or perms.events.add_groupsession %}
+        {% get_obj_perms request.user for hosted_session as "session_perms" %}
+        {% if "change_peersession" in session_perms or "change_groupsession" in session_perms %}
             <form method="post" class="w-full">
                 {% csrf_token %}
                 {{ form.non_field_errors }}
@@ -38,9 +39,13 @@
             {% endfor %}
             <button type="submit"
                     class="auth_button auth_button__sessions block mt-8 mx-auto text-center">
-                    {% trans "Add session" %}
+                    {% trans "Update session" %}
             </button>
         </form>
+    {% else %}
+        <p>
+            <a href="{% pageurl page %}">{% trans "Oops, you're on the wrong page. Head back to sessions." %}</a>
+        </p>
     {% endif %}
 {% else %}
     <p>
@@ -48,10 +53,3 @@
     </p>
 {% endif %}
 {% endblock form %}
-
-{% block redirect_help %}
-    <p>
-        <a href="{% routablepageurl page "choose_session_type" %}"
-           class="link_alt font-body text-sm">{% trans "Want to host a different type of workshop? Click here." %}</a>
-    </p>
-{% endblock redirect_help %}

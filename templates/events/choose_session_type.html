@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load i18n account %}
+{% load i18n account wagtailroutablepage_tags %}
 
 {% block title %}
     Host a session
@@ -21,7 +21,7 @@
                         {% if perms.events.add_peersession %}
                             <li class="lg:w-1/2">
                                 <a class="link_alt flex flex-col items-center gap-2 text-center"
-                                   href="{{ page.url }}create/peer/">
+                                   href="{% routablepageurl page "create_session" session_type="peer" %}">
 
                                     {% include "includes/icon.html" with icon="handshake" iconclass="icon shake-vertical" width=128 height=128 %}
                                     <span class="pt-5 text-5xl uppercase">{% trans "Peer" %}</span>
@@ -32,7 +32,7 @@
                         {% if perms.events.add_groupsession %}
                             <li class="lg:w-1/2">
                                 <a class="link_alt flex flex-col items-center gap-2 text-center"
-                                   href="{{ page.url }}create/group/">
+                                   href="{% routablepageurl page "create_session" session_type="group" %}">
 
                                     {% include "includes/icon.html" with icon="multiple-user" iconclass="icon shake-vertical" width=128 height=128 %}
                                     <span class="pt-5 text-5xl uppercase">{% trans "Group" %}</span>
@@ -44,5 +44,7 @@
                 </main>
             </div>
         {% endif %}
+    {% else %}
+        <a href="{% url 'account_login' %}">{% trans "Oops, you're on the wrong page. Log in to continue." %}</a>
     {% endif %}
 {% endblock content %}
