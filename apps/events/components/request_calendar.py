@@ -39,7 +39,7 @@ class RequestCalendar(Component):
 
     def get_template_data(self, args, kwargs, slots, context):
         calendar_data = get_calendar_for_availability(self.kwargs["available_slots"])
-        durations = [int(i) for i in self.kwargs["durations"][1:-1].split(", ")]
+        durations = [int(i) for i in self.kwargs["durations"].split(",")]
         return {
             "calendar_data": calendar_data,
             "available_slots": self.kwargs["available_slots"],

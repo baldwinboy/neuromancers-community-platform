@@ -11,6 +11,7 @@ class SessionRequestStatusChoices(models.IntegerChoices):
     APPROVED = 0, _("Approved")
     REJECTED = 1, _("Rejected")
     PENDING = 2, _("Pending")
+    WITHDRAWN = 3, _("Withdrawn")
 
 
 class SessionAvailabilityOccurrenceChoices(models.IntegerChoices):

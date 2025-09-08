@@ -31,13 +31,19 @@ var toggleSelectedOptions = (button) => {
     selected.replaceChildren();
 
     Array.from(select.querySelectorAll('option[selected]')).map(opt => {
-        const button = createSelectedButton(toggleSelectedOptions, opt.textContent, select.dataset.removeTitle);
-        selected.appendChild(button);
+        const _button = createSelectedButton(toggleSelectedOptions, opt.textContent, select.dataset.removeTitle);
+        const dropdown = button.closest(".typed_select_multiple__options_group");
+        _button.dataset.selectName = select.name;
+        _button.dataset.outputId = selected.id;
+        _button.dataset.value = opt.value;
+        if (dropdown && !dropdown.classList.contains("hidden")) dropdown.classList.add("hidden");
+        selected.appendChild(_button);
     });
 }
 
 const searchInput = (event, groups) => {
     const search = event.target.value;
+    console.log(search);
 
     // Find value in groups
     groups.forEach((group) => {
@@ -71,6 +77,7 @@ const inputKeySelect = (event, groups) => {
                     const firstButton = visibleItems[0].querySelector('button');
                     if (firstButton) {
                         firstButton.click(); // Trigger selection
+                        group.classList.add("hidden");
                     }
                     throw new Error("Match found")
                 }
@@ -78,31 +85,54 @@ const inputKeySelect = (event, groups) => {
         } catch {
             // noop
         }
+        return;
     }
+
+    searchInput(event, groups);
 }
 
-document.addEventListener('input', function(event) {
-    const inputEl = event.target;
+const renderSelectedButtons = (wrapperEl) => {
+    const select = wrapperEl.querySelector('select');
+    const selected = wrapperEl.querySelector('.typed_select_multiple__selected');
+    if (!(select && selected)) return;
 
-    if (!event.target.matches('[data-id="typed_select_multiple__input"]')) return;
+    selected.replaceChildren();
+
+    Array.from(select.querySelectorAll('option[selected]')).forEach(opt => {
+        const button = createSelectedButton(toggleSelectedOptions, opt.textContent, select.dataset.removeTitle);
+        button.dataset.selectName = select.name;
+        button.dataset.outputId = selected.id;
+        button.dataset.value = opt.value;
+        selected.appendChild(button);
+    });
+}
+
+const initializeInput = (inputEl) => {
     if (initializedInputs.has(inputEl)) return;
     initializedInputs.add(inputEl);
 
     const wrapperEl = inputEl.parentElement;
     const groups = wrapperEl.querySelectorAll('.typed_select_multiple__options_group');
-    const select = wrapperEl.querySelector('select');
-    const selected = wrapperEl.querySelector('.typed_select_multiple__selected');
 
-    if(select && selected) {
-        Array.from(select.querySelectorAll('option[selected]')).map(opt => {
-            const button = createSelectedButton(toggleSelectedOptions, opt.textContent, select.dataset.removeTitle);
-            button.dataset.selectName = select.name;
-            button.dataset.outputId = selected.id;
-            button.dataset.value = opt.value;
-            selected.appendChild(button);
-        });
-    }
+    renderSelectedButtons(wrapperEl);
 
-    inputEl.addEventListener("input", (event) => searchInput(event, groups), { passive: true });
-    inputEl.addEventListener("keydown", (event) => inputKeySelect(event, groups));
+    inputEl.addEventListener("input", (event) => {
+        searchInput(event, groups);
+        renderSelectedButtons(wrapperEl);
+    }, { passive: true });
+
+    inputEl.addEventListener("keyup", (event) => inputKeySelect(event, groups));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-id="typed_select_multiple__input"]').forEach(inputEl => {
+        initializeInput(inputEl);
+    });
+});
+
+document.addEventListener('input', function(event) {
+    const inputEl = event.target;
+    if (!inputEl.matches('[data-id="typed_select_multiple__input"]')) return;
+
+    initializeInput(inputEl);
 });

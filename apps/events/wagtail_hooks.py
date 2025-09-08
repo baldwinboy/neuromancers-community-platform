@@ -3,7 +3,7 @@ from guardian.admin import GuardedModelAdmin
 from wagtail.signals import page_published
 from wagtail_modeladmin.options import ModelAdmin, ModelAdminGroup, modeladmin_register
 
-from .models import GroupSession, PeerSession, SessionsIndexPage, PeerSessionRequest
+from .models import GroupSession, PeerSession, SessionsIndexPage, PeerSessionRequest, GroupSessionRequest
 
 
 @receiver(page_published)
@@ -35,7 +35,14 @@ class PeerSessionRequestAdmin(ModelAdmin, GuardedModelAdmin):
     model = PeerSessionRequest
     menu_icon = "mail"
     list_display = ("session", "attendee", "starts_at", "ends_at")
-    list_filter = ("session", "attendee", "starts_at", "ends_at")
+    list_filter = ("session", "attendee", "starts_at", "ends_at", "status")
+    search_fields = ("session", "attendee",)
+
+class GroupSessionRequestAdmin(ModelAdmin, GuardedModelAdmin):
+    model = GroupSessionRequest
+    menu_icon = "folder-open-1"
+    list_display = ("session", "attendee")
+    list_filter = ("session", "attendee", "status")
     search_fields = ("session", "attendee",)
 
 
@@ -43,7 +50,7 @@ class SessionsGroup(ModelAdminGroup):
     menu_label = "Sessions"
     menu_icon = "calendar-alt"
     menu_order = 200  # will put in 3rd place (000 being 1st, 100 2nd)
-    items = (PeerSessionAdmin, PeerSessionRequestAdmin, GroupSessionAdmin)
+    items = (PeerSessionAdmin, PeerSessionRequestAdmin, GroupSessionAdmin, GroupSessionRequestAdmin)
 
 
 modeladmin_register(SessionsGroup)

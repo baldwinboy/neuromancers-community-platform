@@ -20975,7 +20975,7 @@ h2 {
   }
 }
 .accordion[open] + .accordion_content {
-  max-height: 100vh;
+  max-height: 200vh;
   overflow: unset;
   transition: max-height 400ms ease-out, border 0ms linear;
 }
@@ -21153,6 +21153,22 @@ h2 {
   background: transparent;
   color: hsl(0, 100%, 0.78%);
 }
+.auth_button__sessions_alt {
+  border: 1px solid hsl(0, 100%, 0.78%);
+  background: transparent;
+  color: hsl(0, 100%, 0.78%);
+}
+.auth_button__sessions_alt:not([disabled]):hover, .auth_button__sessions_alt:not([disabled]):focus-visible {
+  border: 1px solid transparent;
+  background: hsl(0, 100%, 0.78%);
+  color: hsl(343.29, 95.89%, 71.37%);
+}
+.auth_button__sessions_disabled, .auth_button__sessions:disabled {
+  pointer-events: none;
+  background: hsl(0, 100%, 0.78%);
+  color: hsl(343.29, 95.89%, 71.37%);
+  opacity: 0.5;
+}
 
 .auth_panel {
   border-radius: 10px;
@@ -21201,15 +21217,17 @@ h2 {
   top: 50%;
   position: absolute;
   left: 15px;
-  content: " ";
+  content: none;
   height: 33px;
   width: 2px;
   background-color: hsl(343.29, 95.89%, 71.37%);
 }
-.auth_panel .auth_form p input[type=checkbox]:checked:before {
+.auth_panel .auth_form p input[type=checkbox]:checked:checked:before {
+  content: " ";
   transform: translate(-50%, -50%) rotate(45deg);
 }
-.auth_panel .auth_form p input[type=checkbox]:checked:after {
+.auth_panel .auth_form p input[type=checkbox]:checked:checked:after {
+  content: " ";
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 .auth_panel .auth_form p input[type=checkbox]:not([disabled]):hover, .auth_panel .auth_form p input[type=checkbox]:not([disabled]):focus-visible {
@@ -21219,15 +21237,17 @@ h2 {
   top: 50%;
   position: absolute;
   left: 15px;
-  content: " ";
+  content: none;
   height: 33px;
   width: 2px;
   background-color: hsl(343.29, 95.89%, 71.37%);
 }
-.auth_panel .auth_form p input[type=checkbox]:not([disabled]):hover:before, .auth_panel .auth_form p input[type=checkbox]:not([disabled]):focus-visible:before {
+.auth_panel .auth_form p input[type=checkbox]:not([disabled]):hover:checked:before, .auth_panel .auth_form p input[type=checkbox]:not([disabled]):focus-visible:checked:before {
+  content: " ";
   transform: translate(-50%, -50%) rotate(45deg);
 }
-.auth_panel .auth_form p input[type=checkbox]:not([disabled]):hover:after, .auth_panel .auth_form p input[type=checkbox]:not([disabled]):focus-visible:after {
+.auth_panel .auth_form p input[type=checkbox]:not([disabled]):hover:checked:after, .auth_panel .auth_form p input[type=checkbox]:not([disabled]):focus-visible:checked:after {
+  content: " ";
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 .auth_panel .auth_form p label {
@@ -21439,17 +21459,19 @@ h2 {
   top: 50%;
   position: absolute;
   left: 15px;
-  content: " ";
+  content: none;
   height: 33px;
   width: 2px;
   background-color: hsl(0, 100%, 0.78%);
 }
-.create_session__field_item input[type=checkbox]:checked:before,
-.manage_availability__form input[type=checkbox]:checked:before {
+.create_session__field_item input[type=checkbox]:checked:checked:before,
+.manage_availability__form input[type=checkbox]:checked:checked:before {
+  content: " ";
   transform: translate(-50%, -50%) rotate(45deg);
 }
-.create_session__field_item input[type=checkbox]:checked:after,
-.manage_availability__form input[type=checkbox]:checked:after {
+.create_session__field_item input[type=checkbox]:checked:checked:after,
+.manage_availability__form input[type=checkbox]:checked:checked:after {
+  content: " ";
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 .create_session__field_item input[type=checkbox]:not([disabled]):hover, .create_session__field_item input[type=checkbox]:not([disabled]):focus-visible,
@@ -21465,19 +21487,21 @@ h2 {
   top: 50%;
   position: absolute;
   left: 15px;
-  content: " ";
+  content: none;
   height: 33px;
   width: 2px;
   background-color: hsl(0, 100%, 0.78%);
 }
-.create_session__field_item input[type=checkbox]:not([disabled]):hover:before, .create_session__field_item input[type=checkbox]:not([disabled]):focus-visible:before,
-.manage_availability__form input[type=checkbox]:not([disabled]):hover:before,
-.manage_availability__form input[type=checkbox]:not([disabled]):focus-visible:before {
+.create_session__field_item input[type=checkbox]:not([disabled]):hover:checked:before, .create_session__field_item input[type=checkbox]:not([disabled]):focus-visible:checked:before,
+.manage_availability__form input[type=checkbox]:not([disabled]):hover:checked:before,
+.manage_availability__form input[type=checkbox]:not([disabled]):focus-visible:checked:before {
+  content: " ";
   transform: translate(-50%, -50%) rotate(45deg);
 }
-.create_session__field_item input[type=checkbox]:not([disabled]):hover:after, .create_session__field_item input[type=checkbox]:not([disabled]):focus-visible:after,
-.manage_availability__form input[type=checkbox]:not([disabled]):hover:after,
-.manage_availability__form input[type=checkbox]:not([disabled]):focus-visible:after {
+.create_session__field_item input[type=checkbox]:not([disabled]):hover:checked:after, .create_session__field_item input[type=checkbox]:not([disabled]):focus-visible:checked:after,
+.manage_availability__form input[type=checkbox]:not([disabled]):hover:checked:after,
+.manage_availability__form input[type=checkbox]:not([disabled]):focus-visible:checked:after {
+  content: " ";
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 .create_session__field_item select,

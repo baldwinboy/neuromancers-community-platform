@@ -1,5 +1,5 @@
 {% load i18n %}
-<fieldset class="typed_select_multiple" data-x="{{ widget.value }}">
+<fieldset class="typed_select_multiple">
     {# djlint:off #}
     <input type="text" name="{{ widget.name }}__input" {% include "django/forms/widgets/attrs.html" %} pattern="{{ widget.pattern }}" data-id="typed_select_multiple__input"></input>
     {# djlint:on #}

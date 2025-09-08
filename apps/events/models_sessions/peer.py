@@ -1,13 +1,17 @@
 import uuid
+from decimal import Decimal
 from datetime import timedelta, datetime
 
 from dateutil.relativedelta import relativedelta
-from django.core.validators import MinValueValidator
+from django.core.validators import (MinValueValidator, MaxValueValidator)
 from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext as _
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from guardian.shortcuts import (assign_perm, remove_perm)
+
+from apps.accounts.models import UserGroup
 from apps.events.choices import (
     SessionAvailabilityOccurrenceChoices,
     SessionRequestStatusChoices,
@@ -34,20 +38,22 @@ class PeerSession(AbstractSession):
         ),
         max_length=320,
     )
-    per_hour_price = models.DecimalField(
-        max_digits=7,
-        decimal_places=2,
-        validators=[MinValueValidator(0, message=_("Cannot charge negative values"))],
+    per_hour_price = models.IntegerField(
+        validators=[
+            MinValueValidator(0, message=_("Cannot charge negative values")),
+            MaxValueValidator(9_999_999, message=_("Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."))
+        ],
         help_text=_(
             "Support seekers will be charged this price based on the duration of their requested session if set"
         ),
         null=True,
         blank=True,
     )
-    concessionary_per_hour_price = models.DecimalField(
-        max_digits=7,
-        decimal_places=2,
-        validators=[MinValueValidator(0, message=_("Cannot charge negative values"))],
+    concessionary_per_hour_price = models.IntegerField(
+        validators=[
+            MinValueValidator(0, message=_("Cannot charge negative values")),
+            MaxValueValidator(9_999_999, message=_("Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."))
+        ],
         help_text=_(
             "Support seekers will be charged this price based on the duration of their requested session if set and if they are allowed to pay a reduced price"
         ),
@@ -81,6 +87,43 @@ class PeerSession(AbstractSession):
             ("schedule_session", "Schedule session"),
         ]
 
+    @property
+    def durations_display(self):
+        if not self.durations:
+            return []
+
+        durations = []
+        for part in self.durations.split(","):
+            try:
+                total_minutes = int(part.strip())
+            except ValueError:
+                continue  # ignore invalid parts
+
+            hours = total_minutes // 60
+            minutes = total_minutes % 60
+
+            if hours > 0 and minutes > 0:
+                duration_str = f"{hours} hour{'s' if hours > 1 else ''} and {minutes} minute{'s' if minutes > 1 else ''}"
+            elif hours > 0:
+                duration_str = f"{hours} hour{'s' if hours > 1 else ''}"
+            else:
+                duration_str = f"{minutes} minute{'s' if minutes != 1 else ''}"
+
+            durations.append(duration_str)
+
+        return durations
+
+    @property
+    def per_hour_price_display(self):
+        return "{:.2f}".format(self.per_hour_price / 100)
+    
+    @property
+    def concessionary_per_hour_price_display(self):
+        if not self.concessionary_price:
+            return "{:.2f}".format(0)
+
+        return "{:.2f}".format(self.concessionary_price / 100)
+    
     @property
     def currency_symbol(self):
         _currency = filtered_currencies.get(self.currency, None)
@@ -173,6 +216,36 @@ class PeerSession(AbstractSession):
                     slots.append((base_start, base_end))
 
         return slots
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        support_seeker_group = UserGroup.objects.get(name="Support Seeker")
+
+        if not support_seeker_group:
+            return
+        
+        support_seeker_perms = [
+            "view_peersession",
+            "request_session",
+        ]
+        for perm in support_seeker_perms:
+            if self.is_published:
+                assign_perm(perm, support_seeker_group, self)
+            else:
+                remove_perm(perm, support_seeker_group, self)
+
+        perms = [
+            "manage_availability",
+            "schedule_session",
+            "change_peersession",
+            "delete_peersession",
+            "view_peersession",
+        ]
+
+        if self.host:
+            for perm in perms:
+                assign_perm(perm, self.host, self)
 
 class PeerSessionUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(PeerSession, on_delete=models.CASCADE)
@@ -281,16 +354,20 @@ class PeerSessionRequest(AbstractSessionRequest):
             models.UniqueConstraint(
                 fields=["attendee", "session", "starts_at"],
                 name="unique_peer_session_request",
+                violation_error_message=_(
+                    "Attendees may only request once per session if an existing request starts at the same time."
+                ),
             ),
             models.CheckConstraint(
                 condition=Q(ends_at__gte=(F("starts_at") + timedelta(minutes=5))),
-                name="peer_ends_at_gte_starts_at",
+                name="peer_request_ends_at_gte_starts_at",
                 violation_error_message=_("Peer session must last at least 5 minutes"),
             ),
         ]
 
         permissions = [
             ("approve_peer_request", "Approve peer request"),
+            ("withdraw_peer_request", "Withdraw peer request"),
         ]
 
     def __str__(self):
@@ -300,17 +377,37 @@ class PeerSessionRequest(AbstractSessionRequest):
     def price(self):
         _price = self.session.price or 0
         duration_hrs = (self.ends_at - self.starts_at).total_seconds() / 3600
+        
+        if self.session.per_hour_price:
+            return "{:.2f}".format((Decimal(duration_hrs) * self.session.per_hour_price) / Decimal(100))
+    
+        return "{:.2f}".format(_price / Decimal(100))
+    
+    @property
+    def concessionary_price(self):
+        _price = self.session.price or 0
+        duration_hrs = (self.ends_at - self.starts_at).total_seconds() / 3600
 
         if self.pay_concessionary_price:
             if self.session.concessionary_per_hour_price:
-                return duration_hrs * self.session.concessionary_per_hour_price
+                return "{:.2f}".format((Decimal(duration_hrs) * self.session.concessionary_per_hour_price) / Decimal(100))
             
-            return self.session.concessionary_price or 0
+            return "{:.2f}".format((self.session.concessionary_price or 0) / Decimal(100) )
         
-        if self.session.per_hour_price:
-            return duration_hrs * self.session.per_hour_price
+        return "{:.2f}".format(_price / Decimal(100))
     
-        return _price
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if not self.attendee or not self.session or not self.session.host:
+            return
+        
+        assign_perm("approve_peer_request", self.session.host, self)
+        assign_perm("withdraw_peer_request", self.attendee, self)
+
+        if not self.session.require_request_approval and self.status == SessionRequestStatusChoices.PENDING:
+            self.status = SessionRequestStatusChoices.APPROVED
+
 
 class PeerSessionRequestUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(PeerSessionRequest, on_delete=models.CASCADE)

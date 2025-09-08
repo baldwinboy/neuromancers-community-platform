@@ -4,7 +4,7 @@ from django.utils.translation import gettext as _
 from wagtail.admin.panels import FieldPanel, PanelPlaceholder
 from wagtail.models import Page
 
-from apps.events.forms import GroupSessionPublishForm, PeerSessionPublishForm
+from apps.events.forms import GroupSessionPublishForm, GroupSessionRequestForm, PeerSessionPublishForm
 from apps.events.models_sessions.group import GroupSession
 from apps.events.models_sessions.peer import PeerSession
 
@@ -117,6 +117,22 @@ class GroupSessionDetailPage(Page):
             and request.user.has_perm("change_groupsession", self.session)
         ):
             context["form"] = GroupSessionPublishForm(instance=self.session)
+
+
+        if (
+            self.session
+            and request.user
+            and request.user.is_authenticated
+            and request.user.has_perm("request_join_session", self.session)
+            and not request.user.has_perm("change_groupsession", self.session)
+        ):
+            attendee_requested = self.session.attendee_requested(request.user)
+
+            if not attendee_requested:
+                context["form"] = GroupSessionRequestForm(request.user, self.session, instance=self.session)
+                
+            context["attendee_requested"] = attendee_requested
+
         context["sessions_index"] = self.get_parent().specific
         return context
 
@@ -142,6 +158,19 @@ class GroupSessionDetailPage(Page):
             and request.method == "POST"
         ):
             form = GroupSessionPublishForm(request.POST, instance=self.session)
+            if form.is_valid():
+                form.save()
+
+        attendee_requested = self.session.attendee_requested(request.user)
+        # Allow users to join group session
+        if (
+            request.user.is_authenticated
+            and request.user.has_perm("request_join_session", self.session)
+            and not request.user.has_perm("change_groupsession", self.session)
+            and not attendee_requested
+            and request.method == "POST"
+        ):
+            form = GroupSessionRequestForm(request.user, self.session, request.POST)
             if form.is_valid():
                 form.save()
 

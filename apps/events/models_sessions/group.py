@@ -1,12 +1,13 @@
 from datetime import timedelta
 
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext as _
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from guardian.shortcuts import (assign_perm, remove_perm)
 
-from apps.events.choices import SessionRequestStatusChoices
+from apps.accounts.models import UserGroup
+from apps.events.choices import (SessionRequestStatusChoices, filtered_currencies)
 
 from .abstract import AbstractSession, AbstractSessionRequest, User
 
@@ -43,6 +44,9 @@ class GroupSession(AbstractSession):
             models.UniqueConstraint(
                 fields=["host", "title", "is_published"],
                 name="unique_published_group_session",
+                violation_error_message=_(
+                    "Published sessions must be unique. Unpublish existing sessions with the same title or change the title of this session."
+                ),
             ),
             models.CheckConstraint(
                 condition=Q(ends_at__gte=(F("starts_at") + timedelta(minutes=5)))
@@ -66,34 +70,57 @@ class GroupSession(AbstractSession):
             ("request_join_session", "Request join session"),
         ]
 
-    def validate_unique(self, *args, **kwargs):
-        """
-        Published group sessions should not conflict with existing published group sessions from the same host
-        """
-        overlapping_requests = GroupSession.objects.filter(
-            Q(starts_at__lt=self.ends_at, ends_at__gt=self.starts_at)
-            | Q(starts_at__gte=self.starts_at, ends_at__lte=self.ends_at),
-            host=self.host,
-            is_published=True,
-        )
+    @property
+    def currency_symbol(self):
+        _currency = filtered_currencies.get(self.currency, None)
 
-        if overlapping_requests.exists():
-            raise ValidationError(
-                _(
-                    "Published group sessions should not conflict with existing published group sessions from the same host"
-                )
-            )
+        if not _currency:
+            return ""
+        
+        return _currency.get("symbol", None)
 
-        super(GroupSession, self).validate_unique(*args, **kwargs)
-
-    def get_attendees(self):
+    @property
+    def attendees(self):
         """
         Gets attendees based on support seekers who have requested to join and have been approved
         """
         return self.support_seekers.filter(
             requests__status=SessionRequestStatusChoices.APPROVED
         )
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
+        support_seeker_group = UserGroup.objects.get(name="Support Seeker")
+
+        if not support_seeker_group:
+            return
+        
+        support_seeker_perms = [
+            "view_groupsession",
+            "request_join_session",
+        ]
+        for perm in support_seeker_perms:
+            if self.is_published:
+                assign_perm(perm, support_seeker_group, self)
+            else:
+                remove_perm(perm, support_seeker_group, self)
+
+        perms = [
+            "change_groupsession",
+            "delete_groupsession",
+            "view_groupsession",
+        ]
+
+        if self.host:
+            for perm in perms:
+                assign_perm(perm, self.host, self)
+
+    def attendee_requested(self, user):
+        return self.requests.filter(attendee=user).exists()
+    
+    def attendee_approved(self, user):
+        return self.requests.filter(attendee=user, status=SessionRequestStatusChoices.APPROVED).exists()
 
 class GroupSessionUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(GroupSession, on_delete=models.CASCADE)
@@ -114,17 +141,33 @@ class GroupSessionRequest(AbstractSessionRequest):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["attendee", "session"], name="unique_group_request"
-            )
+                fields=["attendee", "session"],
+                name="unique_group_request",
+                violation_error_message=_(
+                    "Attendees may only request once per session."
+                ),
+            ),
         ]
 
         permissions = [
             ("approve_group_request", "Approve group request"),
+            ("withdraw_group_request", "Withdraw group request"),
         ]
 
     def __str__(self):
         return f"{self.session.title} for {self.attendee.username}"
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if not self.attendee or not self.session or not self.session.host:
+            return
+        
+        assign_perm("approve_group_request", self.session.host, self)
+        assign_perm("withdraw_group_request", self.attendee, self)
+
+        if not self.session.require_request_approval and self.status == SessionRequestStatusChoices.PENDING:
+            self.status = SessionRequestStatusChoices.APPROVED
 
 class GroupSessionRequestUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(GroupSessionRequest, on_delete=models.CASCADE)

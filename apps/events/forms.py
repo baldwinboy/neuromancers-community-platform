@@ -1,5 +1,7 @@
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 from django import forms
+from django.core.validators import MinValueValidator
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
@@ -7,7 +9,7 @@ from apps.core.widgets import TypedSelectMultiple
 from apps.events.choices import SessionRequestStatusChoices
 
 from .mixins import GroupedFormMixin
-from .models_sessions.group import GroupSession
+from .models_sessions.group import GroupSession, GroupSessionRequest
 from .models_sessions.peer import (
     PeerSession,
     PeerSessionAvailability,
@@ -17,6 +19,36 @@ from .models_sessions.peer import (
 DURATIONS = [[_("Minutes"), list(zip(range(5, 121), range(5, 121)))]]
 
 class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
+    host = forms.CharField(required=False)
+    price = forms.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        validators=[MinValueValidator(0, message=_("Cannot charge negative values"))],
+    )
+    concessionary_price = forms.DecimalField(
+        required=False,
+        max_digits=7,
+        decimal_places=2,
+        validators=[MinValueValidator(0, message=_("Cannot charge negative values"))],
+    )
+    per_hour_price = forms.DecimalField(
+        required=False,
+        max_digits=7,
+        decimal_places=2,
+        validators=[MinValueValidator(0, message=_("Cannot charge negative values"))],
+        help_text=_(
+            "Support seekers will be charged this price based on the duration of their requested session if set"
+        ),
+    )
+    concessionary_per_hour_price = forms.DecimalField(
+        required=False,
+        max_digits=7,
+        decimal_places=2,
+        validators=[MinValueValidator(0, message=_("Cannot charge negative values"))],
+        help_text=_(
+            "Support seekers will be charged this price based on the duration of their requested session if set"
+        ),
+    )
     durations = forms.TypedMultipleChoiceField(
         coerce=int,
         choices=DURATIONS,
@@ -37,6 +69,7 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
     class Meta:
         model = PeerSession
         fields = [
+            "host",
             "title",
             "description",
             "durations",
@@ -69,12 +102,35 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
         ),
     ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, host, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        self.initial["host"] = host
 
-        # Convert comma-separated string from model to a list of ints for the form
         if self.instance and self.instance.pk:
+            # Convert price from integer to decimal
+            price_decimal = Decimal(self.instance.price) / Decimal(100)
+            price_decimal = price_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            self.initial["price"] = price_decimal
+
+            if self.instance.concessionary_price:
+                price_decimal = Decimal(self.instance.concessionary_price) / Decimal(100)
+                price_decimal = price_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                self.initial["concessionary_price"] = price_decimal
+
+            if self.instance.per_hour_price:
+                price_decimal = Decimal(self.instance.per_hour_price) / Decimal(100)
+                price_decimal = price_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                self.initial["per_hour_price"] = price_decimal
+
+            if self.instance.concessionary_per_hour_price:
+                price_decimal = Decimal(self.instance.concessionary_per_hour_price) / Decimal(100)
+                price_decimal = price_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                self.initial["concessionary_per_hour_price"] = price_decimal
+
+            # Convert comma-separated string from model to a list of ints for the form
             durations_str = self.instance.durations
+            durations_str = durations_str.strip("[]")
             if durations_str:
                 self.initial["durations"] = [int(x) for x in durations_str.split(",")]
 
@@ -85,9 +141,56 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
         if commit:
             instance.save()
         return instance
+    
+    def clean_host(self):
+        return self.initial["host"]
+    
+    def clean_price(self):
+        data = self.cleaned_data['price']
+
+        if not data:
+            return data
+        
+        return int(data * 100)
+    
+    def clean_concessionary_price(self):
+        data = self.cleaned_data['concessionary_price']
+
+        if not data:
+            return data
+        
+        return int(data * 100)
+    
+    def clean_per_hour_price(self):
+        data = self.cleaned_data['per_hour_price']
+
+        if not data:
+            return data
+        
+        return int(data * 100)
+    
+    def clean_concessionary_per_hour_price(self):
+        data = self.cleaned_data['concessionary_per_hour_price']
+
+        if not data:
+            return data
+        
+        return int(data * 100)
 
 
 class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
+    host = forms.CharField(required=False)
+    price = forms.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        validators=[MinValueValidator(0, message=_("Cannot charge negative values"))],
+    )
+    concessionary_price = forms.DecimalField(
+        required=False,
+        max_digits=7,
+        decimal_places=2,
+        validators=[MinValueValidator(0, message=_("Cannot charge negative values"))],
+    )
     capacity = forms.IntegerField(
         help_text=_("Number of people that can attend at this time"),
         min_value=1,
@@ -109,6 +212,7 @@ class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
     class Meta:
         model = GroupSession
         fields = [
+            "host",
             "title",
             "description",
             "currency",
@@ -144,18 +248,76 @@ class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
         ),
     ]
 
+    def __init__(self, host, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.initial["host"] = host
+
+        if self.instance and self.instance.pk:
+            # Convert price from integer to decimal
+            price_decimal = Decimal(self.instance.price) / Decimal(100)
+            price_decimal = price_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            self.initial["price"] = price_decimal
+
+            if self.instance.concessionary_price:
+                price_decimal = Decimal(self.instance.concessionary_price) / Decimal(100)
+                price_decimal = price_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                self.initial["concessionary_price"] = price_decimal
+
+    def clean_host(self):
+        return self.initial["host"]
+    
+    def clean_price(self):
+        data = self.cleaned_data['price']
+
+        if not data:
+            return data
+        
+        return int(data * 100)
+    
+    def clean_concessionary_price(self):
+        data = self.cleaned_data['concessionary_price']
+
+        if not data:
+            return data
+        
+        return int(data * 100)
+
     def clean(self):
         cleaned_data = super().clean()
 
         starts_at = cleaned_data.get("starts_at")
         ends_at = cleaned_data.get("ends_at")
+        host = cleaned_data.get("host")
 
         if not (starts_at and ends_at):
             raise forms.ValidationError(
                 _("You must add a start and end time to your session"),
                 code="starts_at_and_ends_at",
             )
+        
+        if not host:
+            raise forms.ValidationError(
+                _("A session must be hosted by an existing user"),
+                code="required_host",
+            )
 
+        overlapping_sessions = GroupSession.objects.filter(
+            Q(starts_at__lt=starts_at, ends_at__gt=ends_at)
+            | Q(starts_at__gte=starts_at, ends_at__lte=ends_at),
+            is_published=True,
+            host=host,
+        )
+
+        if self.instance.pk:
+            overlapping_sessions = overlapping_sessions.exclude(pk=self.instance.pk)
+
+        if overlapping_sessions.exists():
+            raise forms.ValidationError(
+                _("Group sessions must not overlap with existing group sessions from the same host"),
+                code="overlapping_session",
+            )
+        
         return cleaned_data
 
 
@@ -227,6 +389,13 @@ class PeerSessionAvailabilityForm(forms.ModelForm):
             "occurrence_ends_at",
         ]
 
+    def save(self, session: PeerSession, commit=True):
+        instance = super().save(commit=False)
+        instance.session = session
+        if commit:
+            instance.save()
+        return instance
+    
     def clean(self):
         cleaned_data = super().clean()
 
@@ -240,13 +409,6 @@ class PeerSessionAvailabilityForm(forms.ModelForm):
             )
 
         return cleaned_data
-
-    def save(self, session: PeerSession, commit=True):
-        instance = super().save(commit=False)
-        instance.session = session
-        if commit:
-            instance.save()
-        return instance
 
 
 class PeerSessionRequestForm(forms.ModelForm):
@@ -320,6 +482,9 @@ class PeerSessionRequestForm(forms.ModelForm):
             status=SessionRequestStatusChoices.APPROVED,
         )
 
+        if self.instance.pk:
+            overlapping_requests = overlapping_requests.exclude(pk=self.instance.pk)
+
         if overlapping_requests.exists():
             raise forms.ValidationError(
                 _(
@@ -333,3 +498,23 @@ class PeerSessionRequestForm(forms.ModelForm):
                 cleaned_data.pop(k, None)
 
         return cleaned_data
+    
+class GroupSessionRequestForm(forms.ModelForm):
+    attendee = forms.CharField(required=False)
+    session = forms.CharField(required=False)
+
+    class Meta:
+        model = GroupSessionRequest
+        fields = ["attendee", "session", "pay_concessionary_price"]
+
+    def __init__(self, attendee, session, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.initial["attendee"] = attendee
+        self.initial["session"] = session
+        
+    def clean_session(self):
+        return self.initial["session"]
+    
+    def clean_attendee(self):
+        return self.initial["attendee"]

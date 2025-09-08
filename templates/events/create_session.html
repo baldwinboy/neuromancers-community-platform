@@ -12,30 +12,30 @@
 
 {% block form %}
     {% if user.is_authenticated %}
-        {% if perms.events.add_groupsession or perms.events.add_groupsession %}
+        {% if perms.events.add_peersession or perms.events.add_groupsession %}
             <form method="post" class="w-full">
                 {% csrf_token %}
                 {{ form.non_field_errors }}
                 {% for group_title, fields in form.get_field_groups %}
                     {% with accordion_heading=group_title accordion_name="field-group" accordion_classes="create_session__field_group" %}
                         {% accordion %}
-                        {% for field in fields %}
-                            <div class="create_session__field_item py-8">
-                                {{ field.errors }}
-                                <div class="flex flex-wrap">
-                                    {% if field.id_for_label %}
-                                        <label for="{{ field.id_for_label }}" class="text-2xl">{{ field.label }}</label>
-                                    {% else %}
-                                        <label for="id_{{ field.name }}_0" class="text-2xl">{{ field.label }}</label>
-                                    {% endif %}
-                                    {{ field }}
-                                    <p class="create_session__field_item_help_text w-full font-subheading font-light">{{ field.help_text }}</p>
+                            {% for field in fields %}
+                                <div class="create_session__field_item py-8">
+                                    {{ field.errors }}
+                                    <div class="flex flex-wrap">
+                                        {% if field.id_for_label %}
+                                            <label for="{{ field.id_for_label }}" class="text-2xl">{{ field.label }}{% if field.field.required %}*{% endif %}</label>
+                                        {% else %}
+                                            <label for="id_{{ field.name }}_0" class="text-2xl">{{ field.label }}{% if field.field.required %}*{% endif %}</label>
+                                        {% endif %}
+                                        {{ field }}
+                                        <p class="create_session__field_item_help_text w-full font-subheading font-light">{{ field.help_text }}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        {% endfor %}
-                    {% endaccordion %}
-                {% endwith %}
-            {% endfor %}
+                            {% endfor %}
+                        {% endaccordion %}
+                    {% endwith %}
+                {% endfor %}
             <button type="submit"
                     class="auth_button auth_button__sessions block mt-8 mx-auto text-center">
                     {% trans "Add session" %}
@@ -55,3 +55,8 @@
            class="link_alt font-body text-sm">{% trans "Want to host a different type of workshop? Click here." %}</a>
     </p>
 {% endblock redirect_help %}
+
+{% block extra_js %}
+    {{ form.media }}
+    {{ block.super }}
+{% endblock extra_js %}

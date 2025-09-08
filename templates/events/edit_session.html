@@ -1,6 +1,6 @@
 {% extends "events/create_base.html" %}
 
-{% load i18n account guardian_tags %}
+{% load i18n account guardian_tags wagtailcore_tags %}
 
 {% block title %}
     Update {{ hosted_session.title }}
@@ -25,9 +25,9 @@
                                 {{ field.errors }}
                                 <div class="flex flex-wrap">
                                     {% if field.id_for_label %}
-                                        <label for="{{ field.id_for_label }}" class="text-2xl">{{ field.label }}</label>
+                                        <label for="{{ field.id_for_label }}" class="text-2xl">{{ field.label }}{% if field.field.required %}*{% endif %}</label>
                                     {% else %}
-                                        <label for="id_{{ field.name }}_0" class="text-2xl">{{ field.label }}</label>
+                                        <label for="id_{{ field.name }}_0" class="text-2xl">{{ field.label }}{% if field.field.required %}*{% endif %}</label>
                                     {% endif %}
                                     {{ field }}
                                     <p class="create_session__field_item_help_text w-full font-subheading font-light">{{ field.help_text }}</p>
@@ -53,3 +53,8 @@
     </p>
 {% endif %}
 {% endblock form %}
+
+{% block extra_js %}
+    {{ form.media }}
+    {{ block.super }}
+{% endblock extra_js %}

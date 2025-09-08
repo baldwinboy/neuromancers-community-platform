@@ -292,6 +292,7 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 # Django Allauth
+ACCOUNT_ADAPTER = "apps.accounts.adapters.AccountAdapter"
 ACCOUNT_USERNAME_BLACKLIST = name_blacklist
 ACCOUNT_LOGIN_BY_CODE_ENABLED = True  # Users can be sent a code to login
 # Handle logins with Django Allauth
