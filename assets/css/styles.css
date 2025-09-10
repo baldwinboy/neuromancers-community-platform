@@ -21092,6 +21092,40 @@ h2 {
   accent-color: hsl(342.11, 40.43%, 27.65%);
 }
 
+.session_item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid hsl(0, 100%, 0.78%);
+  background: hsl(342.11, 40.43%, 27.65%);
+  color: hsl(343.29, 95.89%, 71.37%);
+  box-shadow: 10px 5px hsl(0, 100%, 0.78%);
+  transition: all 0.25s ease-in-out;
+}
+.session_item:not([disabled]):hover, .session_item:not([disabled]):focus-visible {
+  transform: translate(-0.5rem, -0.25rem);
+}
+@media (prefers-reduced-motion) {
+  .session_item {
+    transition: none;
+  }
+}
+.session_item > time {
+  opacity: 0.75;
+}
+.session_item__author {
+  align-self: flex-end;
+  margin-left: auto;
+}
+
+.session_item_alt {
+  border: 1px solid hsl(342.11, 40.43%, 27.65%);
+  background: hsl(0, 100%, 0.78%);
+  color: hsl(0, 0%, 100%);
+}
+
 .auth_button {
   cursor: pointer;
   width: fit-content;
