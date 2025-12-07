@@ -12,6 +12,7 @@ from .validators import (
     user_over_18,
     username_banned_words_message,
     username_banned_words_re,
+    validate_toc,
 )
 
 
@@ -37,6 +38,18 @@ class SignupForm(AllauthSignupForm):
         widget=forms.SelectDateWidget(years=current_birth_years),
     )
 
+    country = forms.Select()
+
+    receive_notifications = forms.Select(
+        required=False
+    )
+
+    terms_confirmed = forms.CheckboxInput(
+        required=True,
+        label=_("I accept the terms and conditions"),
+        validators=[validate_toc]
+    )
+
     field_order = [
         "first_name",
         "last_name",
@@ -46,6 +59,9 @@ class SignupForm(AllauthSignupForm):
         "email2",
         "password1",
         "password2",
+        "country",
+        "receive_notifications"
+        "terms_confirmed"
     ]
 
     def clean_username(self):
@@ -65,5 +81,8 @@ class SignupForm(AllauthSignupForm):
         user.first_name = self.cleaned_data["first_name"]
         user.last_name = self.cleaned_data["last_name"]
         user.date_of_birth = self.cleaned_data["date_of_birth"]
+        user.country = self.cleaned_data["country"]
+        user.receive_notifications = self.cleaned_data["receive_notifications"]
+        user.terms_confirmed = self.cleaned_data["terms_confirmed"]
         user.save()
         return user

@@ -1,5 +1,6 @@
 import datetime
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, Group, UserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.mail import send_mail
@@ -11,6 +12,7 @@ from guardian.mixins import GuardianGroupMixin, GuardianUserMixin
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
 from guardian.shortcuts import get_objects_for_user
 
+from .choices import NotificationChoices
 from .mixins import UserGroupPermissionsMixin
 from .validators import (
     username_min_length,
@@ -68,6 +70,19 @@ class User(AbstractBaseUser, GuardianUserMixin, UserGroupPermissionsMixin):
     )
     date_of_birth = models.DateField(null=True, blank=True)
 
+    country = models.TextChoices(choices=settings.COUNTRIES, max_length=2)
+
+    receive_notifications = models.IntegerField(
+        choices=NotificationChoices,
+        help_text=_(
+            ("We'll only send notifications related to your account and sessions. "
+            "You can change these settings at any time")
+        ),
+        default=NotificationChoices.WEB_ONLY
+    )
+
+    terms_confirmed = models.BooleanField(default=False)
+    
     objects = UserManager()
 
     EMAIL_FIELD = "email"

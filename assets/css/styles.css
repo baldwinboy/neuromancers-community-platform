@@ -21099,9 +21099,9 @@ h2 {
   width: 100%;
   padding: 1rem;
   border: 1px solid hsl(0, 100%, 0.78%);
-  background: hsl(342.11, 40.43%, 27.65%);
-  color: hsl(343.29, 95.89%, 71.37%);
-  box-shadow: 10px 5px hsl(0, 100%, 0.78%);
+  background: hsl(342.63, 80.85%, 81.57%);
+  color: hsl(0, 100%, 0.78%);
+  box-shadow: 10px 10px hsl(0, 100%, 0.78%);
   transition: all 0.25s ease-in-out;
 }
 .session_item:not([disabled]):hover, .session_item:not([disabled]):focus-visible {

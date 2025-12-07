@@ -20,17 +20,21 @@
             {% endif %}
         </header>
         <main class="flex flex-col w-full h-full container mx-auto py-9 px-6 lg:px-0">
-            <section class="flex flex-col gap-4 m-auto w-full lg:w-3/4">
-                {% for session in sessions %}
-                    {% if session.starts_at %}
-                        {% session_item session=session session_type="group" / %}
-                    {% else %}
-                        {% session_item session=session session_type="peer" / %}
-                    {% endif %}
-                {% empty %}
-                    <p>No sessions yet.</p>
-                {% endfor %}
-            </section>
+            {% if sessions|length > 0 %}
+                <section class="flex flex-col gap-4 mx-auto mb-auto w-full lg:w-3/4">
+                    {% for session in sessions %}
+                        {% if session.starts_at %}
+                            {% session_item session=session session_type="group" / %}
+                        {% else %}
+                            {% session_item session=session session_type="peer" / %}
+                        {% endif %}
+                    {% endfor %}
+                </section>
+            {% else %}
+                <section class="flex flex-col justify-center items-center h-full">
+                    <p class="self-center">No sessions yet.</p>
+                </section>
+            {% endif %}
         </main>
     </div>
 {% endblock content %}

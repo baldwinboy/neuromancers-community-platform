@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.conf import LANGUAGES
 from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext as _
@@ -7,6 +8,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import (assign_perm, remove_perm)
 
 from apps.accounts.models import UserGroup
+from apps.events.validators import validate_language_codes
 from apps.events.choices import (SessionRequestStatusChoices, filtered_currencies)
 
 from .abstract import AbstractSession, AbstractSessionRequest, User
@@ -16,7 +18,12 @@ class GroupSession(AbstractSession):
     """
     Group sessions cannot be requested but may attended by several `SupportSeeker` users for a single duration of time
     """
-
+    language = models.TextChoices(
+        choices=LANGUAGES,
+        help_text=_("This is the language that the session will be provided in"),
+        max_length=2,
+        validators=[validate_language_codes]
+    )
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
     capacity = models.PositiveSmallIntegerField(

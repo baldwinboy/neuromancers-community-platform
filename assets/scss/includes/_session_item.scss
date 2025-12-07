@@ -8,9 +8,9 @@
     width: 100%;
     padding: 1rem;
     border: 1px solid $black;
-    background: $darkAccent;
-    color: $lightAccent;
-    box-shadow: 10px 5px $black;
+    background: $accent;
+    color: $black;
+    box-shadow: 10px 10px $black;
     transition: all 0.25s ease-in-out;
 
     @include interact {

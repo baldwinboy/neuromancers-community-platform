@@ -12,6 +12,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import (assign_perm, remove_perm)
 
 from apps.accounts.models import UserGroup
+from apps.events.validators import validate_language_codes
 from apps.events.choices import (
     SessionAvailabilityOccurrenceChoices,
     SessionRequestStatusChoices,
@@ -32,9 +33,14 @@ class PeerSession(AbstractSession):
     Peer sessions may be rquested and attended by a single `SupportSeeker` user for a selected duration of time.
     """
 
+    languages = models.CharField(
+        help_text=_("These are languages that a session may be provided in"),
+        max_length=620,
+        validators=[validate_language_codes]
+    )
     durations = models.CharField(
         help_text=_(
-            "These are durations (in minutes) that a session may be booked for"
+            "These are durations (in minutes) that a session may be provided for"
         ),
         max_length=320,
     )

@@ -36,7 +36,7 @@ beautifulsoup4==4.13.4
     #   wagtail
 bleach==6.2.0
     # via -r requirements/base.in
-build==1.2.2.post1
+build==1.3.0
     # via -r requirements/base.in
 cachetools==6.1.0
     # via -r requirements/base.in
@@ -52,7 +52,7 @@ charset-normalizer==3.4.2
     # via
     #   -r requirements/base.in
     #   requests
-click==8.2.1
+click==8.3.1
     # via -r requirements/base.in
 csscompressor==0.9.5
     # via -r requirements/base.in
@@ -71,6 +71,7 @@ django==5.2.5
     #   -r requirements/base.in
     #   django-allauth
     #   django-appconf
+    #   django-components
     #   django-compressor
     #   django-filter
     #   django-guardian
@@ -93,6 +94,8 @@ django-cogwheels==0.3
     # via
     #   -r requirements/base.in
     #   wagtailmenus
+django-components==0.141.4
+    # via -r requirements/base.in
 django-compressor==4.5.1
     # via -r requirements/base.in
 django-environ==0.12.0
@@ -131,6 +134,10 @@ djangorestframework==3.16.0
     # via
     #   -r requirements/base.in
     #   wagtail
+djc-core-html-parser==1.0.2
+    # via
+    #   -r requirements/base.in
+    #   django-components
 draftjs-exporter==5.1.0
     # via
     #   -r requirements/base.in
@@ -307,6 +314,7 @@ typing-extensions==4.14.1
     # via
     #   -r requirements/base.in
     #   beautifulsoup4
+    #   django-components
     #   django-stubs-ext
     #   django-tasks
     #   referencing

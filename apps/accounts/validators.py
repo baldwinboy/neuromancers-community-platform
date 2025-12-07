@@ -2,6 +2,7 @@ import re
 
 from django.conf import settings
 from django.core.validators import BaseValidator, MinLengthValidator, RegexValidator
+from django.forms import ValidationError
 from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext as _
 
@@ -76,3 +77,11 @@ class MinAgeValidator(BaseValidator):
 
 
 user_over_18 = MinAgeValidator(18)
+
+def validate_toc(value: bool):
+     if not value:
+        raise ValidationError(
+            _("You must accept the terms and conditions to use this platform."),
+            code="accept_toc",
+            params={"value": value},
+        )

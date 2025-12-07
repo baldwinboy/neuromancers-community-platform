@@ -13,6 +13,15 @@ from apps.events.models import (
     PeerSession,
     PeerSessionAvailability,
     PeerSessionRequest,
+    LivedExperience,
+    FocusArea,
+)
+from apps.account_settings.models import (
+    CertifiedTraining,
+    NotificationSettings,
+    PeerNotificationSettings,
+    AccessNeeds,
+    PeerSessionSettings,
 )
 
 User = get_user_model()
@@ -43,6 +52,7 @@ class Command(BaseCommand):
 
         # Common permissions across all groups
         base_perms = [
+            # Events/Sessions
             ("events.view_peersession", PeerSession),
             ("events.request_session", PeerSession),
             ("events.view_peersessionavailability", PeerSessionAvailability),
@@ -50,6 +60,13 @@ class Command(BaseCommand):
             ("events.request_join_session", GroupSession),
             ("events.add_peersessionrequest", PeerSessionRequest),
             ("events.add_groupsessionrequest", GroupSessionRequest),
+            # Account settings
+            ("account_settings.view_livedexperience", LivedExperience),
+            ("account_settings.view_focusarea", FocusArea),
+            ("account_settings.view_certifiedtraining", CertifiedTraining),
+            ("account_settings.add_notificationsettings", NotificationSettings),
+            ("account_settings.add_accessneeds", AccessNeeds),
+            ("account_settings.view_accessneeds", AccessNeeds),
         ]
 
         # Elevated Peer permissions
@@ -58,6 +75,9 @@ class Command(BaseCommand):
             ("events.add_peerscheduledsession", PeerScheduledSession),
             ("events.add_peersessionavailability", PeerSessionAvailability),
             ("events.add_groupsession", GroupSession),
+            # Account settings
+            ("account_settings.add_peernotificationsettings", PeerNotificationSettings),
+            ("account_settings.add_peersessionsettings", PeerSessionSettings),
         ]
 
         # Neuromancer: assign all permissions for specific models
@@ -68,6 +88,10 @@ class Command(BaseCommand):
             PeerScheduledSession,
             GroupSession,
             GroupSessionRequest,
+            LivedExperience,
+            FocusArea,
+            CertifiedTraining,
+            User,
         ]
 
         for group_name, group in groups.items():

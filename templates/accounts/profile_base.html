@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load i18n heroicons %}
+{% load i18n guardian_tags heroicons %}
 
 {% block body_class %}
     template-accounts-profile
@@ -27,11 +27,15 @@
         <section class="mb-4">
             <h2 class="font-light">{% trans "Workshops" %}</h2>
             <hr class="w-60" />
-            {% for event in user.get_hosted_sessions %}
-                <a href="{{ event.page.full_url }}">
-                    <p class="font-body mt-2">{{ event }}</p>
-                </a>
+            <div class="flex flex-col gap-4 mt-4">
+                {% for hosted_session in user.get_hosted_sessions %}
+                 {% if hosted_session.starts_at %}
+                        {% session_item session=hosted_session session_type="group" / %}
+                    {% else %}
+                        {% session_item session=hosted_session session_type="peer" / %}
+                    {% endif %}
             {% endfor %}
+            </div>
         </section>
     </main>
 {% endblock content %}
