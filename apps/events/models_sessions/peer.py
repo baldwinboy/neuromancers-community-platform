@@ -1,21 +1,20 @@
 import uuid
+from datetime import datetime, timedelta
 from decimal import Decimal
-from datetime import timedelta, datetime
 
 from dateutil.relativedelta import relativedelta
-from django.core.validators import (MinValueValidator, MaxValueValidator)
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext as _
-
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
-from guardian.shortcuts import (assign_perm, remove_perm)
+from guardian.shortcuts import assign_perm, remove_perm
 
 from apps.accounts.models import UserGroup
 from apps.events.choices import (
     SessionAvailabilityOccurrenceChoices,
     SessionRequestStatusChoices,
-    filtered_currencies
+    filtered_currencies,
 )
 from apps.events.utils import subtract_event
 
@@ -41,7 +40,12 @@ class PeerSession(AbstractSession):
     per_hour_price = models.IntegerField(
         validators=[
             MinValueValidator(0, message=_("Cannot charge negative values")),
-            MaxValueValidator(9_999_999, message=_("Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."))
+            MaxValueValidator(
+                9_999_999,
+                message=_(
+                    "Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."
+                ),
+            ),
         ],
         help_text=_(
             "Support seekers will be charged this price based on the duration of their requested session if set"
@@ -52,7 +56,12 @@ class PeerSession(AbstractSession):
     concessionary_per_hour_price = models.IntegerField(
         validators=[
             MinValueValidator(0, message=_("Cannot charge negative values")),
-            MaxValueValidator(9_999_999, message=_("Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."))
+            MaxValueValidator(
+                9_999_999,
+                message=_(
+                    "Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."
+                ),
+            ),
         ],
         help_text=_(
             "Support seekers will be charged this price based on the duration of their requested session if set and if they are allowed to pay a reduced price"
@@ -116,21 +125,21 @@ class PeerSession(AbstractSession):
     @property
     def per_hour_price_display(self):
         return "{:.2f}".format(self.per_hour_price / 100)
-    
+
     @property
     def concessionary_per_hour_price_display(self):
         if not self.concessionary_price:
             return "{:.2f}".format(0)
 
         return "{:.2f}".format(self.concessionary_price / 100)
-    
+
     @property
     def currency_symbol(self):
         _currency = filtered_currencies.get(self.currency, None)
 
         if not _currency:
             return ""
-        
+
         return _currency.get("symbol", None)
 
     @property
@@ -192,14 +201,16 @@ class PeerSession(AbstractSession):
                     # Exclude booked times
                     non_overlapping_slots = []
                     for booked_start, booked_end in booked_ranges:
-                        if (start_dt <= booked_end and end_dt >= booked_start):
-                           non_overlapping_slots += subtract_event((start_dt, end_dt), (booked_start, booked_end))
+                        if start_dt <= booked_end and end_dt >= booked_start:
+                            non_overlapping_slots += subtract_event(
+                                (start_dt, end_dt), (booked_start, booked_end)
+                            )
 
                     if non_overlapping_slots:
                         slots += non_overlapping_slots
                     else:
                         slots.append((start_dt, end_dt))
-                    
+
                     if delta:
                         current += delta
 
@@ -207,8 +218,10 @@ class PeerSession(AbstractSession):
                 # One-off availability
                 non_overlapping_slots = []
                 for booked_start, booked_end in booked_ranges:
-                    if (base_start <= booked_end and base_end >= booked_start):
-                        non_overlapping_slots += subtract_event((base_start, base_end), (booked_start, booked_end))
+                    if base_start <= booked_end and base_end >= booked_start:
+                        non_overlapping_slots += subtract_event(
+                            (base_start, base_end), (booked_start, booked_end)
+                        )
 
                 if non_overlapping_slots:
                     slots += non_overlapping_slots
@@ -224,7 +237,7 @@ class PeerSession(AbstractSession):
 
         if not support_seeker_group:
             return
-        
+
         support_seeker_perms = [
             "view_peersession",
             "request_session",
@@ -246,6 +259,7 @@ class PeerSession(AbstractSession):
         if self.host:
             for perm in perms:
                 assign_perm(perm, self.host, self)
+
 
 class PeerSessionUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(PeerSession, on_delete=models.CASCADE)
@@ -372,17 +386,19 @@ class PeerSessionRequest(AbstractSessionRequest):
 
     def __str__(self):
         return f"{self.session.title} for {self.attendee.username} from {self.starts_at} to {self.ends_at}"
-    
+
     @property
     def price(self):
         _price = self.session.price or 0
         duration_hrs = (self.ends_at - self.starts_at).total_seconds() / 3600
-        
+
         if self.session.per_hour_price:
-            return "{:.2f}".format((Decimal(duration_hrs) * self.session.per_hour_price) / Decimal(100))
-    
+            return "{:.2f}".format(
+                (Decimal(duration_hrs) * self.session.per_hour_price) / Decimal(100)
+            )
+
         return "{:.2f}".format(_price / Decimal(100))
-    
+
     @property
     def concessionary_price(self):
         _price = self.session.price or 0
@@ -390,22 +406,30 @@ class PeerSessionRequest(AbstractSessionRequest):
 
         if self.pay_concessionary_price:
             if self.session.concessionary_per_hour_price:
-                return "{:.2f}".format((Decimal(duration_hrs) * self.session.concessionary_per_hour_price) / Decimal(100))
-            
-            return "{:.2f}".format((self.session.concessionary_price or 0) / Decimal(100) )
-        
+                return "{:.2f}".format(
+                    (Decimal(duration_hrs) * self.session.concessionary_per_hour_price)
+                    / Decimal(100)
+                )
+
+            return "{:.2f}".format(
+                (self.session.concessionary_price or 0) / Decimal(100)
+            )
+
         return "{:.2f}".format(_price / Decimal(100))
-    
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
         if not self.attendee or not self.session or not self.session.host:
             return
-        
+
         assign_perm("approve_peer_request", self.session.host, self)
         assign_perm("withdraw_peer_request", self.attendee, self)
 
-        if not self.session.require_request_approval and self.status == SessionRequestStatusChoices.PENDING:
+        if (
+            not self.session.require_request_approval
+            and self.status == SessionRequestStatusChoices.PENDING
+        ):
             self.status = SessionRequestStatusChoices.APPROVED
 
 

@@ -26,27 +26,27 @@
                         </li>
                     {% endfor %}
                 </ul>
-                {% endaccordion %}
-            {% endwith %}
-        {% endif %}
-        {% if "manage_availability" in session_perms %}
-            <form method="post"
-                class="manage_availability__form flex flex-col gap-4 w-full">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit"
-                        class="auth_button auth_button__sessions block mt-8 mx-auto text-center">
-                        {% trans "Update availability" %}
-                </button>
-            </form>
-        {% else %}
-            <p>
-                <a href="{% pageurl page %}">{% trans "Oops, you're on the wrong page. Head back to sessions." %}</a>
-            </p>
-        {% endif %}
+            {% endaccordion %}
+        {% endwith %}
+    {% endif %}
+    {% if "manage_availability" in session_perms %}
+        <form method="post"
+              class="manage_availability__form flex flex-col gap-4 w-full">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit"
+                    class="auth_button auth_button__sessions block mt-8 mx-auto text-center">
+                {% trans "Update availability" %}
+            </button>
+        </form>
     {% else %}
         <p>
-            <a href="{% url 'account_login' %}">{% trans "Oops, you're on the wrong page. Log in to continue." %}</a>
+            <a href="{% pageurl page %}">{% trans "Oops, you're on the wrong page. Head back to sessions." %}</a>
         </p>
     {% endif %}
+{% else %}
+    <p>
+        <a href="{% url 'account_login' %}">{% trans "Oops, you're on the wrong page. Log in to continue." %}</a>
+    </p>
+{% endif %}
 {% endblock form %}

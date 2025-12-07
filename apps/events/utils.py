@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 def subtract_event(a: tuple[datetime, datetime], b: tuple[datetime, datetime]):
     """
     Gte non-overlapping times

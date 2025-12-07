@@ -4,6 +4,7 @@ from datetime import datetime
 
 from django_components import Component, register
 
+
 def get_calendar_for_availability(available_slots: list[tuple[datetime, datetime]]):
     grouped = defaultdict(list)
     active_date_times = defaultdict(list)
@@ -11,7 +12,10 @@ def get_calendar_for_availability(available_slots: list[tuple[datetime, datetime
     for start, end in available_slots:
         start_date = start.date()
         grouped[(start.year, start.month)].append(start_date)
-        active_date_times[start_date.isoformat()] += [[start.hour, start.minute], [end.hour, end.minute]]
+        active_date_times[start_date.isoformat()] += [
+            [start.hour, start.minute],
+            [end.hour, end.minute],
+        ]
 
     cal = calendar.Calendar()
     calendar_data = []
@@ -43,5 +47,5 @@ class RequestCalendar(Component):
         return {
             "calendar_data": calendar_data,
             "available_slots": self.kwargs["available_slots"],
-            "durations": durations
+            "durations": durations,
         }

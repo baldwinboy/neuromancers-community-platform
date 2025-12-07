@@ -1,7 +1,3 @@
-import calendar
-from collections import defaultdict
-from datetime import datetime
-
 from django_components import Component, register
 
 
@@ -12,5 +8,5 @@ class SessionItem(Component):
     def get_template_data(self, args, kwargs, slots, context):
         return {
             "session": self.kwargs["session"],
-            "session_type": self.kwargs["session_type"]
+            "session_type": self.kwargs["session_type"],
         }

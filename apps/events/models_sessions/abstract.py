@@ -1,14 +1,14 @@
 import uuid
 
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext as _
 
 from apps.events.choices import (
     SessionAvailabilityOccurrenceChoices,
     SessionRequestStatusChoices,
-    currency_choices
+    currency_choices,
 )
 
 User = get_user_model()
@@ -27,13 +27,23 @@ class AbstractSession(models.Model):
         default=0,
         validators=[
             MinValueValidator(0, message=_("Cannot charge negative values")),
-            MaxValueValidator(9_999_999, message=_("Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."))
+            MaxValueValidator(
+                9_999_999,
+                message=_(
+                    "Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."
+                ),
+            ),
         ],
     )
     concessionary_price = models.IntegerField(
         validators=[
             MinValueValidator(0, message=_("Cannot charge negative values")),
-            MaxValueValidator(9_999_999, message=_("Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."))
+            MaxValueValidator(
+                9_999_999,
+                message=_(
+                    "Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."
+                ),
+            ),
         ],
         help_text=_(
             "Support seekers will be charged at this price if they are allowed to pay a reduced price"
@@ -71,16 +81,16 @@ class AbstractSession(models.Model):
 
     def __str__(self):
         return self.title
-    
+
     @property
     def price_display(self):
         return "{:.2f}".format(self.price / 100)
-    
+
     @property
     def concessionary_price_display(self):
         if not self.concessionary_price:
             return "{:.2f}".format(0)
-        
+
         return "{:.2f}".format(self.concessionary_price / 100)
 
 
@@ -116,12 +126,16 @@ class AbstractSessionAvailability(models.Model):
 class AbstractSessionRequest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.PositiveSmallIntegerField(
-        help_text=_("By default, this will be pending unless the session does not require approval, then it will be automatically approved. If the request is left pending until the start of the session, the request will be automatically rejected"),
+        help_text=_(
+            "By default, this will be pending unless the session does not require approval, then it will be automatically approved. If the request is left pending until the start of the session, the request will be automatically rejected"
+        ),
         choices=SessionRequestStatusChoices,
         default=SessionRequestStatusChoices.PENDING,
     )
     rejection_message = models.TextField(
-        help_text=_("This message will be displayed to the attendee if their request is rejected if set"),
+        help_text=_(
+            "This message will be displayed to the attendee if their request is rejected if set"
+        ),
         null=True,
     )
     stripe_payment_intent_id = models.CharField(
@@ -135,15 +149,19 @@ class AbstractSessionRequest(models.Model):
         help_text=_(
             "You'll be able to pay a reduced price if the session peer approves."
         ),
-        default=False
+        default=False,
     )
     concessionary_status = models.PositiveSmallIntegerField(
-        help_text=_("By default, this will be pending unless concessionary price request do not require approval, then it will be automatically approved. If the request is left pending until the start of the session, the request will be automatically rejected"),
+        help_text=_(
+            "By default, this will be pending unless concessionary price request do not require approval, then it will be automatically approved. If the request is left pending until the start of the session, the request will be automatically rejected"
+        ),
         choices=SessionRequestStatusChoices,
         default=SessionRequestStatusChoices.PENDING,
     )
     refund_status = models.PositiveSmallIntegerField(
-        help_text=_("By default, this will be pending unless refunds does not require approval, then it will be automatically approved. If the request is left pending until the start of the session, the request will be automatically rejected"),
+        help_text=_(
+            "By default, this will be pending unless refunds does not require approval, then it will be automatically approved. If the request is left pending until the start of the session, the request will be automatically rejected"
+        ),
         choices=SessionRequestStatusChoices,
         default=SessionRequestStatusChoices.PENDING,
     )

@@ -4,10 +4,10 @@ from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext as _
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
-from guardian.shortcuts import (assign_perm, remove_perm)
+from guardian.shortcuts import assign_perm, remove_perm
 
 from apps.accounts.models import UserGroup
-from apps.events.choices import (SessionRequestStatusChoices, filtered_currencies)
+from apps.events.choices import SessionRequestStatusChoices, filtered_currencies
 
 from .abstract import AbstractSession, AbstractSessionRequest, User
 
@@ -76,7 +76,7 @@ class GroupSession(AbstractSession):
 
         if not _currency:
             return ""
-        
+
         return _currency.get("symbol", None)
 
     @property
@@ -87,7 +87,7 @@ class GroupSession(AbstractSession):
         return self.support_seekers.filter(
             requests__status=SessionRequestStatusChoices.APPROVED
         )
-    
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
@@ -95,7 +95,7 @@ class GroupSession(AbstractSession):
 
         if not support_seeker_group:
             return
-        
+
         support_seeker_perms = [
             "view_groupsession",
             "request_join_session",
@@ -118,9 +118,12 @@ class GroupSession(AbstractSession):
 
     def attendee_requested(self, user):
         return self.requests.filter(attendee=user).exists()
-    
+
     def attendee_approved(self, user):
-        return self.requests.filter(attendee=user, status=SessionRequestStatusChoices.APPROVED).exists()
+        return self.requests.filter(
+            attendee=user, status=SessionRequestStatusChoices.APPROVED
+        ).exists()
+
 
 class GroupSessionUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(GroupSession, on_delete=models.CASCADE)
@@ -162,12 +165,16 @@ class GroupSessionRequest(AbstractSessionRequest):
 
         if not self.attendee or not self.session or not self.session.host:
             return
-        
+
         assign_perm("approve_group_request", self.session.host, self)
         assign_perm("withdraw_group_request", self.attendee, self)
 
-        if not self.session.require_request_approval and self.status == SessionRequestStatusChoices.PENDING:
+        if (
+            not self.session.require_request_approval
+            and self.status == SessionRequestStatusChoices.PENDING
+        ):
             self.status = SessionRequestStatusChoices.APPROVED
+
 
 class GroupSessionRequestUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(GroupSessionRequest, on_delete=models.CASCADE)

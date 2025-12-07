@@ -16,7 +16,7 @@
 */
 
 @mixin media($breakpoint, $map: $breakpoints) {
-  @if meta.type-of($map)==map {
+  @if meta.type-of($map) == map {
     @if map.has-key($map, $breakpoint) {
       @media (min-width: #{map.get($map, $breakpoint)}) {
         @content;
@@ -24,7 +24,7 @@
     }
 
     @else {
-      @warn "Unfortunately, no value could be retrieved from `#{$breakpoint}`. "+"Please make sure it is defined in breakpoints map.";
+      @warn "Unfortunately, no value could be retrieved from `#{$breakpoint}`. " + "Please make sure it is defined in breakpoints map.";
     }
   }
 

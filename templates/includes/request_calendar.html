@@ -1,11 +1,8 @@
 {% load heroicons i18n %}
-
 {{ durations|json_script:"request_calendar_durations" }}
 <section class="request_calendar">
     {% for month in calendar_data %}
-        {% if forloop.first %}
-            {{ month.active_date_times|json_script:"request_calendar_active_date_times" }}
-        {% endif %}
+        {% if forloop.first %}{{ month.active_date_times|json_script:"request_calendar_active_date_times" }}{% endif %}
         <article id="request_calendar_month_{{ forloop.counter0 }}"
                  class="request_calendar__month {% if not forloop.first %}hidden{% endif %}">
             <header class="flex items-center justify-center gap-4 w-full mb-4">
@@ -53,8 +50,7 @@
                                         aria-controls="request_calendar_month__available_times_{{ month.month_int }}"
                                         data-date="{{ day|date:"Y-m-d" }}"
                                         data-start-id="{{ starts_at_id }}"
-                                        data-end-id="{{ ends_at_id }}"
-                                        >
+                                        data-end-id="{{ ends_at_id }}">
                                     <span>{{ day.day }}</span>
                                 </button>
                             {% elif day.month is not month.month_int %}
@@ -71,12 +67,31 @@
                 </section>
                 <br>
             </div>
-            <section id="request_calendar_month__available_times_{{ month.month_int }}" class="mx-auto mt-8 hidden">
+            <section id="request_calendar_month__available_times_{{ month.month_int }}"
+                     class="mx-auto mt-8 hidden">
                 <h2 class="text-center">{% trans "Select time" %}</h2>
-                <fieldset name="" class="request_calendar__times flex flex-col w-fit my-4 mx-auto border-black" tabindex="-1"></fieldset>
-                <div class="flex gap-1 mx-auto w-fit" id="id_request_calendar_durations_wrapper">
-                    <input type="range" id="id_request_calendar_durations" name="" class="request_calendar__durations" min="0" value="0" max="{{ durations|length|add:'-1' }}" step="1" oninput="chooseDuration(this)" data-start-id="{{ starts_at_id }}" data-end-id="{{ ends_at_id }}">
-                    <label for="id_request_calendar_durations"><span id="id_request_calendar_durations_time" class="request_calendar__durations_time" data-duration="{{ durations|first }}">{{ durations|first }}</span> {% trans "minutes" %}</label>
+                <fieldset name=""
+                          class="request_calendar__times flex flex-col w-fit my-4 mx-auto border-black"
+                          tabindex="-1">
+                </fieldset>
+                <div class="flex gap-1 mx-auto w-fit"
+                     id="id_request_calendar_durations_wrapper">
+                    <input type="range"
+                           id="id_request_calendar_durations"
+                           name=""
+                           class="request_calendar__durations"
+                           min="0"
+                           value="0"
+                           max="{{ durations|length|add:'-1' }}"
+                           step="1"
+                           oninput="chooseDuration(this)"
+                           data-start-id="{{ starts_at_id }}"
+                           data-end-id="{{ ends_at_id }}">
+                    <label for="id_request_calendar_durations">
+                        <span id="id_request_calendar_durations_time"
+                              class="request_calendar__durations_time"
+                              data-duration="{{ durations|first }}">{{ durations|first }}</span> {% trans "minutes" %}
+                    </label>
                 </div>
             </section>
         </article>

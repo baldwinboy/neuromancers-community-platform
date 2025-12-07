@@ -86,11 +86,11 @@
     }
     @include interact {
         background: $white;
-        color: $darkAccent; 
+        color: $darkAccent;
     }
     &:has(input:checked) {
        background: $white;
-        color: $darkAccent; 
+        color: $darkAccent;
     }
 
     input {

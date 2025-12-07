@@ -6,7 +6,7 @@ function createTimeOption(value, label, interval, targetStartEl, targetEndEl) {
     input.name = "_";
     input.value = dateValue;
     input.type = "radio";
-    input.onchange = () => { 
+    input.onchange = () => {
         try {
             // Should be in minutes
             const durations = JSON.parse(document.getElementById('request_calendar_durations').textContent);

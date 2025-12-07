@@ -16,36 +16,43 @@
         <dl>
             <div class="flex flex-row-wrap justify-space-between gap-4">
                 <dt class="font-body">{% trans "Peer" %}</dt>
-                <dd class="text-2xl"><a href="{% url "accounts_user_profile" username=session_request.session.host.username %}">{{ session_request.session.host }}</a></dd>
+                <dd class="text-2xl">
+                    <a href="{% url "accounts_user_profile" username=session_request.session.host.username %}">{{ session_request.session.host }}</a>
+                </dd>
             </div>
-
             <div class="flex flex-row-wrap justify-space-between gap-4">
                 <dt class="font-body">{% trans "Schedule" %}</dt>
-                <dd class="text-2xl"><time datetime="{{ session_request.starts_at|date:"c" }}">{% localize on %}{{ session_request.starts_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time> - <time datetime="{{ session_request.ends_at|date:"c" }}">{% localize on %}{{ session_request.ends_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time></dd>
+                <dd class="text-2xl">
+                    <time datetime="{{ session_request.starts_at|date:"c" }}">{% localize on %}{{ session_request.starts_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time> - <time datetime="{{ session_request.ends_at|date:"c" }}">{% localize on %}{{ session_request.ends_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time>
+                </dd>
             </div>
-
             <div class="flex flex-row-wrap justify-space-between gap-4">
                 <dt class="font-body">{% trans "Price" %}</dt>
-                <dd class="text-2xl">{{ session_request.session.currency_symbol }}{{ session_request.price }}</dd>
+                <dd class="text-2xl">
+                    {{ session_request.session.currency_symbol }}{{ session_request.price }}
+                </dd>
             </div>
-
             {% if session_request.pay_concessionary_price %}
-            <div class="flex flex-col gap-2">
-                <div class="flex flex-row-wrap justify-space-between">
-                    <dt class="font-body">{% trans "Concessionary price" %}</dt>
-                    <dd class="text-2xl">{{ session_request.session.currency_symbol }}{{ session_request.concessionary_price }}</dd>
+                <div class="flex flex-col gap-2">
+                    <div class="flex flex-row-wrap justify-space-between">
+                        <dt class="font-body">{% trans "Concessionary price" %}</dt>
+                        <dd class="text-2xl">
+                            {{ session_request.session.currency_symbol }}{{ session_request.concessionary_price }}
+                        </dd>
+                    </div>
+                    <small class="text-lg text-darkAccent w-3/4">{% trans "This is the amount you'll pay if the session peer allows you to pay the concessionary price." %}</small>
                 </div>
-                <small class="text-lg text-darkAccent w-3/4">{% trans "This is the amount you'll pay if the session peer allows you to pay the concessionary price." %}</small>
-            </div>
             {% endif %}
         </dl>
         <div>
-            <a href="{% routablepageurl page "request_schedule_session" session_id=session_request.session.id %}" class="auth_button auth_button__sessions_alt block mt-8 mx-auto text-center">
+            <a href="{% routablepageurl page "request_schedule_session" session_id=session_request.session.id %}"
+               class="auth_button auth_button__sessions_alt block mt-8 mx-auto text-center">
                 {% trans "Restart request" %}
             </a>
             <form method="post">
                 {% csrf_token %}
-                <button type="submit" class="auth_button auth_button__sessions block mt-8 mx-auto text-center">
+                <button type="submit"
+                        class="auth_button auth_button__sessions block mt-8 mx-auto text-center">
                     {% trans "Request session" %}
                 </button>
             </form>

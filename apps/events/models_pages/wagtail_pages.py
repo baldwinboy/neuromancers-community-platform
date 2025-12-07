@@ -90,17 +90,22 @@ class SessionsIndexPage(RoutablePage):
     @method_decorator(login_required)
     def create_session(self, request, session_type):
         return self._manage_session(request, session_type=session_type)
-    
-    @route(r"^edit/(?P<session_type>[\w-]+)/(?P<session_id>[0-9a-f-]+)/$", name="edit_session")
+
+    @route(
+        r"^edit/(?P<session_type>[\w-]+)/(?P<session_id>[0-9a-f-]+)/$",
+        name="edit_session",
+    )
     @with_route_name("edit_session")
-    @parse_uuid_param('session_id')  # apply only where session_id exists
+    @parse_uuid_param("session_id")  # apply only where session_id exists
     @method_decorator(login_required)
     def edit_session(self, request, session_type, session_id):
-        return self._manage_session(request, session_type=session_type, session_id=session_id)
-    
+        return self._manage_session(
+            request, session_type=session_type, session_id=session_id
+        )
+
     @route(r"^availability/(?P<session_id>[0-9a-f-]+)/$", name="manage_availability")
     @with_route_name("manage_availability")
-    @parse_uuid_param('session_id')
+    @parse_uuid_param("session_id")
     @method_decorator(login_required)
     def manage_availability(
         self, request: HttpRequest, session_id: uuid.UUID | None = None
@@ -111,7 +116,7 @@ class SessionsIndexPage(RoutablePage):
             return render(request, "404.html", status=404)
         if not request.user.has_perm("manage_availability", session):
             return render(request, "404.html", status=404)
-        
+
         if request.method == "POST":
             form = PeerSessionAvailabilityForm(request.POST)
             if form.is_valid():
@@ -126,9 +131,11 @@ class SessionsIndexPage(RoutablePage):
             {"page": self, "form": form, "hosted_session": session},
         )
 
-    @route(r"^availability/delete/(?P<session_id>[0-9a-f-]+)/$", name="delete_availability")
+    @route(
+        r"^availability/delete/(?P<session_id>[0-9a-f-]+)/$", name="delete_availability"
+    )
     @with_route_name("delete_availability")
-    @parse_uuid_param('session_id')
+    @parse_uuid_param("session_id")
     @method_decorator(login_required)
     def delete_availability(
         self, request: HttpRequest, availability_id: uuid.UUID | None = None
@@ -146,9 +153,12 @@ class SessionsIndexPage(RoutablePage):
         PeerSessionAvailability.objects.filter(pk=availability_id).delete()
         return redirect("events:manage_availability", session_id=session.id)
 
-    @route(r"^request/schedule/(?P<session_id>[0-9a-f-]+)/$", name="request_schedule_session")
+    @route(
+        r"^request/schedule/(?P<session_id>[0-9a-f-]+)/$",
+        name="request_schedule_session",
+    )
     @with_route_name("request_schedule_session")
-    @parse_uuid_param('session_id')
+    @parse_uuid_param("session_id")
     @method_decorator(login_required)
     def request_schedule_session(
         self, request: HttpRequest, session_id: uuid.UUID | None = None
@@ -157,11 +167,11 @@ class SessionsIndexPage(RoutablePage):
             session = PeerSession.objects.get(pk=session_id)
         except PeerSession.DoesNotExist:
             return render(request, "404.html", status=404)
-        
+
         if request.method == "POST":
             form = PeerSessionRequestForm(request.user, session, request.POST)
             if form.is_valid():
-                if request.POST.get('_preview', None):
+                if request.POST.get("_preview", None):
                     instance = form.save(commit=False)
                     serialized = serializers.serialize("json", [instance])
                     request.session["preview_instance"] = serialized
@@ -170,8 +180,8 @@ class SessionsIndexPage(RoutablePage):
                         "events/request_schedule_session_preview.html",
                         {"page": self, "form": form, "session_request": instance},
                     )
-                
-            if 'preview_instance' in request.session:
+
+            if "preview_instance" in request.session:
                 data = request.session.pop("preview_instance", None)
                 if data:
                     instance = list(serializers.deserialize("json", data))[0].object
@@ -182,13 +192,18 @@ class SessionsIndexPage(RoutablePage):
 
                     messages.success(request, _("Your request has been submitted!"))
                     return redirect(session.page.full_url)
-        else:       
+        else:
             form = PeerSessionRequestForm(request.user, session)
-            
+
         return render(
             request,
             "events/request_schedule_session.html",
-            {"page": self, "form": form, "hosted_session": session, "available_slots": session.available_slots},
+            {
+                "page": self,
+                "form": form,
+                "hosted_session": session,
+                "available_slots": session.available_slots,
+            },
         )
 
     def _manage_session(

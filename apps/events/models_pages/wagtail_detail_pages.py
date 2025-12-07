@@ -4,7 +4,11 @@ from django.utils.translation import gettext as _
 from wagtail.admin.panels import FieldPanel, PanelPlaceholder
 from wagtail.models import Page
 
-from apps.events.forms import GroupSessionPublishForm, GroupSessionRequestForm, PeerSessionPublishForm
+from apps.events.forms import (
+    GroupSessionPublishForm,
+    GroupSessionRequestForm,
+    PeerSessionPublishForm,
+)
 from apps.events.models_sessions.group import GroupSession
 from apps.events.models_sessions.peer import PeerSession
 
@@ -118,7 +122,6 @@ class GroupSessionDetailPage(Page):
         ):
             context["form"] = GroupSessionPublishForm(instance=self.session)
 
-
         if (
             self.session
             and request.user
@@ -129,8 +132,10 @@ class GroupSessionDetailPage(Page):
             attendee_requested = self.session.attendee_requested(request.user)
 
             if not attendee_requested:
-                context["form"] = GroupSessionRequestForm(request.user, self.session, instance=self.session)
-                
+                context["form"] = GroupSessionRequestForm(
+                    request.user, self.session, instance=self.session
+                )
+
             context["attendee_requested"] = attendee_requested
 
         context["sessions_index"] = self.get_parent().specific

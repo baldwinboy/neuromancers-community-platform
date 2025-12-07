@@ -1,5 +1,6 @@
 from datetime import datetime
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
+
 from django import forms
 from django.core.validators import MinValueValidator
 from django.db.models import Q
@@ -17,6 +18,7 @@ from .models_sessions.peer import (
 )
 
 DURATIONS = [[_("Minutes"), list(zip(range(5, 121), range(5, 121)))]]
+
 
 class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
     host = forms.CharField(required=False)
@@ -104,28 +106,40 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
 
     def __init__(self, host, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         self.initial["host"] = host
 
         if self.instance and self.instance.pk:
             # Convert price from integer to decimal
             price_decimal = Decimal(self.instance.price) / Decimal(100)
-            price_decimal = price_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            price_decimal = price_decimal.quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
             self.initial["price"] = price_decimal
 
             if self.instance.concessionary_price:
-                price_decimal = Decimal(self.instance.concessionary_price) / Decimal(100)
-                price_decimal = price_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                price_decimal = Decimal(self.instance.concessionary_price) / Decimal(
+                    100
+                )
+                price_decimal = price_decimal.quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
                 self.initial["concessionary_price"] = price_decimal
 
             if self.instance.per_hour_price:
                 price_decimal = Decimal(self.instance.per_hour_price) / Decimal(100)
-                price_decimal = price_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                price_decimal = price_decimal.quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
                 self.initial["per_hour_price"] = price_decimal
 
             if self.instance.concessionary_per_hour_price:
-                price_decimal = Decimal(self.instance.concessionary_per_hour_price) / Decimal(100)
-                price_decimal = price_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                price_decimal = Decimal(
+                    self.instance.concessionary_per_hour_price
+                ) / Decimal(100)
+                price_decimal = price_decimal.quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
                 self.initial["concessionary_per_hour_price"] = price_decimal
 
             # Convert comma-separated string from model to a list of ints for the form
@@ -141,40 +155,40 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
         if commit:
             instance.save()
         return instance
-    
+
     def clean_host(self):
         return self.initial["host"]
-    
+
     def clean_price(self):
-        data = self.cleaned_data['price']
+        data = self.cleaned_data["price"]
 
         if not data:
             return data
-        
+
         return int(data * 100)
-    
+
     def clean_concessionary_price(self):
-        data = self.cleaned_data['concessionary_price']
+        data = self.cleaned_data["concessionary_price"]
 
         if not data:
             return data
-        
+
         return int(data * 100)
-    
+
     def clean_per_hour_price(self):
-        data = self.cleaned_data['per_hour_price']
+        data = self.cleaned_data["per_hour_price"]
 
         if not data:
             return data
-        
+
         return int(data * 100)
-    
+
     def clean_concessionary_per_hour_price(self):
-        data = self.cleaned_data['concessionary_per_hour_price']
+        data = self.cleaned_data["concessionary_per_hour_price"]
 
         if not data:
             return data
-        
+
         return int(data * 100)
 
 
@@ -200,13 +214,17 @@ class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
         widget=forms.SplitDateTimeWidget(
             date_attrs={"type": "date"}, time_attrs={"type": "time"}
         ),
-        help_text=_("This is when your scheduled session starts. All times are set to UTC.")
+        help_text=_(
+            "This is when your scheduled session starts. All times are set to UTC."
+        ),
     )
     ends_at = forms.SplitDateTimeField(
         widget=forms.SplitDateTimeWidget(
             date_attrs={"type": "date"}, time_attrs={"type": "time"}
         ),
-        help_text=_("This is when your scheduled session ends. All times are set to UTC.")
+        help_text=_(
+            "This is when your scheduled session ends. All times are set to UTC."
+        ),
     )
 
     class Meta:
@@ -256,31 +274,37 @@ class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
         if self.instance and self.instance.pk:
             # Convert price from integer to decimal
             price_decimal = Decimal(self.instance.price) / Decimal(100)
-            price_decimal = price_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            price_decimal = price_decimal.quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
             self.initial["price"] = price_decimal
 
             if self.instance.concessionary_price:
-                price_decimal = Decimal(self.instance.concessionary_price) / Decimal(100)
-                price_decimal = price_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                price_decimal = Decimal(self.instance.concessionary_price) / Decimal(
+                    100
+                )
+                price_decimal = price_decimal.quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
                 self.initial["concessionary_price"] = price_decimal
 
     def clean_host(self):
         return self.initial["host"]
-    
+
     def clean_price(self):
-        data = self.cleaned_data['price']
+        data = self.cleaned_data["price"]
 
         if not data:
             return data
-        
+
         return int(data * 100)
-    
+
     def clean_concessionary_price(self):
-        data = self.cleaned_data['concessionary_price']
+        data = self.cleaned_data["concessionary_price"]
 
         if not data:
             return data
-        
+
         return int(data * 100)
 
     def clean(self):
@@ -295,7 +319,7 @@ class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
                 _("You must add a start and end time to your session"),
                 code="starts_at_and_ends_at",
             )
-        
+
         if not host:
             raise forms.ValidationError(
                 _("A session must be hosted by an existing user"),
@@ -314,10 +338,12 @@ class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
 
         if overlapping_sessions.exists():
             raise forms.ValidationError(
-                _("Group sessions must not overlap with existing group sessions from the same host"),
+                _(
+                    "Group sessions must not overlap with existing group sessions from the same host"
+                ),
                 code="overlapping_session",
             )
-        
+
         return cleaned_data
 
 
@@ -352,13 +378,17 @@ class PeerSessionAvailabilityForm(forms.ModelForm):
         widget=forms.SplitDateTimeWidget(
             date_attrs={"type": "date"}, time_attrs={"type": "time"}
         ),
-        help_text=_("This is the start of your availabilty window. All times are set to UTC.")
+        help_text=_(
+            "This is the start of your availabilty window. All times are set to UTC."
+        ),
     )
     ends_at = forms.SplitDateTimeField(
         widget=forms.SplitDateTimeWidget(
             date_attrs={"type": "date"}, time_attrs={"type": "time"}
         ),
-        help_text=_("This is the end of your availabilty window. All times are set to UTC.")
+        help_text=_(
+            "This is the end of your availabilty window. All times are set to UTC."
+        ),
     )
     occurrence_starts_at = forms.SplitDateTimeField(
         required=False,
@@ -395,7 +425,7 @@ class PeerSessionAvailabilityForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
-    
+
     def clean(self):
         cleaned_data = super().clean()
 
@@ -419,16 +449,22 @@ class PeerSessionRequestForm(forms.ModelForm):
 
     class Meta:
         model = PeerSessionRequest
-        fields = ["attendee", "session", "starts_at", "ends_at", "pay_concessionary_price"]
+        fields = [
+            "attendee",
+            "session",
+            "starts_at",
+            "ends_at",
+            "pay_concessionary_price",
+        ]
 
     def __init__(self, attendee, session, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.initial["attendee"] = attendee
         self.initial["session"] = session
-        
+
     def clean_starts_at(self):
-        data = self.cleaned_data['starts_at']
+        data = self.cleaned_data["starts_at"]
 
         try:
             data = datetime.fromisoformat(data).replace(tzinfo=None)
@@ -437,11 +473,11 @@ class PeerSessionRequestForm(forms.ModelForm):
                 _("Invalid start time. Try filling out the form again"),
                 code="invalid_starts_at",
             )
-        
+
         return data
-    
+
     def clean_ends_at(self):
-        data = self.cleaned_data['ends_at']
+        data = self.cleaned_data["ends_at"]
 
         try:
             data = datetime.fromisoformat(data).replace(tzinfo=None)
@@ -450,15 +486,15 @@ class PeerSessionRequestForm(forms.ModelForm):
                 _("Invalid end time. Try filling out the form again"),
                 code="invalid_ends_at",
             )
-        
+
         return data
-    
+
     def clean_session(self):
         return self.initial["session"]
-    
+
     def clean_attendee(self):
         return self.initial["attendee"]
-    
+
     def clean(self):
         cleaned_data = super().clean()
 
@@ -472,7 +508,7 @@ class PeerSessionRequestForm(forms.ModelForm):
                 _("You must add a start and end time to your request"),
                 code="starts_at_and_ends_at",
             )
-        
+
         # Session requests should not overlap with existing approved session requests from the same attendee
         overlapping_requests = PeerSessionRequest.objects.filter(
             Q(starts_at__lt=starts_at, ends_at__gt=ends_at)
@@ -498,7 +534,8 @@ class PeerSessionRequestForm(forms.ModelForm):
                 cleaned_data.pop(k, None)
 
         return cleaned_data
-    
+
+
 class GroupSessionRequestForm(forms.ModelForm):
     attendee = forms.CharField(required=False)
     session = forms.CharField(required=False)
@@ -512,9 +549,9 @@ class GroupSessionRequestForm(forms.ModelForm):
 
         self.initial["attendee"] = attendee
         self.initial["session"] = session
-        
+
     def clean_session(self):
         return self.initial["session"]
-    
+
     def clean_attendee(self):
         return self.initial["attendee"]
