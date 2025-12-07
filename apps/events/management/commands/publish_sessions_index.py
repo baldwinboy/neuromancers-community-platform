@@ -22,6 +22,6 @@ class Command(BaseCommand):
                 revision = page.save_revision()
                 revision.publish()
                 self.stdout.write(f"Published: {page.title}")
-            page.move(root, "right")
+            page.move(root, "first-child")
         if not index_pages.exists():
             self.stdout.write("No unpublished SessionsIndexPages found.")

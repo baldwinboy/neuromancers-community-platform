@@ -2,12 +2,13 @@ SHELL=/bin/bash
 .DEFAULT_GOAL := help
 NEUROMANCERS_VENV := .venv/neuromancers/bin/activate
 NEUROMANCERS_VENV_PATH := .venv/neuromancers
+PYTHON_VERSION := 3.12
 
 help: ## Show this help.
 	@grep -E '^[a-zA-Z0-9 -]+:.*#'  Makefile | sort | while read -r l; do printf "\033[1;32m$$(echo $$l | cut -f 1 -d':')\033[00m:$$(echo $$l | cut -f 2- -d'#')\n"; done
 
 venv: # Create virtual environment
-	uv venv $(NEUROMANCERS_VENV_PATH)
+	uv venv $(NEUROMANCERS_VENV_PATH) --python $(PYTHON_VERSION)
 
 venv-delete: # Delete virtual environment
 	rm -rf $(NEUROMANCERS_VENV_PATH)
@@ -67,7 +68,9 @@ install: # Install Python development requirements
 install-prod: # Install Python production requirements
 	uv pip install -r requirements/production.txt
 
-dev: install django-makemigrations django-migrate django-createsuperuser django-setupdefaultgroups django-publishsessionsindex django-collectstatic django-runserver
+fresh: install django-makemigrations django-migrate django-createsuperuser django-setupdefaultgroups django-publishsessionsindex django-collectstatic django-runserver
+
+dev: django-makemigrations django-migrate django-collectstatic django-runserver
 
 sass-watch: # Compile Sass on demand
 	sass --watch assets/scss/styles.scss assets/css/styles.css
