@@ -11,18 +11,17 @@ class SessionRequestStatusChoices(models.IntegerChoices):
     APPROVED = 0, _("Approved")
     REJECTED = 1, _("Rejected")
     PENDING = 2, _("Pending")
+    WITHDRAWN = 3, _("Withdrawn")
 
 
 class SessionAvailabilityOccurrenceChoices(models.IntegerChoices):
     """
-    Session availability may occur hourly, daily, weekly, monthly, or yearly
+    Session availability may occur hourly, daily, weekly, or monthly
     """
 
-    HOURLY = 0, _("Hourly")
-    DAILY = 1, _("Daily")
-    WEEKLY = 2, _("Weekly")
-    MONTHLY = 3, _("Monthly")
-    YEARLY = 4, _("Yearly")
+    DAILY = 0, _("Daily")
+    WEEKLY = 1, _("Weekly")
+    MONTHLY = 2, _("Monthly")
 
 
 # Filter currencies

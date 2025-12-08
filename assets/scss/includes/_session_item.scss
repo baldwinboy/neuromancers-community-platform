@@ -1,0 +1,38 @@
+@use "../mixins" as *;
+@use "../variables" as *;
+
+.session_item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid $black;
+    background: $darkAccent;
+    color: $lightAccent;
+    box-shadow: 10px 5px $black;
+    transition: all 0.25s ease-in-out;
+
+    @include interact {
+        transform: translate(-0.5rem, -0.25rem);
+    }
+
+    @include reduced-motion {
+        transition: none;
+    }
+
+    & > time {
+        opacity: 0.75;
+    }
+
+    &__author {
+        align-self: flex-end;
+        margin-left: auto;
+    }
+}
+
+.session_item_alt {
+    border: 1px solid $darkAccent;
+    background: $black;
+    color: $white;
+}

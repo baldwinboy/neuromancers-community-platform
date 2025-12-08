@@ -20,7 +20,7 @@
 }
 
 .hidden {
-  display: hidden;
+  display: none;
 }
 
 /* Flexbox */
@@ -301,7 +301,7 @@
     }
 
     .#{$key}\:hidden {
-      display: hidden;
+      display: none;
     }
 
     /* Flexbox */
@@ -347,15 +347,15 @@
         }
 
         .#{$key}\:#{$name}-fit {
-          #{$property}: fit-conent;
+          #{$property}: fit-content;
         }
 
         .#{$key}\:#{$name}-min {
-          #{$property}: min-conent;
+          #{$property}: min-content;
         }
 
         .#{$key}\:#{$name}-max {
-          #{$property}: max-conent;
+          #{$property}: max-content;
         }
 
         .#{$key}\:#{$name}-full {

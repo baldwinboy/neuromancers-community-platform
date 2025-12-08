@@ -1,0 +1,45 @@
+{% load i18n %}
+<fieldset class="typed_select_multiple">
+    {# djlint:off #}
+    <input type="text" name="{{ widget.name }}__input" {% include "django/forms/widgets/attrs.html" %} pattern="{{ widget.pattern }}" data-id="typed_select_multiple__input"></input>
+    {# djlint:on #}
+    <div class="typed_select_multiple__options overflow">
+        {% for group_name, group_choices, group_index in widget.optgroups %}
+            <div class="typed_select_multiple__options_group hidden">
+                {% if group_name %}<h3>{{ group_name }}</h3>{% endif %}
+                <ul>
+                    {% for option in group_choices %}
+                        <li class="hidden"
+                            id="{{ widget.name }}_typed_option_{{ forloop.counter0 }}"
+                            data-value="{{ option.value|stringformat:'s' }}"
+                            data-label="{{ option.label }}">
+                            <button type="button"
+                                    data-value="{{ option.value|stringformat:'s' }}"
+                                    data-label="{{ option.label }}"
+                                    data-select-name="{{ widget.name }}"
+                                    data-output-id="typed_select_multiple__selected__{{ widget.name }}"
+                                    onclick="toggleSelectedOptions(this)">{{ option.label }}</button>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    </div>
+    <select name="{{ widget.name }}"
+            class="hidden"
+            multiple
+            data-remove-title="{% trans "Remove this option" %}">
+        {% for group_name, group_choices, group_index in widget.optgroups %}
+            {% if group_name %}<optgroup label="{{ group_name }}">{% endif %}
+                {% for option in group_choices %}
+                    {% with widget_value=option.value|stringformat:"s" %}
+                        <option value="{{ widget_value }}"
+                                {% if widget_value in widget.value %}selected{% endif %}>{{ option.label }}</option>
+                    {% endwith %}
+                {% endfor %}
+                {% if group_name %}</optgroup>{% endif %}
+        {% endfor %}
+    </select>
+    <div id="typed_select_multiple__selected__{{ widget.name }}"
+         class="typed_select_multiple__selected"></div>
+</fieldset>

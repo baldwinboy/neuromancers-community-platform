@@ -1,0 +1,8 @@
+@use "../variables" as *;
+
+.view_session__details_group {
+    border-top: 1px solid $black;
+    &:last-of-type {
+        border-bottom: 1px solid $black;
+    }
+}

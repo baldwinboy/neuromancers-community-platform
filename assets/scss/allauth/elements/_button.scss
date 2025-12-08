@@ -61,4 +61,23 @@
         background: transparent;
         color: $black;
     }
+
+    &_alt {
+        border: 1px solid $black;
+        background: transparent;
+        color: $black;
+
+        @include interact {
+            border: 1px solid transparent;
+            background: $black;
+            color: $lightAccent;
+        }
+    }
+
+    &_disabled, &:disabled {
+        pointer-events: none;
+        background: $black;
+        color: $lightAccent;
+        opacity: 0.5;
+    }
 }

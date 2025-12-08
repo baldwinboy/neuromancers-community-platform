@@ -10,13 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
 import environ
+from django_components import ComponentsSettings
 
+from .countries import countries
 from .currencies import currencies
+from .languages import languages
 from .name_blacklist import name_blacklist
 from .stripe_currencies import stripe_currencies
 
@@ -64,6 +66,7 @@ DEFAULT_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    "django.forms",
 ]
 
 THIRD_PARTY_APPS = [
@@ -81,6 +84,8 @@ THIRD_PARTY_APPS = [
     "heroicons",
     # For static file compression
     "compressor",
+    # For reusable components
+    "django_components",
 ]
 
 PROJECT_APPS = [
@@ -113,7 +118,6 @@ TEMPLATES = [
         "DIRS": [
             os.path.join(BASE_DIR, "templates"),
         ],
-        "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -123,9 +127,27 @@ TEMPLATES = [
                 "wagtailmenus.context_processors.wagtailmenus",
                 "apps.core.context_processors.unverified_email_warning",
             ],
+            "loaders": [
+                (
+                    "django.template.loaders.cached.Loader",
+                    [
+                        # Default Django loader
+                        "django.template.loaders.filesystem.Loader",
+                        # Including this is the same as APP_DIRS=True
+                        "django.template.loaders.app_directories.Loader",
+                        # Components loader
+                        "django_components.template_loader.Loader",
+                    ],
+                )
+            ],
+            "builtins": [
+                "django_components.templatetags.component_tags",
+            ],
         },
     },
 ]
+
+FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 WSGI_APPLICATION = "neuromancers.wsgi.application"
 
@@ -169,7 +191,7 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -179,6 +201,7 @@ STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     "compressor.finders.CompressorFinder",
+    "django_components.finders.ComponentsFileSystemFinder",
 ]
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "assets")]
@@ -261,8 +284,11 @@ REST_FRAMEWORK = {
 # List of ISO currencies
 CURRENCIES = currencies
 
-# List of ISO currencies supported by Stripe
-STRIPE_CURRENCIES = stripe_currencies
+# List of ISO countries
+COUNTRIES = countries
+
+# List of ISO languages
+LANGUAGES = languages
 
 # Redirect users to homepage after login without `next` query
 LOGIN_REDIRECT_URL = "/"
@@ -270,6 +296,7 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 # Django Allauth
+ACCOUNT_ADAPTER = "apps.accounts.adapters.AccountAdapter"
 ACCOUNT_USERNAME_BLACKLIST = name_blacklist
 ACCOUNT_LOGIN_BY_CODE_ENABLED = True  # Users can be sent a code to login
 # Handle logins with Django Allauth
@@ -315,3 +342,21 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_USE_TLS = True
+
+# Django components
+COMPONENTS = ComponentsSettings(
+    tag_formatter="django_components.component_shorthand_formatter",
+    dirs=[os.path.join(BASE_DIR, "templates/includes")],
+    reload_on_file_change=DEBUG,
+)
+
+# Whereby
+WHEREBY_API_KEY = env("WHEREBY_API_KEY")
+
+# Stripe
+STRIPE_CONNECTED_APP_ID = env("STRIPE_CONNECTED_APP_ID")
+STRIPE_API_PUBLISHABLE_KEY = env("STRIPE_API_PUBLISHABLE_KEY")
+STRIPE_API_SECRET_KEY = env("STRIPE_API_SECRET_KEY")
+STRIPE_REDIRECT_URL = env("STRIPE_REDIRECT_URL")
+STRIPE_CURRENCIES = stripe_currencies  # Currencies supported by Stripe
+STRIPE_APPLICATION_FEE = 0.15  # Decimal value of Stripe Application Fee (15%)

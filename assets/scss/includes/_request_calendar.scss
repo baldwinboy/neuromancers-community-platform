@@ -1,0 +1,108 @@
+@use "../mixins" as *;
+@use "../variables" as *;
+
+.request_calendar__grid {
+  display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    grid-column-gap: 1rem;
+    grid-row-gap: 1rem;
+}
+
+.request_calendar__grid_days {
+    font-size: 200%;
+}
+
+.request_calendar__grid_date {
+    cursor: default;
+    padding: 1rem;
+    font-family: $body;
+    text-align: center;
+    span {
+        font-family: inherit;
+    }
+}
+
+.request_calendar__grid_no_date {
+    color: $darkAccent;
+    opacity: 0.5;
+}
+
+.request_calendar__grid_date_active {
+    cursor: pointer;
+    border-radius: 10px;
+    border: none;
+    background: $white;
+    color: $darkAccent;
+    transition: all 0.25s ease-in-out;
+    @include reduced-motion {
+        transition: none;
+    }
+    @include interact {
+        background: $black;
+        color: $lightAccent;
+    }
+    &:active {
+        background: $black;
+        color: $lightAccent;
+    }
+}
+
+.request_calendar__grid_date_selected {
+    background: $black;
+    color: $lightAccent;
+}
+
+.request_calendar__times {
+    max-height: 8rem;
+    border-radius: 10px;
+    background: $black;
+    color: $lightAccent;
+    overflow: auto;
+    &::-webkit-scrollbar {
+        border-radius: 10px;
+        height: 10px;
+        width: 8px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: $lightAccent;
+        border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-track {
+        border-radius: 10px;
+    }
+}
+
+.request_calendar_active_date_time_option {
+    cursor: pointer;
+    width: 100%;
+    padding: 1rem;
+    font-size: 200%;
+    transition: all 0.25s ease-in-out;
+    @include reduced-motion {
+        transition: none;
+    }
+    @include interact {
+        background: $white;
+        color: $darkAccent;
+    }
+    &:has(input:checked) {
+       background: $white;
+        color: $darkAccent;
+    }
+
+    input {
+        display: none;
+    }
+}
+
+.request_calendar__durations_time {
+    font-size: 200%;
+}
+
+.request_calendar__durations {
+    background: $black;
+    accent-color: $darkAccent;
+}

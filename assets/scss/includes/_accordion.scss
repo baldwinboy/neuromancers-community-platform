@@ -1,0 +1,45 @@
+@use "../mixins" as *;
+@use "../variables" as *;
+
+.accordion {
+  &>summary {
+    position: relative;
+    list-style: none;
+
+    &::after {
+      content: "+";
+      position: absolute;
+      right: 0;
+      font-family: $subheading;
+      font-weight: 200;
+    }
+  }
+
+  &[open]>summary {
+    &::after {
+      content: "\2212";
+    }
+  }
+
+  &+.accordion_content {
+    box-sizing: border-box;
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 400ms ease-out, border 0ms 400ms linear;
+
+    @include reduced-motion {
+      transition: none;
+    }
+  }
+
+  &[open]+.accordion_content {
+    max-height: 200vh;
+    overflow: unset;
+    transition: max-height 400ms ease-out, border 0ms linear;
+
+    @include reduced-motion {
+      transition: none;
+    }
+  }
+}

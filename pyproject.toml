@@ -19,7 +19,7 @@ known_first_party = ["config"]
 profile = "django"
 ignore = "H031"
 blank_line_before_tag="load,extends,include,block,element,slot,setvar"
-custom_blocks="element,slot,setvar"
+custom_blocks="element,slot,setvar,accordion"
 
 [tool.setuptools]
 package-dir = {"" = "apps"}

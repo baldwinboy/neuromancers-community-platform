@@ -2,7 +2,7 @@ exclude: .*migrations\/.*|data/\.*
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v6.0.0
     hooks:
       - id: check-yaml
       - id: end-of-file-fixer
@@ -28,8 +28,8 @@ repos:
   - repo: https://github.com/djlint/djLint
     rev: v1.36.4
     hooks:
-      - id: djlint-reformat-django
       - id: djlint-django
+      - id: djlint-reformat-django
 
   - repo: https://github.com/thibaudcolas/pre-commit-stylelint
     rev: v16.22.0

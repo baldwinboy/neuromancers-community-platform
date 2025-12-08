@@ -22,10 +22,12 @@
         @content;
       }
     }
+
     @else {
       @warn "Unfortunately, no value could be retrieved from `#{$breakpoint}`. " + "Please make sure it is defined in breakpoints map.";
     }
   }
+
   @else {
     @warn "Unfortunately, the map `#{$map}` isn't defined or is invalid.";
   }
@@ -39,6 +41,7 @@
 
 @mixin media-max($breakpoint) {
   $max-width: -get-next($breakpoint, $map: $breakpoints);
+
   @media (max-width: ($max-width - 1)) {
     @content;
   }
@@ -78,6 +81,7 @@
 
 /* Interaction mixin */
 @mixin interact {
+
   &:not([disabled]):hover,
   &:not([disabled]):focus-visible {
     @content;
@@ -101,36 +105,39 @@
 
 /* Checkbox mixin */
 @mixin checkbox($color: $black) {
-    cursor: pointer;
-    position: relative;
-    width: 2rem;
-    height: 2rem;
-    border: 1px solid $color;
-    margin-left: auto;
-    background-color: transparent;
-    appearance: none;
-    vertical-align: top;
+  cursor: pointer;
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid $color;
+  margin-left: auto;
+  background-color: transparent;
+  appearance: none;
+  vertical-align: top;
 }
 
 /* Cross mixin */
 @mixin cross-lines($color: $black) {
   border: 1px solid $color;
+
   &:before,
   &:after {
     top: 50%;
     position: absolute;
     left: 15px;
-    content: ' ';
+    content: none;
     height: 33px;
     width: 2px;
     background-color: $color;
   }
 
-  &:before {
+  &:checked:before {
+    content: ' ';
     transform: translate(-50%, -50%) rotate(45deg);
   }
 
-  &:after {
+  &:checked:after {
+    content: ' ';
     transform: translate(-50%, -50%) rotate(-45deg);
   }
 }

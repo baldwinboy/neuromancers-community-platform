@@ -1,0 +1,66 @@
+{% extends "events/create_base.html" %}
+
+{% load i18n account guardian_tags wagtailcore_tags %}
+
+{% block title %}
+    Update {{ hosted_session.title }}
+{% endblock title %}
+
+{% block form_title %}
+    {% blocktrans with ft=hosted_session.title %}Update {{ ft }}{% endblocktrans %}
+{% endblock form_title %}
+
+{% block form %}
+    {% if user.is_authenticated %}
+        {% get_obj_perms request.user for hosted_session as "session_perms" %}
+        {% if "change_peersession" in session_perms or "change_groupsession" in session_perms %}
+            <form method="post" class="w-full">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                {% for group_title, fields in form.get_field_groups %}
+                    {% with accordion_heading=group_title accordion_name="field-group" accordion_classes="create_session__field_group" %}
+                        {% accordion %}
+                            {% for field in fields %}
+                                <div class="create_session__field_item py-8">
+                                    {{ field.errors }}
+                                    <div class="flex flex-wrap">
+                                        {% if field.id_for_label %}
+                                            <label for="{{ field.id_for_label }}" class="text-2xl">
+                                                {{ field.label }}
+                                                {% if field.field.required %}*{% endif %}
+                                            </label>
+                                        {% else %}
+                                            <label for="id_{{ field.name }}_0" class="text-2xl">
+                                                {{ field.label }}
+                                                {% if field.field.required %}*{% endif %}
+                                            </label>
+                                        {% endif %}
+                                        {{ field }}
+                                        <p class="create_session__field_item_help_text w-full font-subheading font-light">{{ field.help_text }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endaccordion %}
+                    {% endwith %}
+                {% endfor %}
+                <button type="submit"
+                        class="auth_button auth_button__sessions block mt-8 mx-auto text-center">
+                    {% trans "Update session" %}
+                </button>
+            </form>
+        {% else %}
+            <p>
+                <a href="{% pageurl page %}">{% trans "Oops, you're on the wrong page. Head back to sessions." %}</a>
+            </p>
+        {% endif %}
+    {% else %}
+        <p>
+            <a href="{% url 'account_login' %}">{% trans "Oops, you're on the wrong page. Log in to continue." %}</a>
+        </p>
+    {% endif %}
+{% endblock form %}
+
+{% block extra_js %}
+    {{ form.media }}
+    {{ block.super }}
+{% endblock extra_js %}

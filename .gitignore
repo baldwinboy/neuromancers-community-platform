@@ -15,7 +15,6 @@ static
 **/node_modules/
 **/npm-debug.log
 **//.idea/
-**/.vscode
 **/coverage
 **/.python-version
 

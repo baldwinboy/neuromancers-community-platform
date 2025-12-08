@@ -1,0 +1,8 @@
+<details name="{{ accordion_name }}"
+         class="accordion w-full select-none {{ accordion_classes }}">
+    <summary class="w-full py-7 text-4xl">{{ accordion_heading }}</summary>
+</details>
+<div class="accordion_content">
+
+    {% slot "accordion_content" default / %}
+    </div>
