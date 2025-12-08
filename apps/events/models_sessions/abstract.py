@@ -178,3 +178,14 @@ class AbstractSessionRequest(models.Model):
 
     class Meta:
         abstract = True
+
+
+class AbstractSessionReview(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    content = models.TextField()
+
+    class Meta:
+        abstract = True

@@ -22,6 +22,7 @@ from .abstract import (
     AbstractSession,
     AbstractSessionAvailability,
     AbstractSessionRequest,
+    AbstractSessionReview,
     User,
 )
 
@@ -498,3 +499,9 @@ class PeerScheduledSessionUserObjectPermission(UserObjectPermissionBase):
 
 class PeerScheduledSessionGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(PeerScheduledSession, on_delete=models.CASCADE)
+
+
+class PeerSessionReview(AbstractSessionReview):
+    attended_session = models.OneToOneField(
+        PeerScheduledSession, on_delete=models.CASCADE, related_name="review"
+    )

@@ -10,7 +10,12 @@ from apps.accounts.models import UserGroup
 from apps.events.choices import SessionRequestStatusChoices, filtered_currencies
 from apps.events.utils import get_languages
 
-from .abstract import AbstractSession, AbstractSessionRequest, User
+from .abstract import (
+    AbstractSession,
+    AbstractSessionRequest,
+    AbstractSessionReview,
+    User,
+)
 
 
 class GroupSession(AbstractSession):
@@ -196,3 +201,23 @@ class GroupSessionRequestUserObjectPermission(UserObjectPermissionBase):
 
 class GroupSessionRequestGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(GroupSessionRequest, on_delete=models.CASCADE)
+
+
+class GroupSessionReview(AbstractSessionReview):
+    attended_session = models.ForeignKey(
+        GroupSession, on_delete=models.CASCADE, related_name="reviews"
+    )
+    attendee = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="group_session_reviews"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["attended_session", "attendee"],
+                name="unique_group_session_review",
+                violation_error_message=_(
+                    "You can only leave one review on each group session you've attended"
+                ),
+            ),
+        ]
