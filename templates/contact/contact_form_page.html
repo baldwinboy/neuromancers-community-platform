@@ -1,0 +1,51 @@
+{% extends "account/base_entrance.html" %}
+
+{% load allauth i18n wagtailcore_tags wagtailimages_tags %}
+
+{% block body_class %}
+    template-contactformpage
+{% endblock body_class %}
+
+{% block head_title %}
+    {% if page.seo_title %}
+        {{ page.seo_title }}
+    {% else %}
+        {{ page.title }}
+    {% endif %}
+{% endblock head_title %}
+{# Protect against path sniffing #}
+{% querystring next=None %}
+
+{% block content %}
+
+    {% element panel class="auth_panel__signup" %}
+
+        {% slot title %}
+            {% trans page.title %}
+        {% endslot %}
+
+        {% slot body %}
+            {# Form fields #}
+            {% pageurl page as action_url %}
+            <div class="richtext">{{ page.intro|richtext }}</div>
+
+            {% element form form=form method="post" action=action_url tags="entrance,signup" %}
+
+                {% slot body %}
+                    {% csrf_token %}
+
+                    {% element fields form=form unlabeled=True %}
+                    {% endelement %}
+                    {{ redirect_field }}
+                {% endslot %}
+
+                {% slot actions %}
+
+                    {% element button tags="prominent,signup" type="submit" class="auth_button__signup_panel" %}
+                        {% trans "Send" %}
+                    {% endelement %}
+                {% endslot %}
+            {% endelement %}
+        {% endslot %}
+    {% endelement %}
+{% endblock content %}

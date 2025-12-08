@@ -38,7 +38,7 @@ class HomePage(Page):
 
     body = RichTextField(blank=True)
 
-    subpage_types = ["events.SessionsIndexPage"]
+    subpage_types = ["events.SessionsIndexPage", "contact.ContactFormPage"]
 
     # modify your content_panels:
     content_panels = Page.content_panels + [

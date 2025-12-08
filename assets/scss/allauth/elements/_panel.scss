@@ -5,6 +5,12 @@
     border-radius: 10px;
     max-width: 38.5rem;
 
+    .richtext {
+        p {
+            font-family: $body;
+        }
+    }
+
     .auth_form {
         display: flex;
         flex-flow: column;
@@ -15,7 +21,8 @@
         p {
             input[type=text],
             input[type=email],
-            input[type=password] {
+            input[type=password],
+            textarea {
                 border: 1px solid $safeLightAccent;
                 border-top: 0;
                 border-right: 0;

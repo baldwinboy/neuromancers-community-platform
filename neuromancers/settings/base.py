@@ -92,6 +92,7 @@ THIRD_PARTY_APPS = [
 PROJECT_APPS = [
     "apps.accounts",
     "apps.events",
+    "apps.contact",
     "apps.core",
 ]
 

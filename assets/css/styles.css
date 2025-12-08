@@ -21208,6 +21208,9 @@ h2 {
   border-radius: 10px;
   max-width: 38.5rem;
 }
+.auth_panel .richtext p {
+  font-family: "Open Dyslexic", sans-serif;
+}
 .auth_panel .auth_form {
   display: flex;
   flex-flow: column;
@@ -21217,7 +21220,8 @@ h2 {
 }
 .auth_panel .auth_form p input[type=text],
 .auth_panel .auth_form p input[type=email],
-.auth_panel .auth_form p input[type=password] {
+.auth_panel .auth_form p input[type=password],
+.auth_panel .auth_form p textarea {
   border: 1px solid hsl(342.63, 80.85%, 81.57%);
   border-top: 0;
   border-right: 0;
@@ -21229,7 +21233,8 @@ h2 {
 }
 .auth_panel .auth_form p input[type=text]::placeholder,
 .auth_panel .auth_form p input[type=email]::placeholder,
-.auth_panel .auth_form p input[type=password]::placeholder {
+.auth_panel .auth_form p input[type=password]::placeholder,
+.auth_panel .auth_form p textarea::placeholder {
   color: hsl(0, 0%, 100%);
   opacity: 0.8;
 }

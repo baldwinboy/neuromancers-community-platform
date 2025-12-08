@@ -1,0 +1,21 @@
+[
+  {
+    "model": "contact.contacttopic",
+    "fields": {
+      "label": "Account Log Ins & Security",
+      "slug": "account-log-ins-security"
+    }
+  },
+  {
+    "model": "contact.contacttopic",
+    "fields": { "label": "Payments & Billing", "slug": "payments-billing" }
+  },
+  {
+    "model": "contact.contacttopic",
+    "fields": { "label": "General Enquiry", "slug": "general-enquiry" }
+  },
+  {
+    "model": "contact.contacttopic",
+    "fields": { "label": "Other", "slug": "other" }
+  }
+]
