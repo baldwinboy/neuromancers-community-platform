@@ -21311,9 +21311,31 @@ h2 {
 .auth_panel .auth_form p select + select {
   margin-left: 1rem;
 }
+.auth_panel .auth_form ul.errorlist li {
+  color: hsl(343.29, 95.89%, 71.37%);
+}
 .auth_panel .auth_form ul li {
   font-size: 140%;
   font-weight: 300;
+}
+.auth_panel .auth_form p:has(> input[type=checkbox]) {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.auth_panel .auth_form p:has(> input[type=checkbox]) label {
+  flex: 1 1 auto;
+}
+.auth_panel .auth_form p:has(> input[type=checkbox]) input[type=checkbox] {
+  flex: 0 0 auto;
+  align-self: anchor-center;
+  margin-top: -1rem;
+}
+.auth_panel .auth_form p:has(> input[type=checkbox]) a {
+  font-family: "Open Dyslexic", sans-serif;
+}
+.auth_panel .auth_form p:has(> input[type=checkbox]) a:not([disabled]):hover, .auth_panel .auth_form p:has(> input[type=checkbox]) a:not([disabled]):focus-visible {
+  color: hsl(343.29, 95.89%, 71.37%);
 }
 .auth_panel p + p, .auth_panel .auth_form, .auth_panel .auth_form + p {
   margin-top: 2rem;

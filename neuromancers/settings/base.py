@@ -318,6 +318,7 @@ ACCOUNT_SIGNUP_FIELDS = [
     "email2*",
     "password1*",
     "password2*",
+    "accept_toc",
 ]
 # Custom username validators
 ACCOUNT_USERNAME_VALIDATORS = "apps.accounts.validators.username_validators"

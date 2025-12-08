@@ -55,7 +55,7 @@ class HomePage(Page):
     ]
 
 
-@register_setting
+@register_setting(icon="link")
 class Links(BaseGenericSetting):
     terms_and_conditions = models.URLField(
         help_text="Your organisation's terms and conditions URL"

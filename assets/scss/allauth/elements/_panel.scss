@@ -81,9 +81,41 @@
             }
         }
 
-        ul li {
-            font-size: 140%;
-            font-weight: 300;
+        ul {
+            &.errorlist {
+                li {
+                   color: $lightAccent;
+                }
+            }
+
+            li {
+                font-size: 140%;
+                font-weight: 300;
+            }
+        }
+
+
+        p:has(> input[type="checkbox"]) {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+
+            label {
+                flex: 1 1 auto;
+            }
+
+            input[type="checkbox"] {
+                flex: 0 0 auto;
+                align-self: anchor-center;
+                margin-top: -1rem;
+            }
+
+            a {
+                font-family: $body;
+                @include interact {
+                    color: $lightAccent;
+                }
+            }
         }
     }
 
