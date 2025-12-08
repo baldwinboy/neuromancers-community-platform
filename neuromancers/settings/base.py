@@ -10,14 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
 import environ
 from django_components import ComponentsSettings
 
+from .countries import countries
 from .currencies import currencies
+from .languages import languages
 from .name_blacklist import name_blacklist
 from .stripe_currencies import stripe_currencies
 
@@ -283,8 +284,11 @@ REST_FRAMEWORK = {
 # List of ISO currencies
 CURRENCIES = currencies
 
-# List of ISO currencies supported by Stripe
-STRIPE_CURRENCIES = stripe_currencies
+# List of ISO countries
+COUNTRIES = countries
+
+# List of ISO languages
+LANGUAGES = languages
 
 # Redirect users to homepage after login without `next` query
 LOGIN_REDIRECT_URL = "/"
@@ -345,3 +349,14 @@ COMPONENTS = ComponentsSettings(
     dirs=[os.path.join(BASE_DIR, "templates/includes")],
     reload_on_file_change=DEBUG,
 )
+
+# Whereby
+WHEREBY_API_KEY = env("WHEREBY_API_KEY")
+
+# Stripe
+STRIPE_CONNECTED_APP_ID = env("STRIPE_CONNECTED_APP_ID")
+STRIPE_API_PUBLISHABLE_KEY = env("STRIPE_API_PUBLISHABLE_KEY")
+STRIPE_API_SECRET_KEY = env("STRIPE_API_SECRET_KEY")
+STRIPE_REDIRECT_URL = env("STRIPE_REDIRECT_URL")
+STRIPE_CURRENCIES = stripe_currencies  # Currencies supported by Stripe
+STRIPE_APPLICATION_FEE = 0.15  # Decimal value of Stripe Application Fee (15%)
