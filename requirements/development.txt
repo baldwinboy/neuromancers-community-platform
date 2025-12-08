@@ -194,6 +194,12 @@ executing==2.2.0
     # via
     #   -r requirements/base.in
     #   stack-data
+factory-boy==3.3.3
+    # via -r requirements/development.in
+faker==38.2.0
+    # via
+    #   -r requirements/development.in
+    #   factory-boy
 fastjsonschema==2.21.1
     # via
     #   -r requirements/base.in
@@ -505,6 +511,10 @@ typing-extensions==4.14.1
     #   django-tasks
     #   referencing
     #   stripe
+tzdata==2025.2
+    # via
+    #   -r requirements/development.in
+    #   faker
 uritemplate==4.2.0
     # via -r requirements/base.in
 urllib3==2.5.0
