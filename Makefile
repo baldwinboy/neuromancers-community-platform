@@ -65,6 +65,7 @@ update-requirements: # Compile and update requirements from .in files
 
 install: # Install Python development requirements
 	uv pip install -r requirements/development.txt
+	pre-commit install
 install-prod: # Install Python production requirements
 	uv pip install -r requirements/production.txt
 

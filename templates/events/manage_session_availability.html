@@ -17,36 +17,36 @@
             {% trans "Existing availability" as accordion_heading %}
             {% with accordion_name="availability" accordion_classes="create_session__field_group" %}
                 {% accordion %}
-                <ul class="w-full">
-                    {% for availability in hosted_session.availability.all %}
-                        <li class="text-2xl flex flex-wrap gap-2 justify-space-between w-full">
-                            {{ availability }}
-                            <a href="{% routablepageurl page "delete_availability" availability_id=availability.id %}"
-                               title="{% trans "Delete" %}">{% heroicon_solid "trash" size=24 class="text-black" %}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endaccordion %}
-        {% endwith %}
-    {% endif %}
-    {% if "manage_availability" in session_perms %}
-        <form method="post"
-              class="manage_availability__form flex flex-col gap-4 w-full">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit"
-                    class="auth_button auth_button__sessions block mt-8 mx-auto text-center">
-                {% trans "Update availability" %}
-            </button>
-        </form>
+                    <ul class="w-full">
+                        {% for availability in hosted_session.availability.all %}
+                            <li class="text-2xl flex flex-wrap gap-2 justify-space-between w-full">
+                                {{ availability }}
+                                <a href="{% routablepageurl page "delete_availability" availability_id=availability.id %}"
+                                   title="{% trans "Delete" %}">{% heroicon_solid "trash" size=24 class="text-black" %}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endaccordion %}
+            {% endwith %}
+        {% endif %}
+        {% if "manage_availability" in session_perms %}
+            <form method="post"
+                  class="manage_availability__form flex flex-col gap-4 w-full">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit"
+                        class="auth_button auth_button__sessions block mt-8 mx-auto text-center">
+                    {% trans "Update availability" %}
+                </button>
+            </form>
+        {% else %}
+            <p>
+                <a href="{% pageurl page %}">{% trans "Oops, you're on the wrong page. Head back to sessions." %}</a>
+            </p>
+        {% endif %}
     {% else %}
         <p>
-            <a href="{% pageurl page %}">{% trans "Oops, you're on the wrong page. Head back to sessions." %}</a>
+            <a href="{% url 'account_login' %}">{% trans "Oops, you're on the wrong page. Log in to continue." %}</a>
         </p>
     {% endif %}
-{% else %}
-    <p>
-        <a href="{% url 'account_login' %}">{% trans "Oops, you're on the wrong page. Log in to continue." %}</a>
-    </p>
-{% endif %}
 {% endblock form %}
