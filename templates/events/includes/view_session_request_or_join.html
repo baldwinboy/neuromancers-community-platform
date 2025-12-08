@@ -1,0 +1,40 @@
+{% load i18n l10n account guardian_tags wagtailroutablepage_tags %}
+{% if "change_peersession" not in session_perms and "change_groupsession" not in session_perms %}
+    {% if attendee_approved and meeting_link %}
+        <a href="{{ meeting_link }}"
+           class="auth_button auth_button__sessions block text-center mt-8 mx-auto">{% trans "Join session" %}</a>
+    {% elif attendee_approved %}
+        <div class="auth_button auth_button__sessions_disabled block text-center mt-8 mx-auto">{% trans "Join session" %}</div>
+        <small class="text-xl text-darkAccent w-3/4 mx-auto text-center mt-4">{% trans "You'll be able to join this session once a meeting link is available." %}</small>
+    {% elif attendee_requested %}
+        <small class="text-xl text-darkAccent w-3/4 mx-auto text-center mt-4">{% trans "You've requested to join the session. You'll be able to join once your request has been approved and a meeting link is available." %}</small>
+    {% elif page.session_type == "peer" and "request_session" in session_perms %}
+        <a href="{% routablepageurl sessions_index "request_schedule_session" session_id=page.session.id %}"
+           class="auth_button auth_button__sessions block text-center mt-8 mx-auto">{% trans "Schedule a session" %}</a>
+    {% elif page.session_type == "group" and "request_join_session" in session_perms and form %}
+        <form method="post" class="mt-8">
+            {% csrf_token %}
+            <div class="create_session__field_item create_session__field_item_solo w-fit mx-auto pb-8">
+                {{ form.pay_concessionary_price.errors }}
+                <div class="flex flex-wrap">
+                    {% if form.pay_concessionary_price.id_for_label %}
+                        <label for="{{ form.pay_concessionary_price.id_for_label }}"
+                               class="text-2xl">{{ form.pay_concessionary_price.label }}</label>
+                    {% else %}
+                        <label for="id_{{ form.pay_concessionary_price.name }}_0" class="text-2xl">
+                            {{ form.pay_concessionary_price.label }}
+                        </label>
+                    {% endif %}
+                    {{ form.pay_concessionary_price }}
+                    <p class="create_session__field_item_help_text w-full font-subheading font-light">
+                        {{ form.pay_concessionary_price.help_text }}
+                    </p>
+                </div>
+            </div>
+            <button type="submit"
+                    class="auth_button auth_button__sessions block text-center mx-auto">
+                {% trans "Join session" %}
+            </button>
+        </form>
+    {% endif %}
+{% endif %}

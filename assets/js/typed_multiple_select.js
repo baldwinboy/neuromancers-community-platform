@@ -1,4 +1,4 @@
-const initializedInputs = new WeakSet();
+let initializedInputs = new WeakSet();
 
 const createSelectedButton = (callback, textContent, title) => {
     const selectedButton = document.createElement('button');
@@ -43,7 +43,6 @@ var toggleSelectedOptions = (button) => {
 
 const searchInput = (event, groups) => {
     const search = event.target.value;
-    console.log(search);
 
     // Find value in groups
     groups.forEach((group) => {
@@ -129,6 +128,10 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeInput(inputEl);
     });
 });
+
+window.addEventListener('beforeunload', () => {
+    initializedInputs = new WeakSet();
+})
 
 document.addEventListener('input', function(event) {
     const inputEl = event.target;

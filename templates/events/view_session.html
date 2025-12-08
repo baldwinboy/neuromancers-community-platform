@@ -54,105 +54,75 @@
             {% trans "Introduction" as accordion_heading %}
             {% with accordion_name="details-group" accordion_classes="view_session__details_group" %}
                 {% accordion %}
-                <p class="font-body mb-8">{{ page.session.description }}</p>
-            {% endaccordion %}
-        {% endwith %}
-        {% if page.session_type == "group" %}
-            {% trans "Schedule" as accordion_heading %}
+                    <p class="font-body mb-8">{{ page.session.description }}</p>
+                    {% if page.session.languages_display|length > 0 %}
+                        <p class="mt-4 font-body">{% trans "Available in:" %}</p>
+                        <ul class="mb-4">
+                            {% if page.session_type == "peer" %}
+                                {% for lang in page.session.languages_display %}<li class="text-2xl">{{ lang }}</li>{% endfor %}
+                            {% else %}
+                                <li class="text-2xl">{{ page.session.language_display }}</li>
+                            {% endif %}
+                        </ul>
+                    {% endif %}
+                {% endaccordion %}
+            {% endwith %}
+            {% if page.session_type == "group" %}
+                {% trans "Schedule" as accordion_heading %}
+                {% with accordion_name="details-group" accordion_classes="view_session__details_group" %}
+                    {% accordion %}
+                        <p class="font-body mb-8">
+                            <time datetime="{{ session_request.starts_at|date:"c" }}">{% localize on %}{{ session_request.starts_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time> - <time datetime="{{ session_request.ends_at|date:"c" }}">{% localize on %}{{ session_request.ends_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time>
+                        </p>
+                    {% endaccordion %}
+                {% endwith %}
+            {% endif %}
+            {% trans "Pricing" as accordion_heading %}
             {% with accordion_name="details-group" accordion_classes="view_session__details_group" %}
                 {% accordion %}
-                <p class="font-body mb-8">
-                    <time datetime="{{ session_request.starts_at|date:"c" }}">{% localize on %}{{ session_request.starts_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time> - <time datetime="{{ session_request.ends_at|date:"c" }}">{% localize on %}{{ session_request.ends_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time>
-                </p>
-            {% endaccordion %}
-        {% endwith %}
-    {% endif %}
-    {% trans "Pricing" as accordion_heading %}
-    {% with accordion_name="details-group" accordion_classes="view_session__details_group" %}
-        {% accordion %}
-        <div class="mb-8">
-            <p class="text-xl font-body mt-4">
-                {% trans "Standard price:" %} {{ page.session.currency_symbol }}{{ page.session.price_display }}
-            </p>
-            {% if page.session.concessionary_price %}
-                <p class="text-xl font-body">
-                    {% trans "Consessionary price:" %} {{ page.session.currency_symbol }}{{ page.session.concessionary_price_display }}
-                </p>
-            {% endif %}
-            {% if page.session.per_hour_price or page.session.concessionary_per_hour_price %}
-                <h4 class="text-3xl font-subheading mt-8">{% trans "Hourly rates" %}</h4>
-                <p class="font-body mb-4">{% trans "This is how much you'll pay in proportion to the length of your session." %}</p>
-                {% if page.session.per_hour_price %}
-                    <p class="text-xl font-body">
-                        {% trans "Standard hourly rate:" %} {{ page.session.currency_symbol }}{{ page.session.per_hour_price_display }}
-                    </p>
-                    {% if page.session.concessionary_per_hour_price %}
-                        <p class="text-xl font-body">
-                            {% trans "Standard hourly rate:" %} {{ page.session.currency_symbol }}{{ page.session.concessionary_per_hour_price_display }}
+                    <div class="mb-8">
+                        <p class="text-xl font-body mt-4">
+                            {% trans "Standard price:" %} {{ page.session.currency_symbol }}{{ page.session.price_display }}
                         </p>
-                    {% endif %}
-                {% endif %}
-            {% endif %}
-        </div>
-    {% endaccordion %}
-{% endwith %}
-{% if page.session.durations %}
-    {% trans "Durations" as accordion_heading %}
-    {% with accordion_name="details-group" accordion_classes="view_session__details_group" %}
-        {% accordion %}
-        <p class="mt-4 font-body">{% trans "You may schedule sessions for the following amounts of time:" %}</p>
-        <ul class="mb-4">
-            {% for duration in page.session.durations_display %}
-                <li class="text-2xl">{{ duration }}</li>
-            {% empty %}
-                <li class="text-2xl">No durations available.</li>
-            {% endfor %}
-        </ul>
-    {% endaccordion %}
-{% endwith %}
-{% endif %}
-{% if "change_peersession" not in session_perms and "change_groupsession" not in session_perms %}
-    {% if page.session_type == "peer" and "request_session" in session_perms %}
-        <a href="{% routablepageurl sessions_index "request_schedule_session" session_id=page.session.id %}"
-           class="auth_button auth_button__sessions block text-center mt-8 mx-auto">{% trans "Schedule a session" %}</a>
-    {% elif page.session_type == "group" and "request_join_session" in session_perms %}
-        {% if attendee_approved and page.session.meeting_link %}
-            <a href="{{ meeting_link }}"
-               class="auth_button auth_button__sessions block text-center mt-8 mx-auto">{% trans "Join session" %}</a>
-        {% elif attendee_approved and not page.session.meeting_link %}
-            <div class="auth_button auth_button__sessions_disabled block text-center mt-8 mx-auto">{% trans "Join session" %}</div>
-            <small class="text-xl text-darkAccent w-3/4 mx-auto text-center mt-4">{% trans "You'll be able to join this session once a meeting link is available." %}</small>
-        {% elif attendee_requested %}
-            <div class="auth_button auth_button__sessions_disabled block text-center mt-8 mx-auto">{% trans "Join session" %}</div>
-            <small class="text-xl text-darkAccent w-3/4 mx-auto text-center mt-4">{% trans "You've requested to join the session. You'll be able to join once a meeting link is available." %}</small>
-        {% elif form %}
-            <form method="post" class="mt-8">
-                {% csrf_token %}
-                <div class="create_session__field_item create_session__field_item_solo w-fit mx-auto pb-8">
-                    {{ form.pay_concessionary_price.errors }}
-                    <div class="flex flex-wrap">
-                        {% if form.pay_concessionary_price.id_for_label %}
-                            <label for="{{ form.pay_concessionary_price.id_for_label }}"
-                                   class="text-2xl">{{ form.pay_concessionary_price.label }}</label>
-                        {% else %}
-                            <label for="id_{{ form.pay_concessionary_price.name }}_0" class="text-2xl">
-                                {{ form.pay_concessionary_price.label }}
-                            </label>
+                        {% if page.session.concessionary_price %}
+                            <p class="text-xl font-body">
+                                {% trans "Consessionary price:" %} {{ page.session.currency_symbol }}{{ page.session.concessionary_price_display }}
+                            </p>
                         {% endif %}
-                        {{ form.pay_concessionary_price }}
-                        <p class="create_session__field_item_help_text w-full font-subheading font-light">
-                            {{ form.pay_concessionary_price.help_text }}
-                        </p>
+                        {% if page.session.per_hour_price or page.session.concessionary_per_hour_price %}
+                            <h4 class="text-3xl font-subheading mt-8">{% trans "Hourly rates" %}</h4>
+                            <p class="font-body mb-4">{% trans "This is how much you'll pay in proportion to the length of your session." %}</p>
+                            {% if page.session.per_hour_price %}
+                                <p class="text-xl font-body">
+                                    {% trans "Standard hourly rate:" %} {{ page.session.currency_symbol }}{{ page.session.per_hour_price_display }}
+                                </p>
+                                {% if page.session.concessionary_per_hour_price %}
+                                    <p class="text-xl font-body">
+                                        {% trans "Standard hourly rate:" %} {{ page.session.currency_symbol }}{{ page.session.concessionary_per_hour_price_display }}
+                                    </p>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
                     </div>
-                </div>
-                <button type="submit"
-                        class="auth_button auth_button__sessions block text-center mx-auto">
-                    {% trans "Join session" %}
-                </button>
-            </form>
-        {% endif %}
-    {% endif %}
-{% endif %}
-</main>
-</div>
+                {% endaccordion %}
+            {% endwith %}
+            {% if page.session.durations %}
+                {% trans "Durations" as accordion_heading %}
+                {% with accordion_name="details-group" accordion_classes="view_session__details_group" %}
+                    {% accordion %}
+                        {% if page.session.durations_display|length > 0 %}
+                            <p class="mt-4 font-body">{% trans "You may schedule sessions for the following amounts of time:" %}</p>
+                            <ul class="mb-4">
+                                {% for duration in page.session.durations_display %}<li class="text-2xl">{{ duration }}</li>{% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-2xl">No sessions available.</p>
+                        {% endif %}
+                    {% endaccordion %}
+                {% endwith %}
+            {% endif %}
+
+            {% include "events/includes/view_session_request_or_join.html" %}
+        </main>
+    </div>
 {% endblock content %}

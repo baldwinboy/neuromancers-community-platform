@@ -6,17 +6,17 @@ from dateutil.relativedelta import relativedelta
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import F, Q
+from django.forms import ValidationError
 from django.utils.translation import gettext as _
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
-from guardian.shortcuts import assign_perm, remove_perm
 
-from apps.accounts.models import UserGroup
 from apps.events.choices import (
     SessionAvailabilityOccurrenceChoices,
     SessionRequestStatusChoices,
     filtered_currencies,
 )
-from apps.events.utils import subtract_event
+from apps.events.utils import get_language_display, get_languages, subtract_event
+from apps.events.validators import validate_language_codes
 
 from .abstract import (
     AbstractSession,
@@ -31,6 +31,11 @@ class PeerSession(AbstractSession):
     Peer sessions may be rquested and attended by a single `SupportSeeker` user for a selected duration of time.
     """
 
+    languages = models.CharField(
+        help_text=_("These are languages that a session may be provided in"),
+        max_length=620,
+        validators=[validate_language_codes],
+    )
     durations = models.CharField(
         help_text=_(
             "These are durations (in minutes) that a session may be booked for"
@@ -97,7 +102,7 @@ class PeerSession(AbstractSession):
         ]
 
     @property
-    def durations_display(self):
+    def durations_display(self) -> list[str]:
         if not self.durations:
             return []
 
@@ -121,6 +126,20 @@ class PeerSession(AbstractSession):
             durations.append(duration_str)
 
         return durations
+
+    @property
+    def languages_display(self) -> list[str]:
+        if not self.languages:
+            return []
+        all_languages = get_languages()
+        return [all_languages.get(part) for part in self.languages.split(",")]
+
+    @property
+    def language_choices(self) -> list[tuple[str, str]]:
+        if not self.languages:
+            return []
+        all_languages = get_languages()
+        return {part: all_languages.get(part) for part in self.languages.split(",")}
 
     @property
     def per_hour_price_display(self):
@@ -231,34 +250,20 @@ class PeerSession(AbstractSession):
         return slots
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+        can_add = self.host.has_perm("events.add_peersession")
 
-        support_seeker_group = UserGroup.objects.get(name="Support Seeker")
-
-        if not support_seeker_group:
+        if not can_add:
             return
 
-        support_seeker_perms = [
-            "view_peersession",
-            "request_session",
-        ]
-        for perm in support_seeker_perms:
-            if self.is_published:
-                assign_perm(perm, support_seeker_group, self)
-            else:
-                remove_perm(perm, support_seeker_group, self)
+        super().save(*args, **kwargs)
 
-        perms = [
-            "manage_availability",
-            "schedule_session",
-            "change_peersession",
-            "delete_peersession",
-            "view_peersession",
-        ]
+    def attendee_requested(self, user):
+        return self.requests.filter(attendee=user).exists()
 
-        if self.host:
-            for perm in perms:
-                assign_perm(perm, self.host, self)
+    def attendee_approved(self, user):
+        return self.requests.filter(
+            attendee=user, status=SessionRequestStatusChoices.APPROVED
+        ).exists()
 
 
 class PeerSessionUserObjectPermission(UserObjectPermissionBase):
@@ -354,6 +359,11 @@ class PeerSessionRequest(AbstractSessionRequest):
     Peer session requests may be sent from `SupportSeeker` users to `Peer` users
     """
 
+    language = models.CharField(
+        choices=get_languages,
+        help_text=_("This is the language that the session will be provided in"),
+        max_length=2,
+    )
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
     attendee = models.ForeignKey(
@@ -417,20 +427,42 @@ class PeerSessionRequest(AbstractSessionRequest):
 
         return "{:.2f}".format(_price / Decimal(100))
 
+    @property
+    def language_display(self):
+        all_languages = get_languages()
+        return all_languages.get(self.language)
+
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-        if not self.attendee or not self.session or not self.session.host:
+        if (
+            not self.attendee
+            or not self.session
+            or not self.session.host
+            or not self.attendee.has_perm("events.request_session")
+            or not self.session.is_published
+        ):
             return
-
-        assign_perm("approve_peer_request", self.session.host, self)
-        assign_perm("withdraw_peer_request", self.attendee, self)
 
         if (
             not self.session.require_request_approval
             and self.status == SessionRequestStatusChoices.PENDING
         ):
             self.status = SessionRequestStatusChoices.APPROVED
+
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+
+        # Parse languages stored in the PeerSession
+        session_languages = [lang.strip() for lang in self.session.languages.split(",")]
+
+        if self.language not in session_languages:
+            raise ValidationError(
+                _(
+                    f"This session can't be provided in {get_language_display(self.language)}"
+                ),
+                code="invalid_lang_request",
+            )
 
 
 class PeerSessionRequestUserObjectPermission(UserObjectPermissionBase):

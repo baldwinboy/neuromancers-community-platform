@@ -35,14 +35,14 @@ SESSION_TYPE_MAP = {
         "ModelFormCls": PeerSessionForm,
         "PageModelCls": PeerSessionDetailPage,
         "add_perm": "events.add_peersession",
-        "change_perm": "events.change_peersession",
+        "change_perm": "change_peersession",
     },
     "group": {
         "ModelCls": GroupSession,
         "ModelFormCls": GroupSessionForm,
         "PageModelCls": GroupSessionDetailPage,
         "add_perm": "events.add_groupsession",
-        "change_perm": "events.change_groupsession",
+        "change_perm": "change_groupsession",
     },
 }
 
@@ -212,74 +212,84 @@ class SessionsIndexPage(RoutablePage):
         session_type: str | None = None,
         session_id: uuid.UUID | None = None,
     ):
-        if not session_type or session_type not in list(SESSION_TYPE_MAP.keys()):
-            return render(request, "404.html", status=404)
-
-        session_type_map = SESSION_TYPE_MAP[session_type]
-
-        url_name = request.route_name
-
         if (
-            url_name == "create_session"
-            and not request.user.has_perm(session_type_map["add_perm"])
-        ) or (
-            url_name == "edit_session"
-            and (
-                not session_id
-                or not request.user.has_perm(session_type_map["change_perm"])
-            )
+            not session_type
+            or session_type not in list(SESSION_TYPE_MAP.keys())
+            or not request.user
         ):
             return render(request, "404.html", status=404)
 
+        url_name = request.route_name
+
+        session_type_map = SESSION_TYPE_MAP[session_type]
+        ModelFormCls = session_type_map["ModelFormCls"]
+        ModelCls = session_type_map["ModelCls"]
+        form = ModelFormCls(request.user)
         template_name = "events/create_session.html"
         instance = None
 
+        if url_name == "create_session":
+            if session_id or not request.user.has_perm(session_type_map["add_perm"]):
+                return render(request, "404.html", status=404)
+
+            if request.method == "POST":
+                form = ModelFormCls(request.user, request.POST)
+                if form.is_valid():
+                    session_page = self._create_session_page(
+                        form.cleaned_data, request.user, session_type
+                    )
+                    if session_page:
+                        return redirect(session_page.full_url)
+                    else:
+                        return render(request, "404.html", status=404)
+
+            context = {
+                "page": self,
+                "form": form,
+                "session_type": _(session_type.capitalize()),
+            }
+
+            return render(
+                request,
+                template_name,
+                context,
+            )
+
         if url_name == "edit_session":
-            template_name = "events/edit_session.html"
-            ModelCls = session_type_map["ModelCls"]
+            if not session_id:
+                return render(request, "404.html", status=404)
+
             try:
                 instance = ModelCls.objects.get(pk=session_id)
             except ModelCls.DoesNotExist:
                 return render(request, "404.html", status=404)
 
-        ModelFormCls = session_type_map["ModelFormCls"]
+            if not request.user.has_perm(session_type_map["change_perm"], instance):
+                return render(request, "404.html", status=404)
 
-        if request.method == "POST":
-            form = ModelFormCls(request.user, request.POST)
-            if instance:
-                form = ModelFormCls(request.user, instance, request.POST)
+            template_name = "events/edit_session.html"
+            form = ModelFormCls(request.user, instance=instance)
+
+            if request.method == "POST":
+                form = ModelFormCls(request.user, request.POST, instance=instance)
                 if form.is_valid():
                     form.save()
                     return redirect(instance.page.full_url)
 
-            if form.is_valid():
-                session_page = self._create_session_page(
-                    form.cleaned_data, request.user, session_type
-                )
-                if session_page:
-                    return redirect(session_page.full_url)
-                else:
-                    return render(request, "404.html", status=404)
+            context = {
+                "page": self,
+                "form": form,
+                "session_type": _(session_type.capitalize()),
+                "hosted_session": instance,
+            }
 
-        else:
-            form = ModelFormCls(request.user)
-            if instance:
-                form = ModelFormCls(request.user, instance)
+            return render(
+                request,
+                template_name,
+                context,
+            )
 
-        context = {
-            "page": self,
-            "form": form,
-            "session_type": _(session_type.capitalize()),
-        }
-
-        if url_name == "edit_session" and instance:
-            context["hosted_session"] = instance
-
-        return render(
-            request,
-            template_name,
-            context,
-        )
+        return render(request, "404.html", status=404)
 
     def clean(self):
         super().clean()

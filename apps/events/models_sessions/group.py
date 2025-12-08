@@ -8,6 +8,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from apps.accounts.models import UserGroup
 from apps.events.choices import SessionRequestStatusChoices, filtered_currencies
+from apps.events.utils import get_languages
 
 from .abstract import AbstractSession, AbstractSessionRequest, User
 
@@ -17,6 +18,11 @@ class GroupSession(AbstractSession):
     Group sessions cannot be requested but may attended by several `SupportSeeker` users for a single duration of time
     """
 
+    language = models.CharField(
+        choices=get_languages,
+        help_text=_("This is the language that the session will be provided in"),
+        max_length=2,
+    )
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
     capacity = models.PositiveSmallIntegerField(
@@ -88,17 +94,21 @@ class GroupSession(AbstractSession):
             requests__status=SessionRequestStatusChoices.APPROVED
         )
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+    @property
+    def language_display(self):
+        all_languages = get_languages()
+        return all_languages.get(self.language)
 
+    def save(self, *args, **kwargs):
         support_seeker_group = UserGroup.objects.get(name="Support Seeker")
 
         if not support_seeker_group:
             return
 
+        super().save(*args, **kwargs)
         support_seeker_perms = [
-            "view_groupsession",
-            "request_join_session",
+            "events.view_groupsession",
+            "events.request_join_session",
         ]
         for perm in support_seeker_perms:
             if self.is_published:
@@ -107,14 +117,16 @@ class GroupSession(AbstractSession):
                 remove_perm(perm, support_seeker_group, self)
 
         perms = [
-            "change_groupsession",
-            "delete_groupsession",
-            "view_groupsession",
+            "events.change_groupsession",
+            "events.delete_groupsession",
+            "events.view_groupsession",
         ]
 
         if self.host:
             for perm in perms:
                 assign_perm(perm, self.host, self)
+
+        super().save(*args, **kwargs)
 
     def attendee_requested(self, user):
         return self.requests.filter(attendee=user).exists()
@@ -161,19 +173,21 @@ class GroupSessionRequest(AbstractSessionRequest):
         return f"{self.session.title} for {self.attendee.username}"
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-        if not self.attendee or not self.session or not self.session.host:
+        if (
+            not self.attendee
+            or not self.session
+            or not self.session.host
+            or not self.attendee.has_perm("events.request_join_session")
+        ):
             return
-
-        assign_perm("approve_group_request", self.session.host, self)
-        assign_perm("withdraw_group_request", self.attendee, self)
 
         if (
             not self.session.require_request_approval
             and self.status == SessionRequestStatusChoices.PENDING
         ):
             self.status = SessionRequestStatusChoices.APPROVED
+
+        super().save(*args, **kwargs)
 
 
 class GroupSessionRequestUserObjectPermission(UserObjectPermissionBase):

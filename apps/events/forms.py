@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 
 from apps.core.widgets import TypedSelectMultiple
 from apps.events.choices import SessionRequestStatusChoices
+from apps.events.utils import get_languages
 
 from .mixins import GroupedFormMixin
 from .models_sessions.group import GroupSession, GroupSessionRequest
@@ -51,6 +52,20 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
             "Support seekers will be charged this price based on the duration of their requested session if set"
         ),
     )
+    languages = forms.TypedMultipleChoiceField(
+        coerce=str,
+        choices=get_languages,
+        widget=TypedSelectMultiple(
+            pattern="^[a-zA-Z ]*$",
+            attrs={
+                "placeholder": _(
+                    "Enter a language, for example, English. Choose a option from the list to add this language."
+                ),
+                "title": _("Please enter a valid language"),
+            },
+        ),
+        help_text=_("These are languages that a session may be provided in"),
+    )
     durations = forms.TypedMultipleChoiceField(
         coerce=int,
         choices=DURATIONS,
@@ -58,7 +73,7 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
             pattern="^([5-9]|([1-9][0-9])|1[0-1][0-9]|120)$",
             attrs={
                 "placeholder": _(
-                    "Enter a number, for example, 5 for five minutes. Choose a option from the list to add this duration."
+                    "Enter a number, for example, 5 for five minutes. Choose an option from the list to add this duration."
                 ),
                 "title": _("Please enter a valid number between 5 and 120"),
             },
@@ -74,6 +89,7 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
             "host",
             "title",
             "description",
+            "languages",
             "durations",
             "currency",
             "price",
@@ -87,7 +103,7 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
         ]
 
     field_groups = [
-        (_("Introduction"), ["title", "description", "durations"]),
+        (_("Introduction"), ["title", "description", "languages", "durations"]),
         (_("Pricing"), ["currency", "price", "per_hour_price"]),
         (
             _("Concessionary Pricing"),
@@ -148,16 +164,38 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
             if durations_str:
                 self.initial["durations"] = [int(x) for x in durations_str.split(",")]
 
+            # Convert comma-separated string from model to a list of strings for the form
+            languages_str = self.instance.languages
+            languages_str = languages_str.strip("[]")
+            if languages_str:
+                self.initial["languages"] = [
+                    lang.strip() for lang in languages_str.split(",") if lang.strip()
+                ]
+
     def save(self, commit=True):
         instance = super().save(commit=False)
         durations_list = self.cleaned_data["durations"]
+        languages_list = self.cleaned_data["languages"]
         instance.durations = ",".join(str(d) for d in durations_list)
+        instance.languages = ",".join(lang for lang in languages_list)
         if commit:
             instance.save()
         return instance
 
     def clean_host(self):
         return self.initial["host"]
+
+    def clean_languages(self):
+        data = self.cleaned_data.get("languages")
+        if not data:
+            raise forms.ValidationError(_("You must select at least one language."))
+        return data
+
+    def clean_durations(self):
+        data = self.cleaned_data.get("durations")
+        if not data:
+            raise forms.ValidationError(_("You must select at least one duration."))
+        return data
 
     def clean_price(self):
         data = self.cleaned_data["price"]
@@ -194,6 +232,10 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
 
 class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
     host = forms.CharField(required=False)
+    language = forms.ChoiceField(
+        choices=get_languages,
+        help_text=_("This is the language that the session will be provided in"),
+    )
     price = forms.DecimalField(
         max_digits=7,
         decimal_places=2,
@@ -233,6 +275,7 @@ class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
             "host",
             "title",
             "description",
+            "language",
             "currency",
             "price",
             "concessionary_price",
@@ -247,7 +290,7 @@ class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
         ]
 
     field_groups = [
-        (_("Introduction"), ["title", "description"]),
+        (_("Introduction"), ["title", "description", "language"]),
         (_("Schedule"), ["starts_at", "ends_at", "meeting_link"]),
         (_("Pricing"), ["currency", "price"]),
         (
@@ -446,12 +489,16 @@ class PeerSessionRequestForm(forms.ModelForm):
     session = forms.CharField(required=False)
     starts_at = forms.CharField(widget=forms.HiddenInput())
     ends_at = forms.CharField(widget=forms.HiddenInput())
+    language = forms.ChoiceField(
+        help_text=_("This is the language that the session will be provided in"),
+    )
 
     class Meta:
         model = PeerSessionRequest
         fields = [
             "attendee",
             "session",
+            "language",
             "starts_at",
             "ends_at",
             "pay_concessionary_price",
@@ -462,6 +509,7 @@ class PeerSessionRequestForm(forms.ModelForm):
 
         self.initial["attendee"] = attendee
         self.initial["session"] = session
+        self.fields["language"].choices = session.language_choices
 
     def clean_starts_at(self):
         data = self.cleaned_data["starts_at"]

@@ -13,7 +13,7 @@
 {% block form %}
     {% get_obj_perms request.user for session_request.session as "session_perms" %}
     {% if user.is_authenticated and "request_session" in session_perms %}
-        <dl>
+        <dl class="w-full lg:w-1/2">
             <div class="flex flex-row-wrap justify-space-between gap-4">
                 <dt class="font-body">{% trans "Peer" %}</dt>
                 <dd class="text-2xl">
@@ -21,9 +21,21 @@
                 </dd>
             </div>
             <div class="flex flex-row-wrap justify-space-between gap-4">
-                <dt class="font-body">{% trans "Schedule" %}</dt>
+                <dt class="font-body">{% trans "Starts at" %}</dt>
                 <dd class="text-2xl">
-                    <time datetime="{{ session_request.starts_at|date:"c" }}">{% localize on %}{{ session_request.starts_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time> - <time datetime="{{ session_request.ends_at|date:"c" }}">{% localize on %}{{ session_request.ends_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time>
+                    <time datetime="{{ session_request.starts_at|date:"c" }}">{% localize on %}{{ session_request.starts_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time>
+                </dd>
+            </div>
+            <div class="flex flex-row-wrap justify-space-between gap-4">
+                <dt class="font-body">{% trans "Ends at" %}</dt>
+                <dd class="text-2xl">
+                    <time datetime="{{ session_request.ends_at|date:"c" }}">{% localize on %}{{ session_request.ends_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time>
+                </dd>
+            </div>
+            <div class="flex flex-row-wrap justify-space-between gap-4">
+                <dt class="font-body">{% trans "Language" %}</dt>
+                <dd class="text-2xl">
+                    {{ session_request.language_display }}
                 </dd>
             </div>
             <div class="flex flex-row-wrap justify-space-between gap-4">

@@ -18,5 +18,12 @@ class TypedSelectMultiple(forms.SelectMultiple):
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
+
+        if context.get("widget") and context["widget"].get("attrs"):
+            for k, _ in list(context["widget"]["attrs"].items()):
+                if k == "required":
+                    del context["widget"]["attrs"][k]
+
         context["widget"]["pattern"] = self.pattern
+
         return context

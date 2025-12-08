@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.shortcuts import render
 from django.utils.translation import gettext as _
@@ -11,6 +12,8 @@ from apps.events.forms import (
 )
 from apps.events.models_sessions.group import GroupSession
 from apps.events.models_sessions.peer import PeerSession
+
+User = get_user_model()
 
 
 class PeerSessionDetailPage(Page):
@@ -52,6 +55,19 @@ class PeerSessionDetailPage(Page):
             and request.user.has_perm("change_peersession", self.session)
         ):
             context["form"] = PeerSessionPublishForm(instance=self.session)
+
+        if (
+            self.session
+            and isinstance(request.user, User)
+            and request.user.is_authenticated
+            and request.user.has_perm("request_session", self.session)
+            and not request.user.has_perm("change_peersession", self.session)
+        ):
+            context["attendee_requested"] = self.session.attendee_requested(
+                request.user
+            )
+            context["attendee_approved"] = self.session.attendee_approved(request.user)
+
         context["sessions_index"] = self.get_parent().specific
         return context
 
@@ -124,7 +140,7 @@ class GroupSessionDetailPage(Page):
 
         if (
             self.session
-            and request.user
+            and isinstance(request.user, User)
             and request.user.is_authenticated
             and request.user.has_perm("request_join_session", self.session)
             and not request.user.has_perm("change_groupsession", self.session)
@@ -137,6 +153,7 @@ class GroupSessionDetailPage(Page):
                 )
 
             context["attendee_requested"] = attendee_requested
+            context["attendee_approved"] = self.session.attendee_approved(request.user)
 
         context["sessions_index"] = self.get_parent().specific
         return context
@@ -166,7 +183,11 @@ class GroupSessionDetailPage(Page):
             if form.is_valid():
                 form.save()
 
-        attendee_requested = self.session.attendee_requested(request.user)
+        attendee_requested = False
+
+        if isinstance(request.user, User):
+            attendee_requested = self.session.attendee_requested(request.user)
+
         # Allow users to join group session
         if (
             request.user.is_authenticated

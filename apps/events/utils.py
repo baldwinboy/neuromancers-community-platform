@@ -1,5 +1,8 @@
 from datetime import datetime
 
+from django.conf import settings
+from django.utils.translation import gettext as _
+
 
 def subtract_event(a: tuple[datetime, datetime], b: tuple[datetime, datetime]):
     """
@@ -30,3 +33,12 @@ def subtract_event(a: tuple[datetime, datetime], b: tuple[datetime, datetime]):
     # (no need to add anything if y covers x completely)
 
     return results
+
+
+def get_languages() -> dict[str, str]:
+    return {k: _(v) for k, v in settings.LANGUAGES}
+
+
+def get_language_display(iso: str) -> str | None:
+    all_languages = get_languages()
+    return all_languages.get(iso)

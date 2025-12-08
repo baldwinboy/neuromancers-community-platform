@@ -6581,13 +6581,13 @@ h2 {
     width: 1px;
   }
   .xs\:w-fit {
-    width: fit-conent;
+    width: fit-content;
   }
   .xs\:w-min {
-    width: min-conent;
+    width: min-content;
   }
   .xs\:w-max {
-    width: max-conent;
+    width: max-content;
   }
   .xs\:w-full {
     width: 100%;
@@ -6725,13 +6725,13 @@ h2 {
     height: 1px;
   }
   .xs\:h-fit {
-    height: fit-conent;
+    height: fit-content;
   }
   .xs\:h-min {
-    height: min-conent;
+    height: min-content;
   }
   .xs\:h-max {
-    height: max-conent;
+    height: max-content;
   }
   .xs\:h-full {
     height: 100%;
@@ -9355,13 +9355,13 @@ h2 {
     width: 1px;
   }
   .sm\:w-fit {
-    width: fit-conent;
+    width: fit-content;
   }
   .sm\:w-min {
-    width: min-conent;
+    width: min-content;
   }
   .sm\:w-max {
-    width: max-conent;
+    width: max-content;
   }
   .sm\:w-full {
     width: 100%;
@@ -9499,13 +9499,13 @@ h2 {
     height: 1px;
   }
   .sm\:h-fit {
-    height: fit-conent;
+    height: fit-content;
   }
   .sm\:h-min {
-    height: min-conent;
+    height: min-content;
   }
   .sm\:h-max {
-    height: max-conent;
+    height: max-content;
   }
   .sm\:h-full {
     height: 100%;
@@ -12129,13 +12129,13 @@ h2 {
     width: 1px;
   }
   .md\:w-fit {
-    width: fit-conent;
+    width: fit-content;
   }
   .md\:w-min {
-    width: min-conent;
+    width: min-content;
   }
   .md\:w-max {
-    width: max-conent;
+    width: max-content;
   }
   .md\:w-full {
     width: 100%;
@@ -12273,13 +12273,13 @@ h2 {
     height: 1px;
   }
   .md\:h-fit {
-    height: fit-conent;
+    height: fit-content;
   }
   .md\:h-min {
-    height: min-conent;
+    height: min-content;
   }
   .md\:h-max {
-    height: max-conent;
+    height: max-content;
   }
   .md\:h-full {
     height: 100%;
@@ -14903,13 +14903,13 @@ h2 {
     width: 1px;
   }
   .lg\:w-fit {
-    width: fit-conent;
+    width: fit-content;
   }
   .lg\:w-min {
-    width: min-conent;
+    width: min-content;
   }
   .lg\:w-max {
-    width: max-conent;
+    width: max-content;
   }
   .lg\:w-full {
     width: 100%;
@@ -15047,13 +15047,13 @@ h2 {
     height: 1px;
   }
   .lg\:h-fit {
-    height: fit-conent;
+    height: fit-content;
   }
   .lg\:h-min {
-    height: min-conent;
+    height: min-content;
   }
   .lg\:h-max {
-    height: max-conent;
+    height: max-content;
   }
   .lg\:h-full {
     height: 100%;
@@ -17677,13 +17677,13 @@ h2 {
     width: 1px;
   }
   .xl\:w-fit {
-    width: fit-conent;
+    width: fit-content;
   }
   .xl\:w-min {
-    width: min-conent;
+    width: min-content;
   }
   .xl\:w-max {
-    width: max-conent;
+    width: max-content;
   }
   .xl\:w-full {
     width: 100%;
@@ -17821,13 +17821,13 @@ h2 {
     height: 1px;
   }
   .xl\:h-fit {
-    height: fit-conent;
+    height: fit-content;
   }
   .xl\:h-min {
-    height: min-conent;
+    height: min-content;
   }
   .xl\:h-max {
-    height: max-conent;
+    height: max-content;
   }
   .xl\:h-full {
     height: 100%;
@@ -20451,13 +20451,13 @@ h2 {
     width: 1px;
   }
   .xxl\:w-fit {
-    width: fit-conent;
+    width: fit-content;
   }
   .xxl\:w-min {
-    width: min-conent;
+    width: min-content;
   }
   .xxl\:w-max {
-    width: max-conent;
+    width: max-content;
   }
   .xxl\:w-full {
     width: 100%;
@@ -20595,13 +20595,13 @@ h2 {
     height: 1px;
   }
   .xxl\:h-fit {
-    height: fit-conent;
+    height: fit-content;
   }
   .xxl\:h-min {
-    height: min-conent;
+    height: min-content;
   }
   .xxl\:h-max {
-    height: max-conent;
+    height: max-content;
   }
   .xxl\:h-full {
     height: 100%;
