@@ -67,6 +67,7 @@ class User(AbstractBaseUser, GuardianUserMixin, UserGroupPermissionsMixin):
         ],
     )
     date_of_birth = models.DateField(null=True, blank=True)
+    accept_toc = models.BooleanField(default=False)
 
     objects = UserManager()
 

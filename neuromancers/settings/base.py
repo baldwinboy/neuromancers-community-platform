@@ -47,6 +47,7 @@ DEFAULT_APPS = [
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
     "wagtail.contrib.routable_page",
+    "wagtail.contrib.settings",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -126,6 +127,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "wagtailmenus.context_processors.wagtailmenus",
                 "apps.core.context_processors.unverified_email_warning",
+                "wagtail.contrib.settings.context_processors.settings",
             ],
             "loaders": [
                 (
@@ -316,6 +318,7 @@ ACCOUNT_SIGNUP_FIELDS = [
     "email2*",
     "password1*",
     "password2*",
+    "accept_toc",
 ]
 # Custom username validators
 ACCOUNT_USERNAME_VALIDATORS = "apps.accounts.validators.username_validators"

@@ -1,5 +1,6 @@
 from django.db import models
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
+from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
 from wagtail.fields import RichTextField
 from wagtail.models import Page
 
@@ -52,3 +53,10 @@ class HomePage(Page):
         ),
         FieldPanel("body"),
     ]
+
+
+@register_setting(icon="link")
+class Links(BaseGenericSetting):
+    terms_and_conditions = models.URLField(
+        help_text="Your organisation's terms and conditions URL"
+    )
