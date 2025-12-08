@@ -1,6 +1,9 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from wagtail import blocks
+from wagtail.admin.panels import FieldPanel
 from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
+from wagtail.fields import StreamField
 
 
 @register_setting(icon="stripe")
@@ -71,3 +74,26 @@ class WherebySettings(BaseGenericSetting):
 
     class Meta:
         verbose_name = "Whereby API Settings"
+
+
+@register_setting(icon="filter")
+class FilterSettings(BaseGenericSetting):
+    filters = StreamField(
+        [
+            (
+                "lived_experience",
+                blocks.ListBlock(blocks.CharBlock()),
+            ),
+            (
+                "area_of_focus",
+                blocks.ListBlock(blocks.CharBlock()),
+            ),
+        ]
+    )
+
+    panels = [
+        FieldPanel("filters"),
+    ]
+
+    class Meta:
+        verbose_name = "Session filters"
