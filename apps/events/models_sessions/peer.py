@@ -29,7 +29,7 @@ from .abstract import (
 
 class PeerSession(AbstractSession):
     """
-    Peer sessions may be rquested and attended by a single `SupportSeeker` user for a selected duration of time.
+    Peer sessions may be requested and attended by a single `SupportSeeker` user for a selected duration of time.
     """
 
     languages = models.CharField(
@@ -101,6 +101,16 @@ class PeerSession(AbstractSession):
             ("manage_availability", "Manage Availability"),
             ("schedule_session", "Schedule session"),
         ]
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+
+        # save original values, when model is loaded from database,
+        # in a separate attribute on the model
+        instance._loaded_values = dict(zip(field_names, values))
+
+        return instance
 
     @property
     def durations_display(self) -> list[str]:
@@ -251,9 +261,13 @@ class PeerSession(AbstractSession):
         return slots
 
     def save(self, *args, **kwargs):
-        can_add = self.host.has_perm("events.add_peersession")
+        if self._state.adding:
+            can_add = self.host.has_perm("events.add_peersession")
 
-        if not can_add:
+            if not can_add:
+                return
+
+            super().save(*args, **kwargs)
             return
 
         super().save(*args, **kwargs)
@@ -398,6 +412,16 @@ class PeerSessionRequest(AbstractSessionRequest):
     def __str__(self):
         return f"{self.session.title} for {self.attendee.username} from {self.starts_at} to {self.ends_at}"
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+
+        # save original values, when model is loaded from database,
+        # in a separate attribute on the model
+        instance._loaded_values = dict(zip(field_names, values))
+
+        return instance
+
     @property
     def price(self):
         _price = self.session.price or 0
@@ -505,3 +529,13 @@ class PeerSessionReview(AbstractSessionReview):
     attended_session = models.OneToOneField(
         PeerScheduledSession, on_delete=models.CASCADE, related_name="review"
     )
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+
+        # save original values, when model is loaded from database,
+        # in a separate attribute on the model
+        instance._loaded_values = dict(zip(field_names, values))
+
+        return instance

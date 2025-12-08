@@ -65,6 +65,18 @@
                             {% endif %}
                         </ul>
                     {% endif %}
+                    {% if page.session.filters %}
+                        {% for k,v in page.session.filters.items %}
+                            <div class="mb-4">
+                                <p class="mt-4 font-body">{% trans v.label %}</p>
+                                <ul>
+                                    {% for filterK, filter in v.items.items %}
+                                        <li class="text-2xl">{% trans filter.label %}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
                 {% endaccordion %}
             {% endwith %}
             {% if page.session_type == "group" %}

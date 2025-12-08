@@ -10,11 +10,11 @@
 
 .create_session__field_item,
 .manage_availability__form {
-    input, label {
+    input, label, legend {
         font-family: $body;
     }
 
-    label {
+    label, legend {
         order: 0;
     }
 
@@ -42,10 +42,13 @@
         }
     }
 
+    fieldset {
+        border: none;
+    }
+
     fieldset.typed_select_multiple {
         order: 2;
         width: 100%;
-        border: none;
         .typed_select_multiple__options {
             max-height: 7rem;
             padding-inline: 1rem;
@@ -107,6 +110,15 @@
                 background: $darkAccent;
             }
         }
+    }
+
+    fieldset.grouped_checkbox_select {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        order: 2;
+        width: 100%;
+        margin-top: 1rem;
     }
 
     .create_session__field_item_help_text {

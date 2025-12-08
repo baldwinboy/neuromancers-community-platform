@@ -21356,13 +21356,15 @@ h2 {
   border-bottom: 1px solid hsl(0, 100%, 0.78%);
 }
 
-.create_session__field_item input, .create_session__field_item label,
+.create_session__field_item input, .create_session__field_item label, .create_session__field_item legend,
 .manage_availability__form input,
-.manage_availability__form label {
+.manage_availability__form label,
+.manage_availability__form legend {
   font-family: "Open Dyslexic", sans-serif;
 }
-.create_session__field_item label,
-.manage_availability__form label {
+.create_session__field_item label, .create_session__field_item legend,
+.manage_availability__form label,
+.manage_availability__form legend {
   order: 0;
 }
 .create_session__field_item input[type=text],
@@ -21410,11 +21412,14 @@ h2 {
   color: hsl(0, 100%, 0.78%);
   opacity: 0.8;
 }
+.create_session__field_item fieldset,
+.manage_availability__form fieldset {
+  border: none;
+}
 .create_session__field_item fieldset.typed_select_multiple,
 .manage_availability__form fieldset.typed_select_multiple {
   order: 2;
   width: 100%;
-  border: none;
 }
 .create_session__field_item fieldset.typed_select_multiple .typed_select_multiple__options,
 .manage_availability__form fieldset.typed_select_multiple .typed_select_multiple__options {
@@ -21484,6 +21489,15 @@ h2 {
 .manage_availability__form fieldset.typed_select_multiple .typed_select_multiple__selected_button:not([disabled]):hover,
 .manage_availability__form fieldset.typed_select_multiple .typed_select_multiple__selected_button:not([disabled]):focus-visible {
   background: hsl(342.11, 40.43%, 27.65%);
+}
+.create_session__field_item fieldset.grouped_checkbox_select,
+.manage_availability__form fieldset.grouped_checkbox_select {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  order: 2;
+  width: 100%;
+  margin-top: 1rem;
 }
 .create_session__field_item .create_session__field_item_help_text,
 .manage_availability__form .create_session__field_item_help_text {

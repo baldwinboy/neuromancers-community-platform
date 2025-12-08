@@ -1,9 +1,12 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.text import slugify
 from wagtail import blocks
 from wagtail.admin.panels import FieldPanel
 from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
-from wagtail.fields import StreamField
+from wagtail.fields import StreamField, StreamValue
+
+from apps.events.validators import slug_validator
 
 
 @register_setting(icon="stripe")
@@ -76,20 +79,52 @@ class WherebySettings(BaseGenericSetting):
         verbose_name = "Whereby API Settings"
 
 
+class FilterItemBlock(blocks.StructBlock):
+    label = blocks.CharBlock(required=True, help_text="Display label")
+    slug = blocks.CharBlock(
+        required=False,
+        validators=[slug_validator],
+        help_text="Stable ID for this item (auto-generated if empty)",
+    )
+
+    def clean(self, value):
+        value = super().clean(value)
+        if not value.get("slug") and value.get("label"):
+            # Auto-generate slug from label
+            value["slug"] = slugify(value["label"])
+        return value
+
+    class Meta:
+        icon = "tag"
+
+
+class FilterGroupBlock(blocks.StructBlock):
+    label = blocks.CharBlock(required=True, help_text="Filter group label")
+    slug = blocks.CharBlock(
+        required=False,
+        validators=[slug_validator],
+        help_text="Stable ID for this filter group (auto-generated if empty)",
+    )
+    items = blocks.ListBlock(FilterItemBlock(), help_text="Filter items")
+
+    def clean(self, value):
+        value = super().clean(value)
+        if not value.get("slug") and value.get("label"):
+            value["slug"] = slugify(value["label"])
+        return value
+
+    class Meta:
+        icon = "list-ul"
+
+
 @register_setting(icon="filter")
 class FilterSettings(BaseGenericSetting):
     filters = StreamField(
         [
-            (
-                "lived_experience",
-                blocks.ListBlock(blocks.CharBlock()),
-            ),
-            (
-                "area_of_focus",
-                blocks.ListBlock(blocks.CharBlock()),
-            ),
-        ]
-    )
+            ("group", FilterGroupBlock()),
+        ],
+        use_json_field=True,
+    )  # use JSONField for simplicity
 
     panels = [
         FieldPanel("filters"),
@@ -97,3 +132,47 @@ class FilterSettings(BaseGenericSetting):
 
     class Meta:
         verbose_name = "Session filters"
+
+    def as_normalized_mapping(self):
+        """
+        Convert StreamValue into:
+        {
+          "<group_slug>": {
+            "label": "...",
+            "slug": "...",
+            "items": {
+               "<item_slug>": { ... }
+            }
+          }
+        }
+        """
+        normalized = {}
+
+        if not isinstance(self.filters, StreamValue):
+            return normalized
+
+        for group in self.filters.get_prep_value():
+            g = group.get("value")
+            g_slug = g.get("slug")
+            g_label = g.get("label")
+            items = g.get("items", [])
+
+            if not g_slug:
+                continue
+
+            normalized[g_slug] = {"slug": g_slug, "label": g_label, "items": {}}
+
+            for item in items:
+                iv = item.get("value")
+                i_slug = iv.get("slug")
+                i_label = iv.get("label")
+
+                if not i_slug:
+                    continue
+
+                normalized[g_slug]["items"][i_slug] = {
+                    "slug": i_slug,
+                    "label": i_label,
+                }
+
+        return normalized

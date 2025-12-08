@@ -4,9 +4,7 @@ from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext as _
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
-from guardian.shortcuts import assign_perm, remove_perm
 
-from apps.accounts.models import UserGroup
 from apps.events.choices import SessionRequestStatusChoices, filtered_currencies
 from apps.events.utils import get_languages
 
@@ -81,6 +79,16 @@ class GroupSession(AbstractSession):
             ("request_join_session", "Request join session"),
         ]
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+
+        # save original values, when model is loaded from database,
+        # in a separate attribute on the model
+        instance._loaded_values = dict(zip(field_names, values))
+
+        return instance
+
     @property
     def currency_symbol(self):
         _currency = filtered_currencies.get(self.currency, None)
@@ -103,35 +111,6 @@ class GroupSession(AbstractSession):
     def language_display(self):
         all_languages = get_languages()
         return all_languages.get(self.language)
-
-    def save(self, *args, **kwargs):
-        support_seeker_group = UserGroup.objects.get(name="Support Seeker")
-
-        if not support_seeker_group:
-            return
-
-        super().save(*args, **kwargs)
-        support_seeker_perms = [
-            "events.view_groupsession",
-            "events.request_join_session",
-        ]
-        for perm in support_seeker_perms:
-            if self.is_published:
-                assign_perm(perm, support_seeker_group, self)
-            else:
-                remove_perm(perm, support_seeker_group, self)
-
-        perms = [
-            "events.change_groupsession",
-            "events.delete_groupsession",
-            "events.view_groupsession",
-        ]
-
-        if self.host:
-            for perm in perms:
-                assign_perm(perm, self.host, self)
-
-        super().save(*args, **kwargs)
 
     def attendee_requested(self, user):
         return self.requests.filter(attendee=user).exists()
@@ -173,6 +152,16 @@ class GroupSessionRequest(AbstractSessionRequest):
             ("approve_group_request", "Approve group request"),
             ("withdraw_group_request", "Withdraw group request"),
         ]
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+
+        # save original values, when model is loaded from database,
+        # in a separate attribute on the model
+        instance._loaded_values = dict(zip(field_names, values))
+
+        return instance
 
     def __str__(self):
         return f"{self.session.title} for {self.attendee.username}"
@@ -221,3 +210,13 @@ class GroupSessionReview(AbstractSessionReview):
                 ),
             ),
         ]
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+
+        # save original values, when model is loaded from database,
+        # in a separate attribute on the model
+        instance._loaded_values = dict(zip(field_names, values))
+
+        return instance

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.utils.translation import gettext as _
 
 
@@ -33,3 +34,9 @@ def validate_language_codes(value):
 
     if invalid:
         raise ValidationError(_("Invalid language"), code="invalid_lang")
+
+
+slug_validator = RegexValidator(
+    regex=r"^[-a-zA-Z0-9_]+$",
+    message="Slug can only contain letters, numbers, hyphens, and underscores.",
+)

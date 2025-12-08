@@ -73,6 +73,11 @@ class AbstractSession(models.Model):
         help_text=_("Support seekers will require approval before payment is refunded"),
         default=True,
     )
+    filters = models.JSONField(
+        help_text=_("These are filters applied for a session"),
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

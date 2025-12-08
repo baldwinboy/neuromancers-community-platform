@@ -1,0 +1,14 @@
+<fieldset class="grouped_checkbox_select">
+    {% for group_label, group_options, group_value in widget.optgroups %}
+        <div class="checkbox-group" data-group-value="{{ group_value }}">
+            <strong class="font-subheading">{{ group_label }}</strong>
+            <br>
+            <div class="flex flex-row flex-wrap gap-8">
+                {% for option in group_options %}
+                    <label>{{ option.tag }} {{ option.label }}</label>
+                    <br>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</fieldset>

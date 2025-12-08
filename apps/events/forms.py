@@ -7,9 +7,9 @@ from django.db.models import Q
 from django.utils.translation import gettext as _
 
 from apps.core.widgets import TypedSelectMultiple
-from apps.events.choices import SessionRequestStatusChoices
-from apps.events.utils import get_languages
 
+from .choices import SessionRequestStatusChoices
+from .form_fields import FiltersMultipleChoiceField
 from .mixins import GroupedFormMixin
 from .models_sessions.group import GroupSession, GroupSessionRequest
 from .models_sessions.peer import (
@@ -17,6 +17,7 @@ from .models_sessions.peer import (
     PeerSessionAvailability,
     PeerSessionRequest,
 )
+from .utils import get_languages
 
 DURATIONS = [[_("Minutes"), list(zip(range(5, 121), range(5, 121)))]]
 
@@ -82,6 +83,7 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
             "These are durations (in minutes) that a session may be booked for"
         ),
     )
+    filters = FiltersMultipleChoiceField()
 
     class Meta:
         model = PeerSession
@@ -90,6 +92,7 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
             "title",
             "description",
             "languages",
+            "filters",
             "durations",
             "currency",
             "price",
@@ -103,7 +106,10 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
         ]
 
     field_groups = [
-        (_("Introduction"), ["title", "description", "languages", "durations"]),
+        (
+            _("Introduction"),
+            ["title", "description", "languages", "durations", "filters"],
+        ),
         (_("Pricing"), ["currency", "price", "per_hour_price"]),
         (
             _("Concessionary Pricing"),
@@ -121,7 +127,10 @@ class PeerSessionForm(GroupedFormMixin, forms.ModelForm):
     ]
 
     def __init__(self, host, *args, **kwargs):
+        request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
+
+        self.fields["filters"].load_from_request(request)
 
         self.initial["host"] = host
 
@@ -268,6 +277,7 @@ class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
             "This is when your scheduled session ends. All times are set to UTC."
         ),
     )
+    filters = FiltersMultipleChoiceField()
 
     class Meta:
         model = GroupSession
@@ -276,6 +286,7 @@ class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
             "title",
             "description",
             "language",
+            "filters",
             "currency",
             "price",
             "concessionary_price",
@@ -290,7 +301,15 @@ class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
         ]
 
     field_groups = [
-        (_("Introduction"), ["title", "description", "language"]),
+        (
+            _("Introduction"),
+            [
+                "title",
+                "description",
+                "language",
+                "filters",
+            ],
+        ),
         (_("Schedule"), ["starts_at", "ends_at", "meeting_link"]),
         (_("Pricing"), ["currency", "price"]),
         (
@@ -310,7 +329,10 @@ class GroupSessionForm(GroupedFormMixin, forms.ModelForm):
     ]
 
     def __init__(self, host, *args, **kwargs):
+        request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
+
+        self.fields["filters"].load_from_request(request)
 
         self.initial["host"] = host
 
