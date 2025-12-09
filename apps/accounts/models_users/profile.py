@@ -28,6 +28,14 @@ class Profile(models.Model):
             "Care Providers will see this in your profile when you request a session"
         ),
     )
+
+    terms_and_conditions = models.TextField(
+        max_length=10_240,
+        null=True,
+        blank=True,
+        help_text=_("Care Seekers will see this before requesting a session"),
+    )
+
     country = models.CharField(
         max_length=2,
         choices=get_countries,
