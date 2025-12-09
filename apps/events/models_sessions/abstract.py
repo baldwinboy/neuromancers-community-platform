@@ -73,6 +73,10 @@ class AbstractSession(models.Model):
         help_text=_("Support seekers will require approval before payment is refunded"),
         default=True,
     )
+    allow_custom_price = models.BooleanField(
+        help_text=_("Support seekers will be allowed to pay what they can."),
+        default=False,
+    )
     filters = models.JSONField(
         help_text=_("These are filters applied for a session"),
         null=True,
@@ -150,6 +154,19 @@ class AbstractSessionRequest(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    custom_price = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(0, message=_("Cannot charge negative values")),
+            MaxValueValidator(
+                9_999_999,
+                message=_(
+                    "Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."
+                ),
+            ),
+        ],
+    )
     pay_concessionary_price = models.BooleanField(
         help_text=_(
             "You'll be able to pay a reduced price if the session peer approves."
