@@ -31,11 +31,11 @@ class StripeSettings(BaseGenericSetting):
         null=True,
         blank=True,
     )
-    account_id = models.CharField(
-        "Account ID",
+    client_id = models.CharField(
+        "Client ID",
         help_text=(
-            "Your organisation's Stripe Connect account ID. "
-            "This can be gotten from your Stripe dashboard settings. Starts with 'acct_'"
+            "Your organisation's Stripe Connect client ID. "
+            "This can be gotten from your Stripe dashboard settings. Starts with 'ca_'"
         ),
         max_length=255,
         null=True,

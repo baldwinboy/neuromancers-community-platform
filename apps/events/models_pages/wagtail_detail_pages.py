@@ -5,11 +5,11 @@ from django.utils.translation import gettext as _
 from wagtail.admin.panels import FieldPanel, PanelPlaceholder
 from wagtail.models import Page
 
-from apps.events.forms import (
+from apps.events.forms_sessions.group import (
     GroupSessionPublishForm,
     GroupSessionRequestForm,
-    PeerSessionPublishForm,
 )
+from apps.events.forms_sessions.peer import PeerSessionPublishForm
 from apps.events.models_sessions.group import GroupSession
 from apps.events.models_sessions.peer import PeerSession
 
