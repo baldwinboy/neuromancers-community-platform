@@ -16,12 +16,24 @@ class SessionRequestStatusChoices(models.IntegerChoices):
 
 class SessionAvailabilityOccurrenceChoices(models.IntegerChoices):
     """
-    Session availability may occur hourly, daily, weekly, or monthly
+    Session availability may occur daily, weekly, or monthly
     """
 
     DAILY = 0, _("Daily")
     WEEKLY = 1, _("Weekly")
     MONTHLY = 2, _("Monthly")
+
+
+class GroupSessionOccurrenceChoices(models.IntegerChoices):
+    """
+    Group sessions may occur daily, weekly, every two weeks, every three weeks, or monthly
+    """
+
+    DAILY = 0, _("Daily")
+    WEEKLY = 1, _("Weekly")
+    FORTNIGHTLY = 2, _("Every two weeks")
+    EVERY_3_WEEKS = 3, _("Every three weeks")
+    MONTHLY = 4, _("Monthly")
 
 
 # Filter currencies

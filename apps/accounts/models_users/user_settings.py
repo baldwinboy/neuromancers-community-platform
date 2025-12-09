@@ -157,3 +157,27 @@ class PeerNotificationSettingsGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(
         PeerNotificationSettings, on_delete=models.CASCADE
     )
+
+
+# Filters for Peer users
+class PeerFilterSettings(models.Model):
+    filters = models.JSONField(
+        help_text=_("Your profile will be displayed under these filters when selected"),
+        null=True,
+        blank=True,
+    )
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="peer_filter_settings",
+        primary_key=True,
+    )
+
+
+class PeerFilterSettingsUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(PeerFilterSettings, on_delete=models.CASCADE)
+
+
+class PeerFilterSettingsGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(PeerFilterSettings, on_delete=models.CASCADE)

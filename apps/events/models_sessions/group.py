@@ -5,7 +5,11 @@ from django.db.models import F, Q
 from django.utils.translation import gettext as _
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
-from apps.events.choices import SessionRequestStatusChoices, filtered_currencies
+from apps.events.choices import (
+    GroupSessionOccurrenceChoices,
+    SessionRequestStatusChoices,
+    filtered_currencies,
+)
 from apps.events.utils import get_languages
 
 from .abstract import (
@@ -38,6 +42,19 @@ class GroupSession(AbstractSession):
         null=True,
         blank=True,
     )
+
+    recurring = models.BooleanField(default=False)
+
+    recurrence_type = models.CharField(
+        max_length=10,
+        choices=GroupSessionOccurrenceChoices,
+        null=True,
+        blank=True,
+    )
+    recurrence_ends_at = models.DateTimeField(
+        null=True, blank=True, help_text=_("Leave blank for indefinite recurrence")
+    )
+
     support_seekers = models.ManyToManyField(
         User,
         through="GroupSessionRequest",
@@ -71,6 +88,14 @@ class GroupSession(AbstractSession):
                 name="group_access_before_payment_price_zero",
                 violation_error_message=_(
                     "Free sessions can't require access before payment"
+                ),
+            ),
+            models.CheckConstraint(
+                condition=Q(recurring=True, recurrence_type__isnull=False)
+                | Q(recurring=False, recurrence_type__isnull=True),
+                name="event_recurrence_type_required_if_recurring",
+                violation_error_message=_(
+                    "Events can occur repeatedly only if you set both recurring and recurrence type"
                 ),
             ),
         ]
