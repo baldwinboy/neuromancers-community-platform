@@ -93,6 +93,7 @@ PROJECT_APPS = [
     "apps.accounts",
     "apps.events",
     "apps.contact",
+    "apps.blog",
     "apps.core",
 ]
 
@@ -340,10 +341,10 @@ RAISE_404 = False
 # Email
 # https://docs.djangoproject.com/en/5.2/ref/settings/#email-host
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-EMAIL_HOST = env("EMAIL_HOST")
-EMAIL_PORT = env("EMAIL_PORT")
-EMAIL_HOST_USER = env("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+EMAIL_HOST = env("EMAIL_HOST", default="localhost")
+EMAIL_PORT = env("EMAIL_PORT", default=25)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_USE_TLS = True
 
@@ -355,12 +356,12 @@ COMPONENTS = ComponentsSettings(
 )
 
 # Whereby
-WHEREBY_API_KEY = env("WHEREBY_API_KEY")
+WHEREBY_API_KEY = env("WHEREBY_API_KEY", default="")
 
 # Stripe
-STRIPE_CONNECTED_APP_ID = env("STRIPE_CONNECTED_APP_ID")
-STRIPE_API_PUBLISHABLE_KEY = env("STRIPE_API_PUBLISHABLE_KEY")
-STRIPE_API_SECRET_KEY = env("STRIPE_API_SECRET_KEY")
-STRIPE_REDIRECT_URL = env("STRIPE_REDIRECT_URL")
+STRIPE_API_CLIENT_ID = env("STRIPE_API_CLIENT_ID", default="")
+STRIPE_API_PUBLISHABLE_KEY = env("STRIPE_API_PUBLISHABLE_KEY", default="")
+STRIPE_API_SECRET_KEY = env("STRIPE_API_SECRET_KEY", default="")
+STRIPE_REDIRECT_URL = env("STRIPE_REDIRECT_URL", default="")
 STRIPE_CURRENCIES = stripe_currencies  # Currencies supported by Stripe
 STRIPE_APPLICATION_FEE = 0.15  # Decimal value of Stripe Application Fee (15%)
