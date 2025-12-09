@@ -2,17 +2,21 @@ from django.db import models
 from django.utils.translation import gettext as _
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
+from apps.accounts.utils import get_countries
+
 from .user import User
 
 
 class Profile(models.Model):
     display_picture = models.ImageField(
-        help_text=_("This image will be displayed on a user's profile"),
+        help_text=_("This image will be displayed on your profile"),
         null=True,
         blank=True,
     )
     about = models.TextField(
-        help_text=_("This will be displayed on a user's profile as their summary"),
+        help_text=_(
+            "Enter a short description. This will be displayed on your profile."
+        ),
         null=True,
         blank=True,
     )
@@ -24,6 +28,15 @@ class Profile(models.Model):
             "Care Providers will see this in your profile when you request a session"
         ),
     )
+    country = models.CharField(
+        max_length=2,
+        choices=get_countries,
+        help_text=_(
+            "Where you currently decide. This will be displayed on your profile and in searches."
+        ),
+        null=True,
+        blank=True,
+    )
 
     user = models.OneToOneField(
         User,
@@ -31,6 +44,14 @@ class Profile(models.Model):
         related_name="profile",
         primary_key=True,
     )
+
+    @property
+    def country_display(self) -> str | None:
+        if not self.country:
+            return None
+
+        all_countries = get_countries()
+        return all_countries.get(self.country)
 
 
 class ProfileUserObjectPermission(UserObjectPermissionBase):
