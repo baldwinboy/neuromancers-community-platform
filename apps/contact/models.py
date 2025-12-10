@@ -6,10 +6,8 @@ from wagtail.admin.panels import FieldPanel, InlinePanel
 from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
 from wagtail.fields import RichTextField
-from wagtail.snippets.models import register_snippet
 
 
-@register_snippet
 class ContactTopic(models.Model):
     label = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, blank=True)
