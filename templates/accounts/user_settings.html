@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% load i18n heroicons account %}
+
+{% block body_class %}
+    template-accountsusersettings
+{% endblock body_class %}
+
+{% block title %}
+    {% trans "Settings" %}
+{% endblock title %}
+
+{% block content %}
+    <main class="w-full container mx-auto py-9 px-6 lg:px-0">
+        <h1>{% trans "Settings" %}</h1>
+        {% if perms.events.add_peersession %}
+            {% if not stripe_account or not stripe_account.is_ready %}
+                <a href="{% url "stripe_authorize" %}">
+                    {% if not stripe_account %}
+                        {% trans "Connect your Stripe account" %}
+                    {% else %}
+                        {% trans "Complete your Stripe onboarding" %}
+                    {% endif %}
+                </a>
+            {% endif %}
+        {% endif %}
+    </main>
+{% endblock content %}

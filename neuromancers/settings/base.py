@@ -128,7 +128,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "wagtailmenus.context_processors.wagtailmenus",
-                "apps.core.context_processors.unverified_email_warning",
+                "apps.core.context_processors.onboarding_banner",
                 "wagtail.contrib.settings.context_processors.settings",
             ],
             "loaders": [

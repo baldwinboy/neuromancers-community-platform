@@ -13,7 +13,11 @@ from django.utils.translation import gettext as _
 from wagtail.admin.panels import PanelPlaceholder
 from wagtail.contrib.routable_page.models import RoutablePage, route
 
-from apps.events.decorators import parse_uuid_param, with_route_name
+from apps.events.decorators import (
+    parse_uuid_param,
+    stripe_account_required,
+    with_route_name,
+)
 from apps.events.forms import (
     GroupSessionForm,
     PeerSessionAvailabilityForm,
@@ -71,6 +75,7 @@ class SessionsIndexPage(RoutablePage):
     @route(r"^create/$", name="choose_session_type")
     @with_route_name("choose_session_type")
     @method_decorator(login_required)
+    @method_decorator(stripe_account_required)
     def choose_session_type(self, request: HttpRequest):
         if not request.user.has_perm(
             "events.add_peersession"
@@ -88,6 +93,7 @@ class SessionsIndexPage(RoutablePage):
     @route(r"^create/(?P<session_type>[\w-]+)/$", name="create_session")
     @with_route_name("create_session")
     @method_decorator(login_required)
+    @method_decorator(stripe_account_required)
     def create_session(self, request, session_type):
         return self._manage_session(request, session_type=session_type)
 
@@ -98,6 +104,7 @@ class SessionsIndexPage(RoutablePage):
     @with_route_name("edit_session")
     @parse_uuid_param("session_id")  # apply only where session_id exists
     @method_decorator(login_required)
+    @method_decorator(stripe_account_required)
     def edit_session(self, request, session_type, session_id):
         return self._manage_session(
             request, session_type=session_type, session_id=session_id
@@ -107,6 +114,7 @@ class SessionsIndexPage(RoutablePage):
     @with_route_name("manage_availability")
     @parse_uuid_param("session_id")
     @method_decorator(login_required)
+    @method_decorator(stripe_account_required)
     def manage_availability(
         self, request: HttpRequest, session_id: uuid.UUID | None = None
     ):
@@ -137,6 +145,7 @@ class SessionsIndexPage(RoutablePage):
     @with_route_name("delete_availability")
     @parse_uuid_param("session_id")
     @method_decorator(login_required)
+    @method_decorator(stripe_account_required)
     def delete_availability(
         self, request: HttpRequest, availability_id: uuid.UUID | None = None
     ):

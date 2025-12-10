@@ -41,6 +41,8 @@
                                         {% endif %}
                                     </button>
                                 </form>
+                            {% else %}
+                                <button class="auth_button auth_button__sessions block text-center" disabled>{% trans "Publish" %}</button>
                             {% endif %}
                         </div>
                     {% endif %}

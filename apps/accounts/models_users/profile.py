@@ -53,6 +53,8 @@ class Profile(models.Model):
         primary_key=True,
     )
 
+    has_customized = models.BooleanField(default=False)
+
     @property
     def country_display(self) -> str | None:
         if not self.country:
@@ -91,6 +93,7 @@ class CertificateGroupObjectPermission(GroupObjectPermissionBase):
 
 class StripeAccount(models.Model):
     id = models.CharField(unique=True, max_length=128)
+    is_ready = models.BooleanField(default=False)
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,

@@ -8,7 +8,13 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
-from apps.accounts.views import ProfileView, UserView
+from apps.accounts.views import (
+    ProfileView,
+    StripeAuthorizeCallbackView,
+    StripeAuthorizeView,
+    UserSettingsView,
+    UserView,
+)
 
 # Load all other app admins
 admin.autodiscover()
@@ -40,6 +46,13 @@ urlpatterns = [
     ),
     path("profile/", ProfileView.as_view(), name="accounts_profile"),
     path("profile/<str:username>", UserView.as_view(), name="accounts_user_profile"),
+    path("settings/", UserSettingsView.as_view(), name="accounts_user_settings"),
+    path("stripe/authorize/", StripeAuthorizeView.as_view(), name="stripe_authorize"),
+    path(
+        "stripe/oauth/callback/",
+        StripeAuthorizeCallbackView.as_view(),
+        name="stripe_authorize_callback",
+    ),
 ]
 
 if settings.ENVIRONMENT == "development":

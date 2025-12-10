@@ -1,5 +1,6 @@
 import uuid
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext as _
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -33,8 +34,9 @@ class Notifications(models.Model):
         on_delete=models.CASCADE,
         related_name="notifications",
     )
-    subject = models.IntegerField(
+    subject = models.PositiveSmallIntegerField(
         choices=NotificationSubjectChoices,
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
     body = models.TextField(max_length=10_240)
     read = models.BooleanField(default=False)
@@ -42,38 +44,47 @@ class Notifications(models.Model):
 
 # Notification settings for all users
 class BaseNotificationSettings(models.Model):
-    requested_session = models.IntegerField(
+    requested_session = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_("You'll receive a notification when you request a session"),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    responded_session = models.IntegerField(
+    responded_session = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_(
             "You'll receive a notification when a Care Provider has responded to your request"
         ),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    cancelled_session = models.IntegerField(
+    cancelled_session = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_("You'll receive a notification when your session is cancelled"),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    session_reminders = models.IntegerField(
+    session_reminders = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_(
             "You'll receive a notification before one (1) day and/or one (1) hour before your session starts"
         ),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    account_deleted = models.IntegerField(
+    account_deleted = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_("You'll receive a notification when your account is deleted"),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    payment_made = models.IntegerField(
+    payment_made = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_("You'll receive a notification when you make a payment"),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    payment_refunded = models.IntegerField(
+    payment_refunded = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_("You'll receive a notification when your payment is refunded"),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
+
+    has_customized = models.BooleanField(default=False)
 
     class Meta:
         abstract = True
@@ -98,45 +109,53 @@ class NotificationSettingsGroupObjectPermission(GroupObjectPermissionBase):
 
 # Notifications for Peer users
 class PeerNotificationSettings(BaseNotificationSettings):
-    published_session = models.IntegerField(
+    published_session = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_("You'll receive a notification when you publish a session"),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    host_session_requested = models.IntegerField(
+    host_session_requested = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_(
             "You'll receive a notification when a Care Seeker requests a session from you"
         ),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    host_session_booked = models.IntegerField(
+    host_session_booked = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_("You'll receive a notification when you accept a request"),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    host_session_cancelled = models.IntegerField(
+    host_session_cancelled = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_(
             "You'll receive a notification when you or a Care Seeker cancel(s) a session"
         ),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    host_session_reminders = models.IntegerField(
+    host_session_reminders = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_(
             "You'll receive a notification one (1) day and/or one (1) hour before a session provided by you starts"
         ),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    payment_received = models.IntegerField(
+    payment_received = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_("You'll receive a notification when you receive a payment"),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    payment_refund_request = models.IntegerField(
+    payment_refund_request = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_(
             "You'll receive a notification when a Care Seeker requests a refund from you"
         ),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
-    payment_refunded = models.IntegerField(
+    payment_refunded = models.PositiveSmallIntegerField(
         choices=NotificationChoices,
         help_text=_("You'll receive a notification when you refund a payment"),
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
     )
 
     user = models.OneToOneField(

@@ -1,9 +1,7 @@
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
 from guardian.shortcuts import assign_perm
-from guardian.utils import get_group_obj_perms_model
 
 from apps.accounts.models import UserGroup
 from apps.events.models import (
@@ -14,9 +12,6 @@ from apps.events.models import (
     PeerSessionAvailability,
     PeerSessionRequest,
 )
-
-User = get_user_model()
-GroupObjectPermission = get_group_obj_perms_model()
 
 
 class Command(BaseCommand):
