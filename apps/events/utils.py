@@ -1,7 +1,10 @@
+import random
 from datetime import datetime
 
 from django.conf import settings
 from django.utils.translation import gettext as _
+
+from apps.accounts.models_users.user import User
 
 
 def subtract_event(a: tuple[datetime, datetime], b: tuple[datetime, datetime]):
@@ -42,3 +45,19 @@ def get_languages() -> dict[str, str]:
 def get_language_display(iso: str) -> str | None:
     all_languages = get_languages()
     return all_languages.get(iso)
+
+
+def stable_price():
+    return random.choice([0, 500, 1000, 1500])  # repeatable small set
+
+
+def stable_langs():
+    return random.choice(["en", "en,fr", "en,es"])
+
+
+def stable_durations():
+    return random.choice(["30,60", "20,40,60"])
+
+
+def get_host_user():
+    return User.objects.filter(groups__name="Peer").order_by("?").first()

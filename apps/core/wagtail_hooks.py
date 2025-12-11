@@ -1,3 +1,5 @@
+from django.templatetags.static import static
+from django.utils.html import format_html
 from wagtail import hooks
 
 
@@ -8,3 +10,8 @@ def register_icons(icons):
         "wagtailadmin/icons/whereby.svg",
         "wagtailadmin/icons/filter.svg",
     ]
+
+
+@hooks.register("insert_global_admin_css")
+def global_admin_css():
+    return format_html('<link rel="stylesheet" href="{}">', static("css/common.css"))

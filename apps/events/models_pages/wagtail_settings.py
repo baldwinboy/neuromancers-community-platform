@@ -2,7 +2,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
 from wagtail import blocks
-from wagtail.admin.panels import FieldPanel
+from wagtail.admin.panels import FieldPanel, FieldRowPanel
 from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
 from wagtail.fields import StreamField, StreamValue
 
@@ -87,6 +87,8 @@ class FilterItemBlock(blocks.StructBlock):
         help_text="Stable ID for this item (auto-generated if empty)",
     )
 
+    panels = [FieldRowPanel(("label", "slug"))]
+
     def clean(self, value):
         value = super().clean(value)
         if not value.get("slug") and value.get("label"):
@@ -96,6 +98,9 @@ class FilterItemBlock(blocks.StructBlock):
 
     class Meta:
         icon = "tag"
+        collapsed = True
+        label_format = "{label} ({slug})"
+        form_classname = "filter-item-block struct-block flex flex-wrap gap-8"
 
 
 class FilterGroupBlock(blocks.StructBlock):
@@ -107,6 +112,8 @@ class FilterGroupBlock(blocks.StructBlock):
     )
     items = blocks.ListBlock(FilterItemBlock(), help_text="Filter items")
 
+    panels = [FieldRowPanel(("label", "slug")), FieldPanel("items")]
+
     def clean(self, value):
         value = super().clean(value)
         if not value.get("slug") and value.get("label"):
@@ -115,6 +122,9 @@ class FilterGroupBlock(blocks.StructBlock):
 
     class Meta:
         icon = "list-ul"
+        collapsed = True
+        label_format = "{label} ({slug})"
+        form_classname = "filter-group-block struct-block flex flex-wrap gap-8"
 
 
 @register_setting(icon="filter")

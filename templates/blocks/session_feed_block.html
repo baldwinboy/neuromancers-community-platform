@@ -1,0 +1,5 @@
+{% load wagtailcore_tags %}
+{% with sessions=block.get_sessions %}
+
+    {% include "includes/session_feed.html" with sessions=sessions block=value %}
+{% endwith %}

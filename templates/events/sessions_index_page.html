@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load i18n account wagtailcore_tags wagtailroutablepage_tags %}
+{% load i18n account wagtailadmin_tags wagtailcore_tags wagtailroutablepage_tags %}
 
 {% block title %}
     Sessions
@@ -19,22 +19,8 @@
                    class="auth_button auth_button__sessions block text-center">{% trans "Host your own session" %}</a>
             {% endif %}
         </header>
-        <main class="flex flex-col w-full h-full container mx-auto py-9 px-6 lg:px-0">
-            {% if sessions|length > 0 %}
-                <section class="flex flex-col gap-4 mx-auto mb-auto w-full lg:w-3/4">
-                    {% for session in sessions %}
-                        {% if session.starts_at %}
-                            {% session_item session=session session_type="group" / %}
-                        {% else %}
-                            {% session_item session=session session_type="peer" / %}
-                        {% endif %}
-                    {% endfor %}
-                </section>
-            {% else %}
-                <section class="flex flex-col justify-center items-center h-full">
-                    <p class="self-center">No sessions yet.</p>
-                </section>
-            {% endif %}
-        </main>
+        {% for block in page.content %}
+            {% include_block block %}
+        {% endfor %}
     </div>
 {% endblock content %}

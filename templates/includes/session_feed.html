@@ -1,0 +1,14 @@
+{% load i18n %}
+<main class="flex flex-col w-full h-full container mx-auto overflow-hidden py-9 px-6 lg:px-0">
+    {% if sessions %}
+        <section class="flex flex-col gap-4 mx-auto mb-auto w-full lg:w-3/4">
+            {% for session in sessions %}
+                {% session_item session=session session_type=session.type / %}
+            {% endfor %}
+        </section>
+    {% else %}
+        <section class="flex flex-col justify-center items-center h-full">
+            <p class="self-center">{% trans "No sessions yet." %}</p>
+        </section>
+    {% endif %}
+</main>

@@ -12,7 +12,9 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from wagtail.admin.panels import PanelPlaceholder
 from wagtail.contrib.routable_page.models import RoutablePage, route
+from wagtail.fields import StreamField
 
+from apps.events.blocks import SessionFeedBlock
 from apps.events.decorators import (
     parse_uuid_param,
     stripe_account_required,
@@ -52,12 +54,22 @@ SESSION_TYPE_MAP = {
 
 
 class SessionsIndexPage(RoutablePage):
+    content = StreamField(
+        [
+            ("session_feed", SessionFeedBlock()),
+        ],
+        use_json_field=True,
+        null=True,
+        blank=True,
+    )
+
     max_count = 1
 
     parent_page_types = ["core.HomePage"]
     subpage_types = ["events.PeerSessionDetailPage", "events.GroupSessionDetailPage"]
 
     # Optional Wagtail fields (e.g. intro text, image, etc.) can go here.
+    content_panels = RoutablePage.content_panels + ["content"]
 
     promote_panels = [
         PanelPlaceholder(

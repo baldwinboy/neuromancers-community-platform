@@ -1,20 +1,20 @@
-{% load i18n l10n guardian_tags heroicons wagtailcore_tags wagtailroutablepage_tags %}
-{% if session %}
-    <a href="{% pageurl session.page %}" aria-label="{{ session.title }}">
-        <article class="session_item {% if session_type == "group" %}session_item_alt{% endif %}"
-                 tabindex="0">
-            {% if session.starts_at %}
-                <time datetime="{{ session.starts_at|date:"c" }}">{% localize on %}{{ session.starts_at|date }}{% endlocalize %}</time>
-            {% else %}
-                <div class="h-4" aria-hidden="true"></div>
-            {% endif %}
-            <h2>{{ session.title }}</h2>
-            <p class="session_item__author">{{ session.host }}</p>
-            {% if session_type == "group" %}
-                {% heroicon_solid "chevron-right" size=24 class="text-white" %}
-            {% else %}
-                {% heroicon_solid "chevron-right" size=24 class="text-lightAccent" %}
-            {% endif %}
-        </article>
-    </a>
-{% endif %}
+{% load i18n l10n heroicons wagtailcore_tags %}
+<a href="{{ session.url }}" aria-label="{{ session.title }}">
+    <article class="session_item {% if session.type == 'group' %}session_item_alt{% endif %}"
+             tabindex="0">
+        {% if session.starts_at %}
+            <time datetime="{{ session.starts_at|date:'c' }}">
+                {% localize on %}{{ session.starts_at|date }}{% endlocalize %}
+            </time>
+        {% else %}
+            <div class="h-4" aria-hidden="true"></div>
+        {% endif %}
+        <h2>{{ session.title }}</h2>
+        <p class="session_item__author">{{ session.host }}</p>
+        {% if session.type == "group" %}
+            {% heroicon_solid "chevron-right" size=24 class="text-white" %}
+        {% else %}
+            {% heroicon_solid "chevron-right" size=24 class="text-lightAccent" %}
+        {% endif %}
+    </article>
+</a>

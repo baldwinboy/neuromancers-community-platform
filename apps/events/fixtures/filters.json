@@ -1,0 +1,166 @@
+[
+  {
+    "model": "events.filtersettings",
+    "pk": 1,
+    "fields": {
+      "filters": [
+        {
+          "type": "group",
+          "value": {
+            "label": "Lived Experience",
+            "slug": "lived-experience",
+            "items": [
+              {
+                "type": "item",
+                "value": { "label": "Black", "slug": "black" },
+                "id": "95db074a-d1f1-4316-accd-fbc2a8233997"
+              },
+              {
+                "type": "item",
+                "value": { "label": "LGBT+", "slug": "lgbt" },
+                "id": "190fd247-ae61-4711-91a9-6d3ba30367aa"
+              },
+
+              {
+                "id": "693b118a467ed51781c8dff8",
+                "type": "item",
+                "value": {
+                  "label": "Unequal Sentencing",
+                  "slug": "unequal-sentencing"
+                }
+              },
+              {
+                "id": "693b118a982b1deee41219a8",
+                "type": "item",
+                "value": {
+                  "label": "Police Brutality",
+                  "slug": "police-brutality"
+                }
+              },
+              {
+                "id": "693b118a16db4f2487b776e7",
+                "type": "item",
+                "value": {
+                  "label": "Institutional Racism",
+                  "slug": "institutional-racism"
+                }
+              },
+              {
+                "id": "693b118a37a10c138cf9d59b",
+                "type": "item",
+                "value": {
+                  "label": "Workplace Isolation",
+                  "slug": "workplace-isolation"
+                }
+              },
+              {
+                "id": "693b118a8ccae7ddd76feb10",
+                "type": "item",
+                "value": {
+                  "label": "Tax Burden",
+                  "slug": "tax-burden"
+                }
+              },
+              {
+                "id": "693b118a76b159d871004ef0",
+                "type": "item",
+                "value": {
+                  "label": "Disinformation",
+                  "slug": "disinformation"
+                }
+              },
+              {
+                "id": "693b118a5305e60be20679e9",
+                "type": "item",
+                "value": {
+                  "label": "Language Discrimination",
+                  "slug": "language-discrimination"
+                }
+              }
+            ]
+          },
+          "id": "0dddc673-03a7-4fbd-88e7-a195d3957d1b"
+        },
+        {
+          "type": "group",
+          "value": {
+            "label": "Area of Focus",
+            "slug": "area-of-focus",
+            "items": [
+              {
+                "type": "item",
+                "value": { "label": "Non-verbal", "slug": "non-verbal" },
+                "id": "95db074a-d1f1-4316-accd-fbc2a8233997"
+              },
+              {
+                "type": "item",
+                "value": {
+                  "label": "Chronic illness",
+                  "slug": "chronic-illness"
+                },
+                "id": "606ab4da-5ae4-4b0c-9413-bd37add455b3"
+              },
+              {
+                "id": "693b13497ce87f54c8e26f8a",
+                "type": "item",
+                "value": {
+                  "label": "Clinical Trials – Information for Participants",
+                  "slug": "clinical-trials-information-for-participants"
+                }
+              },
+              {
+                "id": "693b1349c21488d5106236b6",
+                "type": "item",
+                "value": {
+                  "label": "Finding Help for Co-Occurring Substance Use and Mental Disorders",
+                  "slug": "finding-help-for-co-occurring-substance-use-and-mental-disorders"
+                }
+              },
+              {
+                "id": "693b1349fbf9cd26eee54d7c",
+                "type": "item",
+                "value": {
+                  "label": "Attention-Deficit/Hyperactivity Disorder (ADHD)",
+                  "slug": "attention-deficithyperactivity-disorder-adhd"
+                }
+              },
+              {
+                "id": "693b1349ce128f810ee50115",
+                "type": "item",
+                "value": {
+                  "label": "Schizophrenia",
+                  "slug": "schizophrenia"
+                }
+              },
+              {
+                "id": "693b1349ac3f989911d0cf81",
+                "type": "item",
+                "value": {
+                  "label": "Psychotherapies",
+                  "slug": "psychotherapies"
+                }
+              },
+              {
+                "id": "693b1349cc3e83234010b5e9",
+                "type": "item",
+                "value": {
+                  "label": "Join a Research Study at NIMH",
+                  "slug": "join-a-research-study-at-nimh"
+                }
+              },
+              {
+                "id": "693b134926b5d85e57718e13",
+                "type": "item",
+                "value": {
+                  "label": "Borderline Personality Disorder",
+                  "slug": "borderline-personality-disorder"
+                }
+              }
+            ]
+          },
+          "id": "dccc166e-dfe5-4159-be8a-a9e26c8ff58d"
+        }
+      ]
+    }
+  }
+]

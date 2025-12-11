@@ -82,7 +82,12 @@ sprite: # Load custom SVGs
 lint-git-files: # Lint files tracked by Git
 	git status -s | cut -c4- | xargs pre-commit run --files
 
-django-seedusers: # Automatically generate fake users, i.e generate 50 Peer users -> `make django-seedusers USERS=50 GROUPS="Peer".
+django-seedusers: # Automatically generate fake users, i.e generate 50 Peer users -> `make django-seedusers USERS=50 GROUPS="Peer"`.
 	@echo "Seeding users..."
 	python manage.py seed_users --users ${USERS} --groups '${GROUPS}'
+	@echo "Done!"
+
+django-seedsessions: # Automatically generate fake sessions, i.e generate 50 sessions -> `make django-seedsessions SIZE=50`.
+	@echo "Seeding sessions..."
+	python manage.py seed_sessions --size ${SIZE}
 	@echo "Done!"
