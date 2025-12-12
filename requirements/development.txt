@@ -517,7 +517,7 @@ tzdata==2025.2
     #   faker
 uritemplate==4.2.0
     # via -r requirements/base.in
-urllib3==2.5.0
+urllib3==2.6.0
     # via
     #   -r requirements/base.in
     #   requests

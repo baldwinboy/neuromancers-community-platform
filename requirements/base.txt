@@ -321,7 +321,7 @@ typing-extensions==4.14.1
     #   stripe
 uritemplate==4.2.0
     # via -r requirements/base.in
-urllib3==2.5.0
+urllib3==2.6.0
     # via
     #   -r requirements/base.in
     #   requests
