@@ -15,7 +15,10 @@ from apps.events.models import (
 
 
 class Command(BaseCommand):
-    help = "Sets up default groups and permissions for event session access with django-guardian"
+    help = """
+    Sets up default groups and permissions for event session
+    access with django-guardian
+    """
 
     def handle(self, *args, **options):
         group_names = ["Support Seeker", "Peer", "Neuromancer"]
@@ -86,6 +89,7 @@ class Command(BaseCommand):
                     )
 
             # Assign all perms to Neuromancer
+            # (full access like superusers, except changing relations)
             if group_name == "Neuromancer":
                 for model in neuromancer_models:
                     content_type = ContentType.objects.get_for_model(model)
@@ -95,13 +99,13 @@ class Command(BaseCommand):
                     )
 
                     for perm in perms:
-                        assign_perm(
-                            f"{perm.content_type.app_label}.{perm.codename}", group
-                        )
+                        label = f"{perm.content_type.app_label}.{perm.codename}"
+                        # Assign all permissions
+                        # Relations (host, session, attendee)
+                        # cannot be changed after creation (enforced in model.save())
+                        assign_perm(label, group)
                         self.stdout.write(
-                            self.style.SUCCESS(
-                                f"Assigned {perm.codename} to {group_name}"
-                            )
+                            self.style.SUCCESS(f"Assigned {label} to Neuromancer")
                         )
 
         self.stdout.write(

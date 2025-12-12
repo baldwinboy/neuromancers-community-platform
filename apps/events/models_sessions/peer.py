@@ -3,10 +3,11 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from dateutil.relativedelta import relativedelta
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import F, Q
-from django.forms import ValidationError
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
@@ -29,7 +30,8 @@ from .abstract import (
 
 class PeerSession(AbstractSession):
     """
-    Peer sessions may be requested and attended by a single `SupportSeeker` user for a selected duration of time.
+    Peer sessions may be requested and attended by a single
+     user for a selected duration of time.
     """
 
     languages = models.CharField(
@@ -49,12 +51,14 @@ class PeerSession(AbstractSession):
             MaxValueValidator(
                 9_999_999,
                 message=_(
-                    "Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."
+                    "Cannot charge over 99,999 of a currency's unit. For "
+                    "higher values, try a different currency."
                 ),
             ),
         ],
         help_text=_(
-            "Support seekers will be charged this price based on the duration of their requested session if set"
+            "Support seekers will be charged this price based on "
+            "the duration of their requested session if set"
         ),
         null=True,
         blank=True,
@@ -65,12 +69,15 @@ class PeerSession(AbstractSession):
             MaxValueValidator(
                 9_999_999,
                 message=_(
-                    "Cannot charge over 99,999 of a currency's unit. For higher values, try a different currency."
+                    "Cannot charge over 99,999 of a currency's unit. "
+                    "For higher values, try a different currency."
                 ),
             ),
         ],
         help_text=_(
-            "Support seekers will be charged this price based on the duration of their requested session if set and if they are allowed to pay a reduced price"
+            "Support seekers will be charged this price based on the duration "
+            "of their requested session if set and if they"
+            " are allowed to pay a reduced price"
         ),
         null=True,
         blank=True,
@@ -128,7 +135,9 @@ class PeerSession(AbstractSession):
             minutes = total_minutes % 60
 
             if hours > 0 and minutes > 0:
-                duration_str = f"{hours} hour{'s' if hours > 1 else ''} and {minutes} minute{'s' if minutes > 1 else ''}"
+                hour_str = f"{hours} hour{'s' if hours > 1 else ''}"
+                minutes_str = f"{minutes} minute{'s' if minutes > 1 else ''}"
+                duration_str = f"{hour_str} and {minutes_str}"
             elif hours > 0:
                 duration_str = f"{hours} hour{'s' if hours > 1 else ''}"
             else:
@@ -175,10 +184,11 @@ class PeerSession(AbstractSession):
     @property
     def available_slots(self) -> list[tuple[datetime, datetime]]:
         """
-        Returns a list of tuples with the availability start date and end date. Excludes booked sessions.
+        Returns a list of tuples with the availability start date and end date.
+        Excludes booked sessions.
         """
         slots = []
-        now = datetime.now()
+        now = timezone.now()
 
         future_approved_requests = self.requests.filter(
             status=SessionRequestStatusChoices.APPROVED, starts_at__gte=now
@@ -261,14 +271,19 @@ class PeerSession(AbstractSession):
         return slots
 
     def save(self, *args, **kwargs):
+        if not self._state.adding:
+            # Prevent changes to host after creation (using cached values from from_db)
+            loaded_values = getattr(self, "_loaded_values", {})
+            if loaded_values.pop("host_id", None) != self.host_id:
+                raise ValidationError(
+                    _("Session host cannot be changed after creation")
+                )
+
         if self._state.adding:
             can_add = self.host.has_perm("events.add_peersession")
 
             if not can_add:
                 return
-
-            super().save(*args, **kwargs)
-            return
 
         super().save(*args, **kwargs)
 
@@ -322,7 +337,9 @@ class PeerSessionAvailability(AbstractSessionAvailability):
                 ),
                 name="availability_occurrence_ends_at_gte_starts_at",
                 violation_error_message=_(
-                    "Availabilty occurrence must last at least two days. If you want an availability that does not recur, don't set any occurrence."
+                    "Availabilty occurrence must last at least two days. "
+                    "If you want an availability that does not recur, "
+                    "don't set any occurrence."
                 ),
             ),
         ]
@@ -346,32 +363,25 @@ class PeerSessionAvailability(AbstractSessionAvailability):
                 "%A, %d %B %Y, %H:%M"
             )
 
+        display = self.get_occurrence_display()
+        display += f" from {starts_at_formatted} to {ends_at_formatted}"
         if occurrence_starts_at_formatted and occurrence_ends_at_formatted:
-            return f"{self.get_occurrence_display()} from {starts_at_formatted} to {ends_at_formatted} between {occurrence_starts_at_formatted} and {occurrence_ends_at_formatted}"
+            display += f" between {occurrence_starts_at_formatted}"
+            display += f" and {occurrence_ends_at_formatted}"
 
         if occurrence_starts_at_formatted:
-            return f"{self.get_occurrence_display()} from {starts_at_formatted} to {ends_at_formatted} after {occurrence_starts_at_formatted}"
+            display += f" after {occurrence_starts_at_formatted}"
         if occurrence_ends_at_formatted:
-            return f"{self.get_occurrence_display()} from {starts_at_formatted} to {ends_at_formatted} until {occurrence_ends_at_formatted}"
+            display += f" until {occurrence_ends_at_formatted}"
 
-        return f"{self.get_occurrence_display()} from {starts_at_formatted} to {ends_at_formatted}"
-
-
-class PeerSessionAvailabilityUserObjectPermission(UserObjectPermissionBase):
-    content_object = models.ForeignKey(
-        PeerSessionAvailability, on_delete=models.CASCADE
-    )
-
-
-class PeerSessionAvailabilityGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(
-        PeerSessionAvailability, on_delete=models.CASCADE
-    )
+        return display
 
 
 class PeerSessionRequest(AbstractSessionRequest):
     """
-    Peer session requests may be sent from `SupportSeeker` users to `Peer` users
+    Peer session requests may be sent from `SupportSeeker` users to `Peer` users.
+    Session and attendee relations cannot be changed after creation.
+    Only the session host can approve/withdraw (inferred from session permissions).
     """
 
     language = models.CharField(
@@ -394,7 +404,8 @@ class PeerSessionRequest(AbstractSessionRequest):
                 fields=["attendee", "session", "starts_at"],
                 name="unique_peer_session_request",
                 violation_error_message=_(
-                    "Attendees may only request once per session if an existing request starts at the same time."
+                    "Attendees may only request once per session "
+                    "if an existing request starts at the same time."
                 ),
             ),
             models.CheckConstraint(
@@ -410,17 +421,8 @@ class PeerSessionRequest(AbstractSessionRequest):
         ]
 
     def __str__(self):
-        return f"{self.session.title} for {self.attendee.username} from {self.starts_at} to {self.ends_at}"
-
-    @classmethod
-    def from_db(cls, db, field_names, values):
-        instance = super().from_db(db, field_names, values)
-
-        # save original values, when model is loaded from database,
-        # in a separate attribute on the model
-        instance._loaded_values = dict(zip(field_names, values))
-
-        return instance
+        display = f"{self.attendee.username} from {self.starts_at} to {self.ends_at}"
+        return f"{self.session.title} for {display}"
 
     @property
     def price(self):
@@ -457,7 +459,37 @@ class PeerSessionRequest(AbstractSessionRequest):
         all_languages = get_languages()
         return all_languages.get(self.language)
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+
+        # save original values, when model is loaded from database,
+        # in a separate attribute on the model
+        instance._loaded_values = dict(zip(field_names, values))
+
+        return instance
+
     def save(self, *args, **kwargs):
+        if not self._state.adding:
+            # Use cached values from from_db() for efficient validation
+            loaded_values = getattr(self, "_loaded_values", {})
+
+            if loaded_values.pop("session_id", None) != self.session_id:
+                raise ValidationError(_("Session cannot be changed after creation"))
+
+            if loaded_values.pop("attendee_id", None) != self.attendee_id:
+                raise ValidationError(_("Attendee cannot be changed after creation"))
+
+            # Prevent start/end changes after approval
+            if loaded_values.get("status") == SessionRequestStatusChoices.APPROVED:
+                if (
+                    loaded_values.pop("starts_at", None) != self.starts_at
+                    or loaded_values.pop("ends_at", None) != self.ends_at
+                ):
+                    raise ValidationError(
+                        _("Cannot change start or end time after approval")
+                    )
+
         if (
             not self.attendee
             or not self.session
@@ -479,28 +511,24 @@ class PeerSessionRequest(AbstractSessionRequest):
         super().clean()
 
         # Parse languages stored in the PeerSession
-        session_languages = [lang.strip() for lang in self.session.languages.split(",")]
+        language_list = self.session.languages.split(",")
+        session_languages = [lang.strip() for lang in language_list]
 
         if self.language not in session_languages:
             raise ValidationError(
                 _(
-                    f"This session can't be provided in {get_language_display(self.language)}"
+                    "This session can't be provided in "
+                    f"{get_language_display(self.language)}"
                 ),
                 code="invalid_lang_request",
             )
 
 
-class PeerSessionRequestUserObjectPermission(UserObjectPermissionBase):
-    content_object = models.ForeignKey(PeerSessionRequest, on_delete=models.CASCADE)
-
-
-class PeerSessionRequestGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(PeerSessionRequest, on_delete=models.CASCADE)
-
-
 class PeerScheduledSession(models.Model):
     """
-    Peer scheduled sessions may be created after requests are sent and approved
+    Peer scheduled sessions may be created after requests are sent and approved.
+    Only the host (via request.session.host)
+    and attendee (via request.attendee) can view this.
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -516,19 +544,45 @@ class PeerScheduledSession(models.Model):
     def __str__(self):
         return str(self.request)
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
 
-class PeerScheduledSessionUserObjectPermission(UserObjectPermissionBase):
-    content_object = models.ForeignKey(PeerScheduledSession, on_delete=models.CASCADE)
+        # save original values, when model is loaded from database,
+        # in a separate attribute on the model
+        instance._loaded_values = dict(zip(field_names, values))
 
+        return instance
 
-class PeerScheduledSessionGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(PeerScheduledSession, on_delete=models.CASCADE)
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            # Use cached values from from_db() for efficient validation
+            loaded_values = getattr(self, "_loaded_values", {})
+            if loaded_values.pop("request_id", None) != self.request_id:
+                raise ValidationError(_("Request cannot be changed after creation"))
+
+        super().save(*args, **kwargs)
 
 
 class PeerSessionReview(AbstractSessionReview):
-    attended_session = models.OneToOneField(
-        PeerScheduledSession, on_delete=models.CASCADE, related_name="review"
+    attended_session = models.ForeignKey(
+        PeerSession, on_delete=models.CASCADE, related_name="reviews"
     )
+    attendee = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="peer_session_reviews"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["attended_session", "attendee"],
+                name="unique_peer_session_review",
+                violation_error_message=_(
+                    "You can only leave one review on each peer session "
+                    "you've attended"
+                ),
+            ),
+        ]
 
     @classmethod
     def from_db(cls, db, field_names, values):
@@ -539,3 +593,21 @@ class PeerSessionReview(AbstractSessionReview):
         instance._loaded_values = dict(zip(field_names, values))
 
         return instance
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            # Use cached values from from_db() for efficient validation
+            loaded_values = getattr(self, "_loaded_values", {})
+
+            if loaded_values.pop("attendee_id", None) != self.attendee_id:
+                raise ValidationError(_("Attendee cannot be changed after creation"))
+
+            if (
+                loaded_values.pop("attended_session_id", None)
+                != self.attended_session_id
+            ):
+                raise ValidationError(
+                    _("Attended session cannot be changed after creation")
+                )
+
+        super().save(*args, **kwargs)

@@ -291,6 +291,11 @@ class PeerSessionRequestForm(forms.ModelForm):
     language = forms.ChoiceField(
         help_text=_("This is the language that the session will be provided in"),
     )
+    accept_terms = forms.BooleanField(
+        required=False,
+        label=_("I have read and accept the host's terms and conditions"),
+        help_text=_("You must accept the terms to request this session"),
+    )
 
     class Meta:
         model = PeerSessionRequest
@@ -309,6 +314,13 @@ class PeerSessionRequestForm(forms.ModelForm):
         self.initial["attendee"] = attendee
         self.initial["session"] = session
         self.fields["language"].choices = session.language_choices
+
+        # Only require terms acceptance if host has set terms
+        if session.host.profile.terms_and_conditions:
+            self.fields["accept_terms"].required = True
+        else:
+            # Hide the field if no terms exist
+            self.fields["accept_terms"].widget = forms.HiddenInput()
 
     def clean_starts_at(self):
         data = self.cleaned_data["starts_at"]

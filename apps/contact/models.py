@@ -27,13 +27,31 @@ class ContactTopic(models.Model):
 
 
 @register_setting(icon="mail")
-class ContactFormSettings(BaseGenericSetting):
+class ContactEmailSettings(BaseGenericSetting):
     default_recipient = models.EmailField(
-        help_text="Email address to receive Contact Form submissions"
+        help_text=(
+            "Email address to receive contact form submissions. "
+            "If you'd like to include a name for the recipient, "
+            "include the name before the email address like so: "
+            "Your Name <email@example.com>"
+        ),
+        null=True,
+        blank=True,
+    )
+    default_sender = models.EmailField(
+        help_text=(
+            "Email address to send communication to users. "
+            "If you'd like to include a name for the recipient, "
+            "include the name before the email address like so: "
+            "Your Name <email@example.com>"
+        ),
+        null=True,
+        blank=True,
     )
 
     panels = [
         FieldPanel("default_recipient"),
+        FieldPanel("default_sender"),
     ]
 
 
@@ -67,7 +85,7 @@ class ContactFormPage(AbstractEmailForm):
         return initial
 
     def get_to_address(self):
-        settings = ContactFormSettings.load(self._request)
+        settings = ContactEmailSettings.load(self._request)
         return [settings.default_recipient]
 
     def get_subject(self, form):

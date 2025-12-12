@@ -1,0 +1,94 @@
+{% load static i18n account %}
+{% comment %} djlint:off H021 {% endcomment %}
+<div style="display: block; text-align: center; background: #fc7097;">
+    <header style="display: block;
+                   text-align: center;
+                   width: 100%;
+                   background: black;
+                   color: white">
+        <img width="75"
+             height="75"
+             src="https://images.squarespace-cdn.com/content/v1/60ed8680f8be342c4089b398/0703eae8-9a71-4e74-a8b5-486103e73f3a/NM+Pixel+Brain.png?format=1500w"
+             alt=""
+             fetchpriority="high"
+             loading="eager"
+             decoding="async"
+             data-loader="raw"
+             style="display: inline-block;
+                    width: 75px;
+                    height: 75px" />
+        <h1 style="display: inline-block;
+                   font-family: monospace;
+                   font-size: 3rem">NEUROMANCERS</h1>
+    </header>
+    <div style="background: #fc7097">
+        <h2 style="font-family: sans-serif">{% trans "New Session Request" %}</h2>
+        <p style="font-family: monospace; font-weight: 900">
+            {% trans "Hello" %} {{ user.get_full_name|default:user.username }}!
+        </p>
+        <p style="font-family: monospace; font-weight: 500">
+            {% trans "A support seeker has requested to book your session:" %}
+        </p>
+        <div style="background: #e8f4f8;
+                    padding: 15px;
+                    border-left: 4px solid black;
+                    margin: 15px;
+                    font-family: monospace;
+                    font-weight: 500">
+            <h3 style="font-family: sans-serif; font-weight: 700; margin-top: 0;">{{ session.title }}</h3>
+            <p>
+                <strong>{% trans "Date & Time:" %}</strong> {{ session_request.scheduled_at }}
+            </p>
+            <p>
+                <strong>{% trans "Duration:" %}</strong> {{ session.duration_minutes }} {% trans "minutes" %}
+            </p>
+            <p>
+                <strong>{% trans "Rate:" %}</strong>
+                {% if session.flat_rate %}
+                    £{{ session.flat_rate }}
+                {% else %}
+                    £{{ session.hourly_rate }}/hour
+                {% endif %}
+            </p>
+        </div>
+        <div style="background: #fff8e1;
+                    padding: 10px;
+                    border-left: 4px solid #ffc107;
+                    margin: 10px;
+                    font-family: monospace;
+                    font-weight: 500">
+            <p>
+                <strong>{% trans "Requested by:" %}</strong> {{ attendee.get_full_name|default:attendee.username }}
+            </p>
+            <p>
+                <strong>{% trans "Access needs:" %}</strong> {{ attendee.profile.access_needs|truncatewords:30|default:"None specified" }}
+            </p>
+        </div>
+        <p style="font-family: monospace; font-weight: 500; padding: 0 1rem;">
+            {% trans "Review this request and either approve or decline it." %}
+        </p>
+        <p style="display: block; padding: 1rem">
+            <a href="{{ site_url }}{{ approve_url }}"
+               style="padding: 1rem;
+                      border: 0;
+                      border-radius: 5px;
+                      text-transform: uppercase;
+                      font-family: sans-serif;
+                      font-weight: 700;
+                      color: #fc7097;
+                      background: black;
+                      text-decoration: none">{% trans "Review Request" %}</a>
+        </p>
+        <p style="font-family: monospace; font-weight: 500; padding: 1rem;">
+            {% trans "Thank you from" %} <span style="font-weight: 900">{% trans "Neuromancers Community Platform" %}</span>!
+        </p>
+    </div>
+    <footer style="width: 100%; padding: 1rem; background: black; color: white">
+        <small style="font-family: monospace; font-weight: 900">NEUROMANCERS</small>
+        <p style="font-family: monospace; font-weight: 500; font-size: 12px;">
+            <a href="{{ site_url }}/settings/?tab=notifications"
+               style="color: #fc7097">{% trans "Manage notification preferences" %}</a>
+        </p>
+    </footer>
+</div>
+{% comment %} djlint:on {% endcomment %}

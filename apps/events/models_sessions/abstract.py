@@ -197,6 +197,14 @@ class AbstractSessionRequest(models.Model):
         ),
         default=True,
     )
+    meeting_link = models.URLField(
+        max_length=500,
+        null=True,
+        blank=True,
+        help_text=_(
+            "Video conference link for this session. Auto-generated via Whereby if not provided."
+        ),
+    )
 
     class Meta:
         abstract = True

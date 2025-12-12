@@ -12,17 +12,294 @@
 
 {% block content %}
     <main class="w-full container mx-auto py-9 px-6 lg:px-0">
-        <h1>{% trans "Settings" %}</h1>
-        {% if perms.events.add_peersession %}
-            {% if not stripe_account or not stripe_account.is_ready %}
-                <a href="{% url "stripe_authorize" %}">
-                    {% if not stripe_account %}
-                        {% trans "Connect your Stripe account" %}
-                    {% else %}
-                        {% trans "Complete your Stripe onboarding" %}
-                    {% endif %}
-                </a>
+        <div class="max-w-2xl mx-auto">
+            <h1 class="text-3xl font-bold mb-8">{% trans "Settings" %}</h1>
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-200 gap-1 mb-8" role="tablist">
+                <button role="tab"
+                        aria-selected="{% if active_tab == 'profile' %}true{% else %}false{% endif %}"
+                        class="px-4 py-2 font-medium border-b-2 {% if active_tab == 'profile' %}border-blue-600 text-blue-600{% else %}border-transparent text-gray-600 hover:text-gray-900{% endif %}"
+                        onclick="window.location.href='{% url 'accounts_user_settings' %}?tab=profile'">
+                    {% trans "Profile" %}
+                </button>
+                <button role="tab"
+                        aria-selected="{% if active_tab == 'notifications' %}true{% else %}false{% endif %}"
+                        class="px-4 py-2 font-medium border-b-2 {% if active_tab == 'notifications' %}border-blue-600 text-blue-600{% else %}border-transparent text-gray-600 hover:text-gray-900{% endif %}"
+                        onclick="window.location.href='{% url 'accounts_user_settings' %}?tab=notifications'">
+                    {% trans "Notifications" %}
+                </button>
+                {% if perms.events.add_peersession %}
+                    <button role="tab"
+                            aria-selected="{% if active_tab == 'stripe' %}true{% else %}false{% endif %}"
+                            class="px-4 py-2 font-medium border-b-2 {% if active_tab == 'stripe' %}border-blue-600 text-blue-600{% else %}border-transparent text-gray-600 hover:text-gray-900{% endif %}"
+                            onclick="window.location.href='{% url 'accounts_user_settings' %}?tab=stripe'">
+                        {% trans "Payments" %}
+                    </button>
+                {% endif %}
+            </div>
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="mb-4 p-4 rounded {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+                {% endfor %}
             {% endif %}
-        {% endif %}
+            <!-- Profile Tab -->
+            {% if active_tab == 'profile' %}
+                <div role="tabpanel" aria-labelledby="profile-tab">
+                    <form method="post" enctype="multipart/form-data" class="space-y-6">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="profile">
+                        <!-- Display Picture -->
+                        <div>
+                            <label for="{{ profile_form.display_picture.id_for_label }}"
+                                   class="block text-sm font-medium text-gray-700 mb-2">
+                                {% trans "Profile Picture" as profile_picture_label %}
+                            </label>
+                            {% if user.profile.display_picture %}
+                                <div class="mb-4">
+                                    <img src="{{ user.profile.display_picture.url }}"
+                                         alt="{{ profile_picture_label }}"
+                                         width="128"
+                                         height="128"
+                                         class="w-32 h-32 rounded-full object-cover">
+                                </div>
+                            {% endif %}
+                            {{ profile_form.display_picture }}
+                            {% if profile_form.display_picture.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ profile_form.display_picture.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <!-- About -->
+                        <div>
+                            <label for="{{ profile_form.about.id_for_label }}"
+                                   class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ profile_form.about.label }}
+                            </label>
+                            {{ profile_form.about }}
+                            {% if profile_form.about.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ profile_form.about.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <!-- Country -->
+                        <div>
+                            <label for="{{ profile_form.country.id_for_label }}"
+                                   class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ profile_form.country.label }}
+                            </label>
+                            {{ profile_form.country }}
+                            {% if profile_form.country.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ profile_form.country.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <!-- Access Needs (Support Seekers) -->
+                        {% if 'access_needs' in profile_form.fields %}
+                            <div>
+                                <label for="{{ profile_form.access_needs.id_for_label }}"
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ profile_form.access_needs.label }}
+                                </label>
+                                <p class="text-sm text-gray-600 mb-2">{{ profile_form.access_needs.help_text }}</p>
+                                {{ profile_form.access_needs }}
+                                {% if profile_form.access_needs.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ profile_form.access_needs.errors }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        <!-- Terms & Conditions (Hosts) -->
+                        {% if 'terms_and_conditions' in profile_form.fields %}
+                            <div>
+                                <label for="{{ profile_form.terms_and_conditions.id_for_label }}"
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ profile_form.terms_and_conditions.label }}
+                                </label>
+                                <p class="text-sm text-gray-600 mb-2">{{ profile_form.terms_and_conditions.help_text }}</p>
+                                {{ profile_form.terms_and_conditions }}
+                                {% if profile_form.terms_and_conditions.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ profile_form.terms_and_conditions.errors }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        <button type="submit"
+                                class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700">
+                            {% trans "Save Profile" %}
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+            <!-- Notifications Tab -->
+            {% if active_tab == 'notifications' %}
+                <div role="tabpanel" aria-labelledby="notifications-tab" class="space-y-6">
+                    <!-- Base Notification Settings -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">{% trans "General Notifications" %}</h3>
+                        <form method="post" class="space-y-4">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="notifications">
+                            {% for field in notification_form %}
+                                {% if field.name != 'has_customized' %}
+                                    <div class="flex items-start">
+                                        <div class="flex-1">
+                                            <label for="{{ field.id_for_label }}"
+                                                   class="text-sm font-medium text-gray-700">{{ field.label }}</label>
+                                            {% if field.help_text %}<p class="text-xs text-gray-600 mt-1">{{ field.help_text|safe }}</p>{% endif %}
+                                        </div>
+                                        <div class="ml-4">
+                                            {{ field }}
+                                            {% if field.errors %}<div class="text-red-600 text-xs mt-1">{{ field.errors }}</div>{% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            <button type="submit"
+                                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700">
+                                {% trans "Save Notifications" %}
+                            </button>
+                        </form>
+                    </div>
+                    <!-- Peer-specific Notification Settings -->
+                    {% if perms.events.add_peersession %}
+                        <div class="pt-6 border-t border-gray-200">
+                            <h3 class="text-lg font-semibold mb-4">{% trans "Host Notifications" %}</h3>
+                            <form method="post" class="space-y-4">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="peer_notifications">
+                                {% for field in peer_notification_form %}
+                                    {% if field.name != 'has_customized' %}
+                                        <div class="flex items-start">
+                                            <div class="flex-1">
+                                                <label for="{{ field.id_for_label }}"
+                                                       class="text-sm font-medium text-gray-700">
+                                                    {{ field.label }}
+                                                </label>
+                                                {% if field.help_text %}<p class="text-xs text-gray-600 mt-1">{{ field.help_text|safe }}</p>{% endif %}
+                                            </div>
+                                            <div class="ml-4">
+                                                {{ field }}
+                                                {% if field.errors %}<div class="text-red-600 text-xs mt-1">{{ field.errors }}</div>{% endif %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                <button type="submit"
+                                        class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700">
+                                    {% trans "Save Host Notifications" %}
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+            <!-- Payments Tab (Hosts only) -->
+            {% if perms.events.add_peersession and active_tab == 'stripe' %}
+                <div role="tabpanel" aria-labelledby="stripe-tab">
+                    <div class="space-y-6">
+                        {% if stripe_account and stripe_account.is_ready %}
+                            <!-- Connected Account Info -->
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <h3 class="text-lg font-semibold text-green-900 mb-2">✓ {% trans "Stripe Account Connected" %}</h3>
+                                <p class="text-sm text-green-800 mb-4">{% trans "Your Stripe account is active and ready to receive payments." %}</p>
+                                <dl class="space-y-2 text-sm">
+                                    <div>
+                                        <dt class="font-medium text-gray-700">{% trans "Account ID:" %}</dt>
+                                        <dd class="text-gray-600 font-mono">
+                                            {{ stripe_account.id }}
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt class="font-medium text-gray-700">{% trans "Connected Since:" %}</dt>
+                                        <dd class="text-gray-600">
+                                            {{ stripe_account.created_at|date:"SHORT_DATE_FORMAT" }}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <!-- Payment Links -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">{% trans "Payment Management" %}</h3>
+                                <div class="space-y-2">
+                                    <a href="{% url 'payment_history' %}"
+                                       class="block w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 text-center">
+                                        {% trans "View Payment History" %}
+                                    </a>
+                                    <a href="https://dashboard.stripe.com/account"
+                                       target="_blank"
+                                       rel="noopener"
+                                       class="block w-full bg-gray-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-700 text-center">
+                                        {% trans "Stripe Dashboard" %} ↗
+                                    </a>
+                                </div>
+                            </div>
+                            <!-- Disconnect Warning -->
+                            <details class="border border-gray-300 rounded-lg">
+                                <summary class="p-4 cursor-pointer font-medium text-gray-900 hover:bg-gray-50">
+                                    {% trans "Disconnect Stripe Account" %}
+                                </summary>
+                                <div class="p-4 border-t border-gray-300 bg-red-50">
+                                    <p class="text-sm text-red-800 mb-4">
+                                        {% trans "Disconnecting your Stripe account will prevent you from accepting payments. You'll need to reconnect before creating new sessions." %}
+                                    </p>
+                                    <form method="post" action="{% url 'stripe_disconnect' %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                class="bg-red-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-700"
+                                                onclick="return confirm('{% trans "Are you sure?" %}')">
+                                            {% trans "Disconnect Stripe" %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </details>
+                        {% elif stripe_account %}
+                            <!-- Incomplete Onboarding -->
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <h3 class="text-lg font-semibold text-yellow-900 mb-2">⚠ {% trans "Stripe Onboarding Incomplete" %}</h3>
+                                <p class="text-sm text-yellow-800 mb-4">
+                                    {% trans "Your Stripe onboarding isn't complete. Please finish the setup to start accepting payments." %}
+                                </p>
+                                <a href="{% url 'stripe_authorize' %}"
+                                   class="inline-block bg-yellow-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-yellow-700">
+                                    {% trans "Complete Onboarding" %}
+                                </a>
+                            </div>
+                        {% else %}
+                            <!-- No Account Connected -->
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                                <h3 class="text-lg font-semibold text-blue-900 mb-2">{% trans "Connect Your Stripe Account" %}</h3>
+                                <p class="text-sm text-blue-800 mb-4">
+                                    {% trans "To start accepting payments from support seekers, you need to connect your Stripe account. This takes just a few minutes." %}
+                                </p>
+                                <a href="{% url 'stripe_authorize' %}"
+                                   class="inline-block bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700">
+                                    {% trans "Connect Stripe Account" %}
+                                </a>
+                            </div>
+                        {% endif %}
+                        <!-- Payment FAQ -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">{% trans "Payment Information" %}</h3>
+                            <dl class="space-y-4 text-sm">
+                                <div>
+                                    <dt class="font-medium text-gray-700">{% trans "Platform Fee:" %}</dt>
+                                    <dd class="text-gray-600">
+                                        15%
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="font-medium text-gray-700">{% trans "Payment Processing:" %}</dt>
+                                    <dd class="text-gray-600">
+                                        {% trans "Handled securely by Stripe. Your banking details are never shared with us." %}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="font-medium text-gray-700">{% trans "Refunds:" %}</dt>
+                                    <dd class="text-gray-600">
+                                        {% trans "Manage refund requests from your Payment History." %}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
     </main>
 {% endblock content %}

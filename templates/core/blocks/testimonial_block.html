@@ -1,0 +1,35 @@
+{% load wagtailimages_tags %}
+<section class="testimonial-block py-12 bg-gray-50">
+    <div class="container mx-auto px-6 lg:px-0">
+        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
+            <div class="flex items-center justify-center mb-6">
+                {% if self.rating %}
+                    {% for star in "12345"|make_list %}
+                        {% if forloop.counter <= self.rating %}
+                            <span class="text-yellow-400 text-2xl">★</span>
+                        {% else %}
+                            <span class="text-gray-300 text-2xl">★</span>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <blockquote class="text-xl text-gray-700 mb-8 italic text-center">
+                "{{ self.quote }}"
+            </blockquote>
+            <div class="flex items-center justify-center">
+                {% if self.author_image %}
+                    {% image self.author_image width-80 as img %}
+                    <img src="{{ img.url }}"
+                         alt="{{ self.author_name }}"
+                         width="80"
+                         height="80"
+                         class="w-16 h-16 rounded-full object-cover mr-4">
+                {% endif %}
+                <div>
+                    <p class="font-semibold text-gray-900">{{ self.author_name }}</p>
+                    {% if self.author_title %}<p class="text-gray-600 text-sm">{{ self.author_title }}</p>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

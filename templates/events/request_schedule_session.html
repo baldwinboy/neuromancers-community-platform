@@ -47,6 +47,23 @@
                         </div>
                         {{ form.pay_concessionary_price.errors }}
                     </div>
+                    {% if hosted_session.host.profile.terms_and_conditions %}
+                        <div class="create_session__field_item">
+                            <div class="flex flex-col gap-4 p-6 bg-lightAccent rounded">
+                                <h3 class="text-xl font-bold">{% trans "Host's Terms and Conditions" %}</h3>
+                                <div class="prose max-w-none whitespace-pre-wrap">{{ hosted_session.host.profile.terms_and_conditions }}</div>
+                            </div>
+                            <div class="flex items-start gap-3 mt-4">
+                                {{ form.accept_terms }}
+                                <label for="{{ form.accept_terms.id_for_label }}"
+                                       class="text-base cursor-pointer">
+                                    {{ form.accept_terms.label }}
+                                    {% if form.accept_terms.required %}<span class="text-red-600">*</span>{% endif %}
+                                </label>
+                            </div>
+                            {{ form.accept_terms.errors }}
+                        </div>
+                    {% endif %}
                     {% with starts_at_id=form.starts_at.id_for_label ends_at_id=form.ends_at.id_for_label %}
                         {% request_calendar available_slots=available_slots durations=hosted_session.durations / %}
                     {% endwith %}

@@ -1,0 +1,6 @@
+<section class="text-block py-12 {% if self.background_color == 'white' %}bg-white{% elif self.background_color == 'light-gray' %}bg-gray-50{% else %}bg-blue-50{% endif %}">
+    <div class="container mx-auto px-6 lg:px-0"
+         style="max-width: {{ self.max_width }}">
+        <div class="prose prose-sm md:prose lg:prose-lg max-w-none">{{ self.content|safe }}</div>
+    </div>
+</section>

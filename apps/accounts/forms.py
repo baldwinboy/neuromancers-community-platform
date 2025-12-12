@@ -102,3 +102,75 @@ class SignupForm(AllauthSignupForm):
         user.accept_toc = self.cleaned_data["accept_toc"]
         user.save()
         return user
+
+
+class ProfileForm(forms.ModelForm):
+    """Form for editing user profile (access_needs for seekers, terms for hosts)"""
+
+    class Meta:
+        from .models_users.profile import Profile
+
+        model = Profile
+        fields = [
+            "display_picture",
+            "about",
+            "country",
+            "access_needs",
+            "terms_and_conditions",
+        ]
+        widgets = {
+            "about": forms.Textarea(
+                attrs={"rows": 4, "placeholder": _("Tell us about yourself...")}
+            ),
+            "access_needs": forms.Textarea(
+                attrs={
+                    "rows": 6,
+                    "placeholder": _(
+                        "Describe any access needs Care Providers should know about..."
+                    ),
+                }
+            ),
+            "terms_and_conditions": forms.Textarea(
+                attrs={
+                    "rows": 6,
+                    "placeholder": _(
+                        "Enter any terms Care Seekers must accept before requesting..."
+                    ),
+                }
+            ),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show relevant fields based on user group
+        if user:
+            # Support seekers only see access_needs
+            if user.groups.filter(name="SupportSeeker").exists():
+                self.fields.pop("terms_and_conditions", None)
+            # Peers only see terms_and_conditions
+            elif user.has_perm("events.add_peersession"):
+                self.fields.pop("access_needs", None)
+            # Others see neither
+            else:
+                self.fields.pop("access_needs", None)
+                self.fields.pop("terms_and_conditions", None)
+
+
+class NotificationSettingsForm(forms.ModelForm):
+    """Form for editing base notification settings (all users)"""
+
+    class Meta:
+        from .models_users.user_settings import NotificationSettings
+
+        model = NotificationSettings
+        exclude = ["user", "has_customized"]
+
+
+class PeerNotificationSettingsForm(forms.ModelForm):
+    """Form for editing peer-specific notification settings"""
+
+    class Meta:
+        from .models_users.user_settings import PeerNotificationSettings
+
+        model = PeerNotificationSettings
+        exclude = ["user", "has_customized"]

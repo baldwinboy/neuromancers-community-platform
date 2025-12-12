@@ -195,7 +195,10 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_TZ = False
+# Store all datetime fields as UTC in the database
+# Convert to user timezone in templates/views using django.utils.timezone
+# This is required for proper timezone handling and SQLite compatibility in tests
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)

@@ -1,0 +1,29 @@
+{% load wagtailimages_tags %}
+<section class="text-image-block py-12 {% if self.background_color == 'white' %}bg-white{% elif self.background_color == 'light-gray' %}bg-gray-50{% else %}bg-blue-50{% endif %}">
+    <div class="container mx-auto px-6 lg:px-0">
+        {% if self.heading %}<h2 class="text-3xl font-bold mb-12 text-center">{{ self.heading }}</h2>{% endif %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {% if self.image_position == 'left' %}
+                <div>
+                    {% image self.image width-600 as img %}
+                    <img src="{{ img.url }}"
+                         alt="{{ self.heading }}"
+                         width="600"
+                         height="600"
+                         class="w-full h-auto rounded-lg">
+                </div>
+                <div class="prose prose-sm md:prose max-w-none">{{ self.text|safe }}</div>
+            {% else %}
+                <div class="prose prose-sm md:prose max-w-none">{{ self.text|safe }}</div>
+                <div>
+                    {% image self.image width-600 as img %}
+                    <img src="{{ img.url }}"
+                         alt="{{ self.heading }}"
+                         width="600"
+                         height="600"
+                         class="w-full h-auto rounded-lg">
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>

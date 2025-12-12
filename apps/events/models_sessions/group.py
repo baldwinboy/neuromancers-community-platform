@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import F, Q
 from django.utils.translation import gettext as _
@@ -22,7 +23,9 @@ from .abstract import (
 
 class GroupSession(AbstractSession):
     """
-    Group sessions cannot be requested but may attended by several `SupportSeeker` users for a single duration of time
+    Group sessions cannot be requested but may be attended by
+    several users for a single duration of time.
+    Session host cannot be changed after creation.
     """
 
     language = models.CharField(
@@ -71,7 +74,8 @@ class GroupSession(AbstractSession):
                 fields=["host", "title", "is_published"],
                 name="unique_published_group_session",
                 violation_error_message=_(
-                    "Published sessions must be unique. Unpublish existing sessions with the same title or change the title of this session."
+                    "Published sessions must be unique. Unpublish existing"
+                    "  sessions with the same title before publishing a new one."
                 ),
             ),
             models.CheckConstraint(
@@ -95,7 +99,8 @@ class GroupSession(AbstractSession):
                 | Q(recurring=False, recurrence_type__isnull=True),
                 name="event_recurrence_type_required_if_recurring",
                 violation_error_message=_(
-                    "Events can occur repeatedly only if you set both recurring and recurrence type"
+                    "Events can occur repeatedly only if you set both "
+                    "recurring and recurrence type"
                 ),
             ),
         ]
@@ -126,7 +131,7 @@ class GroupSession(AbstractSession):
     @property
     def attendees(self):
         """
-        Gets attendees based on support seekers who have requested to join and have been approved
+        Gets attendees based on users who have requested to join and have been approved
         """
         return self.support_seekers.filter(
             requests__status=SessionRequestStatusChoices.APPROVED
@@ -145,6 +150,22 @@ class GroupSession(AbstractSession):
             attendee=user, status=SessionRequestStatusChoices.APPROVED
         ).exists()
 
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            # Prevent changes to host after creation (using cached values from from_db)
+            loaded_values = getattr(self, "_loaded_values", {})
+            if loaded_values.pop("host_id", None) != self.host_id:
+                raise ValidationError(
+                    _("Session host cannot be changed after creation")
+                )
+        else:
+            can_add = self.host.has_perm("events.add_groupsession")
+
+            if not can_add:
+                return
+
+        super().save(*args, **kwargs)
+
 
 class GroupSessionUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(GroupSession, on_delete=models.CASCADE)
@@ -155,6 +176,12 @@ class GroupSessionGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class GroupSessionRequest(AbstractSessionRequest):
+    """
+    Group session requests represent Support Seekers joining a group session.
+    Session and attendee relations cannot be changed after creation.
+    Only the session host can approve/withdraw (inferred from session permissions).
+    """
+
     attendee = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="group_session_requests"
     )
@@ -192,6 +219,16 @@ class GroupSessionRequest(AbstractSessionRequest):
         return f"{self.session.title} for {self.attendee.username}"
 
     def save(self, *args, **kwargs):
+        if not self._state.adding:
+            # Use cached values from from_db() for efficient validation
+            loaded_values = getattr(self, "_loaded_values", {})
+
+            if loaded_values.pop("attendee_id", None) != self.attendee_id:
+                raise ValidationError(_("Attendee cannot be changed after creation"))
+
+            if loaded_values.pop("session_id", None) != self.session_id:
+                raise ValidationError(_("Session cannot be changed after creation"))
+
         if (
             not self.attendee
             or not self.session
@@ -245,3 +282,21 @@ class GroupSessionReview(AbstractSessionReview):
         instance._loaded_values = dict(zip(field_names, values))
 
         return instance
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            # Use cached values from from_db() for efficient validation
+            loaded_values = getattr(self, "_loaded_values", {})
+
+            if loaded_values.pop("attendee_id", None) != self.attendee_id:
+                raise ValidationError(_("Attendee cannot be changed after creation"))
+
+            if (
+                loaded_values.pop("attended_session_id", None)
+                != self.attended_session_id
+            ):
+                raise ValidationError(
+                    _("Attended session cannot be changed after creation")
+                )
+
+        super().save(*args, **kwargs)

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% load i18n wagtailroutablepage_tags %}
+
+{% block title %}
+    {% trans "Payment History" %}
+{% endblock title %}
+
+{% block content %}
+    <div class="w-full container mx-auto py-9 px-6 lg:px-0">
+        <h1 class="text-3xl font-bold mb-6">{% trans "Payment History" %}</h1>
+        {% if payments %}
+            <div class="space-y-4">
+                {% for payment in payments %}
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold">{{ payment.session.title }}</h3>
+                                <p class="text-gray-600">{% trans "Host" %}: {{ payment.session.host.username }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold">{{ payment.session.currency_symbol }}{{ payment.price }}</p>
+                                {% if payment.refunded %}
+                                    <span class="inline-block px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">{% trans "Refunded" %}</span>
+                                {% elif payment.refund_status == 1 %}
+                                    <span class="inline-block px-3 py-1 bg-yellow-200 text-yellow-800 rounded-full text-sm">
+                                        {% trans "Refund Pending" %}
+                                    </span>
+                                {% else %}
+                                    <span class="inline-block px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm">{% trans "Paid" %}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <dl class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <dt class="text-sm text-gray-600">{% trans "Date" %}</dt>
+                                <dd>
+                                    {{ payment.created_at|date:"SHORT_DATETIME_FORMAT" }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm text-gray-600">{% trans "Session Date" %}</dt>
+                                <dd>
+                                    {{ payment.starts_at|date:"SHORT_DATETIME_FORMAT" }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm text-gray-600">{% trans "Language" %}</dt>
+                                <dd>
+                                    {{ payment.language_display }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm text-gray-600">{% trans "Payment ID" %}</dt>
+                                <dd class="text-xs font-mono">
+                                    {{ payment.stripe_payment_intent_id|slice:":20" }}...
+                                </dd>
+                            </div>
+                        </dl>
+                        {% if payment.meeting_link %}
+                            <div class="mb-4">
+                                <a href="{{ payment.meeting_link }}"
+                                   target="_blank"
+                                   class="text-blue-600 hover:text-blue-800 underline">{% trans "Join Session" %}</a>
+                            </div>
+                        {% endif %}
+                        {% if not payment.refunded and payment.refund_status == 0 %}
+                            <form method="post"
+                                  action="{% url 'request_refund' payment.id %}"
+                                  class="inline">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="text-red-600 hover:text-red-800 underline"
+                                        onclick="return confirm('{% trans "Are you sure you want to request a refund?" %}')">
+                                    {% trans "Request Refund" %}
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            {% if is_paginated %}
+                <div class="mt-6 flex justify-center gap-2">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}"
+                           class="btn btn-secondary">{% trans "Previous" %}</a>
+                    {% endif %}
+                    <span class="px-4 py-2">
+                        {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
+                    </span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}"
+                           class="btn btn-secondary">{% trans "Next" %}</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="bg-gray-50 rounded-lg p-8 text-center">
+                <p class="text-gray-600">{% trans "No payment history yet." %}</p>
+                <a href="{% routablepageurl sessions_index %}"
+                   class="mt-4 inline-block text-blue-600 hover:text-blue-800">{% trans "Browse Sessions" %}</a>
+            </div>
+        {% endif %}
+    </div>
+{% endblock content %}

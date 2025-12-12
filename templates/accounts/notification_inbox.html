@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block body_class %}
+    template-notification-inbox
+{% endblock body_class %}
+
+{% block title %}
+    {% trans "Notifications" %}
+{% endblock title %}
+
+{% block content %}
+    <main class="w-full container mx-auto py-9 px-6 lg:px-0">
+        <div class="max-w-2xl mx-auto">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold">{% trans "Notifications" %}</h1>
+                    {% if unread_count %}
+                        <p class="text-gray-600 mt-1">
+                            {% blocktrans count counter=unread_count %}
+                                {{ counter }} unread notification
+                            {% plural %}
+                                {{ counter }} unread notifications
+                            {% endblocktrans %}
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="space-y-2">
+                    {% if unread_count %}
+                        <button onclick="markAllRead()"
+                                class="block w-full px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200">
+                            {% trans "Mark all as read" %}
+                        </button>
+                    {% endif %}
+                    {% if notifications %}
+                        <button onclick="clearNotifications()"
+                                class="block w-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg border border-red-200">
+                            {% trans "Clear read" %}
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Notifications List -->
+            {% if notifications %}
+                <div class="space-y-4">
+                    {% for notification in notifications %}
+                        <div class="border rounded-lg p-4 {% if not notification.read %}bg-blue-50 border-blue-200{% else %}bg-white border-gray-200{% endif %} hover:shadow-md transition">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-gray-900">
+                                        {% if notification.subject == 0 %}
+                                            {% trans "Account" %}
+                                        {% elif notification.subject == 1 %}
+                                            {% trans "Payment" %}
+                                        {% elif notification.subject == 2 %}
+                                            {% trans "Session" %}
+                                        {% else %}
+                                            {% trans "Reminder" %}
+                                        {% endif %}
+                                    </h3>
+                                    <p class="text-gray-600 text-sm mt-2">{{ notification.body|truncatewords:50 }}</p>
+                                    <p class="text-gray-500 text-xs mt-2">{{ notification.sent_at|date:"SHORT_DATETIME_FORMAT" }}</p>
+                                </div>
+                                {% if not notification.read %}
+                                    <button onclick="markRead('{{ notification.id }}')"
+                                            class="ml-4 px-3 py-1 text-sm font-medium text-blue-600 hover:bg-blue-100 rounded-lg">
+                                        ✓ {% trans "Mark read" %}
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                    <div class="flex justify-center gap-2 mt-8">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1"
+                               class="px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg">
+                                {% trans "First" %}
+                            </a>
+                            <a href="?page={{ page_obj.previous_page_number }}"
+                               class="px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg">
+                                {% trans "Previous" %}
+                            </a>
+                        {% endif %}
+                        <span class="px-3 py-2 text-sm text-gray-600">
+                            {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
+                        </span>
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}"
+                               class="px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg">
+                                {% trans "Next" %}
+                            </a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}"
+                               class="px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg">
+                                {% trans "Last" %}
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-12">
+                    <p class="text-gray-600 text-lg">{% trans "No notifications yet" %}</p>
+                    <p class="text-gray-500 text-sm mt-2">{% trans "You'll see notifications about your sessions and payments here." %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+    <script>
+        async function markRead(notificationId) {
+            const response = await fetch(`/notifications/${notificationId}/mark-read/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                location.reload();
+            }
+        }
+
+        async function markAllRead() {
+            const response = await fetch('/notifications/mark-all-read/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                location.reload();
+            }
+        }
+
+        async function clearNotifications() {
+            if (confirm('{% trans "Delete all read notifications?" %}')) {
+                const response = await fetch('/notifications/clear/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    location.reload();
+                }
+            }
+        }
+    </script>
+{% endblock content %}

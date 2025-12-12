@@ -1,0 +1,18 @@
+<section class="faq-block py-12 bg-white">
+    <div class="container mx-auto px-6 lg:px-0 max-w-2xl">
+        {% if self.heading %}<h2 class="text-3xl font-bold mb-12 text-center">{{ self.heading }}</h2>{% endif %}
+        <div class="space-y-4">
+            {% for item in self.items %}
+                <details class="border border-gray-200 rounded-lg">
+                    <summary class="p-4 cursor-pointer font-semibold text-lg hover:bg-gray-50 flex justify-between items-center">
+                        {{ item.value.question }}
+                        <span class="ml-4">▼</span>
+                    </summary>
+                    <div class="p-4 border-t border-gray-200 bg-gray-50">
+                        <div class="prose prose-sm max-w-none">{{ item.value.answer|safe }}</div>
+                    </div>
+                </details>
+            {% endfor %}
+        </div>
+    </div>
+</section>

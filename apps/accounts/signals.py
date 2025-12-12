@@ -16,6 +16,7 @@ from .models import (
     StripeAccount,
     UserGroup,
 )
+from .notifications import notify_group_status_changed
 
 User = get_user_model()
 
@@ -36,6 +37,7 @@ def create_universal_user_objects(sender, instance, created, **kwargs):
 def handle_peer_group_membership(sender, instance, action, pk_set, **kwargs):
     """
     Triggered whenever a user is added/removed from groups.
+    Sends notifications on group status changes.
     """
     try:
         peer_group = UserGroup.objects.get(name=PEER_GROUP_NAME)
@@ -49,6 +51,8 @@ def handle_peer_group_membership(sender, instance, action, pk_set, **kwargs):
                 user=instance, defaults=DEFAULT_PEER_NOTIFICATION_SETTINGS
             )
             PeerFilterSettings.objects.get_or_create(user=instance)
+            # Send upgrade notification
+            notify_group_status_changed(instance, is_upgrade=True)
 
     if action in ("post_remove"):
         if peer_group.id in pk_set:
@@ -56,3 +60,5 @@ def handle_peer_group_membership(sender, instance, action, pk_set, **kwargs):
             PeerFilterSettings.objects.filter(user=instance).delete()
             Certificate.objects.filter(user=instance).delete()
             StripeAccount.objects.filter(user=instance).delete()
+            # Send downgrade/removal notification
+            notify_group_status_changed(instance, is_upgrade=False)

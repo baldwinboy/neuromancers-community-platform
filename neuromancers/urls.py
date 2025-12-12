@@ -9,11 +9,23 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from apps.accounts.views import (
+    ClearNotificationsView,
+    MarkAllNotificationsReadView,
+    MarkNotificationReadView,
+    NotificationInboxView,
     ProfileView,
     StripeAuthorizeCallbackView,
     StripeAuthorizeView,
+    StripeDisconnectView,
     UserSettingsView,
     UserView,
+)
+from apps.events.views import (
+    ApproveRefundView,
+    CreatePaymentIntentView,
+    PaymentHistoryView,
+    PaymentSuccessView,
+    RequestRefundView,
 )
 
 # Load all other app admins
@@ -47,11 +59,48 @@ urlpatterns = [
     path("profile/", ProfileView.as_view(), name="accounts_profile"),
     path("profile/<str:username>", UserView.as_view(), name="accounts_user_profile"),
     path("settings/", UserSettingsView.as_view(), name="accounts_user_settings"),
+    path("notifications/", NotificationInboxView.as_view(), name="notification_inbox"),
+    path(
+        "notifications/<uuid:notification_id>/mark-read/",
+        MarkNotificationReadView.as_view(),
+        name="mark_notification_read",
+    ),
+    path(
+        "notifications/mark-all-read/",
+        MarkAllNotificationsReadView.as_view(),
+        name="mark_all_notifications_read",
+    ),
+    path(
+        "notifications/clear/",
+        ClearNotificationsView.as_view(),
+        name="clear_notifications",
+    ),
     path("stripe/authorize/", StripeAuthorizeView.as_view(), name="stripe_authorize"),
     path(
         "stripe/oauth/callback/",
         StripeAuthorizeCallbackView.as_view(),
         name="stripe_authorize_callback",
+    ),
+    path(
+        "stripe/disconnect/", StripeDisconnectView.as_view(), name="stripe_disconnect"
+    ),
+    # Payment URLs
+    path("payments/history/", PaymentHistoryView.as_view(), name="payment_history"),
+    path("payments/success/", PaymentSuccessView.as_view(), name="payment_success"),
+    path(
+        "payments/create/<uuid:request_id>/",
+        CreatePaymentIntentView.as_view(),
+        name="create_payment_intent",
+    ),
+    path(
+        "payments/refund/<uuid:request_id>/",
+        RequestRefundView.as_view(),
+        name="request_refund",
+    ),
+    path(
+        "payments/approve-refund/<uuid:request_id>/",
+        ApproveRefundView.as_view(),
+        name="approve_refund",
     ),
 ]
 

@@ -4,7 +4,13 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from apps.accounts.models import UserGroup
 
+from .choices import SessionRequestStatusChoices
 from .models import GroupSession, GroupSessionRequest, PeerSession, PeerSessionRequest
+from .notifications import (
+    notify_session_approved,
+    notify_session_published,
+    notify_session_requested,
+)
 
 
 @receiver(post_save, sender=PeerSession)
@@ -13,6 +19,7 @@ def set_peersession_permissions(sender, instance, created, **kwargs):
     - Assigns Support Seeker permissions for Peer Session if it is published
     - Removes Support Seeker permissions for Peer Session if it is not published
     - Adds host permissions for Peer Session if it is created
+    - Sends notification when session is published
     """
 
     # Support Seeker group permissions
@@ -29,6 +36,8 @@ def set_peersession_permissions(sender, instance, created, **kwargs):
     if instance.is_published:
         for perm in seeker_perms:
             assign_perm(perm, support_seeker_group, instance)
+        # Notify host when session is published
+        notify_session_published(instance)
     else:
         for perm in seeker_perms:
             remove_perm(perm, support_seeker_group, instance)
@@ -51,11 +60,26 @@ def set_peersession_permissions(sender, instance, created, **kwargs):
 def set_peersessionrequest_permissions(sender, instance, created, **kwargs):
     """
     - Assigns approval to the host
-    - Assigns withdrawal to the host
+    - Assigns withdrawal to the attendee
+    - Sends notification when request is created
+    - Sends notification when request is approved
     """
     if created:
         assign_perm("approve_peer_request", instance.session.host, instance)
         assign_perm("withdraw_peer_request", instance.attendee, instance)
+        # Notify host of new request
+        notify_session_requested(instance)
+    else:
+        # Check if status changed to APPROVED using Django's field tracking
+        loaded_values = getattr(instance, "_loaded_values", {})
+        old_status = loaded_values.get("status")
+        if (
+            old_status is not None
+            and old_status != SessionRequestStatusChoices.APPROVED
+            and instance.status == SessionRequestStatusChoices.APPROVED
+        ):
+            # Notify attendee that their request was approved
+            notify_session_approved(instance)
 
 
 @receiver(post_save, sender=GroupSession)
