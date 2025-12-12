@@ -12,7 +12,7 @@ appnope==0.1.4
     # via
     #   -r requirements/base.in
     #   ipython
-asgiref==3.9.1
+asgiref==3.11.0
     # via
     #   -r requirements/base.in
     #   django
@@ -97,7 +97,7 @@ distlib==0.4.0
     # via
     #   -r requirements/base.in
     #   virtualenv
-django==5.2.5
+django==5.2.9
     # via
     #   -r requirements/base.in
     #   django-allauth
@@ -463,7 +463,7 @@ soupsieve==2.7
     # via
     #   -r requirements/base.in
     #   beautifulsoup4
-sqlparse==0.5.3
+sqlparse==0.5.4
     # via
     #   -r requirements/base.in
     #   django
