@@ -205,6 +205,9 @@ class AbstractSessionRequest(models.Model):
             "Video conference link for this session. Auto-generated via Whereby if not provided."
         ),
     )
+    attended = models.BooleanField(
+        help_text=_("Whether the attendee attended the session or not"), default=False
+    )
 
     class Meta:
         abstract = True

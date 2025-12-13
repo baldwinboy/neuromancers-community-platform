@@ -8,6 +8,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import F, Q
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
@@ -109,15 +110,9 @@ class PeerSession(AbstractSession):
             ("schedule_session", "Schedule session"),
         ]
 
-    @classmethod
-    def from_db(cls, db, field_names, values):
-        instance = super().from_db(db, field_names, values)
-
-        # save original values, when model is loaded from database,
-        # in a separate attribute on the model
-        instance._loaded_values = dict(zip(field_names, values))
-
-        return instance
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._initial_host = self.host
 
     @property
     def durations_display(self) -> list[str]:
@@ -181,7 +176,17 @@ class PeerSession(AbstractSession):
 
         return _currency.get("symbol", None)
 
-    @property
+    @cached_property
+    def attendee_requested(self, user):
+        return self.requests.filter(attendee=user).exists()
+
+    @cached_property
+    def attendee_approved(self, user):
+        return self.requests.filter(
+            attendee=user, status=SessionRequestStatusChoices.APPROVED
+        ).exists()
+
+    @cached_property
     def available_slots(self) -> list[tuple[datetime, datetime]]:
         """
         Returns a list of tuples with the availability start date and end date.
@@ -272,28 +277,17 @@ class PeerSession(AbstractSession):
 
     def save(self, *args, **kwargs):
         if not self._state.adding:
-            # Prevent changes to host after creation (using cached values from from_db)
-            loaded_values = getattr(self, "_loaded_values", {})
-            if loaded_values.pop("host_id", None) != self.host_id:
+            if self._initial_host.pk != self.host.pk:
                 raise ValidationError(
                     _("Session host cannot be changed after creation")
                 )
-
-        if self._state.adding:
+        else:
             can_add = self.host.has_perm("events.add_peersession")
 
             if not can_add:
                 return
 
         super().save(*args, **kwargs)
-
-    def attendee_requested(self, user):
-        return self.requests.filter(attendee=user).exists()
-
-    def attendee_approved(self, user):
-        return self.requests.filter(
-            attendee=user, status=SessionRequestStatusChoices.APPROVED
-        ).exists()
 
 
 class PeerSessionUserObjectPermission(UserObjectPermissionBase):
@@ -420,6 +414,14 @@ class PeerSessionRequest(AbstractSessionRequest):
             ("withdraw_peer_request", "Withdraw peer request"),
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._initial_attendee = self.attendee
+        self._initial_session = self.session
+        self._initial_starts_at = self.starts_at
+        self._initial_ends_at = self.ends_at
+        self._initial_status = self.status
+
     def __str__(self):
         display = f"{self.attendee.username} from {self.starts_at} to {self.ends_at}"
         return f"{self.session.title} for {display}"
@@ -459,51 +461,42 @@ class PeerSessionRequest(AbstractSessionRequest):
         all_languages = get_languages()
         return all_languages.get(self.language)
 
-    @classmethod
-    def from_db(cls, db, field_names, values):
-        instance = super().from_db(db, field_names, values)
-
-        # save original values, when model is loaded from database,
-        # in a separate attribute on the model
-        instance._loaded_values = dict(zip(field_names, values))
-
-        return instance
-
     def save(self, *args, **kwargs):
         if not self._state.adding:
-            # Use cached values from from_db() for efficient validation
-            loaded_values = getattr(self, "_loaded_values", {})
+            if self._initial_attendee.pk != self.attendee.pk:
+                raise ValidationError(
+                    _("Session attendee cannot be changed after creation")
+                )
 
-            if loaded_values.pop("session_id", None) != self.session_id:
+            if self._initial_session.pk != self.session.pk:
                 raise ValidationError(_("Session cannot be changed after creation"))
 
-            if loaded_values.pop("attendee_id", None) != self.attendee_id:
-                raise ValidationError(_("Attendee cannot be changed after creation"))
-
-            # Prevent start/end changes after approval
-            if loaded_values.get("status") == SessionRequestStatusChoices.APPROVED:
-                if (
-                    loaded_values.pop("starts_at", None) != self.starts_at
-                    or loaded_values.pop("ends_at", None) != self.ends_at
-                ):
+            # Prevent changing starts_at and ends_at after approval
+            if self._initial_status == SessionRequestStatusChoices.APPROVED:
+                if self._initial_starts_at != self.starts_at:
                     raise ValidationError(
-                        _("Cannot change start or end time after approval")
+                        _("Session start time cannot be changed after approval")
                     )
+                if self._initial_ends_at != self.ends_at:
+                    raise ValidationError(
+                        _("Session end time cannot be changed after approval")
+                    )
+        else:
+            if (
+                self.attendee.has_perm("request_session", self.session)
+                or not self.session.is_published
+            ):
+                return
 
-        if (
-            not self.attendee
-            or not self.session
-            or not self.session.host
-            or not self.attendee.has_perm("events.request_session")
-            or not self.session.is_published
-        ):
-            return
+            if (
+                not self.session.require_request_approval
+                and self.status == SessionRequestStatusChoices.PENDING
+            ):
+                self.status = SessionRequestStatusChoices.APPROVED
 
-        if (
-            not self.session.require_request_approval
-            and self.status == SessionRequestStatusChoices.PENDING
-        ):
-            self.status = SessionRequestStatusChoices.APPROVED
+        self._initial_status = self.status
+        self._initial_starts_at = self.starts_at
+        self._initial_ends_at = self.ends_at
 
         super().save(*args, **kwargs)
 
@@ -541,25 +534,16 @@ class PeerScheduledSession(models.Model):
         related_name="scheduled_session",
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._initial_request = self.request
+
     def __str__(self):
         return str(self.request)
 
-    @classmethod
-    def from_db(cls, db, field_names, values):
-        instance = super().from_db(db, field_names, values)
-
-        # save original values, when model is loaded from database,
-        # in a separate attribute on the model
-        instance._loaded_values = dict(zip(field_names, values))
-
-        return instance
-
     def save(self, *args, **kwargs):
-        if not self._state.adding:
-            # Use cached values from from_db() for efficient validation
-            loaded_values = getattr(self, "_loaded_values", {})
-            if loaded_values.pop("request_id", None) != self.request_id:
-                raise ValidationError(_("Request cannot be changed after creation"))
+        if not self._state.adding and self._initial_request.pk != self.request.pk:
+            raise ValidationError(_("Request cannot be changed after creation"))
 
         super().save(*args, **kwargs)
 
@@ -567,6 +551,9 @@ class PeerScheduledSession(models.Model):
 class PeerSessionReview(AbstractSessionReview):
     attended_session = models.ForeignKey(
         PeerSession, on_delete=models.CASCADE, related_name="reviews"
+    )
+    attended_request = models.OneToOneField(
+        PeerSessionRequest, on_delete=models.CASCADE, related_name="review"
     )
     attendee = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="peer_session_reviews"
@@ -584,30 +571,33 @@ class PeerSessionReview(AbstractSessionReview):
             ),
         ]
 
-    @classmethod
-    def from_db(cls, db, field_names, values):
-        instance = super().from_db(db, field_names, values)
-
-        # save original values, when model is loaded from database,
-        # in a separate attribute on the model
-        instance._loaded_values = dict(zip(field_names, values))
-
-        return instance
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._initial_session = self.attended_session
+        self._initial_attendee = self.attendee
+        self._initial_request = self.attended_request
 
     def save(self, *args, **kwargs):
         if not self._state.adding:
-            # Use cached values from from_db() for efficient validation
-            loaded_values = getattr(self, "_loaded_values", {})
-
-            if loaded_values.pop("attendee_id", None) != self.attendee_id:
-                raise ValidationError(_("Attendee cannot be changed after creation"))
-
-            if (
-                loaded_values.pop("attended_session_id", None)
-                != self.attended_session_id
-            ):
+            if self._initial_session.pk != self.attended_session.pk:
                 raise ValidationError(
                     _("Attended session cannot be changed after creation")
                 )
+
+            if self._initial_attendee.pk != self.attendee.pk:
+                raise ValidationError(_("Attendee cannot be changed after creation"))
+
+            if self._initial_request.pk != self.attended_request.pk:
+                raise ValidationError(
+                    _("Attended request cannot be changed after creation")
+                )
+        else:
+            approved_request = (
+                self.attended_request.status == SessionRequestStatusChoices.APPROVED
+            )
+            now_after_session = timezone.now() >= self.attended_request.ends_at
+
+            if not approved_request or not now_after_session:
+                return
 
         super().save(*args, **kwargs)

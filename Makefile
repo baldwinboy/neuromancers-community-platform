@@ -58,6 +58,15 @@ django-test:
 django-shell: # Create a Django shell
 	python ./manage.py shell
 
+django-coverage: # Run tests with coverage report
+	coverage run
+	coverage report -m
+	coverage html -d reports/coverage
+	coverage xml -o reports/coverage.xml
+
+django-coverage-badge: # Generate coverage badge (requires coverage.py)
+	genbadge coverage -i reports/coverage.xml -o reports/coverage-badge.svg
+
 update-requirements: # Compile and update requirements from .in files
 	pip-compile requirements/base.in
 	pip-compile requirements/development.in

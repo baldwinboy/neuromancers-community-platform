@@ -196,10 +196,13 @@ def notify_session_published(session):
     except PeerNotificationSettings.DoesNotExist:
         pass
 
+    if not hasattr(session, "page"):
+        return
+
     context = {
         "user": session.host,
         "session": session,
-        "session_url": f"/sessions/{session.slug}/",
+        "session_url": f"/sessions/{session.page.slug}/",
     }
 
     send_notification(
@@ -225,12 +228,17 @@ def notify_session_requested(session_request):
     except PeerNotificationSettings.DoesNotExist:
         pass
 
+    if not session_request.session.is_published or not hasattr(
+        session_request.session, "page"
+    ):
+        return
+
     context = {
         "user": session_request.session.host,
         "session_request": session_request,
         "attendee": session_request.attendee,
         "session": session_request.session,
-        "approve_url": f"/sessions/{session_request.session.slug}/requests/{session_request.id}/approve/",
+        "approve_url": f"/sessions/{session_request.session.page.slug}/requests/{session_request.id}/approve/",
     }
 
     send_notification(
@@ -252,13 +260,17 @@ def notify_session_approved(session_request):
     except NotificationSettings.DoesNotExist:
         pass
 
+    if not session_request.session.is_published or not hasattr(
+        session_request.session, "page"
+    ):
+        return
+
     context = {
         "user": session_request.attendee,
         "session_request": session_request,
         "host": session_request.session.host,
         "session": session_request.session,
-        "session_url": f"/sessions/{session_request.session.slug}/",
-        "meeting_link": session_request.meeting_link,
+        "session_url": f"/sessions/{session_request.session.page.slug}/",
     }
 
     send_notification(

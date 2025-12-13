@@ -2,6 +2,8 @@
 
 Production-ready Django/Wagtail CMS for scheduling peer support sessions with integrated payment processing and video conferencing.
 
+![Coverage](reports/coverage-badge.svg?branch=main)
+
 ## Overview
 
 This platform enables peer support providers to:
@@ -210,8 +212,12 @@ EMAIL_PORT=25
 ## Testing
 
 ```bash
-make django-test  # Run full test suite
+make django-test           # Run full test suite
+make django-coverage       # Run tests with coverage report and HTML output
+tox -e coverage            # Run coverage via tox (with uv support)
 ```
+
+Coverage reports are generated in `htmlcov/` directory after running coverage commands.
 
 **Testing Philosophy**:
 - Test business logic, not Django framework functionality

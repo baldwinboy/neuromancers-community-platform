@@ -3,6 +3,8 @@ from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import F, Q
+from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 
@@ -109,15 +111,9 @@ class GroupSession(AbstractSession):
             ("request_join_session", "Request join session"),
         ]
 
-    @classmethod
-    def from_db(cls, db, field_names, values):
-        instance = super().from_db(db, field_names, values)
-
-        # save original values, when model is loaded from database,
-        # in a separate attribute on the model
-        instance._loaded_values = dict(zip(field_names, values))
-
-        return instance
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._initial_host = self.host
 
     @property
     def currency_symbol(self):
@@ -128,7 +124,7 @@ class GroupSession(AbstractSession):
 
         return _currency.get("symbol", None)
 
-    @property
+    @cached_property
     def attendees(self):
         """
         Gets attendees based on users who have requested to join and have been approved
@@ -142,22 +138,19 @@ class GroupSession(AbstractSession):
         all_languages = get_languages()
         return all_languages.get(self.language)
 
+    @cached_property
     def attendee_requested(self, user):
         return self.requests.filter(attendee=user).exists()
 
+    @cached_property
     def attendee_approved(self, user):
         return self.requests.filter(
             attendee=user, status=SessionRequestStatusChoices.APPROVED
         ).exists()
 
     def save(self, *args, **kwargs):
-        if not self._state.adding:
-            # Prevent changes to host after creation (using cached values from from_db)
-            loaded_values = getattr(self, "_loaded_values", {})
-            if loaded_values.pop("host_id", None) != self.host_id:
-                raise ValidationError(
-                    _("Session host cannot be changed after creation")
-                )
+        if not self._state.adding and self._initial_host.pk != self.host.pk:
+            raise ValidationError(_("Session host cannot be changed after creation"))
         else:
             can_add = self.host.has_perm("events.add_groupsession")
 
@@ -205,36 +198,25 @@ class GroupSessionRequest(AbstractSessionRequest):
             ("withdraw_group_request", "Withdraw group request"),
         ]
 
-    @classmethod
-    def from_db(cls, db, field_names, values):
-        instance = super().from_db(db, field_names, values)
-
-        # save original values, when model is loaded from database,
-        # in a separate attribute on the model
-        instance._loaded_values = dict(zip(field_names, values))
-
-        return instance
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._initial_session = self.session
+        self._initial_attendee = self.attendee
 
     def __str__(self):
         return f"{self.session.title} for {self.attendee.username}"
 
     def save(self, *args, **kwargs):
         if not self._state.adding:
-            # Use cached values from from_db() for efficient validation
-            loaded_values = getattr(self, "_loaded_values", {})
+            if self._initial_attendee.pk != self.attendee.pk:
+                raise ValidationError(
+                    _("Session attendee cannot be changed after creation")
+                )
 
-            if loaded_values.pop("attendee_id", None) != self.attendee_id:
-                raise ValidationError(_("Attendee cannot be changed after creation"))
-
-            if loaded_values.pop("session_id", None) != self.session_id:
+            if self._initial_session.pk != self.session.pk:
                 raise ValidationError(_("Session cannot be changed after creation"))
 
-        if (
-            not self.attendee
-            or not self.session
-            or not self.session.host
-            or not self.attendee.has_perm("events.request_join_session")
-        ):
+        if not self.attendee.has_perm("request_join_session", self.session):
             return
 
         if (
@@ -258,6 +240,9 @@ class GroupSessionReview(AbstractSessionReview):
     attended_session = models.ForeignKey(
         GroupSession, on_delete=models.CASCADE, related_name="reviews"
     )
+    attended_request = models.OneToOneField(
+        GroupSessionRequest, on_delete=models.CASCADE, related_name="review"
+    )
     attendee = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="group_session_reviews"
     )
@@ -273,30 +258,33 @@ class GroupSessionReview(AbstractSessionReview):
             ),
         ]
 
-    @classmethod
-    def from_db(cls, db, field_names, values):
-        instance = super().from_db(db, field_names, values)
-
-        # save original values, when model is loaded from database,
-        # in a separate attribute on the model
-        instance._loaded_values = dict(zip(field_names, values))
-
-        return instance
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._initial_attended_session = self.attended_session
+        self._initial_attendee = self.attendee
+        self._initial_attended_request = self.attended_request
 
     def save(self, *args, **kwargs):
         if not self._state.adding:
-            # Use cached values from from_db() for efficient validation
-            loaded_values = getattr(self, "_loaded_values", {})
-
-            if loaded_values.pop("attendee_id", None) != self.attendee_id:
-                raise ValidationError(_("Attendee cannot be changed after creation"))
-
-            if (
-                loaded_values.pop("attended_session_id", None)
-                != self.attended_session_id
-            ):
+            if self._initial_attended_session.pk != self.attended_session.pk:
                 raise ValidationError(
                     _("Attended session cannot be changed after creation")
                 )
+
+            if self._initial_attendee.pk != self.attendee.pk:
+                raise ValidationError(_("Attendee cannot be changed after creation"))
+
+            if self._initial_attended_request.pk != self.attended_request.pk:
+                raise ValidationError(
+                    _("Attended request cannot be changed after creation")
+                )
+        else:
+            approved_request = (
+                self.attended_request.status == SessionRequestStatusChoices.APPROVED
+            )
+            now_after_session = timezone.now() >= self.attended_request.ends_at
+
+            if not approved_request or not now_after_session:
+                return
 
         super().save(*args, **kwargs)

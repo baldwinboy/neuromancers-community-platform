@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
 
 from apps.accounts.models import UserGroup
+from apps.events.models_sessions.peer import PeerScheduledSession
 
 from .choices import SessionRequestStatusChoices
 from .models import GroupSession, GroupSessionRequest, PeerSession, PeerSessionRequest
@@ -21,6 +22,18 @@ def set_peersession_permissions(sender, instance, created, **kwargs):
     - Adds host permissions for Peer Session if it is created
     - Sends notification when session is published
     """
+    if created:
+        host = instance.host
+        host_perms = [
+            "manage_availability",
+            "schedule_session",
+            "change_peersession",
+            "delete_peersession",
+            "view_peersession",
+        ]
+
+        for perm in host_perms:
+            assign_perm(perm, host, instance)
 
     # Support Seeker group permissions
     try:
@@ -42,19 +55,6 @@ def set_peersession_permissions(sender, instance, created, **kwargs):
         for perm in seeker_perms:
             remove_perm(perm, support_seeker_group, instance)
 
-    if created:
-        host = instance.host
-        host_perms = [
-            "manage_availability",
-            "schedule_session",
-            "change_peersession",
-            "delete_peersession",
-            "view_peersession",
-        ]
-
-        for perm in host_perms:
-            assign_perm(perm, host, instance)
-
 
 @receiver(post_save, sender=PeerSessionRequest)
 def set_peersessionrequest_permissions(sender, instance, created, **kwargs):
@@ -69,17 +69,16 @@ def set_peersessionrequest_permissions(sender, instance, created, **kwargs):
         assign_perm("withdraw_peer_request", instance.attendee, instance)
         # Notify host of new request
         notify_session_requested(instance)
-    else:
-        # Check if status changed to APPROVED using Django's field tracking
-        loaded_values = getattr(instance, "_loaded_values", {})
-        old_status = loaded_values.get("status")
-        if (
-            old_status is not None
-            and old_status != SessionRequestStatusChoices.APPROVED
-            and instance.status == SessionRequestStatusChoices.APPROVED
-        ):
-            # Notify attendee that their request was approved
-            notify_session_approved(instance)
+    elif instance.status == SessionRequestStatusChoices.APPROVED:
+        # Create scheduled session upon approval
+        if not hasattr(instance, "scheduled_session"):
+            session = PeerScheduledSession(
+                request=instance,
+            )
+            session.save()
+
+        # Notify attendee that their request was approved
+        notify_session_approved(instance)
 
 
 @receiver(post_save, sender=GroupSession)
@@ -89,6 +88,17 @@ def set_groupsession_permissions(sender, instance, created, **kwargs):
     - Removes Support Seeker permissions for Group Session if it is not published
     - Adds host permissions for Group Session if it is created
     """
+    if created:
+        # Host permissions
+        host = instance.host
+        host_perms = [
+            "change_groupsession",
+            "delete_groupsession",
+            "view_groupsession",
+        ]
+
+        for perm in host_perms:
+            assign_perm(perm, host, instance)
 
     # Support Seeker group permissions
     try:
@@ -108,18 +118,6 @@ def set_groupsession_permissions(sender, instance, created, **kwargs):
         for perm in seeker_perms:
             remove_perm(perm, support_seeker_group, instance)
 
-    if created:
-        # Host permissions
-        host = instance.host
-        host_perms = [
-            "change_groupsession",
-            "delete_groupsession",
-            "view_groupsession",
-        ]
-
-        for perm in host_perms:
-            assign_perm(perm, host, instance)
-
 
 @receiver(post_save, sender=GroupSessionRequest)
 def set_groupsessionrequest_permissions(sender, instance, created, **kwargs):
@@ -131,3 +129,8 @@ def set_groupsessionrequest_permissions(sender, instance, created, **kwargs):
     if created:
         assign_perm("approve_group_request", instance.session.host, instance)
         assign_perm("withdraw_group_request", instance.attendee, instance)
+        # Notify host of new request
+        notify_session_requested(instance)
+    elif instance.status == SessionRequestStatusChoices.APPROVED:
+        # Notify attendee that their request was approved
+        notify_session_approved(instance)

@@ -78,6 +78,9 @@ colorama==0.4.6
     #   -r requirements/development.in
     #   djlint
     #   tox
+coverage==7.6.11
+    # via
+    #   -r requirements/development.in
 cssbeautifier==1.15.4
     # via
     #   -r requirements/development.in

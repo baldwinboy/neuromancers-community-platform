@@ -21,5 +21,41 @@ ignore = "H031"
 blank_line_before_tag="load,extends,include,block,element,slot,setvar"
 custom_blocks="element,slot,setvar,accordion"
 
+[tool.coverage.run]
+source = ["apps"]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/test_*.py",
+    "manage.py",
+    "*/wsgi.py",
+]
+branch = true
+command_line = "./manage.py test --noinput . apps"
+data_file = "reports/.coverage"
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "@property",
+    "@cached_property",
+]
+precision = 2
+skip_covered = false
+ignore_errors = true
+
+[tool.coverage.html]
+directory = "reports/coverage"
+
+[tool.coverage.xml]
+output = "reports/coverage.xml"
+
 [tool.setuptools]
 package-dir = {"" = "apps"}
