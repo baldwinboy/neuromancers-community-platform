@@ -38,7 +38,7 @@ draftjs-exporter==5.1.0
 et-xmlfile==2.0.0
 executing==2.2.0
 fastjsonschema==2.21.1
-filelock==3.18.0
+filelock==3.20.1
 filetype==1.2.0
 heroicons==2.11.0
 identify==2.6.12
