@@ -91,7 +91,7 @@ wagtail-modeladmin==2.2.0
 wagtailmenus==4.0.4
 wcwidth==0.2.13
 webencodings==0.5.1
-wheel==0.45.1
+wheel==0.46.2
 willow==1.11.0
 yarg==0.1.9
 zipp==3.23.0
