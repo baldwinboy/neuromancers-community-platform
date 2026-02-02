@@ -6,101 +6,103 @@
 #
 anyascii==0.3.3
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 appnope==0.1.4
-    # via -r base.in
+    # via
+    #   -r requirements/base.in
+    #   ipython
 asgiref==3.11.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   django
     #   django-allauth
 asttokens==3.0.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   stack-data
 attrs==25.3.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   jsonschema
     #   referencing
 backcall==0.2.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   ipython
 beautifulsoup4==4.13.4
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   nbconvert
     #   wagtail
 black==25.1.0
-    # via -r development.in
+    # via -r requirements/development.in
 bleach[css]==6.2.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   nbconvert
 build==1.3.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   pip-tools
 cachetools==6.1.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   tox
 calmjs-parse==1.3.3
-    # via -r base.in
+    # via -r requirements/base.in
 certifi==2025.7.14
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   requests
 cfgv==3.4.0
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   pre-commit
 chardet==5.2.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   tox
 charset-normalizer==3.4.2
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   requests
 click==8.3.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   black
     #   djlint
     #   genbadge
     #   pip-tools
 colorama==0.4.6
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   djlint
     #   tox
 coverage==7.6.11
-    # via -r development.in
+    # via -r requirements/development.in
 cssbeautifier==1.15.4
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   djlint
 csscompressor==0.9.5
-    # via -r base.in
+    # via -r requirements/base.in
 decorator==5.2.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   ipython
 defusedxml==0.7.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   nbconvert
     #   willow
 distlib==0.4.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   virtualenv
 django==5.2.9
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   django-allauth
     #   django-appconf
     #   django-components
@@ -118,213 +120,213 @@ django==5.2.9
     #   laces
     #   model-bakery
     #   wagtail
-django-allauth==65.10.0
-    # via -r base.in
+django-allauth==65.13.0
+    # via -r requirements/base.in
 django-appconf==1.1.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   django-compressor
 django-cogwheels==0.3
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtailmenus
 django-components==0.141.4
-    # via -r base.in
+    # via -r requirements/base.in
 django-compressor==4.5.1
-    # via -r base.in
+    # via -r requirements/base.in
 django-debug-toolbar==6.0.0
-    # via -r development.in
+    # via -r requirements/development.in
 django-environ==0.12.0
-    # via -r base.in
+    # via -r requirements/base.in
 django-filter==25.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 django-guardian==3.0.3
-    # via -r base.in
+    # via -r requirements/base.in
 django-modelcluster==6.4
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 django-permissionedforms==0.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 django-stubs-ext==5.2.2
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   django-tasks
 django-taggit==6.1.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 django-tasks==0.7.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 django-treebeard==4.7.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 djangorestframework==3.16.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 djc-core-html-parser==1.0.2
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   django-components
 djlint==1.36.4
-    # via -r development.in
+    # via -r requirements/development.in
 docopt==0.6.2
-    # via -r development.in
+    # via -r requirements/development.in
 draftjs-exporter==5.1.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 editorconfig==0.17.1
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   cssbeautifier
     #   jsbeautifier
 et-xmlfile==2.0.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   openpyxl
 executing==2.2.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   stack-data
 factory-boy==3.3.3
-    # via -r development.in
+    # via -r requirements/development.in
 faker==38.2.0
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   factory-boy
 fastjsonschema==2.21.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   nbformat
-filelock==3.18.0
+filelock==3.20.3
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   tox
     #   virtualenv
 filetype==1.2.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   willow
 flake8==7.3.0
-    # via -r development.in
+    # via -r requirements/development.in
 genbadge==1.1.3
-    # via -r development.in
+    # via -r requirements/development.in
 heroicons==2.11.0
-    # via -r base.in
+    # via -r requirements/base.in
 identify==2.6.12
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   pre-commit
 idna==3.10
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   requests
 importlib-metadata==8.7.0
-    # via -r base.in
+    # via -r requirements/base.in
 ipython==8.12.3
-    # via -r base.in
+    # via -r requirements/base.in
 isort==6.0.1
-    # via -r development.in
+    # via -r requirements/development.in
 jedi==0.19.2
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   ipython
 jinja2==3.1.6
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   nbconvert
 jsbeautifier==1.15.4
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   cssbeautifier
     #   djlint
 json5==0.12.0
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   djlint
 jsonschema==4.25.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   nbformat
 jsonschema-specifications==2025.4.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   jsonschema
 jupyter-client==8.6.3
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   nbclient
 jupyter-core==5.8.1
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   jupyter-client
     #   nbclient
     #   nbconvert
     #   nbformat
 jupyterlab-pygments==0.3.0
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   nbconvert
 laces==0.1.2
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 markdown==3.8.2
-    # via -r base.in
+    # via -r requirements/base.in
 markupsafe==3.0.2
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   jinja2
     #   nbconvert
 matplotlib-inline==0.1.7
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   ipython
 mccabe==0.7.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   flake8
 mistune==3.1.3
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   nbconvert
 model-bakery==1.20.5
-    # via -r development.in
+    # via -r requirements/development.in
 mypy-extensions==1.1.0
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   black
 nbclient==0.10.2
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   nbconvert
 nbconvert==7.16.6
-    # via -r development.in
+    # via -r requirements/development.in
 nbformat==5.10.4
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   nbclient
     #   nbconvert
 nodeenv==1.9.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   pre-commit
 openpyxl==3.1.5
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 packaging==25.0
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   black
     #   build
     #   nbconvert
@@ -333,174 +335,174 @@ packaging==25.0
     #   wheel
 pandocfilters==1.5.1
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   nbconvert
 parso==0.8.4
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   jedi
 pathspec==0.12.1
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   black
     #   djlint
 pexpect==4.9.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   ipython
 pickleshare==0.7.5
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   ipython
 pillow==11.3.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   genbadge
     #   pillow-heif
     #   wagtail
 pillow-heif==1.0.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   willow
 pip-tools==7.5.2
-    # via -r development.in
+    # via -r requirements/development.in
 platformdirs==4.3.8
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   black
     #   jupyter-core
     #   tox
     #   virtualenv
 pluggy==1.6.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   tox
 ply==3.11
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   calmjs-parse
 pre-commit==4.2.0
-    # via -r development.in
+    # via -r requirements/development.in
 prompt-toolkit==3.0.51
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   ipython
 ptyprocess==0.7.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   pexpect
 pure-eval==0.2.3
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   stack-data
 pycodestyle==2.14.0
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   flake8
 pyflakes==3.4.0
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   flake8
 pygments==2.19.2
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   ipython
     #   nbconvert
 pyproject-api==1.9.1
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   tox
 pyproject-hooks==1.2.0
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   build
     #   pip-tools
 python-dateutil==2.9.0.post0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   jupyter-client
 pytz==2025.2
-    # via -r base.in
+    # via -r requirements/base.in
 pyyaml==6.0.2
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   djlint
     #   pre-commit
 pyzmq==27.0.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   jupyter-client
 rcssmin==1.1.2
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   django-compressor
 referencing==0.36.2
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   jsonschema
     #   jsonschema-specifications
 regex==2024.11.6
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   djlint
 requests==2.32.4
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   genbadge
     #   stripe
     #   wagtail
     #   yarg
 rjsmin==1.2.2
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   django-compressor
 rpds-py==0.26.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   jsonschema
     #   referencing
 six==1.17.0
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   cssbeautifier
     #   jsbeautifier
     #   python-dateutil
 soupsieve==2.7
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   beautifulsoup4
 sqlparse==0.5.4
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   django
     #   django-debug-toolbar
 stack-data==0.6.3
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   ipython
 stripe==12.3.0
-    # via -r base.in
+    # via -r requirements/base.in
 telepath==0.3.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 tinycss2==1.4.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   bleach
 tornado==6.5.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   jupyter-client
 tox==4.28.2
-    # via -r development.in
+    # via -r requirements/development.in
 tqdm==4.67.1
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   djlint
 traitlets==5.14.3
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   ipython
     #   jupyter-client
     #   jupyter-core
@@ -510,7 +512,7 @@ traitlets==5.14.3
     #   nbformat
 typing-extensions==4.14.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   beautifulsoup4
     #   django-components
     #   django-stubs-ext
@@ -519,50 +521,50 @@ typing-extensions==4.14.1
     #   stripe
 tzdata==2025.2
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   faker
 uritemplate==4.2.0
-    # via -r base.in
-urllib3==2.6.0
+    # via -r requirements/base.in
+urllib3==2.6.3
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   requests
 virtualenv==20.32.0
     # via
-    #   -r development.in
+    #   -r requirements/development.in
     #   pre-commit
     #   tox
 wagtail==7.0.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail-modeladmin
     #   wagtailmenus
 wagtail-modeladmin==2.2.0
-    # via -r base.in
+    # via -r requirements/base.in
 wagtailmenus==4.0.4
-    # via -r base.in
+    # via -r requirements/base.in
 wcwidth==0.2.13
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   prompt-toolkit
 webencodings==0.5.1
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   bleach
     #   tinycss2
 wheel==0.46.2
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   pip-tools
 willow[heif]==1.11.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   wagtail
 yarg==0.1.9
-    # via -r base.in
+    # via -r requirements/base.in
 zipp==3.23.0
     # via
-    #   -r base.in
+    #   -r requirements/base.in
     #   importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
