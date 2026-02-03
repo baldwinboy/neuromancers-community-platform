@@ -532,7 +532,7 @@ virtualenv==20.32.0
     #   -r development.in
     #   pre-commit
     #   tox
-wagtail==7.0.1
+wagtail==7.0.4
     # via
     #   -r base.in
     #   wagtail-modeladmin

@@ -86,7 +86,7 @@ traitlets==5.14.3
 typing-extensions==4.14.1
 uritemplate==4.2.0
 urllib3==2.6.0
-wagtail==7.0.1
+wagtail==7.0.4
 wagtail-modeladmin==2.2.0
 wagtailmenus==4.0.4
 wcwidth==0.2.13

@@ -325,7 +325,7 @@ urllib3==2.6.0
     # via
     #   -r base.in
     #   requests
-wagtail==7.0.1
+wagtail==7.0.4
     # via
     #   -r base.in
     #   wagtail-modeladmin
