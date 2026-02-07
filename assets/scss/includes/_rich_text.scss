@@ -1,0 +1,56 @@
+@use "sass:list";
+@use "sass:map";
+@use "../variables" as *;
+@use "../mixins" as *;
+
+/* Set default styles for tags h1 - h6 */
+@for $i from 1 through 6 {
+  $small-heading: list.nth(map.values($text-sizes), -$i - 3);
+  $large-heading: list.nth(map.values($text-sizes), -$i - 1);
+
+  .prose h#{$i} {
+    font-family: $heading;
+    text-align: center;
+  }
+
+  .prose-sm h#{$i} {
+    font-size: map.get($small-heading, font-size);
+    line-height: map.get($small-heading, line-height);
+  }
+
+  @include media(lg) {
+    .lg\:prose-lg h#{$i} {
+      font-size: map.get($large-heading, font-size);
+      line-height: map.get($large-heading, line-height);
+    }
+  }
+}
+
+.prose p,
+.prose ol li,
+.prose ul li {
+    font-family: $body;
+}
+
+.prose ol,
+.prose ul {
+    padding-left: calc($spacer * 3);
+}
+
+.prose blockquote {
+  padding-inline: calc($spacer * 3);
+  font-weight: 500;
+  text-align: center;
+}
+
+.prose-sm blockquote {
+  font-size: map.get(map.get($text-sizes, xl), font-size);
+  line-height: map.get(map.get($text-sizes, xl), line-height);
+}
+
+@include media(lg) {
+  .lg\:prose-lg blockquote {
+    font-size: map.get(map.get($text-sizes, 2xl), font-size);
+    line-height: map.get(map.get($text-sizes, 2xl), line-height);
+  }
+}

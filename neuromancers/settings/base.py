@@ -354,8 +354,9 @@ EMAIL_USE_TLS = True
 # Django components
 COMPONENTS = ComponentsSettings(
     tag_formatter="django_components.component_shorthand_formatter",
-    dirs=[os.path.join(BASE_DIR, "templates/includes")],
+    dirs=[os.path.join(BASE_DIR, "templates", "includes")],
     reload_on_file_change=DEBUG,
+    reload_on_template_change=DEBUG,
 )
 
 # Whereby

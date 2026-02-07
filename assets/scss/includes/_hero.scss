@@ -1,0 +1,27 @@
+@use "../variables" as *;
+
+.hero_block__container {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero_block__image {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-size: cover;
+    background-position: center;
+    background-blend-mode: multiply;
+    background-repeat: no-repeat !important;
+}
+
+.hero_block__content {
+    z-index: 1;
+}
+
+.hero_block__container .inline_button {
+    display: block !important;
+    width: 66.67% !important;
+    margin: calc($spacer * 4) auto 0 !important;
+    font-family: $heading !important;
+}

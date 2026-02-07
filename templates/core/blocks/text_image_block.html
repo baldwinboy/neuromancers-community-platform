@@ -4,7 +4,7 @@
         {% if self.heading %}<h2 class="text-3xl font-bold mb-12 text-center">{{ self.heading }}</h2>{% endif %}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {% if self.image_position == 'left' %}
-                <div>
+                <div class="rounded-full overflow-hidden">
                     {% image self.image width-600 as img %}
                     <img src="{{ img.url }}"
                          alt="{{ self.heading }}"

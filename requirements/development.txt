@@ -12,7 +12,7 @@ appnope==0.1.4
     # via
     #   -r requirements/base.in
     #   ipython
-asgiref==3.11.0
+asgiref==3.11.1
     # via
     #   -r requirements/base.in
     #   django
@@ -30,7 +30,7 @@ backcall==0.2.0
     # via
     #   -r requirements/base.in
     #   ipython
-beautifulsoup4==4.13.4
+beautifulsoup4==4.14.3
     # via
     #   -r requirements/base.in
     #   nbconvert
@@ -51,7 +51,7 @@ cachetools==6.1.0
     #   tox
 calmjs-parse==1.3.3
     # via -r requirements/base.in
-certifi==2025.7.14
+certifi==2026.1.4
     # via
     #   -r requirements/base.in
     #   requests
@@ -63,7 +63,7 @@ chardet==5.2.0
     # via
     #   -r requirements/base.in
     #   tox
-charset-normalizer==3.4.2
+charset-normalizer==3.4.4
     # via
     #   -r requirements/base.in
     #   requests
@@ -100,7 +100,7 @@ distlib==0.4.0
     # via
     #   -r requirements/base.in
     #   virtualenv
-django==5.2.9
+django==6.0.2
     # via
     #   -r requirements/base.in
     #   django-allauth
@@ -119,6 +119,7 @@ django==5.2.9
     #   djangorestframework
     #   laces
     #   model-bakery
+    #   modelsearch
     #   wagtail
 django-allauth==65.13.0
     # via -r requirements/base.in
@@ -130,7 +131,7 @@ django-cogwheels==0.3
     # via
     #   -r requirements/base.in
     #   wagtailmenus
-django-components==0.141.4
+django-components==0.148.0
     # via -r requirements/base.in
 django-compressor==4.5.1
     # via -r requirements/base.in
@@ -138,13 +139,13 @@ django-debug-toolbar==6.0.0
     # via -r requirements/development.in
 django-environ==0.12.0
     # via -r requirements/base.in
-django-filter==25.1
+django-filter==25.2
     # via
     #   -r requirements/base.in
     #   wagtail
 django-guardian==3.0.3
     # via -r requirements/base.in
-django-modelcluster==6.4
+django-modelcluster==6.4.1
     # via
     #   -r requirements/base.in
     #   wagtail
@@ -152,7 +153,7 @@ django-permissionedforms==0.1
     # via
     #   -r requirements/base.in
     #   wagtail
-django-stubs-ext==5.2.2
+django-stubs-ext==5.2.9
     # via
     #   -r requirements/base.in
     #   django-tasks
@@ -160,19 +161,20 @@ django-taggit==6.1.0
     # via
     #   -r requirements/base.in
     #   wagtail
-django-tasks==0.7.0
+django-tasks==0.9.0
+    # via
+    #   -r requirements/base.in
+    #   modelsearch
+    #   wagtail
+django-treebeard==4.8.0
     # via
     #   -r requirements/base.in
     #   wagtail
-django-treebeard==4.7.1
+djangorestframework==3.16.1
     # via
     #   -r requirements/base.in
     #   wagtail
-djangorestframework==3.16.0
-    # via
-    #   -r requirements/base.in
-    #   wagtail
-djc-core-html-parser==1.0.2
+djc-core==1.3.0
     # via
     #   -r requirements/base.in
     #   django-components
@@ -180,7 +182,7 @@ djlint==1.36.4
     # via -r requirements/development.in
 docopt==0.6.2
     # via -r requirements/development.in
-draftjs-exporter==5.1.0
+draftjs-exporter==5.2.0
     # via
     #   -r requirements/base.in
     #   wagtail
@@ -226,7 +228,7 @@ identify==2.6.12
     # via
     #   -r requirements/base.in
     #   pre-commit
-idna==3.10
+idna==3.11
     # via
     #   -r requirements/base.in
     #   requests
@@ -301,6 +303,10 @@ mistune==3.1.3
     #   nbconvert
 model-bakery==1.20.5
     # via -r requirements/development.in
+modelsearch==1.1.1
+    # via
+    #   -r requirements/base.in
+    #   wagtail
 mypy-extensions==1.1.0
     # via
     #   -r requirements/development.in
@@ -354,13 +360,13 @@ pickleshare==0.7.5
     # via
     #   -r requirements/base.in
     #   ipython
-pillow==11.3.0
+pillow==12.1.0
     # via
     #   -r requirements/base.in
     #   genbadge
     #   pillow-heif
     #   wagtail
-pillow-heif==1.0.0
+pillow-heif==1.2.0
     # via
     #   -r requirements/base.in
     #   willow
@@ -445,7 +451,7 @@ regex==2024.11.6
     # via
     #   -r requirements/base.in
     #   djlint
-requests==2.32.4
+requests==2.32.5
     # via
     #   -r requirements/base.in
     #   genbadge
@@ -467,11 +473,11 @@ six==1.17.0
     #   cssbeautifier
     #   jsbeautifier
     #   python-dateutil
-soupsieve==2.7
+soupsieve==2.8.3
     # via
     #   -r requirements/base.in
     #   beautifulsoup4
-sqlparse==0.5.4
+sqlparse==0.5.5
     # via
     #   -r requirements/base.in
     #   django
@@ -510,7 +516,7 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
-typing-extensions==4.14.1
+typing-extensions==4.15.0
     # via
     #   -r requirements/base.in
     #   beautifulsoup4
@@ -534,7 +540,7 @@ virtualenv==20.32.0
     #   -r requirements/development.in
     #   pre-commit
     #   tox
-wagtail==7.0.1
+wagtail==7.3
     # via
     #   -r requirements/base.in
     #   wagtail-modeladmin
@@ -556,7 +562,7 @@ wheel==0.46.2
     # via
     #   -r requirements/base.in
     #   pip-tools
-willow[heif]==1.11.0
+willow[heif]==1.12.0
     # via
     #   -r requirements/base.in
     #   wagtail

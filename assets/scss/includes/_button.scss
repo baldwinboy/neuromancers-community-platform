@@ -1,0 +1,83 @@
+@use "../variables" as *;
+@use "../mixins" as *;
+
+.inline_button {
+    cursor: pointer;
+    width: fit-content;
+    padding: 1rem;
+    border: 0;
+    border-radius: 5px;
+    background: $safeLightAccent;
+    color: $black;
+    font-family: $subheading;
+    font-size: 140%;
+    font-weight: 300;
+    text-transform: uppercase;
+    transition: all 0.25s ease-in-out;
+    @include interact {
+        background: $lightAccent;
+    }
+    @include reduced-motion {
+        transition: none;
+    }
+}
+
+.inline_button__signin_panel,
+.inline_button__signup_panel,
+.inline_button__signin_code_panel,
+.inline_button__password_reset_panel {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.inline_button_alt {
+    border: 1px solid transparent;
+    background: transparent;
+    color: $safeLightAccent;
+
+    @include interact {
+        border: 1px solid $lightAccent;
+        background: transparent;
+        color: $lightAccent;
+    }
+}
+
+.inline_button_alt__signin_code_panel {
+    margin-top: 1rem;
+}
+
+.inline_button__navbar {
+    min-width: 8rem;
+    font-size: 100%;
+}
+
+.inline_button__sessions {
+    border: 1px solid transparent;
+    background: $black;
+    color: $lightAccent;
+
+    @include interact {
+        border: 1px solid $black;
+        background: transparent;
+        color: $black;
+    }
+
+    &_alt {
+        border: 1px solid $black;
+        background: transparent;
+        color: $black;
+
+        @include interact {
+            border: 1px solid transparent;
+            background: $black;
+            color: $lightAccent;
+        }
+    }
+
+    &_disabled, &:disabled {
+        pointer-events: none;
+        background: $black;
+        color: $lightAccent;
+        opacity: 0.5;
+    }
+}

@@ -293,6 +293,7 @@
 /* Display */
 /* Flexbox */
 /* Cursor */
+/* Grid */
 /*
 * Sass mobile-first media queries mixins
 * @author Franco Moya - @iamravenous
@@ -367,6 +368,10 @@
 
 .inline-flex {
   display: inline-flex;
+}
+
+.grid {
+  display: grid;
 }
 
 .hidden {
@@ -3419,6 +3424,103 @@
   padding: 24rem;
 }
 
+/* Grid */
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.grid-rows-1 {
+  grid-template-rows: repeat(1, minmax(0, 1fr));
+}
+
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-rows-2 {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid-rows-3 {
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.grid-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid-rows-4 {
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+}
+
+.grid-cols-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.grid-rows-5 {
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+}
+
+.grid-cols-6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.grid-rows-6 {
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+}
+
+.grid-cols-7 {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.grid-rows-7 {
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+}
+
+.grid-cols-8 {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+.grid-rows-8 {
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+}
+
+.grid-cols-9 {
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+
+.grid-rows-9 {
+  grid-template-rows: repeat(9, minmax(0, 1fr));
+}
+
+.grid-cols-10 {
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+}
+
+.grid-rows-10 {
+  grid-template-rows: repeat(10, minmax(0, 1fr));
+}
+
+.grid-cols-11 {
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+}
+
+.grid-rows-11 {
+  grid-template-rows: repeat(11, minmax(0, 1fr));
+}
+
+.grid-cols-12 {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.grid-rows-12 {
+  grid-template-rows: repeat(12, minmax(0, 1fr));
+}
+
 .w-px {
   width: 1px;
 }
@@ -4291,6 +4393,9 @@ h2 {
   }
   .xs\:inline-flex {
     display: inline-flex;
+  }
+  .xs\:grid {
+    display: grid;
   }
   .xs\:hidden {
     display: none;
@@ -6577,6 +6682,79 @@ h2 {
   .xs\:p-96 {
     padding: 24rem;
   }
+  /* Grid */
+  .xs\:grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  .xs\:grid-rows-1 {
+    grid-template-rows: repeat(1, minmax(0, 1fr));
+  }
+  .xs\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .xs\:grid-rows-2 {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+  .xs\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .xs\:grid-rows-3 {
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+  .xs\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .xs\:grid-rows-4 {
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+  }
+  .xs\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .xs\:grid-rows-5 {
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+  }
+  .xs\:grid-cols-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .xs\:grid-rows-6 {
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+  }
+  .xs\:grid-cols-7 {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .xs\:grid-rows-7 {
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+  }
+  .xs\:grid-cols-8 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+  .xs\:grid-rows-8 {
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+  }
+  .xs\:grid-cols-9 {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+  }
+  .xs\:grid-rows-9 {
+    grid-template-rows: repeat(9, minmax(0, 1fr));
+  }
+  .xs\:grid-cols-10 {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+  .xs\:grid-rows-10 {
+    grid-template-rows: repeat(10, minmax(0, 1fr));
+  }
+  .xs\:grid-cols-11 {
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+  }
+  .xs\:grid-rows-11 {
+    grid-template-rows: repeat(11, minmax(0, 1fr));
+  }
+  .xs\:grid-cols-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .xs\:grid-rows-12 {
+    grid-template-rows: repeat(12, minmax(0, 1fr));
+  }
   .xs\:w-px {
     width: 1px;
   }
@@ -7065,6 +7243,9 @@ h2 {
   }
   .sm\:inline-flex {
     display: inline-flex;
+  }
+  .sm\:grid {
+    display: grid;
   }
   .sm\:hidden {
     display: none;
@@ -9351,6 +9532,79 @@ h2 {
   .sm\:p-96 {
     padding: 24rem;
   }
+  /* Grid */
+  .sm\:grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  .sm\:grid-rows-1 {
+    grid-template-rows: repeat(1, minmax(0, 1fr));
+  }
+  .sm\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sm\:grid-rows-2 {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+  .sm\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .sm\:grid-rows-3 {
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+  .sm\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .sm\:grid-rows-4 {
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+  }
+  .sm\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .sm\:grid-rows-5 {
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+  }
+  .sm\:grid-cols-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .sm\:grid-rows-6 {
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+  }
+  .sm\:grid-cols-7 {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .sm\:grid-rows-7 {
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+  }
+  .sm\:grid-cols-8 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+  .sm\:grid-rows-8 {
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+  }
+  .sm\:grid-cols-9 {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+  }
+  .sm\:grid-rows-9 {
+    grid-template-rows: repeat(9, minmax(0, 1fr));
+  }
+  .sm\:grid-cols-10 {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+  .sm\:grid-rows-10 {
+    grid-template-rows: repeat(10, minmax(0, 1fr));
+  }
+  .sm\:grid-cols-11 {
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+  }
+  .sm\:grid-rows-11 {
+    grid-template-rows: repeat(11, minmax(0, 1fr));
+  }
+  .sm\:grid-cols-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .sm\:grid-rows-12 {
+    grid-template-rows: repeat(12, minmax(0, 1fr));
+  }
   .sm\:w-px {
     width: 1px;
   }
@@ -9839,6 +10093,9 @@ h2 {
   }
   .md\:inline-flex {
     display: inline-flex;
+  }
+  .md\:grid {
+    display: grid;
   }
   .md\:hidden {
     display: none;
@@ -12125,6 +12382,79 @@ h2 {
   .md\:p-96 {
     padding: 24rem;
   }
+  /* Grid */
+  .md\:grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  .md\:grid-rows-1 {
+    grid-template-rows: repeat(1, minmax(0, 1fr));
+  }
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .md\:grid-rows-2 {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .md\:grid-rows-3 {
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .md\:grid-rows-4 {
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+  }
+  .md\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .md\:grid-rows-5 {
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+  }
+  .md\:grid-cols-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .md\:grid-rows-6 {
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+  }
+  .md\:grid-cols-7 {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .md\:grid-rows-7 {
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+  }
+  .md\:grid-cols-8 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+  .md\:grid-rows-8 {
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+  }
+  .md\:grid-cols-9 {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+  }
+  .md\:grid-rows-9 {
+    grid-template-rows: repeat(9, minmax(0, 1fr));
+  }
+  .md\:grid-cols-10 {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+  .md\:grid-rows-10 {
+    grid-template-rows: repeat(10, minmax(0, 1fr));
+  }
+  .md\:grid-cols-11 {
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+  }
+  .md\:grid-rows-11 {
+    grid-template-rows: repeat(11, minmax(0, 1fr));
+  }
+  .md\:grid-cols-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .md\:grid-rows-12 {
+    grid-template-rows: repeat(12, minmax(0, 1fr));
+  }
   .md\:w-px {
     width: 1px;
   }
@@ -12613,6 +12943,9 @@ h2 {
   }
   .lg\:inline-flex {
     display: inline-flex;
+  }
+  .lg\:grid {
+    display: grid;
   }
   .lg\:hidden {
     display: none;
@@ -14899,6 +15232,79 @@ h2 {
   .lg\:p-96 {
     padding: 24rem;
   }
+  /* Grid */
+  .lg\:grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  .lg\:grid-rows-1 {
+    grid-template-rows: repeat(1, minmax(0, 1fr));
+  }
+  .lg\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lg\:grid-rows-2 {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+  .lg\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .lg\:grid-rows-3 {
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+  .lg\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .lg\:grid-rows-4 {
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+  }
+  .lg\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .lg\:grid-rows-5 {
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+  }
+  .lg\:grid-cols-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .lg\:grid-rows-6 {
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+  }
+  .lg\:grid-cols-7 {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .lg\:grid-rows-7 {
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+  }
+  .lg\:grid-cols-8 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+  .lg\:grid-rows-8 {
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+  }
+  .lg\:grid-cols-9 {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+  }
+  .lg\:grid-rows-9 {
+    grid-template-rows: repeat(9, minmax(0, 1fr));
+  }
+  .lg\:grid-cols-10 {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+  .lg\:grid-rows-10 {
+    grid-template-rows: repeat(10, minmax(0, 1fr));
+  }
+  .lg\:grid-cols-11 {
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+  }
+  .lg\:grid-rows-11 {
+    grid-template-rows: repeat(11, minmax(0, 1fr));
+  }
+  .lg\:grid-cols-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .lg\:grid-rows-12 {
+    grid-template-rows: repeat(12, minmax(0, 1fr));
+  }
   .lg\:w-px {
     width: 1px;
   }
@@ -15387,6 +15793,9 @@ h2 {
   }
   .xl\:inline-flex {
     display: inline-flex;
+  }
+  .xl\:grid {
+    display: grid;
   }
   .xl\:hidden {
     display: none;
@@ -17673,6 +18082,79 @@ h2 {
   .xl\:p-96 {
     padding: 24rem;
   }
+  /* Grid */
+  .xl\:grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  .xl\:grid-rows-1 {
+    grid-template-rows: repeat(1, minmax(0, 1fr));
+  }
+  .xl\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .xl\:grid-rows-2 {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+  .xl\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .xl\:grid-rows-3 {
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+  .xl\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .xl\:grid-rows-4 {
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+  }
+  .xl\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .xl\:grid-rows-5 {
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+  }
+  .xl\:grid-cols-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .xl\:grid-rows-6 {
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+  }
+  .xl\:grid-cols-7 {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .xl\:grid-rows-7 {
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+  }
+  .xl\:grid-cols-8 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+  .xl\:grid-rows-8 {
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+  }
+  .xl\:grid-cols-9 {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+  }
+  .xl\:grid-rows-9 {
+    grid-template-rows: repeat(9, minmax(0, 1fr));
+  }
+  .xl\:grid-cols-10 {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+  .xl\:grid-rows-10 {
+    grid-template-rows: repeat(10, minmax(0, 1fr));
+  }
+  .xl\:grid-cols-11 {
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+  }
+  .xl\:grid-rows-11 {
+    grid-template-rows: repeat(11, minmax(0, 1fr));
+  }
+  .xl\:grid-cols-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .xl\:grid-rows-12 {
+    grid-template-rows: repeat(12, minmax(0, 1fr));
+  }
   .xl\:w-px {
     width: 1px;
   }
@@ -18161,6 +18643,9 @@ h2 {
   }
   .xxl\:inline-flex {
     display: inline-flex;
+  }
+  .xxl\:grid {
+    display: grid;
   }
   .xxl\:hidden {
     display: none;
@@ -20447,6 +20932,79 @@ h2 {
   .xxl\:p-96 {
     padding: 24rem;
   }
+  /* Grid */
+  .xxl\:grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  .xxl\:grid-rows-1 {
+    grid-template-rows: repeat(1, minmax(0, 1fr));
+  }
+  .xxl\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .xxl\:grid-rows-2 {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+  .xxl\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .xxl\:grid-rows-3 {
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+  .xxl\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .xxl\:grid-rows-4 {
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+  }
+  .xxl\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .xxl\:grid-rows-5 {
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+  }
+  .xxl\:grid-cols-6 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .xxl\:grid-rows-6 {
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+  }
+  .xxl\:grid-cols-7 {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .xxl\:grid-rows-7 {
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+  }
+  .xxl\:grid-cols-8 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+  .xxl\:grid-rows-8 {
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+  }
+  .xxl\:grid-cols-9 {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+  }
+  .xxl\:grid-rows-9 {
+    grid-template-rows: repeat(9, minmax(0, 1fr));
+  }
+  .xxl\:grid-cols-10 {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+  .xxl\:grid-rows-10 {
+    grid-template-rows: repeat(10, minmax(0, 1fr));
+  }
+  .xxl\:grid-cols-11 {
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+  }
+  .xxl\:grid-rows-11 {
+    grid-template-rows: repeat(11, minmax(0, 1fr));
+  }
+  .xxl\:grid-cols-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .xxl\:grid-rows-12 {
+    grid-template-rows: repeat(12, minmax(0, 1fr));
+  }
   .xxl\:w-px {
     width: 1px;
   }
@@ -20934,6 +21492,84 @@ h2 {
     transform: translateY(-6.4px);
   }
 }
+.inline_button {
+  cursor: pointer;
+  width: fit-content;
+  padding: 1rem;
+  border: 0;
+  border-radius: 5px;
+  background: hsl(342.63, 80.85%, 81.57%);
+  color: hsl(0, 100%, 0.78%);
+  font-family: "Roboto", sans-serif;
+  font-size: 140%;
+  font-weight: 300;
+  text-transform: uppercase;
+  transition: all 0.25s ease-in-out;
+}
+.inline_button:not([disabled]):hover, .inline_button:not([disabled]):focus-visible {
+  background: hsl(343.29, 95.89%, 71.37%);
+}
+@media (prefers-reduced-motion) {
+  .inline_button {
+    transition: none;
+  }
+}
+
+.inline_button__signin_panel,
+.inline_button__signup_panel,
+.inline_button__signin_code_panel,
+.inline_button__password_reset_panel {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.inline_button_alt {
+  border: 1px solid transparent;
+  background: transparent;
+  color: hsl(342.63, 80.85%, 81.57%);
+}
+.inline_button_alt:not([disabled]):hover, .inline_button_alt:not([disabled]):focus-visible {
+  border: 1px solid hsl(343.29, 95.89%, 71.37%);
+  background: transparent;
+  color: hsl(343.29, 95.89%, 71.37%);
+}
+
+.inline_button_alt__signin_code_panel {
+  margin-top: 1rem;
+}
+
+.inline_button__navbar {
+  min-width: 8rem;
+  font-size: 100%;
+}
+
+.inline_button__sessions {
+  border: 1px solid transparent;
+  background: hsl(0, 100%, 0.78%);
+  color: hsl(343.29, 95.89%, 71.37%);
+}
+.inline_button__sessions:not([disabled]):hover, .inline_button__sessions:not([disabled]):focus-visible {
+  border: 1px solid hsl(0, 100%, 0.78%);
+  background: transparent;
+  color: hsl(0, 100%, 0.78%);
+}
+.inline_button__sessions_alt {
+  border: 1px solid hsl(0, 100%, 0.78%);
+  background: transparent;
+  color: hsl(0, 100%, 0.78%);
+}
+.inline_button__sessions_alt:not([disabled]):hover, .inline_button__sessions_alt:not([disabled]):focus-visible {
+  border: 1px solid transparent;
+  background: hsl(0, 100%, 0.78%);
+  color: hsl(343.29, 95.89%, 71.37%);
+}
+.inline_button__sessions_disabled, .inline_button__sessions:disabled {
+  pointer-events: none;
+  background: hsl(0, 100%, 0.78%);
+  color: hsl(343.29, 95.89%, 71.37%);
+  opacity: 0.5;
+}
+
 .base__header {
   height: 7.6875rem;
   font-size: 1.4rem;
@@ -20946,6 +21582,32 @@ h2 {
 
 .base__header__nav-link {
   font-weight: 200;
+}
+
+.hero_block__container {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero_block__image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: multiply;
+  background-repeat: no-repeat !important;
+}
+
+.hero_block__content {
+  z-index: 1;
+}
+
+.hero_block__container .inline_button {
+  display: block !important;
+  width: 66.67% !important;
+  margin: 4rem auto 0 !important;
+  font-family: "Handjet", monospace !important;
 }
 
 .accordion > summary {
@@ -20983,6 +21645,49 @@ h2 {
   .accordion[open] + .accordion_content {
     transition: none;
   }
+}
+
+.accordion__prose {
+  border-top: 1px solid hsl(0, 100%, 0.78%);
+}
+.accordion__prose:last-of-type {
+  border-bottom: 1px solid hsl(0, 100%, 0.78%);
+  transition: border 0ms ease-out;
+  transition-delay: 400ms;
+}
+.accordion__prose[open]:last-of-type {
+  transition-delay: 0ms;
+  border-bottom: 0px solid hsl(0, 100%, 0.78%);
+}
+.accordion__prose > summary {
+  font-weight: 600;
+}
+.accordion__prose + .accordion_content {
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 400ms ease-out, border 0ms 400ms linear;
+}
+@media (prefers-reduced-motion) {
+  .accordion__prose + .accordion_content {
+    transition: none;
+  }
+}
+.accordion__prose[open] + .accordion_content {
+  margin-bottom: 1rem;
+}
+@media (prefers-reduced-motion) {
+  .accordion__prose[open] + .accordion_content {
+    transition: none;
+  }
+}
+.accordion__prose[open]:last-of-type + .accordion_content {
+  margin-bottom: 0;
+}
+.accordion__prose[open]:last-of-type + .accordion_content > .prose {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid hsl(0, 100%, 0.78%);
 }
 
 .request_calendar__grid {
@@ -21092,6 +21797,131 @@ h2 {
   accent-color: hsl(342.11, 40.43%, 27.65%);
 }
 
+/* Set default styles for tags h1 - h6 */
+.prose h1 {
+  font-family: "Handjet", monospace;
+  text-align: center;
+}
+
+.prose-sm h1 {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+
+@media (min-width: 1024px) {
+  .lg\:prose-lg h1 {
+    font-size: 6rem;
+    line-height: 1;
+  }
+}
+.prose h2 {
+  font-family: "Handjet", monospace;
+  text-align: center;
+}
+
+.prose-sm h2 {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+@media (min-width: 1024px) {
+  .lg\:prose-lg h2 {
+    font-size: 4.5rem;
+    line-height: 1;
+  }
+}
+.prose h3 {
+  font-family: "Handjet", monospace;
+  text-align: center;
+}
+
+.prose-sm h3 {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+
+@media (min-width: 1024px) {
+  .lg\:prose-lg h3 {
+    font-size: 3.75rem;
+    line-height: 1;
+  }
+}
+.prose h4 {
+  font-family: "Handjet", monospace;
+  text-align: center;
+}
+
+.prose-sm h4 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+@media (min-width: 1024px) {
+  .lg\:prose-lg h4 {
+    font-size: 3rem;
+    line-height: 1;
+  }
+}
+.prose h5 {
+  font-family: "Handjet", monospace;
+  text-align: center;
+}
+
+.prose-sm h5 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .lg\:prose-lg h5 {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+}
+.prose h6 {
+  font-family: "Handjet", monospace;
+  text-align: center;
+}
+
+.prose-sm h6 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+@media (min-width: 1024px) {
+  .lg\:prose-lg h6 {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+}
+.prose p,
+.prose ol li,
+.prose ul li {
+  font-family: "Open Dyslexic", sans-serif;
+}
+
+.prose ol,
+.prose ul {
+  padding-left: 3rem;
+}
+
+.prose blockquote {
+  padding-inline: 3rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.prose-sm blockquote {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+@media (min-width: 1024px) {
+  .lg\:prose-lg blockquote {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+}
 .session_item {
   display: flex;
   align-items: center;

@@ -29,10 +29,10 @@
         <link rel="shortcut icon"
               type="image/png"
               href="{% static 'images/favicon.png' %}">
+        {% component_css_dependencies %}
         {% compress css %}
             {# Global stylesheets #}
             <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
-            {% component_css_dependencies %}
 
             {% block extra_css %}
                 {# Override this in templates to add extra stylesheets #}
@@ -65,10 +65,12 @@
     {% endblock content %}
 
     {% include "includes/sprite.svg" %}
+    {% component_js_dependencies %}
     {% compress js %}
         {# Global javascript #}
         <script type="text/javascript" src="{% static 'js/core.js' %}"></script>
-        {% component_js_dependencies %}
+        <script type="text/javascript" src="{% static 'js/accordion.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/hero.js' %}"></script>
 
         {% block extra_js %}
             {# Override this in templates to add extra javascript #}

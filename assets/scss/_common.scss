@@ -63,6 +63,17 @@
   }
 }
 
+/* Grid */
+@each $key, $value in $grid-template {
+  .grid-cols-#{$key} {
+    grid-template-columns: $value;
+  }
+
+  .grid-rows-#{$key} {
+    grid-template-rows: $value;
+  }
+}
+
 @each $name, $property in $spacing {
   @if (string.index($property, "width") == 1 or string.index($property, "height") == 1) {
     .#{$name}-px {
@@ -337,6 +348,17 @@
         .#{$key}\:#{$name}-#{$sKey} {
           #{$property}: $sValue;
         }
+      }
+    }
+
+    /* Grid */
+    @each $gkey, $gvalue in $grid-template {
+      .#{$key}\:grid-cols-#{$gkey} {
+        grid-template-columns: $gvalue;
+      }
+
+      .#{$key}\:grid-rows-#{$gkey} {
+        grid-template-rows: $gvalue;
       }
     }
 

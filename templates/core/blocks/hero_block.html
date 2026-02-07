@@ -1,24 +1,7 @@
 {% load wagtailimages_tags %}
-<section class="hero-block py-20 {% if self.background_color == 'white' %}bg-white{% elif self.background_color == 'blue' %}bg-blue-600{% elif self.background_color == 'navy' %}bg-blue-900{% elif self.background_color == 'gray' %}bg-gray-100{% else %}bg-black{% endif %} {% if self.text_color == 'white' %}text-white{% elif self.text_color == 'blue' %}text-blue-600{% else %}text-black{% endif %}"
-         style="min-height: {{ self.min_height }}">
-    <div class="container mx-auto px-6 lg:px-0 flex items-center justify-center">
-        <div class="max-w-2xl text-center">
-            {% if self.image %}
-                {% image self.image width-400 as img %}
-                <img src="{{ img.url }}"
-                     alt="{{ self.heading }}"
-                     width="400"
-                     height="400"
-                     class="w-full h-auto mb-8 rounded-lg">
-            {% endif %}
-            <h1 class="text-4xl lg:text-5xl font-bold mb-4">{{ self.heading }}</h1>
-            {% if self.subheading %}<p class="text-lg lg:text-xl mb-8 opacity-90">{{ self.subheading }}</p>{% endif %}
-            {% if self.button_text and self.button_link %}
-                <a href="{{ self.button_link }}"
-                   class="inline-block bg-blue-600 text-white py-3 px-8 rounded-lg font-medium hover:bg-blue-700 transition">
-                    {{ self.button_text }}
-                </a>
-            {% endif %}
-        </div>
-    </div>
-</section>
+{% if self.image %}
+    {% image self.image width-400 as img %}
+    {% hero min_height=self.min_height background_color=self.background_color text_color=self.text_color button_text=self.button_text button_link=self.button_link image=img.url heading=self.heading subheading=self.subheading / %}
+{% else %}
+    {% hero min_height=self.min_height background_color=self.background_color text_color=self.text_color button_text=self.button_text button_link=self.button_link heading=self.heading subheading=self.subheading / %}
+{% endif %}

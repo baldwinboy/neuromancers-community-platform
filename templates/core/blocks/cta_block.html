@@ -4,7 +4,7 @@
             <h2 class="text-3xl font-bold mb-4">{{ self.heading }}</h2>
             {% if self.description %}<p class="text-lg mb-8 opacity-90">{{ self.description }}</p>{% endif %}
             <a href="{{ self.button_link }}"
-               class="inline-block py-3 px-8 rounded-lg font-medium transition {% if self.button_style == 'primary' %}bg-blue-600 text-white hover:bg-blue-700{% elif self.button_style == 'secondary' %}bg-gray-600 text-white hover:bg-gray-700{% else %}bg-green-600 text-white hover:bg-green-700{% endif %}">
+               class="inline_button py-3 px-8 rounded-lg font-medium transition {% if self.button_style == 'primary' %}bg-blue-600 text-white hover:bg-blue-700{% elif self.button_style == 'secondary' %}bg-gray-600 text-white hover:bg-gray-700{% else %}bg-green-600 text-white hover:bg-green-700{% endif %}">
                 {{ self.button_text }}
             </a>
         </div>

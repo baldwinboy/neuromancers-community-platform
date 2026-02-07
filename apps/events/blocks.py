@@ -20,7 +20,7 @@ class SessionFeedBlock(blocks.StructBlock):
     class Meta:
         icon = "list-ul"
         label = "Session Feed"
-        template = "blocks/session_feed_block.html"
+        template = "events/blocks/session_feed_block.html"
 
     def render(self, value, context=None):
         """
