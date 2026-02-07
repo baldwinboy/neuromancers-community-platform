@@ -43,4 +43,4 @@ six==1.17.0
 tox==4.28.2
 tqdm==4.67.1
 tzdata==2025.2
-virtualenv==20.32.0
+virtualenv==20.36.1
