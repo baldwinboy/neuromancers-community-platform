@@ -49,6 +49,36 @@ def get_language_display(iso: str) -> str | None:
     return all_languages.get(iso)
 
 
+def parse_csv_string(value: str) -> list[str]:
+    """
+    Parse a value that may be stored as either a plain comma-separated string
+    (e.g. ``"en,fr,de"``) or a Python list literal
+    (e.g. ``"['en','fr','de']"``).  Returns a list of stripped, non-empty
+    strings.
+    """
+    if not value:
+        return []
+    raw = str(value).strip("[] ")
+    raw = raw.replace("'", "").replace('"', "")
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def parse_int_csv_string(value: str) -> list[int]:
+    """
+    Like :func:`parse_csv_string` but casts every element to ``int``,
+    silently skipping values that are not valid integers.
+
+    Handles ``"30,60"`` as well as ``"[30, 60]"``.
+    """
+    result = []
+    for item in parse_csv_string(value):
+        try:
+            result.append(int(item))
+        except (ValueError, TypeError):
+            continue
+    return result
+
+
 def stable_price():
     return random.choice([0, 500, 1000, 1500])  # repeatable small set
 
@@ -240,3 +270,86 @@ def generate_group_meeting_link_if_needed(session):
             return result["roomUrl"]
 
     return None
+
+
+def format_session_for_card(session, user=None):
+    """
+    Format a session model (PeerSession or GroupSession) into a dictionary
+    suitable for the session_item component.
+
+    Args:
+        session: PeerSession or GroupSession instance
+        user: Optional User instance. If provided, the user's request status
+              for this session will be included as ``request_status``.
+    """
+    from apps.events.choices import SessionRequestStatusChoices
+    from apps.events.models_sessions.group import GroupSession
+
+    # Precompute URL safely
+    url = "#"
+    page = getattr(session, "page", None)
+    if page:
+        try:
+            url = page.url
+        except Exception:
+            pass
+
+    session_type = (
+        "group"
+        if hasattr(session, "starts_at") and isinstance(session, GroupSession)
+        else "peer"
+    )
+
+    # Build item data
+    item = {
+        "id": str(session.id),
+        "title": session.title,
+        "description": (
+            session.description[:200] + "..."
+            if session.description and len(session.description) > 200
+            else session.description
+        ),
+        "starts_at": getattr(session, "starts_at", None),
+        "ends_at": getattr(session, "ends_at", None),
+        "created_at": session.created_at,
+        "host": str(session.host),
+        "url": url,
+        "type": session_type,
+        "filters": session.filters or {},
+    }
+
+    # Group session specific fields
+    if session_type == "group":
+        approved_count = getattr(session, "approved_count", None)
+        if approved_count is None:
+            approved_count = session.requests.filter(
+                status=SessionRequestStatusChoices.APPROVED
+            ).count()
+        item["remaining_capacity"] = session.capacity - approved_count
+        item["capacity"] = session.capacity
+        item["language"] = session.language
+        item["language_display"] = session.language_display
+        item["recurring"] = session.recurring
+        item["recurrence_type"] = session.recurrence_type
+    else:
+        # Peer session specific fields
+        item["durations"] = (
+            session.durations_display if hasattr(session, "durations_display") else []
+        )
+        item["languages"] = (
+            session.languages_display if hasattr(session, "languages_display") else []
+        )
+
+    # Annotate with user's request status if a user is provided
+    if user and user.is_authenticated:
+        request_qs = session.requests.filter(attendee=user).order_by("-created_at")
+        latest = request_qs.first()
+        if latest:
+            status_map = {
+                SessionRequestStatusChoices.APPROVED: "going",
+                SessionRequestStatusChoices.PENDING: "pending",
+                SessionRequestStatusChoices.REJECTED: "rejected",
+            }
+            item["request_status"] = status_map.get(latest.status)
+
+    return item

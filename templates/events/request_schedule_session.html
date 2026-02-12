@@ -47,21 +47,34 @@
                         </div>
                         {{ form.pay_concessionary_price.errors }}
                     </div>
+                    <div class="create_session__field_item">
+                        <div class="flex flex-wrap w-full">
+                            <label for="{{ form.accessibility_needs.id_for_label }}"
+                                   class="text-2xl w-full">{{ form.accessibility_needs.label }}</label>
+                            {{ form.accessibility_needs }}
+                            <p class="create_session__field_item_help_text w-full font-subheading font-light">
+                                {{ form.accessibility_needs.help_text }}
+                            </p>
+                        </div>
+                        {{ form.accessibility_needs.errors }}
+                    </div>
                     {% if hosted_session.host.profile.terms_and_conditions %}
-                        <div class="create_session__field_item">
-                            <div class="flex flex-col gap-4 p-6 bg-lightAccent rounded">
-                                <h3 class="text-xl font-bold">{% trans "Host's Terms and Conditions" %}</h3>
-                                <div class="prose max-w-none whitespace-pre-wrap">{{ hosted_session.host.profile.terms_and_conditions }}</div>
+                        <div class="create_session__field_item create_session__field_item_terms">
+                            <div class="flex flex-col gap-4 p-6 bg-darkAccent rounded">
+                                <h3 class="text-xl text-accent font-bold">{% trans "Host's Terms and Conditions" %}</h3>
+                                <div class="prose prose-lg max-w-none whitespace-pre-wrap text-accent">
+                                    {{ hosted_session.host.profile.terms_and_conditions }}
+                                </div>
+                                <div class="flex items-start gap-3 mt-4">
+                                    {{ form.accept_terms }}
+                                    <label for="{{ form.accept_terms.id_for_label }}"
+                                           class="text-base cursor-pointer">
+                                        {{ form.accept_terms.label }}
+                                        {% if form.accept_terms.required %}<span class="text-red-600">*</span>{% endif %}
+                                    </label>
+                                </div>
+                                {{ form.accept_terms.errors }}
                             </div>
-                            <div class="flex items-start gap-3 mt-4">
-                                {{ form.accept_terms }}
-                                <label for="{{ form.accept_terms.id_for_label }}"
-                                       class="text-base cursor-pointer">
-                                    {{ form.accept_terms.label }}
-                                    {% if form.accept_terms.required %}<span class="text-red-600">*</span>{% endif %}
-                                </label>
-                            </div>
-                            {{ form.accept_terms.errors }}
                         </div>
                     {% endif %}
                     {% with starts_at_id=form.starts_at.id_for_label ends_at_id=form.ends_at.id_for_label %}

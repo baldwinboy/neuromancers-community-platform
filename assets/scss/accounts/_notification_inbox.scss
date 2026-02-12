@@ -1,0 +1,204 @@
+@use "../mixins" as *;
+@use "../variables" as *;
+
+.notification-inbox {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: calc($spacer * 2.25) calc($spacer * 1.5);
+
+    @include media(lg) {
+        padding: calc($spacer * 2.25) 0;
+    }
+}
+
+.notification-inbox__header {
+    display: flex;
+    flex-direction: column;
+    gap: $spacer;
+    margin-bottom: $spacer * 2;
+
+    @include media(lg) {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.notification-inbox__title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: $black;
+    margin: 0;
+}
+
+.notification-inbox__subtitle {
+    margin-top: $spacer * 0.25;
+    font-size: 0.875rem;
+    color: $gray-500;
+}
+
+.notification-inbox__actions {
+    display: flex;
+    gap: $spacer * 0.5;
+    flex-shrink: 0;
+}
+
+.notification-inbox__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.notification-inbox__item {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacer;
+    padding: calc($spacer * 1.25) 0;
+    border-bottom: 1px solid $gray-100;
+    transition: background 0.15s ease;
+
+    &:first-child {
+        border-top: 1px solid $gray-100;
+    }
+
+    @include reduced-motion {
+        transition: none;
+    }
+
+    &--unread {
+        position: relative;
+
+        .notification-inbox__item-subject {
+            font-weight: 700;
+        }
+    }
+}
+
+.notification-inbox__item-link {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacer;
+    flex: 1;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.15s ease;
+
+    @include interact {
+        opacity: 0.8;
+    }
+
+    @include reduced-motion {
+        transition: none;
+    }
+}
+
+.notification-inbox__item-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: $spacer * 2.5;
+    height: $spacer * 2.5;
+    border-radius: 50%;
+    background: $gray-50;
+    color: $gray-400;
+
+    .notification-inbox__item--unread & {
+        background: rgba($lightAccent, 0.12);
+        color: $lightAccent;
+    }
+}
+
+.notification-inbox__item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-inbox__item-subject {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: $black;
+    margin: 0;
+}
+
+.notification-inbox__item-body {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: $gray-600;
+    margin: calc($spacer * 0.25) 0 0;
+}
+
+.notification-inbox__item-time {
+    display: block;
+    font-size: 0.75rem;
+    color: $gray-400;
+    margin-top: $spacer * 0.375;
+}
+
+.notification-inbox__item-action {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacer * 0.375;
+    flex-shrink: 0;
+    padding: calc($spacer * 0.375) calc($spacer * 0.75);
+    font-family: $subheading;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: $darkAccent;
+    background: transparent;
+    border: 1px solid $gray-200;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    @include interact {
+        background: $black;
+        color: $lightAccent;
+        border-color: $black;
+    }
+
+    @include reduced-motion {
+        transition: none;
+    }
+}
+
+.notification-inbox__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacer * 0.5;
+    margin-top: $spacer * 2;
+    padding-top: $spacer * 1.5;
+    border-top: 1px solid $gray-100;
+}
+
+.notification-inbox__pagination-info {
+    font-size: 0.875rem;
+    color: $gray-500;
+    padding: 0 calc($spacer * 0.5);
+}
+
+.notification-inbox__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacer * 0.75;
+    padding: calc($spacer * 4) $spacer;
+    color: $gray-400;
+    text-align: center;
+}
+
+.notification-inbox__empty-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: $gray-500;
+    margin: 0;
+}
+
+.notification-inbox__empty-hint {
+    font-size: 0.875rem;
+    color: $gray-400;
+    margin: 0;
+}

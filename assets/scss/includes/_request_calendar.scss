@@ -5,8 +5,8 @@
   display: grid;
     grid-template-columns: repeat(7, 1fr);
     grid-template-rows: repeat(5, 1fr);
-    grid-column-gap: 1rem;
-    grid-row-gap: 1rem;
+    grid-column-gap: $spacer;
+    grid-row-gap: $spacer;
 }
 
 .request_calendar__grid_days {
@@ -15,7 +15,7 @@
 
 .request_calendar__grid_date {
     cursor: default;
-    padding: 1rem;
+    padding: $spacer;
     font-family: $body;
     text-align: center;
     span {
@@ -54,7 +54,7 @@
 }
 
 .request_calendar__times {
-    max-height: 8rem;
+    max-height: $spacer * 8;
     border-radius: 10px;
     background: $black;
     color: $lightAccent;
@@ -78,7 +78,7 @@
 .request_calendar_active_date_time_option {
     cursor: pointer;
     width: 100%;
-    padding: 1rem;
+    padding: $spacer;
     font-size: 200%;
     transition: all 0.25s ease-in-out;
     @include reduced-motion {

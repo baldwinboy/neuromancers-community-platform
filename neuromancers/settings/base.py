@@ -74,8 +74,6 @@ THIRD_PARTY_APPS = [
     # For object-level permissions
     "guardian",
     "rest_framework",
-    # For placing non-page models on the Admin page easily
-    "wagtail_modeladmin",
     # For site navigation bars
     "wagtailmenus",
     # For site user login
@@ -129,6 +127,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "wagtailmenus.context_processors.wagtailmenus",
                 "apps.core.context_processors.onboarding_banner",
+                "apps.core.context_processors.unread_notification_count",
                 "wagtail.contrib.settings.context_processors.settings",
             ],
             "loaders": [
@@ -369,3 +368,9 @@ STRIPE_API_SECRET_KEY = env("STRIPE_API_SECRET_KEY", default="")
 STRIPE_REDIRECT_URL = env("STRIPE_REDIRECT_URL", default="")
 STRIPE_CURRENCIES = stripe_currencies  # Currencies supported by Stripe
 STRIPE_APPLICATION_FEE = 0.15  # Decimal value of Stripe Application Fee (15%)
+
+# Get Pronto
+GETPRONTO_API_KEY = env("GETPRONTO_API_KEY", default="")
+GETPRONTO_API_URL = env("GETPRONTO_API_URL", default="")
+GETPRONTO_EMAIL = env("GETPRONTO_EMAIL", default="")
+GETPRONTO_PASSWORD = env("GETPRONTO_PASSWORD", default="")

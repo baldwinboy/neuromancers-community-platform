@@ -10,6 +10,7 @@ from .models import GroupSession, GroupSessionRequest, PeerSession, PeerSessionR
 from .notifications import (
     notify_session_approved,
     notify_session_published,
+    notify_session_rejected,
     notify_session_requested,
 )
 
@@ -41,19 +42,30 @@ def set_peersession_permissions(sender, instance, created, **kwargs):
     except UserGroup.DoesNotExist:
         return
 
+    try:
+        peer_group = UserGroup.objects.get(name="Peer")
+    except UserGroup.DoesNotExist:
+        return
+
+    try:
+        neuromancer_group = UserGroup.objects.get(name="Neuromancer")
+    except UserGroup.DoesNotExist:
+        return
+
     seeker_perms = [
         "view_peersession",
         "request_session",
     ]
 
-    if instance.is_published:
-        for perm in seeker_perms:
-            assign_perm(perm, support_seeker_group, instance)
-        # Notify host when session is published
-        notify_session_published(instance)
-    else:
-        for perm in seeker_perms:
-            remove_perm(perm, support_seeker_group, instance)
+    for group in [support_seeker_group, peer_group, neuromancer_group]:
+        if instance.is_published:
+            for perm in seeker_perms:
+                assign_perm(perm, group, instance)
+            # Notify host when session is published
+            notify_session_published(instance)
+        else:
+            for perm in seeker_perms:
+                remove_perm(perm, group, instance)
 
 
 @receiver(post_save, sender=PeerSessionRequest)
@@ -79,6 +91,9 @@ def set_peersessionrequest_permissions(sender, instance, created, **kwargs):
 
         # Notify attendee that their request was approved
         notify_session_approved(instance)
+    elif instance.status == SessionRequestStatusChoices.REJECTED:
+        # Notify attendee that their request was rejected
+        notify_session_rejected(instance)
 
 
 @receiver(post_save, sender=GroupSession)
@@ -106,17 +121,30 @@ def set_groupsession_permissions(sender, instance, created, **kwargs):
     except UserGroup.DoesNotExist:
         return
 
+    try:
+        peer_group = UserGroup.objects.get(name="Peer")
+    except UserGroup.DoesNotExist:
+        return
+
+    try:
+        neuromancer_group = UserGroup.objects.get(name="Neuromancer")
+    except UserGroup.DoesNotExist:
+        return
+
     seeker_perms = [
         "view_groupsession",
         "request_join_session",
     ]
 
-    if instance.is_published:
-        for perm in seeker_perms:
-            assign_perm(perm, support_seeker_group, instance)
-    else:
-        for perm in seeker_perms:
-            remove_perm(perm, support_seeker_group, instance)
+    for group in [support_seeker_group, peer_group, neuromancer_group]:
+        if instance.is_published:
+            for perm in seeker_perms:
+                assign_perm(perm, group, instance)
+            # Notify host when session is published
+            notify_session_published(instance)
+        else:
+            for perm in seeker_perms:
+                remove_perm(perm, group, instance)
 
 
 @receiver(post_save, sender=GroupSessionRequest)
@@ -134,3 +162,6 @@ def set_groupsessionrequest_permissions(sender, instance, created, **kwargs):
     elif instance.status == SessionRequestStatusChoices.APPROVED:
         # Notify attendee that their request was approved
         notify_session_approved(instance)
+    elif instance.status == SessionRequestStatusChoices.REJECTED:
+        # Notify attendee that their request was rejected
+        notify_session_rejected(instance)

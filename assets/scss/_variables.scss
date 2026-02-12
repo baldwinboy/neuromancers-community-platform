@@ -13,6 +13,34 @@ $accent: hsl(342.63, 80.85%, 81.57%);
 $lightAccent: hsl(343.29, 95.89%, 71.37%);
 $darkAccent: hsl(342.11, 40.43%, 27.65%);
 
+/* Gray scale */
+$gray-50: hsl(0, 0%, 98%);
+$gray-100: hsl(0, 0%, 96%);
+$gray-200: hsl(0, 0%, 90%);
+$gray-300: hsl(0, 0%, 83%);
+$gray-400: hsl(0, 0%, 64%);
+$gray-500: hsl(0, 0%, 45%);
+$gray-600: hsl(0, 0%, 32%);
+$gray-700: hsl(0, 0%, 25%);
+$gray-800: hsl(0, 0%, 15%);
+$gray-900: hsl(0, 0%, 9%);
+
+/* Status colors */
+$red-400: hsl(0, 84%, 70%);
+$red-500: hsl(0, 84%, 60%);
+$red-600: hsl(0, 72%, 51%);
+$green-400: hsl(142, 69%, 58%);
+$green-500: hsl(142, 71%, 45%);
+$blue-400: hsl(217, 91%, 65%);
+$blue-500: hsl(217, 91%, 55%);
+
+/* Semantic colors */
+$success: $green-500;
+$info: $blue-500;
+$primary: $accent;
+$danger: $red-500;
+$warning: hsl(38, 92%, 50%);
+
 $colors: (
   "white": $white,
   "black": $black,
@@ -40,6 +68,10 @@ $fonts: (
 
 /* Font sizes */
 $text-sizes: (
+  2xs: (
+    font-size: 0.625rem,
+    line-height: 0.75rem,
+  ),
   xs: (
     font-size: 0.75rem,
     line-height: 1rem,

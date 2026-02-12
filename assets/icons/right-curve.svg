@@ -1,0 +1,8 @@
+<svg class="section-divider-svg-clip">
+  <clipPath id="section-divider-right-curve" clipPathUnits="objectBoundingBox">
+    <path
+      class="section-divider-clip"
+      d="M 1 0.826 L 1 1 l 0 0 c -0.25 0 -0.5 0 -1 -0.174 l 0 0.174 l 0 0 c -0.25 0 -0.5 0 -1 -0.174 l 0 0.174 l 0 0 c -0.25 0 -0.5 0 -1 -0.174 l 0 0.174 L -2 -1 L 1 -1 z"
+    ></path>
+  </clipPath>
+</svg>

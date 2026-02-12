@@ -33,8 +33,8 @@
         background: transparent;
         color: $black;
         width: 100%;
-        padding-block: 1rem;
-        padding-left: 1rem;
+        padding-block: $spacer;
+        padding-left: $spacer;
 
         &::placeholder {
             color: $black;
@@ -50,13 +50,13 @@
         order: 2;
         width: 100%;
         .typed_select_multiple__options {
-            max-height: 7rem;
-            padding-inline: 1rem;
+            max-height: $spacer * 7;
+            padding-inline: $spacer;
             background: $black;
             color: $white;
 
             .typed_select_multiple__options_group {
-                padding-block: 1rem;
+                padding-block: $spacer;
             }
 
             &, ul, li, .typed_select_multiple__options_group, button {
@@ -83,15 +83,15 @@
         .typed_select_multiple__selected {
             display: flex;
             flex-wrap: wrap;
-            padding-block: 1rem;
-            gap: 0.5rem;
+            padding-block: $spacer;
+            gap: $spacer * 0.5;
         }
 
         .typed_select_multiple__selected_button {
             cursor: pointer;
             position: relative;
             height: 100%;
-            padding: 1rem;
+            padding: $spacer;
             border: 1px solid $black;
             border-radius: 10px;
             background: $black;
@@ -115,10 +115,10 @@
     fieldset.grouped_checkbox_select {
         display: flex;
         flex-direction: column;
-        gap: 2rem;
+        gap: $spacer * 2;
         order: 2;
         width: 100%;
-        margin-top: 1rem;
+        margin-top: $spacer;
     }
 
     .create_session__field_item_help_text {
@@ -147,19 +147,36 @@
         border-top: 0;
         border-right: 0;
         width: 100%;
-        padding-block: 1rem;
-        padding-left: 1rem;
+        padding-block: $spacer;
+        padding-left: $spacer;
         background: transparent;
         color: $black;
         font-size: 140%;
         font-weight: 300;
 
         & + select {
-            margin-left: 1rem;
+            margin-left: $spacer;
         }
     }
 }
 
 .create_session__field_item_solo {
     margin-top: 0;
+}
+
+.create_session__field_item_terms label {
+    color: $accent;
+}
+
+.create_session__field_item_terms input[type="checkbox"] {
+    border-color: $accent;
+    margin-left: 0;
+
+    &:checked {
+        @include cross-lines($accent);
+    }
+
+    @include interact {
+        @include cross-lines($accent);
+    }
 }

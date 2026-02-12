@@ -20,7 +20,7 @@ from apps.events.models_sessions.peer import (
     PeerSessionAvailability,
     PeerSessionRequest,
 )
-from apps.events.utils import get_languages
+from apps.events.utils import get_languages, parse_csv_string, parse_int_csv_string
 
 DURATIONS = [[_("Minutes"), list(zip(range(5, 121), range(5, 121)))]]
 
@@ -150,18 +150,14 @@ class PeerSessionForm(
                 self.initial["concessionary_per_hour_price"] = price_decimal
 
             # Convert comma-separated string from model to a list of ints for the form
-            durations_str = self.instance.durations
-            durations_str = durations_str.strip("[]")
-            if durations_str:
-                self.initial["durations"] = [int(x) for x in durations_str.split(",")]
+            if self.instance.durations:
+                self.initial["durations"] = parse_int_csv_string(
+                    self.instance.durations
+                )
 
             # Convert comma-separated string from model to a list of strings for the form
-            languages_str = self.instance.languages
-            languages_str = languages_str.strip("[]")
-            if languages_str:
-                self.initial["languages"] = [
-                    lang.strip() for lang in languages_str.split(",") if lang.strip()
-                ]
+            if self.instance.languages:
+                self.initial["languages"] = parse_csv_string(self.instance.languages)
 
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -296,6 +292,15 @@ class PeerSessionRequestForm(forms.ModelForm):
         label=_("I have read and accept the host's terms and conditions"),
         help_text=_("You must accept the terms to request this session"),
     )
+    accessibility_needs = forms.CharField(
+        required=False,
+        label=_("Accessibility needs"),
+        help_text=_(
+            "Let the host know about any accessibility needs you have "
+            "so they can accommodate you"
+        ),
+        widget=forms.Textarea(attrs={"rows": 3}),
+    )
 
     class Meta:
         model = PeerSessionRequest
@@ -306,6 +311,7 @@ class PeerSessionRequestForm(forms.ModelForm):
             "starts_at",
             "ends_at",
             "pay_concessionary_price",
+            "accessibility_needs",
         ]
 
     def __init__(self, attendee, session, *args, **kwargs):

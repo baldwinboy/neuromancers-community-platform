@@ -1,6 +1,8 @@
-<section class="text-block py-12 {% if self.background_color == 'white' %}bg-white{% elif self.background_color == 'light-gray' %}bg-gray-50{% else %}bg-blue-50{% endif %}">
+<section class="text-block py-12 {% if self.background_color %}bg-{{ self.background_color }}{% endif %}{% if self.top_border_color %} border-t-{{ self.top_border_color }}{% endif %}{% if self.bottom_border_color %} border-b-{{ self.bottom_border_color }}{% endif %}{% if self.top_border_style %} border-t-{{ self.top_border_style }}{% endif %}{% if self.bottom_border_style %} border-b-{{ self.bottom_border_style }}{% endif %}">
     <div class="container mx-auto px-6 lg:px-0"
          style="max-width: {{ self.max_width }}">
-        <div class="prose prose-sm md:prose lg:prose-lg max-w-none">{{ self.content|safe }}</div>
+        <div class="prose prose-sm md:prose lg:prose-lg max-w-none {% if self.text_color %}text-{{ self.text_color }}{% endif %}">
+            {{ self.content|safe }}
+        </div>
     </div>
 </section>

@@ -60,6 +60,10 @@
     .#{$name}-#{$sKey} {
       #{$property}: $sValue;
     }
+
+    .-#{$name}-#{$sKey} {
+      #{$property}: -#{$sValue};
+    }
   }
 }
 
@@ -92,15 +96,40 @@
       #{$property}: max-content;
     }
 
+    .min-#{$name}-full {
+      min-#{$property}: 100%;
+    }
+
     .#{$name}-full {
       #{$property}: 100%;
     }
+
+    .max-#{$name}-full {
+      max-#{$property}: 100%;
+    }
+
+    .min-#{$name}-screen {
+      min-#{$property}: if($property == "width", 100vw, 100vh);
+    }
+
+    .#{$name}-screen {
+      #{$property}: if($property == "width", 100vw, 100vh);
+    }
+
+    .max-#{$name}-screen {
+      max-#{$property}: if($property == "width", 100vw, 100vh);
+    }
+
 
     .#{$name}-auto {
       #{$property}: auto;
     }
 
     @for $i from 1 through 11 {
+      .min-#{$name}-#{$i}\/12 {
+        min-#{$property}: math.percentage(math.div($i, 12));
+      }
+
       .#{$name}-#{$i}\/12 {
         #{$property}: math.percentage(math.div($i, 12));
       }
@@ -109,8 +138,16 @@
         $denom: 12 - $j;
 
         @if $denom > $i and ($denom <= 5 or ($denom > 5 and $denom % 2 == 0)) {
+          .min-#{$name}-#{$i}\/#{$denom} {
+            min-#{$property}: math.percentage(math.div($i, $denom));
+          }
+
           .#{$name}-#{$i}\/#{$denom} {
             #{$property}: math.percentage(math.div($i, $denom));
+          }
+
+          .max-#{$name}-#{$i}\/#{$denom} {
+            max-#{$property}: math.percentage(math.div($i, $denom));
           }
         }
       }
@@ -135,7 +172,15 @@
   }
 
   .border-#{$key} {
-    border-color: $value;
+    border: 1px solid $value;
+  }
+
+  .border-t-#{$key} {
+    border-top: 1px solid $value;
+  }
+
+  .border-b-#{$key} {
+    border-bottom: 1px solid $value;
   }
 }
 
@@ -168,14 +213,6 @@
   }
 }
 
-@for $i from 1 through 5 {
-  h#{7 - $i} {
-    margin: 0;
-    padding: 0;
-    font-family: $subheading;
-  }
-}
-
 .overflow {
   overflow: auto;
 }
@@ -186,7 +223,13 @@
 
 .container {
   @include media(xl) {
-    max-width: 75rem;
+    max-width: $spacer * 75;
+  }
+}
+
+.container-sm {
+  @include media(xl) {
+    max-width: $spacer * 36;
   }
 }
 
@@ -262,13 +305,12 @@
 }
 
 .base_message {
-  & > span {
+  & > * {
     display: block;
-    padding-block: list.nth($spacers, 9);
+    padding: map.get($spacers, 4) map.get($spacers, 8);
     margin-inline: auto;
-    @include media(xl) {
-      max-width: 75rem;
-    }
+    width: 100%;
+    max-width: $spacer * 80;
   }
 
   .wagtailadmin_messages {
@@ -293,6 +335,67 @@
 .select-none {
   user-select: none;
 }
+
+.rounded {
+  border-radius: 0.375rem;
+}
+
+.rounded-full {
+  border-radius: 9999px;
+}
+
+.rounded-md {
+  border-radius: 0.5rem;
+}
+
+.rounded-lg {
+  border-radius: 0.75rem;
+}
+
+.rounded-xl {
+  border-radius: 1rem;
+}
+
+.rounded-2xl {
+  border-radius: 1.5rem;
+}
+
+.rounded-3xl {
+  border-radius: 2rem;
+}
+
+.opacity-0 {
+  opacity: 0;
+}
+
+@for $i from 1 through 10 {
+  .opacity-#{$i} {
+    opacity: math.div($i, 10);
+  }
+
+  .opacity-#{$i}0 {
+    opacity: math.div($i * 10, 100);
+  }
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacer * 0.5;
+    margin-bottom: $spacer * 1.5;
+    color: $darkAccent;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+
+    &, & * {
+      font-family: $body;
+    }
+
+    @include interact {
+        opacity: 0.7;
+    }
+}
+
 
 /* Responsive */
 @each $key, $value in $breakpoints {
@@ -348,6 +451,10 @@
         .#{$key}\:#{$name}-#{$sKey} {
           #{$property}: $sValue;
         }
+
+        .#{$key}\:-#{$name}-#{$sKey} {
+          #{$property}: -$sValue;
+        }
       }
     }
 
@@ -380,8 +487,28 @@
           #{$property}: max-content;
         }
 
+        .#{$key}\:min-#{$name}-full {
+          min-#{$property}: 100%;
+        }
+
         .#{$key}\:#{$name}-full {
           #{$property}: 100%;
+        }
+
+        .#{$key}\:max-#{$name}-full {
+          max-#{$property}: 100%;
+        }
+
+        .#{$key}\:min-#{$name}-screen {
+          min-#{$property}: if($property == "width", 100vw, 100vh);
+        }
+
+        .#{$key}\:#{$name}-screen {
+          #{$property}: if($property == "width", 100vw, 100vh);
+        }
+
+        .#{$key}\:max-#{$name}-screen {
+          max-#{$property}: if($property == "width", 100vw, 100vh);
         }
 
         .#{$key}\:#{$name}-auto {
@@ -389,6 +516,10 @@
         }
 
         @for $i from 1 through 11 {
+          .#{$key}\:min-#{$name}-#{$i}\/12 {
+            min-#{$property}: math.percentage(math.div($i, 12));
+          }
+
           .#{$key}\:#{$name}-#{$i}\/12 {
             #{$property}: math.percentage(math.div($i, 12));
           }
@@ -396,11 +527,17 @@
           @for $j from 2 through 11 {
             $denom: 12 - $j;
 
-            @if (
-              $denom > $i and ($denom <= 5 or ($denom > 5 and $denom % 2 == 0))
-            ) {
+            @if $denom > $i and ($denom <= 5 or ($denom > 5 and $denom % 2 == 0)) {
+              .#{$key}\:min-#{$name}-#{$i}\/#{$denom} {
+                min-#{$property}: math.percentage(math.div($i, $denom));
+              }
+
               .#{$key}\:#{$name}-#{$i}\/#{$denom} {
                 #{$property}: math.percentage(math.div($i, $denom));
+              }
+
+              .#{$key}\:max-#{$name}-#{$i}\/#{$denom} {
+                max-#{$property}: math.percentage(math.div($i, $denom));
               }
             }
           }
@@ -425,7 +562,15 @@
       }
 
       .#{$key}\:border-#{$ckey} {
-        border-color: $cvalue;
+        border: 1px solid $cvalue;
+      }
+
+      .#{$key}\:border-t-#{$ckey} {
+        border-top: 1px solid $cvalue;
+      }
+
+      .#{$key}\:border-b-#{$ckey} {
+        border-bottom: 1px solid $cvalue;
       }
     }
 
@@ -433,7 +578,7 @@
     @each $tkey, $props in $text-sizes {
       .#{$key}\:text-#{$tkey} {
         font-size: map.get($props, font-size);
-        line-height: map.get($props, line-heiht);
+        line-height: map.get($props, line-height);
       }
     }
   }

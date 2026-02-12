@@ -1,0 +1,48 @@
+{% load i18n heroicons %}
+<a href="{{ peer.profile_url }}" aria-label="{{ peer.display_name }}">
+    <article class="peer_item{% if peer.has_certificate %} peer_item_verified{% endif %}"
+             tabindex="0">
+        {# Avatar and header #}
+        <div class="peer_item__header">
+            <div class="peer_item__avatar" aria-hidden="true">
+                {% if peer.display_picture %}
+                    <img src="{{ peer.display_picture }}"
+                         alt=""
+                         class="peer_item__avatar-img"
+                         width="48"
+                         height="48" />
+                {% else %}
+                    {% heroicon_solid "user" size=24 %}
+                {% endif %}
+            </div>
+            <div class="peer_item__info">
+                <div class="peer_item__name-col flex flex-col gap-1">
+                    <h3 class="peer_item__name font-heading font-normal text-3xl">{{ peer.display_name }}</h3>
+                    <h4 class="font-body text-2xs">@{{ peer.username }}</h4>
+                    {% if peer.has_certificate %}
+                        <p class="visually-hidden">{% trans "Trained with Neuromancers" %}</p>
+                    {% endif %}
+                </div>
+                {% if peer.country_display %}
+                    <p class="peer_item__location font-body opacity-50">
+                        {% heroicon_mini "map-pin" size=10 %}
+                        <span class="-ml-2 font-body text-2xs">{{ peer.country_display }}</span>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+        {# Bio - body text #}
+        {% if peer.bio %}<p class="peer_item__bio">{{ peer.bio }}</p>{% endif %}
+        {# Languages #}
+        {% if peer.languages %}
+            <div class="peer_item__languages">
+                {% for lang in peer.languages|slice:":3" %}<span class="peer_item__tag">{{ lang }}</span>{% endfor %}
+                {% if peer.languages|length > 3 %}
+                    <span class="peer_item__tag peer_item__tag--more">+{{ peer.languages|length|add:"-3" }}</span>
+                {% endif %}
+            </div>
+        {% endif %}
+        {# Arrow icon #}
+        <div class="peer_item__arrow">{% heroicon_solid "chevron-right" size=24 %}</div>
+    </article>
+</a>

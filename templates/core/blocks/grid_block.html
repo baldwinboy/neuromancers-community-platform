@@ -1,0 +1,6 @@
+{% load wagtailcore_tags wagtailimages_tags %}
+<section class="grid grid-cols-1 {% if self.columns == '2' %}md:grid-cols-2{% elif self.columns == '4' %}md:grid-cols-4{% else %}md:grid-cols-3{% endif %} gap-8{% if self.top_border_color %} border-t-{{ self.top_border_color }}{% endif %}{% if self.bottom_border_color %} border-b-{{ self.bottom_border_color }}{% endif %}{% if self.top_border_style %} border-t-{{ self.top_border_style }}{% endif %}{% if self.bottom_border_style %} border-b-{{ self.bottom_border_style }}{% endif %}">
+    {% for block in self.items %}
+        {% include_block block %}
+    {% endfor %}
+</section>

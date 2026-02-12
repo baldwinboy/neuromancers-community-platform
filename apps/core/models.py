@@ -8,7 +8,9 @@ from .blocks import (
     CTABlock,
     FAQBlock,
     FeatureGridBlock,
+    GridBlock,
     HeroBlock,
+    MarqueeBlock,
     SpacerBlock,
     TestimonialBlock,
     TextBlock,
@@ -16,20 +18,30 @@ from .blocks import (
 )
 
 
+def get_shared_streamfield_blocks():
+    """
+    Returns the shared StreamField block types used across multiple page types.
+    Use this to ensure consistency between HomePage, BlogIndexPage, ContactFormPage, etc.
+    """
+    return [
+        ("hero", HeroBlock()),
+        ("text", TextBlock()),
+        ("text_image", TextImageBlock()),
+        ("cta", CTABlock()),
+        ("testimonial", TestimonialBlock()),
+        ("features", FeatureGridBlock()),
+        ("faq", FAQBlock()),
+        ("spacer", SpacerBlock()),
+        ("grid", GridBlock()),
+        ("marquee", MarqueeBlock()),
+    ]
+
+
 class HomePage(Page):
     max_count = 1
 
     body = StreamField(
-        [
-            ("hero", HeroBlock()),
-            ("text", TextBlock()),
-            ("text_image", TextImageBlock()),
-            ("cta", CTABlock()),
-            ("testimonial", TestimonialBlock()),
-            ("features", FeatureGridBlock()),
-            ("faq", FAQBlock()),
-            ("spacer", SpacerBlock()),
-        ],
+        get_shared_streamfield_blocks(),
         blank=True,
         null=True,
         use_json_field=True,

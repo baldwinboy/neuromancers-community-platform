@@ -1,15 +1,19 @@
+@use "sass:map";
+@use "sass:color";
 @use "../mixins" as *;
 @use "../variables" as *;
 
 .session_item {
+    position: relative;
     display: flex;
-    align-items: center;
-    gap: 1rem;
+    flex-direction: column;
+    gap: $spacer * 0.25;
     width: 100%;
-    padding: 1rem;
+    padding: $spacer * 1.5;
+    padding-right: $spacer * 3;
     border: 1px solid $black;
     background: $darkAccent;
-    color: $lightAccent;
+    color: $safeLightAccent;
     box-shadow: 10px 5px $black;
     transition: all 0.25s ease-in-out;
 
@@ -21,18 +25,338 @@
         transition: none;
     }
 
-    & > time {
+    // Alternate style for group sessions
+    &--alt {
+        border-color: $darkAccent;
+        background: $black;
+        color: $white;
+
+        .session_item__arrow {
+            color: $white;
+        }
+
+        .session_item__tag {
+            background: rgba($white, 0.15);
+            color: $white;
+        }
+
+        .session_item__tag--available {
+            background: rgba(74, 222, 128, 0.2);
+            color: rgb(134, 239, 172);
+        }
+
+        .session_item__tag--full {
+            background: rgba(248, 113, 113, 0.2);
+            color: rgb(252, 165, 165);
+        }
+
+        .session_item__filter-tag {
+            background: rgba($accent, 0.2);
+            color: $lightAccent;
+        }
+    }
+
+    // Meta info (date/time)
+    &__meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: $spacer * 0.5;
+        font-family: $subheading;
+        font-size: 0.875rem;
         opacity: 0.75;
     }
 
+    &__meta-spacer {
+        height: $spacer;
+    }
+
+    &__date,
+    &__time {
+        font-family: $subheading;
+    }
+
+    &__separator {
+        opacity: 0.5;
+    }
+
+    &__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: $spacer * 0.25;
+        padding: calc($spacer * 0.125) calc($spacer * 0.5);
+        font-size: 0.75rem;
+        border-radius: 9999px;
+
+        &--recurring {
+            background: rgba(147, 197, 253, 0.2);
+            color: rgb(147, 197, 253);
+        }
+    }
+
+    // Request status tag (Going / Pending / Not approved)
+    &__status {
+        $text-size: map.get($text-sizes, xs);
+
+        display: inline-flex;
+        align-items: center;
+        gap: $spacer * 0.25;
+        margin-block: $spacer;
+        padding: calc($spacer * 0.125) calc($spacer * 0.625);
+        font-family: $body;
+        font-size: map.get($text-size, font-size);
+        line-height: map.get($text-size, line-height);
+        font-weight: 600;
+        text-transform: uppercase;
+        border-radius: 9999px;
+        width: fit-content;
+
+        &--going {
+            background: rgba(74, 222, 128, 0.2);
+            color: rgb(74, 222, 128);
+        }
+
+        &--pending {
+            background: rgba(250, 204, 21, 0.2);
+            color: rgb(250, 204, 21);
+        }
+
+        &--rejected {
+            background: rgba(248, 113, 113, 0.2);
+            color: rgb(248, 113, 113);
+        }
+    }
+
+    // Alternate style overrides for status tags (group sessions)
+    &--alt &__status {
+        &--going {
+            background: rgba(74, 222, 128, 0.2);
+            color: rgb(134, 239, 172);
+        }
+
+        &--pending {
+            background: rgba(250, 204, 21, 0.2);
+            color: rgb(253, 224, 71);
+        }
+
+        &--rejected {
+            background: rgba(248, 113, 113, 0.2);
+            color: rgb(252, 165, 165);
+        }
+    }
+
+    // Title - primary heading
+    &__title {
+        font-family: $heading;
+        font-size: 200%;
+        font-weight: 400;
+        margin-top: $spacer * 0.25;
+    }
+
+    // Description - body text
+    &__description {
+        font-family: $body;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        opacity: 0.8;
+        @include line-clamp(2);
+    }
+
+    // Author - subheading
     &__author {
-        align-self: flex-end;
-        margin-left: auto;
+        $text-size: map.get($text-sizes, lg);
+        font-family: $heading;
+        font-size: map.get($text-size, font-size);
+        font-weight: normal;
+        line-height: map.get($text-size, line-height);
+        margin-top: $spacer * 0.25;
+        opacity: 0.7;
+    }
+
+    // Details row
+    &__details {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: $spacer * 0.5;
+        margin-top: $spacer * 0.75;
+    }
+
+    &__tag {
+        display: inline-flex;
+        align-items: center;
+        gap: $spacer * 0.25;
+        padding: calc($spacer * 0.25) calc($spacer * 0.5);
+        font-family: $body;
+        font-size: 0.75rem;
+        background: rgba($lightAccent, 0.15);
+        border-radius: 9999px;
+
+        svg {
+            flex-shrink: 0;
+        }
+
+        &--available {
+            background: rgba(74, 222, 128, 0.2);
+            color: rgb(74, 222, 128);
+        }
+
+        &--full {
+            background: rgba(248, 113, 113, 0.2);
+            color: rgb(248, 113, 113);
+        }
+    }
+
+    // Filter tags
+    &__filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacer * 0.25;
+        margin-top: $spacer * 0.5;
+    }
+
+    &__filter-tag {
+        display: inline-block;
+        padding: calc($spacer * 0.125) calc($spacer * 0.5);
+        font-family: $body;
+        font-size: 0.75rem;
+        background: rgba($black, 0.2);
+        color: $accent;
+        border-radius: 9999px;
+    }
+
+    // Arrow indicator
+    &__arrow {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $lightAccent;
     }
 }
 
-.session_item_alt {
-    border: 1px solid $darkAccent;
-    background: $black;
-    color: $white;
+.peer_item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: $spacer * 0.5;
+    width: 100%;
+    padding: $spacer * 2;
+    padding-right: $spacer * 3;
+    border: 1px solid $black;
+    background: $darkAccent;
+    color: $safeLightAccent;
+    box-shadow: 10px 5px $black;
+    transition: all 0.25s ease-in-out;
+
+    @include interact {
+        transform: translate(-0.5rem, -0.25rem);
+    }
+
+    @include reduced-motion {
+        transition: none;
+    }
+
+    &_verified {
+        background: $safeLightAccent;
+        color: $darkAccent;
+        &::after {
+            content: "Trained with Neuromancers";
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: $darkAccent;
+            color: $safeLightAccent;
+            padding: $spacer * 0.5;
+            font-size: 0.75rem;
+            font-weight: 400;
+            text-transform: uppercase;
+        }
+    }
+
+    &__header {
+        display: flex;
+        align-items: flex-start;
+        gap: $spacer * 0.75;
+    }
+
+    &__avatar {
+        flex-shrink: 0;
+        width: $spacer * 3;
+        height: $spacer * 3;
+        border-radius: 50%;
+        background: $accent;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $darkAccent;
+
+        .peer_item_verified & {
+            background: $darkAccent;
+            color: $accent;
+        }
+    }
+
+    &__avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    &__info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &__bio {
+        font-family: $body;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        opacity: 0.8;
+        @include line-clamp(2);
+    }
+
+    &__languages {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacer * 0.25;
+        margin-top: $spacer * 0.25;
+    }
+
+    &__tag {
+        display: inline-block;
+        padding: calc($spacer * 0.125) calc($spacer * 0.5);
+        font-family: $body;
+        font-size: 0.75rem;
+        background: rgba($lightAccent, 0.15);
+        border-radius: 9999px;
+
+        &--more {
+            background: rgba($lightAccent, 0.1);
+        }
+
+        .peer_item_verified & {
+            background: color.scale($accent, $lightness: -50%, $alpha: -80%, $saturation: -50%);
+            color: $darkAccent;
+        }
+    }
+
+    &__arrow {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $safeLightAccent;
+
+        .peer_item_verified & {
+            color: $darkAccent;
+        }
+    }
 }

@@ -10,6 +10,7 @@ from wagtail.documents import urls as wagtaildocs_urls
 
 from apps.accounts.views import (
     ClearNotificationsView,
+    HostDashboardView,
     MarkAllNotificationsReadView,
     MarkNotificationReadView,
     NotificationInboxView,
@@ -22,10 +23,15 @@ from apps.accounts.views import (
 )
 from apps.events.views import (
     ApproveRefundView,
-    CreatePaymentIntentView,
+    CalendarExportView,
+    CreatePaymentLinkView,
+    ManageMeetingLinkView,
     PaymentHistoryView,
     PaymentSuccessView,
     RequestRefundView,
+    SessionCalendarExportView,
+    WithdrawGroupRequestView,
+    WithdrawPeerRequestView,
 )
 
 # Load all other app admins
@@ -59,6 +65,7 @@ urlpatterns = [
     path("profile/", ProfileView.as_view(), name="accounts_profile"),
     path("profile/<str:username>", UserView.as_view(), name="accounts_user_profile"),
     path("settings/", UserSettingsView.as_view(), name="accounts_user_settings"),
+    path("dashboard/", HostDashboardView.as_view(), name="host_dashboard"),
     path("notifications/", NotificationInboxView.as_view(), name="notification_inbox"),
     path(
         "notifications/<uuid:notification_id>/mark-read/",
@@ -88,9 +95,9 @@ urlpatterns = [
     path("payments/history/", PaymentHistoryView.as_view(), name="payment_history"),
     path("payments/success/", PaymentSuccessView.as_view(), name="payment_success"),
     path(
-        "payments/create/<uuid:request_id>/",
-        CreatePaymentIntentView.as_view(),
-        name="create_payment_intent",
+        "payments/pay/<uuid:request_id>/",
+        CreatePaymentLinkView.as_view(),
+        name="create_payment_link",
     ),
     path(
         "payments/refund/<uuid:request_id>/",
@@ -101,6 +108,34 @@ urlpatterns = [
         "payments/approve-refund/<uuid:request_id>/",
         ApproveRefundView.as_view(),
         name="approve_refund",
+    ),
+    # Session request management
+    path(
+        "requests/peer/<uuid:request_id>/withdraw/",
+        WithdrawPeerRequestView.as_view(),
+        name="withdraw_peer_request",
+    ),
+    path(
+        "requests/group/<uuid:request_id>/withdraw/",
+        WithdrawGroupRequestView.as_view(),
+        name="withdraw_group_request",
+    ),
+    # Meeting link management
+    path(
+        "dashboard/meeting-link/",
+        ManageMeetingLinkView.as_view(),
+        name="manage_meeting_link",
+    ),
+    # Calendar export URLs
+    path(
+        "calendar/export/",
+        CalendarExportView.as_view(),
+        name="calendar_export",
+    ),
+    path(
+        "calendar/session/<str:session_type>/<uuid:session_id>/",
+        SessionCalendarExportView.as_view(),
+        name="session_calendar_export",
     ),
 ]
 

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load i18n heroicons account %}
+{% load i18n heroicons account getpronto %}
 
 {% block body_class %}
     template-accountsusersettings
@@ -11,295 +11,579 @@
 {% endblock title %}
 
 {% block content %}
-    <main class="w-full container mx-auto py-9 px-6 lg:px-0">
-        <div class="max-w-2xl mx-auto">
-            <h1 class="text-3xl font-bold mb-8">{% trans "Settings" %}</h1>
-            <!-- Tab Navigation -->
-            <div class="flex border-b border-gray-200 gap-1 mb-8" role="tablist">
-                <button role="tab"
-                        aria-selected="{% if active_tab == 'profile' %}true{% else %}false{% endif %}"
-                        class="px-4 py-2 font-medium border-b-2 {% if active_tab == 'profile' %}border-blue-600 text-blue-600{% else %}border-transparent text-gray-600 hover:text-gray-900{% endif %}"
-                        onclick="window.location.href='{% url 'accounts_user_settings' %}?tab=profile'">
-                    {% trans "Profile" %}
-                </button>
-                <button role="tab"
-                        aria-selected="{% if active_tab == 'notifications' %}true{% else %}false{% endif %}"
-                        class="px-4 py-2 font-medium border-b-2 {% if active_tab == 'notifications' %}border-blue-600 text-blue-600{% else %}border-transparent text-gray-600 hover:text-gray-900{% endif %}"
-                        onclick="window.location.href='{% url 'accounts_user_settings' %}?tab=notifications'">
-                    {% trans "Notifications" %}
-                </button>
-                {% if perms.events.add_peersession %}
-                    <button role="tab"
-                            aria-selected="{% if active_tab == 'stripe' %}true{% else %}false{% endif %}"
-                            class="px-4 py-2 font-medium border-b-2 {% if active_tab == 'stripe' %}border-blue-600 text-blue-600{% else %}border-transparent text-gray-600 hover:text-gray-900{% endif %}"
-                            onclick="window.location.href='{% url 'accounts_user_settings' %}?tab=stripe'">
-                        {% trans "Payments" %}
-                    </button>
-                {% endif %}
-            </div>
-            <!-- Messages -->
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="mb-4 p-4 rounded {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
-                {% endfor %}
+    <main class="settings">
+        {# Back button #}
+        <a href="{% url 'accounts_profile' %}" class="back-link">
+            {% heroicon_mini "arrow-left" size=18 %}
+            <span class="font-body">{% trans "Back to Profile" %}</span>
+        </a>
+        <h1 class="settings-title">{% trans "Settings" %}</h1>
+        {# Tab Navigation #}
+        <nav class="settings-nav"
+             role="tablist"
+             aria-label='{% trans "Settings sections" %}'>
+            <a href="{% url 'accounts_user_settings' %}?tab=account"
+               role="tab"
+               aria-selected="{% if active_tab == 'account' %}true{% else %}false{% endif %}"
+               class="settings-nav__tab {% if active_tab == 'account' %}settings-nav__tab--active{% endif %}">
+                {% heroicon_mini "cog-6-tooth" size=18 %}
+                <span>{% trans "Account" %}</span>
+            </a>
+            <a href="{% url 'accounts_user_settings' %}?tab=profile"
+               role="tab"
+               aria-selected="{% if active_tab == 'profile' %}true{% else %}false{% endif %}"
+               class="settings-nav__tab {% if active_tab == 'profile' %}settings-nav__tab--active{% endif %}">
+                {% heroicon_mini "user" size=18 %}
+                <span>{% trans "Profile" %}</span>
+            </a>
+            <a href="{% url 'accounts_user_settings' %}?tab=notifications"
+               role="tab"
+               aria-selected="{% if active_tab == 'notifications' %}true{% else %}false{% endif %}"
+               class="settings-nav__tab {% if active_tab == 'notifications' %}settings-nav__tab--active{% endif %}">
+                {% heroicon_mini "bell" size=18 %}
+                <span>{% trans "Notifications" %}</span>
+            </a>
+            <a href="{% url 'accounts_user_settings' %}?tab=calendar"
+               role="tab"
+               aria-selected="{% if active_tab == 'calendar' %}true{% else %}false{% endif %}"
+               class="settings-nav__tab {% if active_tab == 'calendar' %}settings-nav__tab--active{% endif %}">
+                {% heroicon_mini "calendar-days" size=18 %}
+                <span>{% trans "Calendar" %}</span>
+            </a>
+            {% if perms.events.add_peersession %}
+                <a href="{% url 'accounts_user_settings' %}?tab=privacy"
+                   role="tab"
+                   aria-selected="{% if active_tab == 'privacy' %}true{% else %}false{% endif %}"
+                   class="settings-nav__tab {% if active_tab == 'privacy' %}settings-nav__tab--active{% endif %}">
+                    {% heroicon_mini "eye" size=18 %}
+                    <span>{% trans "Privacy" %}</span>
+                </a>
+                <a href="{% url 'accounts_user_settings' %}?tab=stripe"
+                   role="tab"
+                   aria-selected="{% if active_tab == 'stripe' %}true{% else %}false{% endif %}"
+                   class="settings-nav__tab {% if active_tab == 'stripe' %}settings-nav__tab--active{% endif %}">
+                    {% heroicon_mini "credit-card" size=18 %}
+                    <span>{% trans "Payments" %}</span>
+                </a>
             {% endif %}
-            <!-- Profile Tab -->
-            {% if active_tab == 'profile' %}
-                <div role="tabpanel" aria-labelledby="profile-tab">
-                    <form method="post" enctype="multipart/form-data" class="space-y-6">
+        </nav>
+        {# Messages #}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="settings-alert settings-alert--{% if message.tags %}{{ message.tags }}{% else %}info{% endif %}"
+                     role="alert">
+                    <p class="font-body">{{ message }}</p>
+                </div>
+            {% endfor %}
+        {% endif %}
+        {# Account Tab #}
+        {% if active_tab == 'account' %}
+            <section class="settings-panel" role="tabpanel" aria-labelledby="account-tab">
+                {# Personal Details #}
+                <div class="settings-section">
+                    <h2 class="settings-section__title font-heading text-lg">{% trans "Personal Details" %}</h2>
+                    <p class="settings-section__description font-body">{% trans "Update your name, username, and date of birth." %}</p>
+                    <form method="post" class="settings-form settings-form--grid">
                         {% csrf_token %}
-                        <input type="hidden" name="form_type" value="profile">
-                        <!-- Display Picture -->
-                        <div>
-                            <label for="{{ profile_form.display_picture.id_for_label }}"
-                                   class="block text-sm font-medium text-gray-700 mb-2">
-                                {% trans "Profile Picture" as profile_picture_label %}
-                            </label>
-                            {% if user.profile.display_picture %}
-                                <div class="mb-4">
-                                    <img src="{{ user.profile.display_picture.url }}"
-                                         alt="{{ profile_picture_label }}"
-                                         width="128"
-                                         height="128"
-                                         class="w-32 h-32 rounded-full object-cover">
-                                </div>
-                            {% endif %}
-                            {{ profile_form.display_picture }}
-                            {% if profile_form.display_picture.errors %}
-                                <div class="text-red-600 text-sm mt-1">{{ profile_form.display_picture.errors }}</div>
+                        <input type="hidden" name="form_type" value="account">
+                        {# First name #}
+                        <div class="settings-form__group">
+                            <label for="{{ account_form.first_name.id_for_label }}"
+                                   class="settings-form__label">{{ account_form.first_name.label }}</label>
+                            {{ account_form.first_name }}
+                            {% if account_form.first_name.errors %}
+                                <p class="settings-form__error font-body">{{ account_form.first_name.errors.0 }}</p>
                             {% endif %}
                         </div>
-                        <!-- About -->
-                        <div>
-                            <label for="{{ profile_form.about.id_for_label }}"
-                                   class="block text-sm font-medium text-gray-700 mb-2">
-                                {{ profile_form.about.label }}
-                            </label>
-                            {{ profile_form.about }}
-                            {% if profile_form.about.errors %}
-                                <div class="text-red-600 text-sm mt-1">{{ profile_form.about.errors }}</div>
+                        {# Last name #}
+                        <div class="settings-form__group">
+                            <label for="{{ account_form.last_name.id_for_label }}"
+                                   class="settings-form__label">{{ account_form.last_name.label }}</label>
+                            {{ account_form.last_name }}
+                            {% if account_form.last_name.errors %}
+                                <p class="settings-form__error font-body">{{ account_form.last_name.errors.0 }}</p>
                             {% endif %}
                         </div>
-                        <!-- Country -->
-                        <div>
-                            <label for="{{ profile_form.country.id_for_label }}"
-                                   class="block text-sm font-medium text-gray-700 mb-2">
-                                {{ profile_form.country.label }}
-                            </label>
-                            {{ profile_form.country }}
-                            {% if profile_form.country.errors %}
-                                <div class="text-red-600 text-sm mt-1">{{ profile_form.country.errors }}</div>
+                        {# Username #}
+                        <div class="settings-form__group">
+                            <label for="{{ account_form.username.id_for_label }}"
+                                   class="settings-form__label">{{ account_form.username.label }}</label>
+                            {{ account_form.username }}
+                            <p class="settings-form__hint font-body">{% trans "Lowercase letters, numbers, underscores, and dashes only." %}</p>
+                            {% if account_form.username.errors %}
+                                <p class="settings-form__error font-body">{{ account_form.username.errors.0 }}</p>
                             {% endif %}
                         </div>
-                        <!-- Access Needs (Support Seekers) -->
-                        {% if 'access_needs' in profile_form.fields %}
-                            <div>
-                                <label for="{{ profile_form.access_needs.id_for_label }}"
-                                       class="block text-sm font-medium text-gray-700 mb-2">
-                                    {{ profile_form.access_needs.label }}
-                                </label>
-                                <p class="text-sm text-gray-600 mb-2">{{ profile_form.access_needs.help_text }}</p>
-                                {{ profile_form.access_needs }}
-                                {% if profile_form.access_needs.errors %}
-                                    <div class="text-red-600 text-sm mt-1">{{ profile_form.access_needs.errors }}</div>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-                        <!-- Terms & Conditions (Hosts) -->
-                        {% if 'terms_and_conditions' in profile_form.fields %}
-                            <div>
-                                <label for="{{ profile_form.terms_and_conditions.id_for_label }}"
-                                       class="block text-sm font-medium text-gray-700 mb-2">
-                                    {{ profile_form.terms_and_conditions.label }}
-                                </label>
-                                <p class="text-sm text-gray-600 mb-2">{{ profile_form.terms_and_conditions.help_text }}</p>
-                                {{ profile_form.terms_and_conditions }}
-                                {% if profile_form.terms_and_conditions.errors %}
-                                    <div class="text-red-600 text-sm mt-1">{{ profile_form.terms_and_conditions.errors }}</div>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-                        <button type="submit"
-                                class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700">
-                            {% trans "Save Profile" %}
-                        </button>
+                        {# Date of birth #}
+                        <div class="settings-form__group settings-form__group--dob">
+                            <label for="{{ account_form.date_of_birth.id_for_label }}"
+                                   class="settings-form__label">{{ account_form.date_of_birth.label }}</label>
+                            <div class="settings-form__date-selects">{{ account_form.date_of_birth }}</div>
+                            {% if account_form.date_of_birth.errors %}
+                                <p class="settings-form__error font-body">{{ account_form.date_of_birth.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="settings-form__group settings-form__group--full">
+                            <button type="submit" class="settings-submit">
+                                {% heroicon_mini "check" size=18 %}
+                                {% trans "Save Details" %}
+                            </button>
+                        </div>
                     </form>
                 </div>
-            {% endif %}
-            <!-- Notifications Tab -->
-            {% if active_tab == 'notifications' %}
-                <div role="tabpanel" aria-labelledby="notifications-tab" class="space-y-6">
-                    <!-- Base Notification Settings -->
-                    <div>
-                        <h3 class="text-lg font-semibold mb-4">{% trans "General Notifications" %}</h3>
-                        <form method="post" class="space-y-4">
+                <hr class="settings-form__divider">
+                {# Email address — link to allauth email management #}
+                <div class="settings-section">
+                    <h2 class="settings-section__title font-heading text-lg">{% trans "Email Address" %}</h2>
+                    <p class="settings-section__description font-body">{% trans "Manage the email addresses linked to your account." %}</p>
+                    <p class="settings-account__current font-body">
+                        {% trans "Current email:" %} <strong>{{ user.email }}</strong>
+                    </p>
+                    <a href="{% url 'account_email' %}"
+                       class="settings-submit settings-submit--secondary">
+                        {% heroicon_mini "envelope" size=18 %}
+                        {% trans "Manage Email Addresses" %}
+                    </a>
+                </div>
+                <hr class="settings-form__divider">
+                {# Password — link to allauth password change #}
+                <div class="settings-section">
+                    <h2 class="settings-section__title font-heading text-lg">{% trans "Password" %}</h2>
+                    <p class="settings-section__description font-body">{% trans "Change your password to keep your account secure." %}</p>
+                    <a href="{% url 'account_change_password' %}"
+                       class="settings-submit settings-submit--secondary">
+                        {% heroicon_mini "lock-closed" size=18 %}
+                        {% trans "Change Password" %}
+                    </a>
+                </div>
+            </section>
+        {% endif %}
+        {# Profile Tab #}
+        {% if active_tab == 'profile' %}
+            <section class="settings-panel" role="tabpanel" aria-labelledby="profile-tab">
+                <form method="post"
+                      enctype="multipart/form-data"
+                      class="settings-form settings-form--grid">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="profile">
+                    {# Display Picture #}
+                    <div class="settings-form__group settings-form__group--full">
+                        <label class="settings-form__label">{% trans "Profile Picture" %}</label>
+                        <div class="settings-avatar settings-avatar--clickable"
+                             id="avatar-upload-area">
+                            <div class="settings-avatar__preview" id="avatar-preview">
+                                {% if user.profile.display_picture_url %}
+                                    {% pronto_img user.profile.display_picture_url alt="" w=128 h=128 q=90 fit="cover" css_class="settings-avatar__image" %}
+                                {% else %}
+                                    <div class="settings-avatar__placeholder">{% heroicon_solid "user" size=48 %}</div>
+                                {% endif %}
+                                <div class="settings-avatar__overlay">
+                                    {% heroicon_mini "camera" size=20 %}
+                                    <span class="font-body">{% trans "Change" %}</span>
+                                </div>
+                            </div>
+                            {{ profile_form.display_picture_file }}
+                            <div class="settings-avatar__info">
+                                <p class="settings-form__hint font-body">{% trans "Click to upload. Recommended size: 128×128 px." %}</p>
+                                <p class="settings-form__hint font-body">{% trans "JPG, PNG, GIF or WebP. Max 2 MB." %}</p>
+                            </div>
+                        </div>
+                        {% if profile_form.display_picture_file.errors %}
+                            <p class="settings-form__error font-body">{{ profile_form.display_picture_file.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    {# About #}
+                    <div class="settings-form__group settings-form__group--full">
+                        <label for="{{ profile_form.about.id_for_label }}"
+                               class="settings-form__label">{{ profile_form.about.label }}</label>
+                        {{ profile_form.about }}
+                        {% if profile_form.about.help_text %}
+                            <p class="settings-form__hint font-body">{{ profile_form.about.help_text }}</p>
+                        {% endif %}
+                        {% if profile_form.about.errors %}
+                            <p class="settings-form__error font-body">{{ profile_form.about.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    {# Country #}
+                    <div class="settings-form__group">
+                        <label for="{{ profile_form.country.id_for_label }}"
+                               class="settings-form__label">{{ profile_form.country.label }}</label>
+                        {{ profile_form.country }}
+                        {% if profile_form.country.errors %}
+                            <p class="settings-form__error font-body">{{ profile_form.country.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    {# Access Needs (Support Seekers) #}
+                    {% if 'access_needs' in profile_form.fields %}
+                        <div class="settings-form__group settings-form__group--full">
+                            <label for="{{ profile_form.access_needs.id_for_label }}"
+                                   class="settings-form__label">{{ profile_form.access_needs.label }}</label>
+                            {% if profile_form.access_needs.help_text %}
+                                <p class="settings-form__hint font-body">{{ profile_form.access_needs.help_text }}</p>
+                            {% endif %}
+                            {{ profile_form.access_needs }}
+                            {% if profile_form.access_needs.errors %}
+                                <p class="settings-form__error font-body">{{ profile_form.access_needs.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    {# Terms & Conditions (Hosts) #}
+                    {% if 'terms_and_conditions' in profile_form.fields %}
+                        <div class="settings-form__group settings-form__group--full">
+                            <label for="{{ profile_form.terms_and_conditions.id_for_label }}"
+                                   class="settings-form__label">{{ profile_form.terms_and_conditions.label }}</label>
+                            {% if profile_form.terms_and_conditions.help_text %}
+                                <p class="settings-form__hint font-body">{{ profile_form.terms_and_conditions.help_text }}</p>
+                            {% endif %}
+                            {{ profile_form.terms_and_conditions }}
+                            {% if profile_form.terms_and_conditions.errors %}
+                                <p class="settings-form__error font-body">{{ profile_form.terms_and_conditions.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    <div class="settings-form__group settings-form__group--full">
+                        <button type="submit" class="settings-submit">
+                            {% heroicon_mini "check" size=18 %}
+                            {% trans "Save Profile" %}
+                        </button>
+                    </div>
+                </form>
+            </section>
+        {% endif %}
+        {# Notifications Tab #}
+        {% if active_tab == 'notifications' %}
+            <section class="settings-panel"
+                     role="tabpanel"
+                     aria-labelledby="notifications-tab">
+                {# General Notifications - Collapsible #}
+                <details class="settings-collapsible" open>
+                    <summary class="settings-collapsible__header">
+                        {% heroicon_mini "bell" size=18 %}
+                        <span class="font-heading text-lg">{% trans "General Notifications" %}</span>
+                    </summary>
+                    <div class="settings-collapsible__content">
+                        <form method="post" class="settings-form settings-form--grid">
                             {% csrf_token %}
                             <input type="hidden" name="form_type" value="notifications">
                             {% for field in notification_form %}
                                 {% if field.name != 'has_customized' %}
-                                    <div class="flex items-start">
-                                        <div class="flex-1">
-                                            <label for="{{ field.id_for_label }}"
-                                                   class="text-sm font-medium text-gray-700">{{ field.label }}</label>
-                                            {% if field.help_text %}<p class="text-xs text-gray-600 mt-1">{{ field.help_text|safe }}</p>{% endif %}
+                                    <div class="settings-form__toggle">
+                                        <div class="settings-form__toggle-content">
+                                            <label for="{{ field.id_for_label }}" class="settings-form__label">{{ field.label }}</label>
+                                            {% if field.help_text %}<p class="settings-form__hint font-body">{{ field.help_text|safe }}</p>{% endif %}
                                         </div>
-                                        <div class="ml-4">
-                                            {{ field }}
-                                            {% if field.errors %}<div class="text-red-600 text-xs mt-1">{{ field.errors }}</div>{% endif %}
-                                        </div>
+                                        <div class="settings-form__toggle-control">{{ field }}</div>
+                                        {% if field.errors %}<p class="settings-form__error font-body">{{ field.errors.0 }}</p>{% endif %}
                                     </div>
                                 {% endif %}
                             {% endfor %}
-                            <button type="submit"
-                                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700">
-                                {% trans "Save Notifications" %}
-                            </button>
+                            <div class="settings-form__group settings-form__group--full">
+                                <button type="submit" class="settings-submit">
+                                    {% heroicon_mini "check" size=18 %}
+                                    {% trans "Save Notifications" %}
+                                </button>
+                            </div>
                         </form>
                     </div>
-                    <!-- Peer-specific Notification Settings -->
-                    {% if perms.events.add_peersession %}
-                        <div class="pt-6 border-t border-gray-200">
-                            <h3 class="text-lg font-semibold mb-4">{% trans "Host Notifications" %}</h3>
-                            <form method="post" class="space-y-4">
+                </details>
+                {# Host Notifications (Peers only) - Collapsible #}
+                {% if perms.events.add_peersession %}
+                    <details class="settings-collapsible">
+                        <summary class="settings-collapsible__header">
+                            {% heroicon_mini "megaphone" size=18 %}
+                            <span class="font-heading text-lg">{% trans "Host Notifications" %}</span>
+                        </summary>
+                        <div class="settings-collapsible__content">
+                            <form method="post" class="settings-form settings-form--grid">
                                 {% csrf_token %}
                                 <input type="hidden" name="form_type" value="peer_notifications">
                                 {% for field in peer_notification_form %}
                                     {% if field.name != 'has_customized' %}
-                                        <div class="flex items-start">
-                                            <div class="flex-1">
-                                                <label for="{{ field.id_for_label }}"
-                                                       class="text-sm font-medium text-gray-700">
-                                                    {{ field.label }}
-                                                </label>
-                                                {% if field.help_text %}<p class="text-xs text-gray-600 mt-1">{{ field.help_text|safe }}</p>{% endif %}
+                                        <div class="settings-form__toggle">
+                                            <div class="settings-form__toggle-content">
+                                                <label for="{{ field.id_for_label }}" class="settings-form__label">{{ field.label }}</label>
+                                                {% if field.help_text %}<p class="settings-form__hint font-body">{{ field.help_text|safe }}</p>{% endif %}
                                             </div>
-                                            <div class="ml-4">
-                                                {{ field }}
-                                                {% if field.errors %}<div class="text-red-600 text-xs mt-1">{{ field.errors }}</div>{% endif %}
-                                            </div>
+                                            <div class="settings-form__toggle-control">{{ field }}</div>
+                                            {% if field.errors %}<p class="settings-form__error font-body">{{ field.errors.0 }}</p>{% endif %}
                                         </div>
                                     {% endif %}
                                 {% endfor %}
-                                <button type="submit"
-                                        class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700">
-                                    {% trans "Save Host Notifications" %}
-                                </button>
+                                <div class="settings-form__group settings-form__group--full">
+                                    <button type="submit" class="settings-submit">
+                                        {% heroicon_mini "check" size=18 %}
+                                        {% trans "Save Host Notifications" %}
+                                    </button>
+                                </div>
                             </form>
                         </div>
-                    {% endif %}
+                    </details>
+                {% endif %}
+            </section>
+        {% endif %}
+        {# Privacy Tab (Hosts only) #}
+        {% if perms.events.add_peersession and active_tab == 'privacy' %}
+            <section class="settings-panel" role="tabpanel" aria-labelledby="privacy-tab">
+                <div class="settings-section">
+                    <h2 class="settings-section__title font-heading text-lg">{% trans "Profile Visibility" %}</h2>
+                    <p class="settings-section__description font-body">
+                        {% trans "Control what information is visible on your public profile page." %}
+                    </p>
+                    <form method="post" class="settings-form settings-form--grid">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="privacy">
+                        {% for field in privacy_form %}
+                            <div class="settings-form__toggle">
+                                <div class="settings-form__toggle-content">
+                                    <label for="{{ field.id_for_label }}" class="settings-form__label">{{ field.label }}</label>
+                                    {% if field.help_text %}<p class="settings-form__hint font-body">{{ field.help_text|safe }}</p>{% endif %}
+                                </div>
+                                <div class="settings-form__toggle-control">{{ field }}</div>
+                                {% if field.errors %}<p class="settings-form__error font-body">{{ field.errors.0 }}</p>{% endif %}
+                            </div>
+                        {% endfor %}
+                        <div class="settings-form__group settings-form__group--full">
+                            <button type="submit" class="settings-submit">
+                                {% heroicon_mini "check" size=18 %}
+                                {% trans "Save Privacy Settings" %}
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            {% endif %}
-            <!-- Payments Tab (Hosts only) -->
-            {% if perms.events.add_peersession and active_tab == 'stripe' %}
-                <div role="tabpanel" aria-labelledby="stripe-tab">
-                    <div class="space-y-6">
-                        {% if stripe_account and stripe_account.is_ready %}
-                            <!-- Connected Account Info -->
-                            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                                <h3 class="text-lg font-semibold text-green-900 mb-2">✓ {% trans "Stripe Account Connected" %}</h3>
-                                <p class="text-sm text-green-800 mb-4">{% trans "Your Stripe account is active and ready to receive payments." %}</p>
-                                <dl class="space-y-2 text-sm">
-                                    <div>
-                                        <dt class="font-medium text-gray-700">{% trans "Account ID:" %}</dt>
-                                        <dd class="text-gray-600 font-mono">
-                                            {{ stripe_account.id }}
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt class="font-medium text-gray-700">{% trans "Connected Since:" %}</dt>
-                                        <dd class="text-gray-600">
-                                            {{ stripe_account.created_at|date:"SHORT_DATE_FORMAT" }}
-                                        </dd>
-                                    </div>
-                                </dl>
+            </section>
+        {% endif %}
+        {# Calendar Tab (All users) #}
+        {% if active_tab == 'calendar' %}
+            <section class="settings-panel" role="tabpanel" aria-labelledby="calendar-tab">
+                <div class="settings-section">
+                    <h2 class="settings-section__title font-heading text-lg">{% trans "Calendar Sync" %}</h2>
+                    <p class="settings-section__description font-body">
+                        {% trans "Export your approved sessions to your favourite calendar app. This includes sessions you're hosting and attending." %}
+                    </p>
+                </div>
+                {# ICS Download #}
+                <div class="settings-section">
+                    <h3 class="settings-section__subtitle font-heading">{% trans "Download Calendar File" %}</h3>
+                    <p class="settings-section__description font-body">
+                        {% trans "Download an ICS file containing all your approved sessions. Import it into any calendar application." %}
+                    </p>
+                    <a href="{% url 'calendar_export' %}" class="settings-submit" download>
+                        {% heroicon_mini "arrow-down-tray" size=18 %}
+                        {% trans "Download ICS File" %}
+                    </a>
+                </div>
+                {# Calendar service links #}
+                <div class="settings-section">
+                    <h3 class="settings-section__subtitle font-heading">{% trans "Add to Calendar Service" %}</h3>
+                    <p class="settings-section__description font-body">
+                        {% trans "Use the links below to export individual sessions from your profile or session detail pages." %}
+                    </p>
+                    <div class="settings-calendar-services">
+                        <div class="settings-calendar-services__item">
+                            <div class="settings-calendar-services__icon settings-calendar-services__icon--google">
+                                {% heroicon_mini "calendar-days" size=20 %}
                             </div>
-                            <!-- Payment Links -->
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <h3 class="text-lg font-semibold text-gray-900 mb-4">{% trans "Payment Management" %}</h3>
-                                <div class="space-y-2">
-                                    <a href="{% url 'payment_history' %}"
-                                       class="block w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 text-center">
-                                        {% trans "View Payment History" %}
-                                    </a>
-                                    <a href="https://dashboard.stripe.com/account"
-                                       target="_blank"
-                                       rel="noopener"
-                                       class="block w-full bg-gray-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-gray-700 text-center">
-                                        {% trans "Stripe Dashboard" %} ↗
-                                    </a>
-                                </div>
+                            <div class="settings-calendar-services__info">
+                                <h4 class="font-heading">{% trans "Google Calendar" %}</h4>
+                                <p class="font-body">{% trans "Click 'Add to Calendar' on any session page and select Google Calendar." %}</p>
                             </div>
-                            <!-- Disconnect Warning -->
-                            <details class="border border-gray-300 rounded-lg">
-                                <summary class="p-4 cursor-pointer font-medium text-gray-900 hover:bg-gray-50">
-                                    {% trans "Disconnect Stripe Account" %}
-                                </summary>
-                                <div class="p-4 border-t border-gray-300 bg-red-50">
-                                    <p class="text-sm text-red-800 mb-4">
-                                        {% trans "Disconnecting your Stripe account will prevent you from accepting payments. You'll need to reconnect before creating new sessions." %}
-                                    </p>
-                                    <form method="post" action="{% url 'stripe_disconnect' %}" class="inline">
-                                        {% csrf_token %}
-                                        <button type="submit"
-                                                class="bg-red-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-700"
-                                                onclick="return confirm('{% trans "Are you sure?" %}')">
-                                            {% trans "Disconnect Stripe" %}
-                                        </button>
-                                    </form>
-                                </div>
-                            </details>
-                        {% elif stripe_account %}
-                            <!-- Incomplete Onboarding -->
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                <h3 class="text-lg font-semibold text-yellow-900 mb-2">⚠ {% trans "Stripe Onboarding Incomplete" %}</h3>
-                                <p class="text-sm text-yellow-800 mb-4">
-                                    {% trans "Your Stripe onboarding isn't complete. Please finish the setup to start accepting payments." %}
+                        </div>
+                        <div class="settings-calendar-services__item">
+                            <div class="settings-calendar-services__icon settings-calendar-services__icon--outlook">
+                                {% heroicon_mini "calendar-days" size=20 %}
+                            </div>
+                            <div class="settings-calendar-services__info">
+                                <h4 class="font-heading">{% trans "Outlook" %}</h4>
+                                <p class="font-body">{% trans "Click 'Add to Calendar' on any session page and select Outlook." %}</p>
+                            </div>
+                        </div>
+                        <div class="settings-calendar-services__item">
+                            <div class="settings-calendar-services__icon settings-calendar-services__icon--apple">
+                                {% heroicon_mini "calendar-days" size=20 %}
+                            </div>
+                            <div class="settings-calendar-services__info">
+                                <h4 class="font-heading">{% trans "Apple Calendar" %}</h4>
+                                <p class="font-body">
+                                    {% trans "Download the ICS file above and open it with Apple Calendar, or use the ICS download on individual session pages." %}
                                 </p>
-                                <a href="{% url 'stripe_authorize' %}"
-                                   class="inline-block bg-yellow-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-yellow-700">
-                                    {% trans "Complete Onboarding" %}
-                                </a>
                             </div>
-                        {% else %}
-                            <!-- No Account Connected -->
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                                <h3 class="text-lg font-semibold text-blue-900 mb-2">{% trans "Connect Your Stripe Account" %}</h3>
-                                <p class="text-sm text-blue-800 mb-4">
-                                    {% trans "To start accepting payments from support seekers, you need to connect your Stripe account. This takes just a few minutes." %}
-                                </p>
-                                <a href="{% url 'stripe_authorize' %}"
-                                   class="inline-block bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700">
-                                    {% trans "Connect Stripe Account" %}
-                                </a>
-                            </div>
-                        {% endif %}
-                        <!-- Payment FAQ -->
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">{% trans "Payment Information" %}</h3>
-                            <dl class="space-y-4 text-sm">
-                                <div>
-                                    <dt class="font-medium text-gray-700">{% trans "Platform Fee:" %}</dt>
-                                    <dd class="text-gray-600">
-                                        15%
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt class="font-medium text-gray-700">{% trans "Payment Processing:" %}</dt>
-                                    <dd class="text-gray-600">
-                                        {% trans "Handled securely by Stripe. Your banking details are never shared with us." %}
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt class="font-medium text-gray-700">{% trans "Refunds:" %}</dt>
-                                    <dd class="text-gray-600">
-                                        {% trans "Manage refund requests from your Payment History." %}
-                                    </dd>
-                                </div>
-                            </dl>
                         </div>
                     </div>
                 </div>
-            {% endif %}
-        </div>
+            </section>
+        {% endif %}
+        {# Payments Tab (Hosts only) #}
+        {% if perms.events.add_peersession and active_tab == 'stripe' %}
+            <section class="settings-panel" role="tabpanel" aria-labelledby="stripe-tab">
+                {% if stripe_account and stripe_account.is_ready %}
+                    {# Connected Account Info #}
+                    <div class="settings-stripe settings-stripe--connected">
+                        <div class="settings-stripe__header">
+                            {% heroicon_solid "check-circle" size=24 %}
+                            <h2 class="font-heading text-lg">{% trans "Stripe Account Connected" %}</h2>
+                        </div>
+                        <p class="settings-stripe__description font-body">
+                            {% trans "Your Stripe account is active and ready to receive payments." %}
+                        </p>
+                        <dl class="settings-stripe__details">
+                            <div class="settings-stripe__detail">
+                                <dt class="font-body">{% trans "Account ID" %}</dt>
+                                <dd class="font-body">
+                                    <code>{{ stripe_account.id }}</code>
+                                </dd>
+                            </div>
+                            <div class="settings-stripe__detail">
+                                <dt class="font-body">{% trans "Connected Since" %}</dt>
+                                <dd class="font-body">
+                                    {{ stripe_account.created_at|date:"SHORT_DATE_FORMAT" }}
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+                    {# Payment Links #}
+                    <div class="settings-section">
+                        <h2 class="settings-section__title font-heading text-lg">{% trans "Payment Management" %}</h2>
+                        <div class="settings-stripe__actions">
+                            <a href="{% url 'payment_history' %}" class="settings-submit">
+                                {% heroicon_mini "document-text" size=18 %}
+                                {% trans "View Payment History" %}
+                            </a>
+                            <a href="https://dashboard.stripe.com/account"
+                               target="_blank"
+                               rel="noopener"
+                               class="settings-submit settings-submit--secondary">
+                                {% heroicon_mini "arrow-top-right-on-square" size=18 %}
+                                {% trans "Stripe Dashboard" %}
+                            </a>
+                        </div>
+                    </div>
+                    {# Disconnect #}
+                    <details class="settings-collapsible settings-collapsible--danger">
+                        <summary class="settings-collapsible__header">
+                            {% heroicon_mini "exclamation-triangle" size=18 %}
+                            <span class="font-body">{% trans "Disconnect Stripe Account" %}</span>
+                        </summary>
+                        <div class="settings-collapsible__content">
+                            <p class="font-body">
+                                {% trans "Disconnecting your Stripe account will prevent you from accepting payments. You'll need to reconnect before creating new sessions." %}
+                            </p>
+                            <form method="post" action="{% url 'stripe_disconnect' %}">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="settings-submit settings-submit--danger"
+                                        onclick="return confirm('{% trans "Are you sure you want to disconnect your Stripe account?" %}')">
+                                    {% heroicon_mini "x-mark" size=18 %}
+                                    {% trans "Disconnect Stripe" %}
+                                </button>
+                            </form>
+                        </div>
+                    </details>
+                {% elif stripe_account %}
+                    {# Incomplete Onboarding #}
+                    <div class="settings-stripe settings-stripe--warning">
+                        <div class="settings-stripe__header">
+                            {% heroicon_solid "exclamation-triangle" size=24 %}
+                            <h2 class="font-heading text-lg">{% trans "Stripe Onboarding Incomplete" %}</h2>
+                        </div>
+                        <p class="settings-stripe__description font-body">
+                            {% trans "Your Stripe onboarding isn't complete. Please finish the setup to start accepting payments." %}
+                        </p>
+                        <a href="{% url 'stripe_authorize' %}" class="settings-submit">
+                            {% heroicon_mini "arrow-right" size=18 %}
+                            {% trans "Complete Onboarding" %}
+                        </a>
+                    </div>
+                {% else %}
+                    {# No Account Connected #}
+                    <div class="settings-stripe settings-stripe--info">
+                        <div class="settings-stripe__header">
+                            {% heroicon_solid "credit-card" size=24 %}
+                            <h2 class="font-heading text-lg">{% trans "Connect Your Stripe Account" %}</h2>
+                        </div>
+                        <p class="settings-stripe__description font-body">
+                            {% trans "To start accepting payments from support seekers, you need to connect your Stripe account. This takes just a few minutes." %}
+                        </p>
+                        <a href="{% url 'stripe_authorize' %}" class="settings-submit">
+                            {% heroicon_mini "link" size=18 %}
+                            {% trans "Connect Stripe Account" %}
+                        </a>
+                    </div>
+                {% endif %}
+                {# Payment FAQ #}
+                <div class="settings-section">
+                    <h2 class="settings-section__title font-heading text-lg">{% trans "Payment Information" %}</h2>
+                    <dl class="settings-stripe__faq">
+                        <div class="settings-stripe__faq-item">
+                            <dt class="font-body">{% trans "Platform Fee" %}</dt>
+                            <dd class="font-body">
+                                15%
+                            </dd>
+                        </div>
+                        <div class="settings-stripe__faq-item">
+                            <dt class="font-body">{% trans "Payment Processing" %}</dt>
+                            <dd class="font-body">
+                                {% trans "Handled securely by Stripe. Your banking details are never shared with us." %}
+                            </dd>
+                        </div>
+                        <div class="settings-stripe__faq-item">
+                            <dt class="font-body">{% trans "Refunds" %}</dt>
+                            <dd class="font-body">
+                                {% trans "Manage refund requests from your Payment History." %}
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+            </section>
+        {% endif %}
     </main>
 {% endblock content %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const area = document.getElementById('avatar-upload-area');
+            const input = document.getElementById('id_display_picture_file');
+            const preview = document.getElementById('avatar-preview');
+
+            if (!area || !input || !preview) return;
+
+            // Clicking the avatar area triggers the hidden file input
+            area.addEventListener('click', function (e) {
+                if (e.target === input) return; // avoid re-trigger
+                input.click();
+            });
+
+            // Show a client-side preview of the selected image
+            input.addEventListener('change', function () {
+                const file = this.files[0];
+                if (!file) return;
+
+                // Client-side size check (2 MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('{% trans "File size must not exceed 2 MB." %}');
+                    this.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    // Replace the preview content with the selected image
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.alt = '';
+                    img.width = 128;
+                    img.height = 128;
+                    img.classList.add('settings-avatar__image');
+                    img.style.objectFit = 'cover';
+
+                    // Keep the overlay, replace everything else
+                    const overlay = preview.querySelector('.settings-avatar__overlay');
+                    preview.innerHTML = '';
+                    preview.appendChild(img);
+                    if (overlay) preview.appendChild(overlay);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    </script>
+{% endblock extra_js %}

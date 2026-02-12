@@ -6,16 +6,17 @@ for clean admin dashboard access.
 """
 
 from guardian.admin import GuardedModelAdmin
-from wagtail_modeladmin.options import ModelAdmin, ModelAdminGroup, modeladmin_register
+from wagtail.snippets.models import register_snippet
+from wagtail.snippets.views.snippets import SnippetViewSet, SnippetViewSetGroup
 
-from .models_users.profile import Certificate, StripeAccount
+from .models_users.profile import Certificate, Profile, StripeAccount
 
 
-class CertificateAdmin(ModelAdmin, GuardedModelAdmin):
+class CertificateAdmin(SnippetViewSet, GuardedModelAdmin):
     """Admin interface for issuing and managing Peer certificates."""
 
     model = Certificate
-    menu_icon = "success"
+    icon = "success"
     list_display = ("user", "issued_at", "expires_at")
     list_filter = ("issued_at", "expires_at")
     search_fields = (
@@ -30,11 +31,11 @@ class CertificateAdmin(ModelAdmin, GuardedModelAdmin):
     edit_template_name = "wagtailadmin/generic/edit.html"
 
 
-class StripeAccountAdmin(ModelAdmin, GuardedModelAdmin):
+class StripeAccountAdmin(SnippetViewSet, GuardedModelAdmin):
     """Admin interface for viewing Stripe account connections."""
 
     model = StripeAccount
-    menu_icon = "link"
+    icon = "link"
     list_display = ("user", "is_ready")
     list_filter = ("is_ready",)
     search_fields = ("user__username", "user__email")
@@ -43,14 +44,28 @@ class StripeAccountAdmin(ModelAdmin, GuardedModelAdmin):
     read_only_fields = ("id",)
 
 
-class AccountsGroup(ModelAdminGroup):
+class ProfileAdmin(SnippetViewSet, GuardedModelAdmin):
+    """Admin interface for managing user profiles."""
+
+    model = Profile
+    icon = "user"
+    list_display = ("user", "country")
+    search_fields = (
+        "user__username",
+        "user__email",
+        "country",
+    )
+
+
+class AccountsGroup(SnippetViewSetGroup):
     menu_label = "Accounts"
-    menu_icon = "user"
+    icon = "user"
     menu_order = 100
     items = (
         CertificateAdmin,
         StripeAccountAdmin,
+        ProfileAdmin,
     )
 
 
-modeladmin_register(AccountsGroup)
+register_snippet(AccountsGroup)

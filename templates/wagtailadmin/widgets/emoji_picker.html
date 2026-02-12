@@ -1,0 +1,82 @@
+{% load i18n %}
+{# Emoji Picker Widget - Vanilla JS implementation for Wagtail admin #}
+<div class="emoji-picker-wrapper" data-emoji-picker>
+    {# Hidden input for form value #}
+    <input type="hidden"
+           name="{{ widget.name }}"
+           id="{{ widget.attrs.id }}"
+           value="{{ widget.value|default:'' }}"
+           data-emoji-value>
+    {# Display button showing selected emoji #}
+    <button type="button"
+            class="emoji-picker-trigger w-field__input"
+            data-emoji-trigger
+            aria-label="{% trans "Choose emoji" %}"
+            aria-haspopup="dialog">
+        <span class="emoji-picker-selected" data-emoji-display>
+            {% if widget.value %}
+                {{ widget.value }}
+            {% else %}
+                <span class="emoji-picker-placeholder">{% trans "Click to select emoji" %}</span>
+            {% endif %}
+        </span>
+        <span class="emoji-picker-arrow">▼</span>
+    </button>
+    {# Clear button #}
+    <button type="button"
+            class="emoji-picker-clear"
+            data-emoji-clear
+            aria-label="{% trans "Clear emoji" %}"
+            {% if not widget.value %}style="display: none;"{% endif %}>✕</button>
+    {# Picker dropdown panel #}
+    <div class="emoji-picker-panel" data-emoji-panel hidden>
+        {# Search input #}
+        <div class="emoji-picker-search">
+            <input type="text"
+                   class="emoji-picker-search-input"
+                   placeholder="{% trans "Search emojis..." %}"
+                   data-emoji-search
+                   aria-label="{% trans "Search emojis" %}">
+        </div>
+        {# Category tabs #}
+        <div class="emoji-picker-tabs" role="tablist">
+            {% for key, category in emoji_categories.items %}
+                <button type="button"
+                        class="emoji-picker-tab{% if forloop.first %} active{% endif %}"
+                        data-emoji-tab="{{ key }}"
+                        role="tab"
+                        aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                        aria-label="{{ category.label }}"
+                        title="{{ category.label }}">{{ category.icon }}</button>
+            {% endfor %}
+        </div>
+        {# Emoji grid container #}
+        <div class="emoji-picker-content">
+            {% for key, category in emoji_categories.items %}
+                <div class="emoji-picker-category{% if forloop.first %} active{% endif %}"
+                     data-emoji-category="{{ key }}"
+                     role="tabpanel">
+                    <div class="emoji-picker-category-label">{{ category.label }}</div>
+                    <div class="emoji-picker-grid">
+                        {% for item in category.emojis %}
+                            <button type="button"
+                                    class="emoji-picker-emoji"
+                                    data-emoji="{{ item.emoji }}"
+                                    data-keywords="{{ item.keywords|join:' ' }}"
+                                    title="{{ item.name }}"
+                                    aria-label="{{ item.name }}">{{ item.emoji }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+            {# Search results container #}
+            <div class="emoji-picker-search-results" data-emoji-results hidden>
+                <div class="emoji-picker-category-label">{% trans "Search Results" %}</div>
+                <div class="emoji-picker-grid" data-emoji-results-grid></div>
+                <div class="emoji-picker-no-results" hidden>{% trans "No emojis found" %}</div>
+            </div>
+        </div>
+    </div>
+    {# Store emoji data for JS #}
+    <script type="application/json" data-emoji-data>{{ emoji_categories_json }}</script>
+</div>

@@ -182,10 +182,11 @@ class AbstractSessionRequest(models.Model):
     )
     refund_status = models.PositiveSmallIntegerField(
         help_text=_(
-            "By default, this will be pending unless refunds does not require approval, then it will be automatically approved. If the request is left pending until the start of the session, the request will be automatically rejected"
+            "Tracks whether a refund has been requested and its current state. "
+            "Defaults to approved (no refund action pending)."
         ),
         choices=SessionRequestStatusChoices,
-        default=SessionRequestStatusChoices.PENDING,
+        default=SessionRequestStatusChoices.APPROVED,
     )
     refunded = models.BooleanField(
         help_text=_(
@@ -195,7 +196,7 @@ class AbstractSessionRequest(models.Model):
                     (b) a user requests a refund and the request is approved
             """
         ),
-        default=True,
+        default=False,
     )
     meeting_link = models.URLField(
         max_length=500,

@@ -1,0 +1,238 @@
+@use "../mixins" as *;
+@use "../variables" as *;
+
+.payment-history {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: calc($spacer * 2.25) calc($spacer * 1.5);
+
+    @include media(lg) {
+        padding: calc($spacer * 2.25) 0;
+    }
+}
+
+.payment-history__title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: $black;
+    margin-bottom: $spacer * 1.5;
+}
+
+// Card list
+.payment-history__list {
+    display: flex;
+    flex-direction: column;
+    gap: $spacer;
+}
+
+.payment-history__card {
+    border: 1px solid $gray-100;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: $white;
+    transition: box-shadow 0.15s ease;
+
+    @include interact {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    &--paid {
+        border-left: 4px solid $green-500;
+    }
+
+    &--refunded {
+        border-left: 4px solid $gray-400;
+    }
+
+    &--refund-pending {
+        border-left: 4px solid $accent;
+    }
+}
+
+.payment-history__card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: $spacer calc($spacer * 1.25);
+    gap: $spacer;
+}
+
+.payment-history__card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.payment-history__card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: $black;
+}
+
+.payment-history__card-meta {
+    margin-top: $spacer * 0.25;
+    font-size: 0.875rem;
+    color: $gray-500;
+}
+
+.payment-history__card-price-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: $spacer * 0.375;
+    flex-shrink: 0;
+}
+
+.payment-history__card-price {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: $black;
+}
+
+// Status pills
+.payment-history__status {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacer * 0.25;
+    padding: calc($spacer * 0.25) calc($spacer * 0.75);
+    font-family: $subheading;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 999px;
+    white-space: nowrap;
+
+    &--paid {
+        color: #166534;
+        background: #dcfce7;
+    }
+
+    &--refunded {
+        color: $gray-600;
+        background: $gray-100;
+    }
+
+    &--refund-pending {
+        color: #92400e;
+        background: #fef3c7;
+    }
+}
+
+// Card body / details grid
+.payment-history__card-body {
+    padding: 0 calc($spacer * 1.25) $spacer;
+}
+
+.payment-history__details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacer * 0.75;
+
+    @include media(lg) {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.payment-history__detail {
+    display: flex;
+    flex-direction: column;
+    gap: $spacer * 0.125;
+
+    dt {
+        font-family: $body;
+        font-size: 0.75rem;
+        color: $gray-500;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    dd {
+        font-family: $subheading;
+        font-size: 0.875rem;
+        color: $black;
+    }
+}
+
+.payment-history__payment-id {
+    font-family: monospace;
+    font-size: 0.75rem !important;
+    word-break: break-all;
+}
+
+// Action buttons row
+.payment-history__card-actions {
+    display: flex;
+    gap: $spacer * 0.5;
+    padding: calc($spacer * 0.75) calc($spacer * 1.25);
+    border-top: 1px solid $gray-50;
+    background: $gray-50;
+
+    form {
+        display: flex;
+        gap: $spacer * 0.5;
+    }
+}
+
+.payment-history__action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacer * 0.375;
+    padding: calc($spacer * 0.5) $spacer;
+    font-family: $subheading;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &--join {
+        color: #1e40af;
+        background: #dbeafe;
+        border-color: #bfdbfe;
+        text-decoration: none;
+
+        @include interact {
+            background: #bfdbfe;
+        }
+    }
+
+    &--refund {
+        color: #991b1b;
+        background: #fee2e2;
+        border-color: #fecaca;
+
+        @include interact {
+            background: #fecaca;
+        }
+    }
+}
+
+// Pagination
+.payment-history__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacer;
+    margin-top: $spacer * 2;
+}
+
+.payment-history__page-info {
+    font-size: 0.875rem;
+    color: $gray-500;
+}
+
+// Empty state
+.payment-history__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacer;
+    padding: calc($spacer * 3) $spacer;
+    color: $gray-500;
+    text-align: center;
+
+    p {
+        font-family: $body;
+        font-size: 1rem;
+    }
+}

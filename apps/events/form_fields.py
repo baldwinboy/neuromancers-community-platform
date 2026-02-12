@@ -1,7 +1,11 @@
+import logging
+
 from django import forms
 from django.utils.translation import gettext as _
 from wagtail.contrib.settings.registry import registry
 from wagtail.fields import StreamValue
+
+logger = logging.getLogger(__name__)
 
 
 class GroupedCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
@@ -134,7 +138,7 @@ class FiltersMultipleChoiceField(forms.MultipleChoiceField):
         )
         filters = filter_settings.filters
         if isinstance(filters, StreamValue):
-            self.normalized = filter_settings.as_normalized_mapping()
+            self.normalized = filter_settings.get_cached_mapping()
 
             choices = []
             flat_choices = []
@@ -152,3 +156,82 @@ class FiltersMultipleChoiceField(forms.MultipleChoiceField):
             if choices:
                 self.choices = flat_choices
                 self.widget = GroupedCheckboxSelectMultiple(choices=choices)
+
+
+class WagtailAdminFiltersMultipleChoiceField(GroupedCheckboxSelectMultiple):
+    """
+    A custom widget that renders filters as grouped checkboxes in Wagtail admin.
+    """
+
+    template_name = "wagtailadmin/widgets/grouped_checkbox_select.html"
+
+    def __init__(self, attrs=None, choices=[]):
+        # Load registry object
+        super().__init__(attrs, choices)  # initialize with empty choices
+        try:
+            filter_settings = registry.get_by_natural_key(
+                "events", "FilterSettings"
+            ).load()
+        except Exception:
+            # Table may not exist yet during migrations or DB reset
+            logger.debug(
+                "FilterSettings table not available yet, skipping filter loading."
+            )
+            return
+        filters = filter_settings.filters
+        if isinstance(filters, StreamValue):
+            self.normalized = filter_settings.get_cached_mapping()
+
+            choices = []
+            flat_choices = []
+
+            for group_slug, group in self.normalized.items():
+                group_label = _(group["label"])
+                subgroup = [
+                    (f"{group_slug}::{item_slug}", _(item["label"]))
+                    for item_slug, item in group["items"].items()
+                ]
+
+                choices.append(((group_slug, _(group_label)), subgroup))
+                flat_choices.extend(subgroup)
+
+            if choices:
+                self.choices = choices
+
+    def format_value(self, value):
+        """
+        Format the value for display in the widget.
+        Converts stored JSON into list of 'group::item' strings.
+        """
+        if not value:
+            return []
+
+        # If value is already the checkbox list format, return it
+        if isinstance(value, (list, tuple)):
+            return value
+
+        if isinstance(value, str):
+            # Attempt to parse JSON string if value is a string
+            import json
+
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                return []
+
+        if not isinstance(value, dict):
+            return []
+
+        prepared = []
+
+        # Normalized form: { group_slug: { items: { item_slug: {...} } } }
+        for group_slug, group_data in value.items():
+            items = group_data.get("items", {})
+            for item_slug in items.keys():
+                prepared.append(f"{group_slug}::{item_slug}")
+
+        return prepared
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        return context

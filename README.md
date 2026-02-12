@@ -21,12 +21,12 @@ Support seekers can:
 
 ## Tech Stack
 
-- **Backend**: Django 5.2, Wagtail CMS
-- **Authentication**: django-allauth (email/username, magic links)
-- **Permissions**: django-guardian (object-level permissions)
-- **Payments**: Stripe Connect (OAuth, payment intents)
+- **Backend**: Django 6.0, Wagtail 7.3
+- **Authentication**: django-allauth 65.x (email/username, magic links)
+- **Permissions**: django-guardian 3.x (object-level permissions)
+- **Payments**: Stripe Connect (OAuth, payment links)
 - **Video**: Whereby API
-- **Frontend**: Sass, django-components, Heroicons
+- **Frontend**: Sass, django-components 0.148.0, Heroicons
 - **Database**: SQLite (development), PostgreSQL (production recommended)
 - **Package Manager**: uv (faster than pip)
 - **Task Runner**: GNU Make
@@ -71,26 +71,34 @@ make dev  # Runs migrations, collectstatic, starts server
 ```
 neuromancers-community-platform/
 ├── apps/
-│   ├── accounts/       # User model, authentication, profiles, Stripe integration
+│   ├── accounts/       # User model, authentication, profiles, Stripe accounts
 │   │   ├── models_users/
 │   │   │   ├── user.py           # Custom User, UserGroup
 │   │   │   ├── profile.py        # Profile, Certificate, StripeAccount
-│   │   │   └── user_settings.py  # Notification/filter preferences
+│   │   │   └── user_settings.py  # Notification/filter/privacy preferences
 │   ├── events/         # Session management
 │   │   ├── models_sessions/
-│   │   │   ├── abstract.py       # AbstractSession, AbstractAvailability
-│   │   │   ├── peer.py           # PeerSession, PeerSessionAvailability, PeerSessionRequest
-│   │   │   └── group.py          # GroupSession, GroupSessionRequest
+│   │   │   ├── abstract.py       # AbstractSession, AbstractAvailability, AbstractSessionRequest, AbstractSessionReview
+│   │   │   ├── peer.py           # PeerSession, PeerSessionAvailability, PeerSessionRequest, PeerScheduledSession, PeerSessionReview
+│   │   │   └── group.py          # GroupSession, GroupSessionRequest, GroupSessionReview
 │   │   ├── models_pages/
 │   │   │   ├── wagtail_pages.py  # SessionsIndexPage (RoutablePage)
-│   │   │   └── wagtail_detail_pages.py  # PeerSessionDetailPage, GroupSessionDetailPage
-│   ├── core/           # Reusable components, base pages
-│   ├── blog/           # Blog functionality
-│   └── contact/        # Contact forms
+│   │   │   ├── wagtail_detail_pages.py  # PeerSessionDetailPage, GroupSessionDetailPage
+│   │   │   └── wagtail_settings.py      # StripeSettings, WherebySettings, SessionFilterSettings, SocialMediaSettings
+│   │   ├── components/  # session_item, peer_item, request_calendar, session_feed, peer_feed
+│   │   └── forms_sessions/  # Peer and group session forms
+│   ├── core/           # HomePage, reusable components (accordion, hero), notification/site settings
+│   ├── common/         # Shared utilities (GetPronto image uploads, helpers)
+│   ├── blog/           # Blog index and blog pages
+│   └── contact/        # Contact form with topics
 ├── neuromancers/settings/
-│   ├── base.py         # Core settings
-│   ├── dev.py          # Development overrides
-│   └── production.py   # Production overrides
+│   ├── base.py         # Core settings (USE_TZ=True, TIME_ZONE="UTC")
+│   ├── dev.py          # Development overrides (DEBUG=True, console email)
+│   ├── production.py   # Production overrides (security headers, HSTS)
+│   ├── countries.py, currencies.py, languages.py  # ISO data lists
+│   ├── stripe_currencies.py  # Stripe-supported currencies
+│   ├── blacklist.py    # Username blacklist
+│   └── bots.py         # Bot user agent list (production)
 ├── templates/          # Django templates
 ├── assets/             # Source Sass, icons, images
 └── static/             # Compiled static files (generated)
@@ -105,6 +113,7 @@ Models are organized in subdirectories and aggregated via star imports:
 ```python
 # apps/events/models.py
 from .models_pages.wagtail_pages import *
+from .models_pages.wagtail_settings import *
 from .models_sessions.peer import *
 from .models_sessions.group import *
 ```
@@ -117,8 +126,11 @@ This keeps large model files manageable. All migrations still generate in `apps/
 1. **CMS page** - editable content in Wagtail admin
 2. **Application routes** - custom URL patterns for session CRUD:
    - `/sessions/create/` - Choose session type
-   - `/sessions/peer/<uuid>/edit/` - Edit peer session
-   - `/sessions/peer/<uuid>/availability/` - Manage availability
+   - `/sessions/create/<session_type>/` - Create peer or group session
+   - `/sessions/edit/<session_type>/<uuid>/` - Edit session
+   - `/sessions/availability/<uuid>/` - Manage peer session availability
+   - `/sessions/availability/delete/<uuid>/` - Delete availability slot
+   - `/sessions/request/schedule/<uuid>/` - Request/schedule a peer session
 
 Each session creates a child Wagtail page (`PeerSessionDetailPage`) for SEO and CMS integration.
 
@@ -140,24 +152,27 @@ def set_peersession_permissions(sender, instance, created, **kwargs):
 - **Peers** can create/edit their own sessions, manage availability
 - **Neuromancers** have admin-level permissions
 
-### Django Components
+### Component Systems
 
-Reusable UI components using `{% element %}` shorthand (django-components v0.141.4):
+The project uses two separate component systems:
+
+**1. django-components** (v0.148.0) — reusable UI with shorthand template tags:
 
 ```django
-{% element panel class="auth_panel" %}
-    {% slot title %}Login{% endslot %}
-    {% slot body %}
-        {% element form form=form method="post" %}
-            {% slot actions %}
-                {% element button type="submit" %}Submit{% endelement %}
-            {% endslot %}
-        {% endelement %}
-    {% endslot %}
-{% endelement %}
+{% accordion %}...{% endaccordion %}
+{% hero heading="Welcome" subheading="Join our community" %}
+{% session_item session=session_data session_type="peer" %}
+{% peer_item peer=peer_data %}
+{% request_calendar available_slots=slots durations=durations %}
 ```
 
-Components in `apps/core/components/` and `templates/includes/`.
+Components registered in `apps/core/components/` (`accordion`, `hero`) and `apps/events/components/` (`session_item`, `peer_item`, `request_calendar`).
+
+**2. Wagtail Component** (`laces` package) — for complex feed blocks:
+- `SessionFeedBlock` and `PeerFeedBlock` in `apps/events/components/` extend `wagtail.blocks.StructBlock`
+- Rendered via Wagtail's StreamField block system
+
+**Note**: `{% element %}` tags in `templates/allauth/elements/` are django-allauth's own element system, not django-components.
 
 ## Development Commands
 
@@ -178,12 +193,15 @@ make django-shell                # Django shell
 make django-test                 # Run test suite
 
 # Data Seeding
-make django-setupdefaultgroups   # Create UserGroups (Peer, Support Seeker, etc.)
+make django-setupdefaultgroups   # Create UserGroups (Peer, Support Seeker, Neuromancer)
+make django-publishsessionsindex # Publish unpublished SessionsIndexPages
 make django-seedusers USERS=50 GROUPS="Peer"  # Generate test users
 make django-seedsessions SIZE=50 # Generate test sessions
 
 # Code Quality
 make lint-git-files              # Run pre-commit on tracked files
+make django-coverage             # Run tests with coverage + HTML report
+make django-coverage-badge       # Generate coverage badge SVG
 ```
 
 ### Environment Variables
@@ -191,7 +209,6 @@ make lint-git-files              # Run pre-commit on tracked files
 Key variables in `.env`:
 
 ```bash
-ENVIRONMENT=development          # development or production
 DEBUG=true
 DJANGO_SECRET_KEY=your-secret-key
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
@@ -200,9 +217,14 @@ DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
 STRIPE_API_PUBLISHABLE_KEY=pk_test_...
 STRIPE_API_SECRET_KEY=sk_test_...
 STRIPE_API_CLIENT_ID=ca_...
+STRIPE_REDIRECT_URL=
 
 # Whereby Video API
 WHEREBY_API_KEY=your-whereby-key
+
+# GetPronto (profile image uploads)
+GETPRONTO_API_KEY=
+GETPRONTO_API_URL=https://api.getpronto.io/v1
 
 # Email (console backend in dev)
 EMAIL_HOST=localhost
@@ -217,7 +239,7 @@ make django-coverage       # Run tests with coverage report and HTML output
 tox -e coverage            # Run coverage via tox (with uv support)
 ```
 
-Coverage reports are generated in `htmlcov/` directory after running coverage commands.
+Coverage reports are generated in `reports/coverage/` directory after running coverage commands.
 
 **Testing Philosophy**:
 - Test business logic, not Django framework functionality
@@ -227,22 +249,17 @@ Coverage reports are generated in `htmlcov/` directory after running coverage co
 
 ## Known Issues & Roadmap
 
-### Critical Pre-Handoff Tasks
+### Pre-Handoff Tasks
 
-1. **⚠️ Timezone Handling**:
-   - Current: `USE_TZ = False` causes SQLite test failures
-   - Required: Enable `USE_TZ = True`, store UTC, convert in templates/views
-   - Impact: Production requirement for correct timezone handling
-
-2. **Code Cleanup**:
-   - Audit 20+ `*ObjectPermission` classes - many never queried
+1. **Code Cleanup**:
+   - Audit 24 `*ObjectPermission` classes (16 in accounts, 8 in events) — many never queried directly
    - Remove unused permission models
    - Clean up commented code, unused imports
 
-3. **Documentation**:
+2. **Documentation**:
    - Complete inline documentation for business logic
    - Add docstrings to complex methods
-   - Document session request → approval → payment flow
+   - Document session request > approval > payment flow
 
 ## Admin Access
 
@@ -282,8 +299,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards and development work
 
 ## Documentation Links
 
-- [Django 5.2](https://docs.djangoproject.com/en/5.2/)
-- [Wagtail](https://wagtail.org/)
+- [Django 6.0](https://docs.djangoproject.com/en/6.0/)
+- [Wagtail 7](https://docs.wagtail.org/en/stable/)
 - [django-allauth](https://docs.allauth.org/en/latest/)
 - [django-guardian](https://django-guardian.readthedocs.io/)
 - [Stripe Connect](https://docs.stripe.com/connect)

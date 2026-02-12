@@ -105,6 +105,8 @@ def send_notification(
     context,
     peer_setting_key=None,
     request=None,
+    platform_body=None,
+    link_url=None,
 ):
     """
     Send a notification to a user based on their preferences.
@@ -117,6 +119,8 @@ def send_notification(
         context: Dictionary of context variables for the template
         peer_setting_key: If this is for a peer host, the PeerNotificationSettings field name (e.g., 'payment_received')
         request: Django request object (used to load Wagtail settings and build site URL)
+        platform_body: Short plain-text message for on-platform notification display. If None, falls back to stripped email template.
+        link_url: URL path for the notification's primary action (e.g., '/dashboard/')
 
     Returns:
         Notification object if created, None otherwise
@@ -154,10 +158,13 @@ def send_notification(
 
     # Create web notification if preference allows
     if preference in [NotificationChoices.WEB_ONLY, NotificationChoices.ALL]:
+        # Use platform_body for on-platform display, fall back to stripped email HTML
+        body = platform_body or render_to_string(email_template, context)
         notification = Notifications.objects.create(
             sent_to=user,
             subject=subject_type,
-            body=render_to_string(email_template, context),
+            body=body,
+            link_url=link_url,
         )
     else:
         notification = None
@@ -199,10 +206,11 @@ def notify_session_published(session):
     if not hasattr(session, "page"):
         return
 
+    session_url = f"/sessions/{session.page.slug}/"
     context = {
         "user": session.host,
         "session": session,
-        "session_url": f"/sessions/{session.page.slug}/",
+        "session_url": session_url,
     }
 
     send_notification(
@@ -212,6 +220,11 @@ def notify_session_published(session):
         email_template="events/emails/session_published.html",
         context=context,
         peer_setting_key="published_session",
+        platform_body=_(
+            "Your session '%(title)s' is now live and visible to support seekers."
+        )
+        % {"title": session.title},
+        link_url=session_url,
     )
 
 
@@ -241,6 +254,10 @@ def notify_session_requested(session_request):
         "approve_url": f"/sessions/{session_request.session.page.slug}/requests/{session_request.id}/approve/",
     }
 
+    attendee_name = (
+        session_request.attendee.get_full_name() or session_request.attendee.username
+    )
+
     send_notification(
         user=session_request.session.host,
         subject_type=NotificationSubjectChoices.SESSION,
@@ -248,6 +265,12 @@ def notify_session_requested(session_request):
         email_template="events/emails/session_requested.html",
         context=context,
         peer_setting_key="host_session_requested",
+        platform_body=_(
+            "%(attendee)s has requested to book '%(title)s'. "
+            "Review and respond from your dashboard."
+        )
+        % {"attendee": attendee_name, "title": session_request.session.title},
+        link_url="/dashboard/?tab=peer",
     )
 
 
@@ -260,18 +283,24 @@ def notify_session_approved(session_request):
     except NotificationSettings.DoesNotExist:
         pass
 
-    if not session_request.session.is_published or not hasattr(
+    session_url = ""
+    if session_request.session.is_published and hasattr(
         session_request.session, "page"
     ):
-        return
+        session_url = f"/sessions/{session_request.session.page.slug}/"
 
     context = {
         "user": session_request.attendee,
         "session_request": session_request,
         "host": session_request.session.host,
         "session": session_request.session,
-        "session_url": f"/sessions/{session_request.session.page.slug}/",
+        "session_url": session_url,
     }
+
+    host_name = (
+        session_request.session.host.get_full_name()
+        or session_request.session.host.username
+    )
 
     send_notification(
         user=session_request.attendee,
@@ -279,99 +308,187 @@ def notify_session_approved(session_request):
         email_subject=f"Your request for '{session_request.session.title}' has been approved!",
         email_template="events/emails/session_approved.html",
         context=context,
+        platform_body=_(
+            "Your request for '%(title)s' with %(host)s has been approved! "
+            "View your session details to get started."
+        )
+        % {"title": session_request.session.title, "host": host_name},
+        link_url=session_url or "/profile/",
     )
 
 
-def notify_payment_made(payment):
+def notify_session_rejected(session_request):
+    """Notify support seeker when host rejects their session request"""
+    try:
+        settings = NotificationSettings.objects.get(user=session_request.attendee)
+        if settings.responded_session == NotificationChoices.NONE:
+            return
+    except NotificationSettings.DoesNotExist:
+        pass
+
+    session_url = ""
+    if session_request.session.is_published and hasattr(
+        session_request.session, "page"
+    ):
+        session_url = f"/sessions/{session_request.session.page.slug}/"
+
+    context = {
+        "user": session_request.attendee,
+        "session_request": session_request,
+        "host": session_request.session.host,
+        "session": session_request.session,
+        "session_url": session_url,
+    }
+
+    host_name = (
+        session_request.session.host.get_full_name()
+        or session_request.session.host.username
+    )
+
+    rejection_info = ""
+    if session_request.rejection_message:
+        rejection_info = _(" Message: '%(message)s'") % {
+            "message": session_request.rejection_message
+        }
+
+    send_notification(
+        user=session_request.attendee,
+        subject_type=NotificationSubjectChoices.SESSION,
+        email_subject=_("Your request for '%(title)s' was not approved")
+        % {"title": session_request.session.title},
+        email_template="events/emails/session_rejected.html",
+        context=context,
+        platform_body=_(
+            "Your request for '%(title)s' with %(host)s was not approved.%(rejection_info)s "
+            "You can browse other available sessions."
+        )
+        % {
+            "title": session_request.session.title,
+            "host": host_name,
+            "rejection_info": rejection_info,
+        },
+        link_url=session_url or "/sessions/",
+    )
+
+
+def notify_payment_made(session_request, amount_display=None):
     """Notify support seeker after successful payment"""
     try:
-        settings = NotificationSettings.objects.get(user=payment.user)
+        settings = NotificationSettings.objects.get(user=session_request.attendee)
         if settings.payment_made == NotificationChoices.NONE:
             return
     except NotificationSettings.DoesNotExist:
         pass
 
     context = {
-        "user": payment.user,
-        "payment": payment,
-        "amount": payment.amount,
-        "session": payment.session_request.session,
+        "user": session_request.attendee,
+        "session_request": session_request,
+        "amount": amount_display or session_request.price,
+        "session": session_request.session,
     }
 
     send_notification(
-        user=payment.user,
+        user=session_request.attendee,
         subject_type=NotificationSubjectChoices.PAYMENT,
-        email_subject=f"Payment confirmed for '{payment.session_request.session.title}'",
+        email_subject=f"Payment confirmed for '{session_request.session.title}'",
         email_template="events/emails/payment_made.html",
         context=context,
+        platform_body=_(
+            "Your payment for '%(title)s' has been confirmed. "
+            "You can view your receipt in payment history."
+        )
+        % {"title": session_request.session.title},
+        link_url="/payments/history/",
     )
 
 
-def notify_payment_received(payment):
+def notify_payment_received(session_request, amount_display=None):
     """Notify host when they receive a payment"""
     try:
         from apps.accounts.models_users.user_settings import PeerNotificationSettings
 
         peer_settings = PeerNotificationSettings.objects.get(
-            user=payment.session_request.session.host
+            user=session_request.session.host
         )
         if peer_settings.payment_received == NotificationChoices.NONE:
             return
     except PeerNotificationSettings.DoesNotExist:
         pass
 
+    attendee_name = (
+        session_request.attendee.get_full_name() or session_request.attendee.username
+    )
+
     context = {
-        "user": payment.session_request.session.host,
-        "payment": payment,
-        "amount": payment.amount,
-        "attendee": payment.user,
-        "session": payment.session_request.session,
+        "user": session_request.session.host,
+        "session_request": session_request,
+        "amount": amount_display or session_request.price,
+        "attendee": session_request.attendee,
+        "session": session_request.session,
     }
 
     send_notification(
-        user=payment.session_request.session.host,
+        user=session_request.session.host,
         subject_type=NotificationSubjectChoices.PAYMENT,
-        email_subject=f"Payment received for '{payment.session_request.session.title}'",
+        email_subject=f"Payment received for '{session_request.session.title}'",
         email_template="events/emails/payment_received.html",
         context=context,
         peer_setting_key="payment_received",
+        platform_body=_(
+            "%(attendee)s has paid for '%(title)s'. "
+            "The payment has been transferred to your Stripe account."
+        )
+        % {"attendee": attendee_name, "title": session_request.session.title},
+        link_url="/settings/?tab=stripe",
     )
 
 
-def notify_refund_requested(refund_request):
+def notify_refund_requested(session_request):
     """Notify host when a refund is requested"""
     try:
         from apps.accounts.models_users.user_settings import PeerNotificationSettings
 
-        peer_settings = PeerNotificationSettings.objects.get(user=refund_request.host)
+        peer_settings = PeerNotificationSettings.objects.get(
+            user=session_request.session.host
+        )
         if peer_settings.payment_refund_request == NotificationChoices.NONE:
             return
     except PeerNotificationSettings.DoesNotExist:
         pass
 
+    attendee_name = (
+        session_request.attendee.get_full_name() or session_request.attendee.username
+    )
+
     context = {
-        "user": refund_request.host,
-        "refund_request": refund_request,
-        "amount": refund_request.payment.amount,
-        "attendee": refund_request.payment.user,
-        "session": refund_request.payment.session_request.session,
-        "reason": refund_request.reason,
+        "user": session_request.session.host,
+        "session_request": session_request,
+        "amount": session_request.price,
+        "attendee": session_request.attendee,
+        "session": session_request.session,
+        "reason": "",
     }
 
     send_notification(
-        user=refund_request.host,
+        user=session_request.session.host,
         subject_type=NotificationSubjectChoices.PAYMENT,
-        email_subject=f"Refund requested for '{refund_request.payment.session_request.session.title}'",
+        email_subject=f"Refund requested for '{session_request.session.title}'",
         email_template="events/emails/refund_requested.html",
         context=context,
         peer_setting_key="payment_refund_request",
+        platform_body=_(
+            "%(attendee)s has requested a refund for '%(title)s'. "
+            "Review the request from your dashboard."
+        )
+        % {"attendee": attendee_name, "title": session_request.session.title},
+        link_url="/dashboard/?tab=refunds",
     )
 
 
-def notify_refund_approved(refund_request):
+def notify_refund_approved(session_request):
     """Notify seeker when their refund request is approved"""
     try:
-        settings = NotificationSettings.objects.get(user=refund_request.payment.user)
+        settings = NotificationSettings.objects.get(user=session_request.attendee)
         if settings.payment_made == NotificationChoices.NONE:
             return
     except NotificationSettings.DoesNotExist:
@@ -379,18 +496,60 @@ def notify_refund_approved(refund_request):
 
     email_settings = get_email_template_settings()
     context = {
-        "user": refund_request.payment.user,
-        "refund_request": refund_request,
-        "amount": refund_request.payment.amount,
-        "session": refund_request.payment.session_request.session,
+        "user": session_request.attendee,
+        "session_request": session_request,
+        "amount": session_request.price,
+        "session": session_request.session,
         "greeting": email_settings["refund_approved_greeting"],
         "body": email_settings["refund_approved_body"],
     }
 
     send_notification(
-        user=refund_request.payment.user,
+        user=session_request.attendee,
         subject_type=NotificationSubjectChoices.PAYMENT,
-        email_subject=f"Your refund for '{refund_request.payment.session_request.session.title}' has been approved",
+        email_subject=f"Your refund for '{session_request.session.title}' has been approved",
         email_template="events/emails/refund_approved.html",
         context=context,
+        platform_body=_(
+            "Your refund for '%(title)s' has been approved. "
+            "The amount will be returned to your original payment method within 5-10 business days."
+        )
+        % {"title": session_request.session.title},
+        link_url="/payments/history/",
+    )
+
+
+def notify_request_revoked(session_request):
+    """Notify attendee when the host revokes their approved request."""
+    try:
+        settings = NotificationSettings.objects.get(user=session_request.attendee)
+        if settings.responded_session == NotificationChoices.NONE:
+            return
+    except NotificationSettings.DoesNotExist:
+        pass
+
+    host_name = (
+        session_request.session.host.get_full_name()
+        or session_request.session.host.username
+    )
+
+    context = {
+        "user": session_request.attendee,
+        "session_request": session_request,
+        "session": session_request.session,
+        "host": session_request.session.host,
+    }
+
+    send_notification(
+        user=session_request.attendee,
+        subject_type=NotificationSubjectChoices.SESSION,
+        email_subject=f"Your request for '{session_request.session.title}' has been revoked",
+        email_template="events/emails/request_revoked.html",
+        context=context,
+        platform_body=_(
+            "%(host)s has revoked your approved request for '%(title)s'. "
+            "If a payment was made, a refund will be processed automatically."
+        )
+        % {"host": host_name, "title": session_request.session.title},
+        link_url="/profile/",
     )

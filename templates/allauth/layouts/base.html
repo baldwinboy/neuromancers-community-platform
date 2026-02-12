@@ -1,4 +1,4 @@
-{% load i18n static wagtailcore_tags wagtailuserbar %}
+{% load i18n static compress wagtailcore_tags wagtailuserbar %}
 {% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
@@ -24,10 +24,15 @@
               type="image/png"
               href="{% static 'images/favicon.png' %}">
         {# Global stylesheets #}
-        <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+        {% component_css_dependencies %}
+        {% compress css %}
+            {# Global stylesheets #}
+            <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
 
-        {% block extra_head %}
-        {% endblock extra_head %}
+            {% block extra_css %}
+                {# Override this in templates to add extra stylesheets #}
+            {% endblock extra_css %}
+        {% endcompress %}
     </head>
     {# djlint:off #}
     <body class="{% block body_class %}{% endblock body_class %}">
@@ -45,7 +50,15 @@
                 <div class="w-full container mx-auto py-9">
                     <strong class="visually-hidden">{% trans "Messages:" %}</strong>
                     <ul>
-                        {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+                        {% for message in messages %}
+                            <li class="base_message w-full bg-lightAccent">
+                                {% if message.extra_tags %}
+                                    <a href="{% url message.extra_tags %}" class="w-fit link_alt">{{ message }}</a>
+                                {% else %}
+                                    <span>{{ message }}</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
                     </ul>
                 </div>
             </div>

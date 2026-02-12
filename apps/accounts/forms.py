@@ -2,9 +2,10 @@ import re
 
 from allauth.account.forms import SignupForm as AllauthSignupForm
 from django import forms
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy as _lazy
 from wagtail.contrib.settings.registry import registry
 
 from .utils import current_birth_years
@@ -104,15 +105,82 @@ class SignupForm(AllauthSignupForm):
         return user
 
 
+class AccountSettingsForm(forms.ModelForm):
+    """Form for changing core account fields: name, username, date of birth."""
+
+    first_name = forms.CharField(
+        required=True,
+        label=_lazy("First name"),
+        max_length=150,
+        validators=[name_no_banned_words, name_safe_characters],
+        widget=forms.TextInput(attrs={"placeholder": _lazy("First name")}),
+    )
+    last_name = forms.CharField(
+        required=True,
+        label=_lazy("Last name"),
+        max_length=150,
+        validators=[name_no_banned_words, name_safe_characters],
+        widget=forms.TextInput(attrs={"placeholder": _lazy("Last name")}),
+    )
+    username = forms.CharField(
+        required=True,
+        label=_lazy("Username"),
+        max_length=64,
+        widget=forms.TextInput(attrs={"placeholder": _lazy("Username")}),
+    )
+    date_of_birth = forms.DateField(
+        required=True,
+        label=_lazy("Date of birth"),
+        validators=[user_over_18],
+        widget=forms.SelectDateWidget(years=current_birth_years),
+    )
+
+    class Meta:
+        model = get_user_model()
+        fields = ["first_name", "last_name", "username", "date_of_birth"]
+
+    def clean_username(self):
+        value = self.cleaned_data.get("username", "").lower()
+        User = get_user_model()
+        # Ensure uniqueness excluding the current user
+        if User.objects.filter(username=value).exclude(pk=self.instance.pk).exists():
+            raise ValidationError(
+                _("A user with that username already exists."),
+                code="username_taken",
+            )
+        if re.match(username_banned_words_re, value):
+            raise ValidationError(
+                username_banned_words_message,
+                code="signup_username_no_banned_words",
+            )
+        return value
+
+
+MAX_UPLOAD_SIZE_MB = 2
+MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+
+
 class ProfileForm(forms.ModelForm):
     """Form for editing user profile (access_needs for seekers, terms for hosts)"""
+
+    display_picture_file = forms.FileField(
+        required=False,
+        label=_("Profile Picture"),
+        widget=forms.FileInput(
+            attrs={
+                "class": "settings-avatar__input",
+                "accept": "image/jpeg,image/png,image/gif,image/webp",
+                "id": "id_display_picture_file",
+            }
+        ),
+    )
 
     class Meta:
         from .models_users.profile import Profile
 
         model = Profile
         fields = [
-            "display_picture",
             "about",
             "country",
             "access_needs",
@@ -142,6 +210,7 @@ class ProfileForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self._user = user
         # Only show relevant fields based on user group
         if user:
             # Support seekers only see access_needs
@@ -154,6 +223,29 @@ class ProfileForm(forms.ModelForm):
             else:
                 self.fields.pop("access_needs", None)
                 self.fields.pop("terms_and_conditions", None)
+
+    def clean_display_picture_file(self):
+        f = self.cleaned_data.get("display_picture_file")
+        if not f:
+            return f
+
+        # Validate content type
+        content_type = getattr(f, "content_type", "")
+        if content_type not in ALLOWED_IMAGE_TYPES:
+            raise ValidationError(
+                _("Unsupported image type. Please upload a JPG, PNG, GIF or WebP."),
+                code="invalid_image_type",
+            )
+
+        # Validate file size (2 MB max)
+        if f.size > MAX_UPLOAD_SIZE_BYTES:
+            raise ValidationError(
+                _("File size must not exceed %(max)d MB.")
+                % {"max": MAX_UPLOAD_SIZE_MB},
+                code="file_too_large",
+            )
+
+        return f
 
 
 class NotificationSettingsForm(forms.ModelForm):
@@ -174,3 +266,18 @@ class PeerNotificationSettingsForm(forms.ModelForm):
 
         model = PeerNotificationSettings
         exclude = ["user", "has_customized"]
+
+
+class PeerPrivacySettingsForm(forms.ModelForm):
+    """Form for editing peer privacy settings (calendar visibility, etc.)"""
+
+    class Meta:
+        from .models_users.user_settings import PeerPrivacySettings
+
+        model = PeerPrivacySettings
+        exclude = ["user"]
+        labels = {
+            "show_calendar": _lazy("Show availability calendar"),
+            "show_peer_session_details": _lazy("Show peer session details"),
+            "show_group_session_details": _lazy("Show group session details"),
+        }

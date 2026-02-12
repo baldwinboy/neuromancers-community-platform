@@ -47,7 +47,7 @@ var toggleSelectedOptions = (button) => {
 };
 
 const searchInput = (event, groups) => {
-  const search = event.target.value;
+  let search = event.target.value;
 
   // Find value in groups
   groups.forEach((group) => {
@@ -58,6 +58,11 @@ const searchInput = (event, groups) => {
         .forEach((item) => item.classList.add("hidden"));
       return;
     }
+
+    search = search.toLowerCase();
+    search = search.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents
+    search = search.replace(/\s+/g, " ").trim(); // Normalize whitespace
+    search = search[0].toUpperCase() + search.slice(1); // Capitalize first letter
 
     const matchingElements = group.querySelectorAll(
       `li[data-label*="${search}"]`,

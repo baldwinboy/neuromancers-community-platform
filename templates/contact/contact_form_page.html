@@ -1,4 +1,4 @@
-{% extends "account/base_entrance.html" %}
+{% extends "base.html" %}
 
 {% load allauth i18n wagtailcore_tags wagtailimages_tags %}
 
@@ -13,39 +13,46 @@
         {{ page.title }}
     {% endif %}
 {% endblock head_title %}
-{# Protect against path sniffing #}
-{% querystring next=None %}
 
 {% block content %}
+    {# Render StreamField body blocks if present #}
+    {% for block in page.body %}
+        {% include_block block %}
+    {% endfor %}
+    {# Contact form section #}
+    <section class="contact-form-section">
+        <div class="contact-form-container">
 
-    {% element panel class="auth_panel__signup" %}
+            {% element panel class="auth_panel__contact" %}
 
-        {% slot title %}
-            {% trans page.title %}
-        {% endslot %}
-
-        {% slot body %}
-            {# Form fields #}
-            {% pageurl page as action_url %}
-            <div class="richtext">{{ page.intro|richtext }}</div>
-
-            {% element form form=form method="post" action=action_url tags="entrance,signup" %}
-
-                {% slot body %}
-                    {% csrf_token %}
-
-                    {% element fields form=form unlabeled=True %}
-                    {% endelement %}
-                    {{ redirect_field }}
+                {% slot title %}
+                    {{ page.title }}
                 {% endslot %}
 
-                {% slot actions %}
+                {% slot body %}
+                    {# Intro text #}
+                    {% if page.intro %}<div class="contact-form-intro">{{ page.intro|richtext }}</div>{% endif %}
+                    {# Form #}
+                    {% pageurl page as action_url %}
 
-                    {% element button tags="prominent,signup" type="submit" class="auth_button__signup_panel" %}
-                        {% trans "Send" %}
+                    {% element form form=form method="post" action=action_url tags="entrance,contact" %}
+
+                        {% slot body %}
+                            {% csrf_token %}
+
+                            {% element fields form=form unlabeled=True %}
+                            {% endelement %}
+                        {% endslot %}
+
+                        {% slot actions %}
+
+                            {% element button tags="prominent,contact" type="submit" class="contact-form-submit" %}
+                                {% trans "Send Message" %}
+                            {% endelement %}
+                        {% endslot %}
                     {% endelement %}
                 {% endslot %}
             {% endelement %}
-        {% endslot %}
-    {% endelement %}
+        </div>
+    </section>
 {% endblock content %}

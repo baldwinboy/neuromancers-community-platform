@@ -29,19 +29,21 @@
                                                     {{ field.label }}
                                                     {% if field.field.required %}*{% endif %}
                                                 </legend>
-                                            {% elif if field.id_for_label %}
-                                                <label for="{{ field.id_for_label }}" class="text-2xl">
-                                                    {{ field.label }}
-                                                    {% if field.field.required %}*{% endif %}
-                                                </label>
                                             {% else %}
-                                                <label for="id_{{ field.name }}_0" class="text-2xl">
-                                                    {{ field.label }}
-                                                    {% if field.field.required %}*{% endif %}
-                                                </label>
+                                                {% if field.id_for_label %}
+                                                    <label for="{{ field.id_for_label }}" class="text-2xl">
+                                                        {{ field.label }}
+                                                        {% if field.field.required %}*{% endif %}
+                                                    </label>
+                                                {% else %}
+                                                    <label for="id_{{ field.name }}_0" class="text-2xl">
+                                                        {{ field.label }}
+                                                        {% if field.field.required %}*{% endif %}
+                                                    </label>
+                                                {% endif %}
                                             {% endif %}
                                             {{ field }}
-                                            <p class="create_session__field_item_help_text w-full font-subheading font-light">{{ field.help_text }}</p>
+                                            <p class="create_session__field_item_help_text w-full font-body">{{ field.help_text }}</p>
                                         </div>
                                     </div>
                                 {% endif %}
@@ -64,7 +66,7 @@
 
 {% block redirect_help %}
     <p>
-        <a href="{% routablepageurl sessions_index_page "choose_session_type" %}"
+        <a href="{% routablepageurl page "choose_session_type" %}"
            class="link_alt font-body text-sm">{% trans "Want to host a different type of workshop? Click here." %}</a>
     </p>
 {% endblock redirect_help %}

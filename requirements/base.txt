@@ -144,6 +144,8 @@ draftjs-exporter==5.2.0
     # via
     #   -r requirements/base.in
     #   wagtail
+emoji==2.15.0
+    # via -r requirements/base.in
 et-xmlfile==2.0.0
     # via
     #   -r requirements/base.in
@@ -336,11 +338,8 @@ urllib3==2.6.3
 wagtail==7.3
     # via
     #   -r requirements/base.in
-    #   wagtail-modeladmin
     #   wagtailmenus
-wagtail-modeladmin==2.2.0
-    # via -r requirements/base.in
-wagtailmenus==4.0.4
+wagtailmenus @ git+https://github.com/baldwinboy/wagtailmenus@master
     # via -r requirements/base.in
 wcwidth==0.2.13
     # via

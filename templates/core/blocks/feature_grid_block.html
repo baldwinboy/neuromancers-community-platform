@@ -1,12 +1,14 @@
-<section class="feature-grid-block py-12 {% if self.background_color == 'white' %}bg-white{% else %}bg-gray-50{% endif %}">
+<section class="feature-grid-block py-12 {% if self.background_color %}bg-{{ self.background_color }}{% endif %}{% if self.top_border_color %} border-t-{{ self.top_border_color }}{% endif %}{% if self.bottom_border_color %} border-b-{{ self.bottom_border_color }}{% endif %}{% if self.top_border_style %} border-t-{{ self.top_border_style }}{% endif %}{% if self.bottom_border_style %} border-b-{{ self.bottom_border_style }}{% endif %}">
     <div class="container mx-auto px-6 lg:px-0">
         {% if self.heading %}
-            <h2 class="text-5xl font-heading font-semibold mb-12 text-center lg:text-6xl">{{ self.heading }}</h2>
+            <h2 class="text-5xl font-heading font-semibold mb-12 text-center lg:text-6xl {% if self.text_color %}text-{{ self.text_color }}{% endif %}">
+                {{ self.heading }}
+            </h2>
         {% endif %}
         <div class="grid grid-cols-1 {% if self.columns == '2' %}md:grid-cols-2{% elif self.columns == '4' %}md:grid-cols-4{% else %}md:grid-cols-3{% endif %} gap-12">
             {% for feature in self.features %}
                 <div class="rounded-lg hover:shadow-lg transition">
-                    <h3 class="text-3xl font-heading font-semibold mb-8 lg:text-4xl">
+                    <h3 class="text-3xl font-heading font-semibold mb-8 lg:text-4xl {% if self.text_color %}text-{{ self.text_color }}{% endif %}">
                         {% spaceless %}
                             {{ feature.value.title }}
                             <span>
@@ -26,7 +28,9 @@
                             </span>
                         {% endspaceless %}
                     </h3>
-                    <p class="text-gray-600 font-body">{{ feature.value.description }}</p>
+                    <p class="text-gray-600 font-body {% if self.text_color %}text-{{ self.text_color }}{% endif %}">
+                        {{ feature.value.description }}
+                    </p>
                 </div>
             {% endfor %}
         </div>

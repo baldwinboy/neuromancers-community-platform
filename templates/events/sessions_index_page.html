@@ -11,7 +11,7 @@
 {% endblock body_class %}
 
 {% block content %}
-    <div class="flex flex-col flex-grow items-center gap-4 w-full h-full bg-lightAccent">
+    <div class="flex flex-col flex-grow items-center gap-4 w-full min-h-full h-auto bg-lightAccent overflow pb-8">
         <header class="flex flex-col justify-start items-center gap-4 w-full container mx-auto py-9 px-6 lg:px-0 lg:flex-row lg:justify-space-between">
             <h1 class="uppercase">{{ page.title }}</h1>
             {% if user.is_authenticated and perms.events.add_peersession or perms.events.add_groupsession %}

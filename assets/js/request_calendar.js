@@ -33,7 +33,7 @@ function createTimeOption(value, label, interval, targetStartEl, targetEndEl) {
     return labelEl;
 }
 
-var chooseDuration = (input) => {
+window.chooseDuration = (input) => {
     const durations = JSON.parse(document.getElementById('request_calendar_durations').textContent);
     const output = document.getElementById('id_request_calendar_durations_time');
     const startsAtInput = document.getElementById(input.dataset.startId);
@@ -58,7 +58,7 @@ var chooseDuration = (input) => {
     }
 }
 
-var setCurrentDateTimes = (button) => {
+window.setCurrentDateTimes = (button) => {
     if (button.classList.contains('request_calendar__grid_date_selected')) return;
 
     // Clear all other selected date classes

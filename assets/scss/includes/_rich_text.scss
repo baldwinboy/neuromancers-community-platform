@@ -37,6 +37,10 @@
     padding-left: calc($spacer * 3);
 }
 
+.prose ul li {
+    list-style-type: square;
+}
+
 .prose blockquote {
   padding-inline: calc($spacer * 3);
   font-weight: 500;

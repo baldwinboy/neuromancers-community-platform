@@ -1,0 +1,612 @@
+@use "../variables" as *;
+@use "../mixins" as *;
+
+.settings {
+    width: 100%;
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: calc($spacer * 2.25) calc($spacer * 1.5);
+
+    @include media(lg) {
+        padding: calc($spacer * 2.25) 0;
+    }
+}
+
+.settings-title {
+    font-family: $heading;
+    font-size: 2rem;
+    color: $black;
+    margin-bottom: $spacer * 1.5;
+}
+
+.settings-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacer * 0.25;
+    border-bottom: 1px solid rgba($black, 0.1);
+    margin-bottom: $spacer * 1.5;
+
+    &__tab {
+        display: flex;
+        align-items: center;
+        gap: $spacer * 0.5;
+        padding: calc($spacer * 0.75) $spacer;
+        font-family: $subheading;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: rgba($black, 0.6);
+        text-decoration: none;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s ease;
+
+        @include interact {
+            color: $black;
+            background: rgba($black, 0.02);
+        }
+
+        &--active {
+            color: $darkAccent;
+            border-bottom-color: $darkAccent;
+        }
+
+        svg {
+            flex-shrink: 0;
+        }
+    }
+}
+
+.settings-section {
+    margin-bottom: $spacer * 1.5;
+
+    &__title {
+        margin-bottom: $spacer * 0.5;
+    }
+
+    &__description {
+        margin-bottom: $spacer;
+        color: rgba($black, 0.6);
+    }
+}
+
+.settings-account__current {
+    margin-bottom: $spacer;
+    color: rgba($black, 0.7);
+
+    strong {
+        font-weight: 600;
+        color: $black;
+    }
+}
+
+.settings-panel {
+    background: $white;
+    border: 1px solid rgba($black, 0.1);
+    padding: $spacer * 1.5;
+
+    &__header {
+        margin-bottom: $spacer * 1.5;
+        padding-bottom: $spacer;
+        border-bottom: 1px solid rgba($black, 0.1);
+    }
+
+    &__title {
+        font-family: $heading;
+        font-size: 1.25rem;
+        color: $black;
+        margin-bottom: $spacer * 0.25;
+    }
+
+    &__description {
+        font-family: $body;
+        font-size: 0.875rem;
+        color: rgba($black, 0.6);
+    }
+
+    & + & {
+        margin-top: $spacer * 1.5;
+    }
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: $spacer * 1.5;
+
+    // Grid layout variant
+    &--grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: $spacer * 1.5;
+
+        @include media(md) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    &__group {
+        display: flex;
+        flex-direction: column;
+        gap: $spacer * 0.5;
+
+        // Full width item in grid
+        &--full {
+            grid-column: 1 / -1;
+        }
+    }
+
+    // Toggle row for boolean settings
+    &__toggle {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: $spacer;
+        padding: $spacer;
+        background: rgba($black, 0.02);
+        border: 1px solid rgba($black, 0.05);
+        grid-column: 1 / -1;
+    }
+
+    &__toggle-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__toggle-control {
+        flex-shrink: 0;
+    }
+
+    &__label {
+        display: block;
+        font-family: $subheading;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: $black;
+    }
+
+    &__hint {
+        font-size: 0.75rem;
+        color: rgba($black, 0.5);
+        margin-top: $spacer * 0.25;
+    }
+
+    &__error {
+        font-size: 0.75rem;
+        color: rgb(220, 38, 38);
+        margin-top: $spacer * 0.25;
+    }
+
+    // Form inputs
+    input[type="text"],
+    input[type="email"],
+    input[type="url"],
+    textarea,
+    select {
+        width: 100%;
+        padding: calc($spacer * 0.5) calc($spacer * 0.75);
+        font-family: $body;
+        font-size: 0.875rem;
+        border: 1px solid rgba($black, 0.2);
+        background: $white;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+        &:focus {
+            outline: none;
+            border-color: $accent;
+            box-shadow: 0 0 0 2px rgba($accent, 0.2);
+        }
+    }
+
+    textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    select {
+        cursor: pointer;
+    }
+
+    // Django SelectDateWidget renders three selects in a row
+    .django-select-date-widget {
+        display: flex;
+        gap: $spacer * 0.5;
+
+        select {
+            flex: 1;
+        }
+    }
+
+    &__date-selects {
+        display: flex;
+        gap: $spacer * 0.5;
+
+        select {
+            flex: 1;
+        }
+    }
+
+    // Checkbox styling
+    input[type="checkbox"] {
+        width: $spacer * 1.25;
+        height: $spacer * 1.25;
+        accent-color: $accent;
+        cursor: pointer;
+    }
+
+    // File input
+    input[type="file"] {
+        font-family: $body;
+        font-size: 0.875rem;
+    }
+
+    &__divider {
+        border: none;
+        border-top: 1px solid rgba($black, 0.1);
+        margin: calc($spacer * 1.5) 0;
+    }
+}
+
+.settings-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacer * 0.5;
+    padding: calc($spacer * 0.75) calc($spacer * 1.5);
+    font-family: $subheading;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $white;
+    background: $darkAccent;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    @include interact {
+        background: $black;
+    }
+
+    &--full {
+        width: 100%;
+    }
+
+    &--secondary {
+        background: transparent;
+        color: $darkAccent;
+        border: 1px solid $darkAccent;
+
+        @include interact {
+            background: rgba($darkAccent, 0.05);
+        }
+    }
+
+    &--danger {
+        background: rgb(220, 38, 38);
+
+        @include interact {
+            background: rgb(185, 28, 28);
+        }
+    }
+}
+
+.settings-alert {
+    padding: $spacer;
+    border: 1px solid;
+    margin-bottom: $spacer;
+
+    &--success {
+        background: rgba(74, 222, 128, 0.1);
+        border-color: rgba(74, 222, 128, 0.3);
+        color: rgb(22, 101, 52);
+    }
+
+    &--warning {
+        background: rgba(251, 191, 36, 0.1);
+        border-color: rgba(251, 191, 36, 0.3);
+        color: rgb(146, 64, 14);
+    }
+
+    &--error {
+        background: rgba(248, 113, 113, 0.1);
+        border-color: rgba(248, 113, 113, 0.3);
+        color: rgb(153, 27, 27);
+    }
+
+    &--info {
+        background: rgba(96, 165, 250, 0.1);
+        border-color: rgba(96, 165, 250, 0.3);
+        color: rgb(30, 64, 175);
+    }
+
+    &__title {
+        font-family: $subheading;
+        font-weight: 600;
+        margin-bottom: $spacer * 0.5;
+    }
+
+    &__text {
+        font-family: $body;
+        font-size: 0.875rem;
+    }
+}
+
+// ============================================
+// Profile Picture Preview
+// ============================================
+.settings-avatar {
+    display: flex;
+    align-items: center;
+    gap: $spacer;
+    margin-bottom: $spacer;
+
+    &--clickable {
+        cursor: pointer;
+    }
+
+    &__input {
+        // Hide the native file input — clicking the avatar triggers it via JS
+        position: absolute;
+        width: 0;
+        height: 0;
+        opacity: 0;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
+    &__preview {
+        position: relative;
+        width: $spacer * 8;
+        height: $spacer * 8;
+        border-radius: 50%;
+        background: $accent;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        svg {
+            color: $lightAccent;
+        }
+    }
+
+    &__overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: $spacer * 0.25;
+        background: rgba($black, 0.45);
+        color: white;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        font-size: 0.75rem;
+
+        .settings-avatar--clickable:hover &,
+        .settings-avatar--clickable:focus-within & {
+            opacity: 1;
+        }
+    }
+
+    &__placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    &__image {
+        border-radius: 50%;
+    }
+
+    &__info {
+        flex: 1;
+    }
+}
+
+.settings-stripe {
+    &__status {
+        display: flex;
+        align-items: center;
+        gap: $spacer * 0.5;
+        margin-bottom: $spacer;
+    }
+
+    &__indicator {
+        width: $spacer * 0.75;
+        height: $spacer * 0.75;
+        border-radius: 50%;
+
+        &--connected {
+            background: rgb(74, 222, 128);
+        }
+
+        &--pending {
+            background: rgb(251, 191, 36);
+        }
+
+        &--disconnected {
+            background: rgba($black, 0.3);
+        }
+    }
+
+    &__info {
+        display: grid;
+        gap: $spacer * 0.5;
+        font-size: 0.875rem;
+
+        dt {
+            font-weight: 500;
+            color: rgba($black, 0.7);
+        }
+
+        dd {
+            color: rgba($black, 0.6);
+        }
+    }
+
+    &__actions {
+        display: flex;
+        flex-direction: column;
+        gap: $spacer * 0.5;
+        margin-top: $spacer;
+
+        @include media(sm) {
+            flex-direction: row;
+        }
+    }
+
+    &__faq {
+        margin: 0;
+    }
+
+    &__faq-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: $spacer;
+        padding: calc($spacer * 0.75) 0;
+        border-bottom: 1px solid rgba($black, 0.08);
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        dt {
+            font-weight: 500;
+            color: rgba($black, 0.7);
+            flex-shrink: 0;
+        }
+
+        dd {
+            margin: 0;
+            text-align: right;
+            color: rgba($black, 0.6);
+        }
+    }
+}
+
+.settings-collapsible {
+    border: 1px solid rgba($black, 0.1);
+    margin-bottom: $spacer;
+
+    &:first-of-type {
+        margin-top: 0;
+    }
+
+    &__header {
+        display: flex;
+        align-items: center;
+        gap: $spacer * 0.75;
+        padding: $spacer;
+        cursor: pointer;
+        list-style: none;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+
+        @include interact {
+            background: rgba($black, 0.02);
+        }
+
+        svg {
+            flex-shrink: 0;
+            color: $darkAccent;
+        }
+    }
+
+    &__content {
+        padding: $spacer * 1.5;
+        border-top: 1px solid rgba($black, 0.1);
+        background: $white;
+    }
+
+    // Danger variant
+    &--danger {
+        .settings-collapsible__content {
+            background: rgba(248, 113, 113, 0.05);
+        }
+
+        svg {
+            color: rgb(220, 38, 38);
+        }
+    }
+}
+
+// Calendar services grid
+.settings-calendar-services {
+    display: flex;
+    flex-direction: column;
+    gap: $spacer * 0.75;
+    margin-top: $spacer;
+}
+
+.settings-calendar-services__item {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacer;
+    padding: $spacer calc($spacer * 1.25);
+    background: $white;
+    border: 1px solid $gray-100;
+    border-radius: 0.75rem;
+    transition: box-shadow 0.15s ease;
+
+    @include interact {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+}
+
+.settings-calendar-services__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: $spacer * 2.5;
+    height: $spacer * 2.5;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+
+    &--google {
+        color: #1a73e8;
+        background: #e8f0fe;
+    }
+
+    &--outlook {
+        color: #0078d4;
+        background: #deecf9;
+    }
+
+    &--apple {
+        color: $black;
+        background: $gray-100;
+    }
+}
+
+.settings-calendar-services__info {
+    h4 {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: $black;
+    }
+
+    p {
+        margin-top: $spacer * 0.25;
+        font-size: 0.8125rem;
+        color: $gray-500;
+    }
+}
+
+.settings-section__subtitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: $black;
+    margin-bottom: $spacer * 0.25;
+}

@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from wagtail.contrib.settings.registry import registry
 
 from apps.events.choices import (
     GroupSessionOccurrenceChoices,
@@ -113,9 +114,12 @@ class GroupSession(AbstractSession):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._initial_host = self.host
+        if hasattr(self, "host"):
+            self._initial_host = self.host
+        if hasattr(self, "filters"):
+            self._initial_filters = self.filters
 
-    @property
+    @cached_property
     def currency_symbol(self):
         _currency = filtered_currencies.get(self.currency, None)
 
@@ -133,20 +137,34 @@ class GroupSession(AbstractSession):
             requests__status=SessionRequestStatusChoices.APPROVED
         )
 
-    @property
+    @cached_property
     def language_display(self):
         all_languages = get_languages()
         return all_languages.get(self.language)
 
-    @cached_property
     def attendee_requested(self, user):
-        return self.requests.filter(attendee=user).exists()
+        return self.requests.filter(
+            attendee=user,
+            status__in=[
+                SessionRequestStatusChoices.PENDING,
+                SessionRequestStatusChoices.APPROVED,
+            ],
+        ).exists()
 
-    @cached_property
     def attendee_approved(self, user):
         return self.requests.filter(
             attendee=user, status=SessionRequestStatusChoices.APPROVED
         ).exists()
+
+    def get_pending_request(self, user):
+        """Return the user's pending request for this session, if any."""
+        return (
+            self.requests.filter(
+                attendee=user, status=SessionRequestStatusChoices.PENDING
+            )
+            .order_by("-created_at")
+            .first()
+        )
 
     def save(self, *args, **kwargs):
         if not self._state.adding and self._initial_host.pk != self.host.pk:
@@ -156,6 +174,55 @@ class GroupSession(AbstractSession):
 
             if not can_add:
                 return
+
+        # Convert list of grouped filters to JSON
+        # This allows the admin interface to work with the grouped checkbox widget
+        # List format: ['group::item', ...]
+        if isinstance(self.filters, list):
+            # Load registry object and get current filter settings to validate against
+            filter_settings = registry.get_by_natural_key(
+                "events", "FilterSettings"
+            ).load()
+            filters_mapping = filter_settings.get_cached_mapping()
+
+            normalized_filters = {}
+
+            for filter_str in self.filters:
+                try:
+                    group_slug, item_slug = filter_str.split("::")
+                except ValueError:
+                    continue  # skip invalid format
+
+                group = filters_mapping.get(group_slug)
+                if not group:
+                    continue  # skip invalid group
+
+                item = group["items"].get(item_slug)
+                if not item:
+                    continue  # skip invalid item
+
+                if group_slug not in normalized_filters:
+                    normalized_filters[group_slug] = {"items": {}}
+
+                normalized_filters[group_slug]["items"][item_slug] = {}
+
+            # Merge normalized filters with existing filters to preserve any additional data
+            if self._initial_filters:
+                if not isinstance(self._initial_filters, dict):
+                    self._initial_filters = {}
+                existing = self._initial_filters
+                for group_slug, group_data in normalized_filters.items():
+                    if group_slug not in existing:
+                        existing[group_slug] = group_data
+                    else:
+                        existing[group_slug]["items"].update(group_data["items"])
+                self.filters = existing
+            else:
+                self.filters = normalized_filters
+
+            self._initial_filters = (
+                self.filters
+            )  # Update initial filters after normalization
 
         super().save(*args, **kwargs)
 
@@ -200,8 +267,10 @@ class GroupSessionRequest(AbstractSessionRequest):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._initial_session = self.session
-        self._initial_attendee = self.attendee
+        if hasattr(self, "session"):
+            self._initial_session = self.session
+        if hasattr(self, "attendee"):
+            self._initial_attendee = self.attendee
 
     def __str__(self):
         return f"{self.session.title} for {self.attendee.username}"

@@ -1,3 +1,630 @@
+@use "sass:color";
+@use "../mixins" as *;
+@use "../variables" as *;
+
+.profile {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: calc($spacer * 2.25) calc($spacer * 1.5);
+
+    @include media(lg) {
+        padding: calc($spacer * 2.25) 0;
+    }
+}
+
+// Profile header
+.profile__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacer;
+    margin-bottom: $spacer * 2;
+
+    @include media(lg) {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+}
+
+.profile__info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacer;
+
+    @include media(lg) {
+        flex-direction: row;
+    }
+}
+
+.profile__avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 128px;
+    height: 128px;
+    border: 5px solid $lightAccent;
+    border-radius: 50%;
+    background: $accent;
+    overflow: hidden;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    &-icon {
+        color: $lightAccent;
+    }
+}
+
+.profile__identity {
+    text-align: center;
+
+    @include media(lg) {
+        text-align: left;
+    }
+}
+
+// Profile sections
+.profile__section {
+    margin-bottom: $spacer * 2;
+}
+
+.profile__section-title {
+    font-family: $subheading;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: $spacer * 0.5;
+    padding-bottom: $spacer * 0.5;
+    border-bottom: 2px solid $lightAccent;
+    display: inline-flex;
+    align-items: center;
+    gap: $spacer * 0.5;
+}
+
+.profile__subsection {
+    margin-bottom: $spacer * 2;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.profile__about {
+    font-family: $body;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.profile__sessions {
+    display: flex;
+    flex-direction: column;
+    gap: $spacer;
+}
+
+.profile__empty {
+    font-family: $body;
+    font-size: 0.875rem;
+    color: $gray-500;
+}
+
+.profile-calendar,
+%profile-calendar {
+    margin-bottom: $spacer * 2;
+    background: $white;
+    border: 1px solid rgba($black, 0.08);
+    border-radius: 0.75rem;
+    overflow: hidden;
+
+    // Header with title and view toggle
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: $spacer calc($spacer * 1.25);
+        border-bottom: 1px solid rgba($black, 0.06);
+    }
+
+    &__title {
+        font-family: $heading;
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    &__views {
+        display: flex;
+        gap: $spacer * 0.25;
+        background: rgba($black, 0.04);
+        border-radius: 0.5rem;
+        padding: $spacer * 0.25;
+    }
+
+    &__view-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: $spacer * 2;
+        height: $spacer * 2;
+        padding: 0;
+        border: none;
+        border-radius: 0.375rem;
+        background: transparent;
+        color: rgba($black, 0.5);
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        @include interact {
+            color: rgba($black, 0.8);
+            background: rgba($black, 0.05);
+        }
+
+        &--active {
+            background: $white;
+            color: $accent;
+            box-shadow: 0 1px 3px rgba($black, 0.1);
+        }
+    }
+
+    // Content area
+    &__content {
+        &--hidden {
+            display: none;
+        }
+    }
+
+    &__grid-container {
+        padding: $spacer calc($spacer * 1.25);
+    }
+
+    // Month navigation
+    &__nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: $spacer;
+    }
+
+    &__nav-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: $spacer * 2;
+        height: $spacer * 2;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background: transparent;
+        color: rgba($black, 0.6);
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        @include interact {
+            background: rgba($black, 0.06);
+            color: $black;
+        }
+    }
+
+    &__month-year {
+        font-family: $subheading;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    // Weekday headers
+    &__weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: $spacer * 0.25;
+        margin-bottom: $spacer * 0.5;
+
+        span {
+            text-align: center;
+            font-family: $subheading;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: rgba($black, 0.4);
+            padding: calc($spacer * 0.25) 0;
+        }
+    }
+
+    // Calendar days grid
+    &__days {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: $spacer * 0.25;
+    }
+
+    // Individual day cell
+    &__day {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: $spacer * 2.75;
+        padding: $spacer * 0.375;
+        border: 2px solid transparent;
+        border-radius: 0.5rem;
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-family: $body;
+
+        &--empty {
+            cursor: default;
+        }
+
+        &--past {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        &--today {
+            border-color: $accent;
+
+            .profile-calendar__day-number {
+                color: $accent;
+                font-weight: 600;
+            }
+        }
+
+        &--selected {
+            background: $accent;
+            border-color: $accent;
+
+            .profile-calendar__day-badge {
+                background: $white;
+                color: $accent;
+            }
+        }
+
+        &--available:not(.profile-calendar__day--past) {
+            background: rgba($success, 0.08);
+
+            @include interact {
+                background: rgba($success, 0.15);
+            }
+        }
+
+        &:not(.profile-calendar__day--empty):not(.profile-calendar__day--past):not(.profile-calendar__day--selected) {
+            @include interact {
+                background: rgba($black, 0.04);
+            }
+        }
+    }
+
+    &__day-number {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: $black;
+        line-height: 1;
+    }
+
+    // Slot count badge
+    &__day-badge {
+        position: absolute;
+        top: 0.125rem;
+        right: 0.125rem;
+        min-width: $spacer;
+        height: $spacer;
+        padding: 0 calc($spacer * 0.25);
+        font-size: 0.625rem;
+        font-weight: 600;
+        color: $white;
+        background: $success;
+        border-radius: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    // Scheduled indicator dot
+    &__day-indicator {
+        position: absolute;
+        bottom: 0.25rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: $spacer * 0.375;
+        height: $spacer * 0.375;
+        border-radius: 50%;
+
+        &--scheduled {
+            background: $info;
+        }
+    }
+
+    // Detail panel
+    &__detail {
+        border-top: 1px solid rgba($black, 0.06);
+        padding: $spacer calc($spacer * 1.25);
+        background: rgba($black, 0.02);
+
+        &--hidden {
+            display: none;
+        }
+    }
+
+    &__detail-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: $spacer * 0.75;
+    }
+
+    &__detail-title {
+        font-family: $subheading;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    &__detail-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: $spacer * 1.75;
+        height: $spacer * 1.75;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background: transparent;
+        color: rgba($black, 0.4);
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        @include interact {
+            background: rgba($black, 0.08);
+            color: $black;
+        }
+    }
+
+    // Slots section in detail
+    &__slots {
+        margin-bottom: $spacer;
+    }
+
+    &__slots-title,
+    &__events-title {
+        font-family: $subheading;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: rgba($black, 0.5);
+        margin: 0 0 calc($spacer * 0.5) 0;
+    }
+
+    &__slots-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacer * 0.5;
+    }
+
+    &__slot {
+        display: flex;
+        align-items: center;
+        gap: $spacer * 0.25;
+        padding: calc($spacer * 0.5) calc($spacer * 0.75);
+        background: rgba($success, 0.1);
+        border: 1px solid rgba($success, 0.2);
+        border-radius: 0.375rem;
+        font-family: $body;
+        font-size: 0.8125rem;
+
+        &, & * {
+            font-family: $body;
+        }
+    }
+
+    &__slot-time {
+        font-weight: 500;
+        color: color.adjust($success, $lightness: -15%);
+    }
+
+    &__slot-separator {
+        color: rgba($black, 0.3);
+    }
+
+    &__event {
+        display: flex;
+        align-items: center;
+        gap: $spacer * 0.5;
+        padding: calc($spacer * 0.5) calc($spacer * 0.75);
+        background: rgba($info, 0.1);
+        border: 1px solid rgba($info, 0.2);
+        border-radius: 0.375rem;
+        margin-bottom: $spacer * 0.375;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        &--peer {
+            background: rgba($info, 0.1);
+            border-color: rgba($info, 0.2);
+        }
+
+        &--group {
+            background: rgba($primary, 0.1);
+            border-color: rgba($primary, 0.2);
+        }
+
+        &, & * {
+            font-family: $body;
+        }
+    }
+
+    &__event-badge {
+        padding: calc($spacer * 0.125) calc($spacer * 0.375);
+        font-size: 0.625rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: $white;
+        background: $info;
+        border-radius: 0.25rem;
+    }
+
+    &__event-title {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: $black;
+    }
+
+    &__event-time {
+        font-size: 0.75rem;
+        color: rgba($black, 0.6);
+        margin-left: auto;
+    }
+
+    // Empty state
+    &__empty {
+        text-align: center;
+        padding: $spacer;
+        font-size: 0.875rem;
+        color: rgba($black, 0.5);
+        margin: 0;
+    }
+
+    // Legend
+    &__legend {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: $spacer;
+        padding: calc($spacer * 0.75) calc($spacer * 1.25);
+        border-top: 1px solid rgba($black, 0.06);
+        font-size: 0.75rem;
+        color: rgba($black, 0.6);
+    }
+
+    &__legend-item {
+        display: flex;
+        align-items: center;
+        gap: $spacer * 0.375;
+    }
+
+    &__legend-dot {
+        width: $spacer * 0.625;
+        height: $spacer * 0.625;
+        border-radius: 50%;
+
+        &--available {
+            background: $success;
+        }
+
+        &--scheduled {
+            background: $info;
+        }
+    }
+
+    &__legend-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: $spacer * 0.875;
+        height: $spacer * 0.875;
+        padding: 0 calc($spacer * 0.25);
+        font-size: 0.5rem;
+        font-weight: 600;
+        color: $white;
+        background: $success;
+        border-radius: 0.2rem;
+        &, & * {
+            font-family: $body;
+        }
+    }
+
+    // List view
+    &__list {
+        padding: calc($spacer * 0.5) calc($spacer * 1.25) $spacer;
+    }
+
+    &__list-day {
+        display: flex;
+        align-items: flex-start;
+        gap: $spacer;
+        padding: calc($spacer * 0.75) 0;
+        border-bottom: 1px solid rgba($black, 0.06);
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    &__list-date {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: $spacer * 3;
+        text-align: center;
+    }
+
+    &__list-weekday {
+        font-size: 0.625rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: rgba($black, 0.5);
+    }
+
+    &__list-daynum {
+        font-family: $heading;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: $black;
+        line-height: 1.2;
+
+        &--today {
+            color: $accent;
+        }
+    }
+
+    &__list-month {
+        font-size: 0.625rem;
+        text-transform: uppercase;
+        color: rgba($black, 0.5);
+    }
+
+    &__list-slots {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacer * 0.375;
+        padding-top: $spacer * 0.25;
+    }
+
+    &__list-slot {
+        display: inline-block;
+        padding: calc($spacer * 0.25) calc($spacer * 0.5);
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: color.adjust($success, $lightness: -10%);
+        background: rgba($success, 0.1);
+        border-radius: 0.25rem;
+    }
+
+    &__list-booked {
+        display: inline-block;
+        padding: calc($spacer * 0.25) calc($spacer * 0.5);
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: $info;
+        background: rgba($info, 0.1);
+        border-radius: 0.25rem;
+    }
+}
+
+// Legacy class - keep for backwards compat
+.profile_calendar {
+    @extend %profile-calendar;
+}
+
+// Legacy class for backwards compat
 .accounts-profile__display_picture {
     border-style: solid;
     border-width: 5px;

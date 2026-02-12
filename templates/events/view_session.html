@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load i18n l10n account guardian_tags wagtailroutablepage_tags %}
+{% load i18n l10n heroicons account guardian_tags wagtailroutablepage_tags %}
 
 {% block title %}
     {{ page.session.title }}
@@ -11,132 +11,263 @@
 {% endblock description %}
 
 {% block body_class %}
-    flex flex-col sessions_create sessions_view
+    template-session-detail
 {% endblock body_class %}
 
 {% block content %}
     {% get_obj_perms request.user for page.session as "session_perms" %}
-    <div class="flex flex-col flex-grow items-center gap-4 w-full h-full">
-        <div class="w-full bg-lightAccent  py-9 ">
-            <header class="flex flex-col justify-start items-center gap-4 w-full container mx-auto px-6 lg:px-0 lg:flex-row lg:justify-space-between">
-                <h1 class="uppercase">{{ page.session.title }}</h1>
-                {% if user.is_authenticated %}
-                    {% if "change_peersession" in session_perms or "change_groupsession" in session_perms %}
-                        <div class="flex gap-4">
-                            <a href="{% routablepageurl sessions_index "edit_session" session_type=page.session_type session_id=page.session.id %}"
-                               class="auth_button auth_button__sessions block text-center">{% trans "Edit" %}</a>
-                            {% if page.session_type == "peer" and "manage_availability" in session_perms %}
-                                <a href="{% routablepageurl sessions_index "manage_availability" session_id=page.session.id %}"
-                                   class="auth_button auth_button__sessions block text-center">{% trans "Manage availability" %}</a>
-                            {% endif %}
-                            {% if form %}
-                                <form method="post">
-                                    {% csrf_token %}
-                                    <div class="hidden" aria-hidden="true">{{ form.is_published }}</div>
-                                    <button class="auth_button auth_button__sessions block text-center">
-                                        {% if page.session.is_published %}
-                                            {% trans "Unpublish" %}
-                                        {% else %}
-                                            {% trans "Publish" %}
-                                        {% endif %}
-                                    </button>
-                                </form>
-                            {% else %}
-                                <button class="auth_button auth_button__sessions block text-center" disabled>{% trans "Publish" %}</button>
-                            {% endif %}
-                        </div>
+    <main class="session-detail">
+        {# Back button #}
+        <a href="{{ sessions_index.url }}" class="session-detail__back">
+            {% heroicon_mini "arrow-left" size=16 %}
+            <span>{% trans "Back to sessions" %}</span>
+        </a>
+        {# Header section #}
+        <header class="session-detail__header">
+            <div class="session-detail__header-content">
+                {# Session type badge #}
+                <span class="session-detail__type-badge {% if page.session_type == 'group' %}session-detail__type-badge--group{% endif %}">
+                    {% if page.session_type == "peer" %}
+                        {% heroicon_mini "user" size=14 %}
+                        {% trans "Peer Session" %}
+                    {% else %}
+                        {% heroicon_mini "users" size=14 %}
+                        {% trans "Group Session" %}
                     {% endif %}
-                {% endif %}
-            </header>
-            <a href="{% url "accounts_user_profile" username=page.session.host.username %}">
-                <h2 class="w-full container mx-auto px-6 text-darkAccent lg:px-0">{{ page.session.host }}</h2>
-            </a>
-        </div>
-        <main class="flex flex-col w-full h-full container mx-auto py-9 px-6 lg:px-0">
-            {% trans "Introduction" as accordion_heading %}
-            {% with accordion_name="details-group" accordion_classes="view_session__details_group" %}
-                {% accordion %}
-                    <p class="font-body mb-8">{{ page.session.description }}</p>
-                    {% if page.session.languages_display|length > 0 %}
-                        <p class="mt-4 font-body">{% trans "Available in:" %}</p>
-                        <ul class="mb-4">
-                            {% if page.session_type == "peer" %}
-                                {% for lang in page.session.languages_display %}<li class="text-2xl">{{ lang }}</li>{% endfor %}
-                            {% else %}
-                                <li class="text-2xl">{{ page.session.language_display }}</li>
-                            {% endif %}
-                        </ul>
+                </span>
+                <h1 class="session-detail__title">{{ page.session.title }}</h1>
+                {# Host info #}
+                <a href="{% url 'accounts_user_profile' username=page.session.host.username %}"
+                   class="session-detail__host">
+                    {% heroicon_mini "user-circle" size=20 %}
+                    <span>{% trans "Hosted by" %} <strong>{{ page.session.host }}</strong></span>
+                    {% if page.session.host.certificate %}
+                        <span class="bg-black text-accent text-sm rounded-2xl py-2 px-4 uppercase text-center select-none">
+                            {% trans "Trained with Neuromancers" %}
+                        </span>
                     {% endif %}
-                    {% if page.session.filters %}
-                        {% for k,v in page.session.filters.items %}
-                            <div class="mb-4">
-                                <p class="mt-4 font-body">{% trans v.label %}</p>
-                                <ul>
-                                    {% for filterK, filter in v.items.items %}
-                                        <li class="text-2xl">{% trans filter.label %}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        {% endfor %}
+                </a>
+                {# Quick info tags #}
+                <div class="session-detail__quick-info">
+                    {# Languages #}
+                    {% if page.session_type == "peer" and page.session.languages_display|length > 0 %}
+                        <span class="session-detail__info-tag">
+                            {% heroicon_mini "language" size=14 %}
+                            {% for lang in page.session.languages_display|slice:":2" %}
+                                {{ lang }}
+                                {% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                            {% if page.session.languages_display|length > 2 %}+{{ page.session.languages_display|length|add:"-2" }}{% endif %}
+                        </span>
+                    {% elif page.session_type == "group" and page.session.language_display %}
+                        <span class="session-detail__info-tag">
+                            {% heroicon_mini "language" size=14 %}
+                            {{ page.session.language_display }}
+                        </span>
                     {% endif %}
-                {% endaccordion %}
-            {% endwith %}
-            {% if page.session_type == "group" %}
-                {% trans "Schedule" as accordion_heading %}
-                {% with accordion_name="details-group" accordion_classes="view_session__details_group" %}
-                    {% accordion %}
-                        <p class="font-body mb-8">
-                            <time datetime="{{ session_request.starts_at|date:"c" }}">{% localize on %}{{ session_request.starts_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time> - <time datetime="{{ session_request.ends_at|date:"c" }}">{% localize on %}{{ session_request.ends_at|date:"DATETIME_FORMAT" }}{% endlocalize %}</time>
-                        </p>
-                    {% endaccordion %}
-                {% endwith %}
-            {% endif %}
-            {% trans "Pricing" as accordion_heading %}
-            {% with accordion_name="details-group" accordion_classes="view_session__details_group" %}
-                {% accordion %}
-                    <div class="mb-8">
-                        <p class="text-xl font-body mt-4">
-                            {% trans "Standard price:" %} {{ page.session.currency_symbol }}{{ page.session.price_display }}
-                        </p>
+                    {# Durations for peer sessions #}
+                    {% if page.session_type == "peer" and page.session.durations_display|length > 0 %}
+                        <span class="session-detail__info-tag">
+                            {% heroicon_mini "clock" size=14 %}
+                            {% blocktrans with start=page.session.durations_display|first end=page.session.durations_display|last %}
+                                From {{ start }} to {{ end }}
+                            {% endblocktrans %}
+                        </span>
+                    {% endif %}
+                    {# Schedule for group sessions #}
+                    {% if page.session_type == "group" and page.session.starts_at %}
+                        <span class="session-detail__info-tag">
+                            {% heroicon_mini "calendar" size=14 %}
+                            <time datetime="{{ page.session.starts_at|date:'c' }}">
+                                {% localize on %}{{ page.session.starts_at|date:"D, M j @ g:i A" }}{% endlocalize %}
+                            </time>
+                        </span>
+                    {% endif %}
+                    {# Pricing #}
+                    <span class="session-detail__info-tag session-detail__info-tag--price">
+                        {% heroicon_mini "currency-dollar" size=14 %}
+                        {{ page.session.currency_symbol }}{{ page.session.price_display }}
                         {% if page.session.concessionary_price %}
-                            <p class="text-xl font-body">
-                                {% trans "Consessionary price:" %} {{ page.session.currency_symbol }}{{ page.session.concessionary_price_display }}
-                            </p>
+                            <small>({{ page.session.currency_symbol }}{{ page.session.concessionary_price_display }} conc.)</small>
                         {% endif %}
-                        {% if page.session.per_hour_price or page.session.concessionary_per_hour_price %}
-                            <h4 class="text-3xl font-subheading mt-8">{% trans "Hourly rates" %}</h4>
-                            <p class="font-body mb-4">{% trans "This is how much you'll pay in proportion to the length of your session." %}</p>
-                            {% if page.session.per_hour_price %}
-                                <p class="text-xl font-body">
-                                    {% trans "Standard hourly rate:" %} {{ page.session.currency_symbol }}{{ page.session.per_hour_price_display }}
-                                </p>
-                                {% if page.session.concessionary_per_hour_price %}
-                                    <p class="text-xl font-body">
-                                        {% trans "Standard hourly rate:" %} {{ page.session.currency_symbol }}{{ page.session.concessionary_per_hour_price_display }}
-                                    </p>
-                                {% endif %}
-                            {% endif %}
+                    </span>
+                </div>
+            </div>
+            {# Action buttons for owners #}
+            {% if user.is_authenticated %}
+                {% if "change_peersession" in session_perms or "change_groupsession" in session_perms %}
+                    <div class="session-detail__actions">
+                        <a href="{% routablepageurl sessions_index 'edit_session' session_type=page.session_type session_id=page.session.id %}"
+                           class="session-detail__action-btn">
+                            {% heroicon_mini "pencil" size=16 %}
+                            {% trans "Edit" %}
+                        </a>
+                        {% if page.session_type == "peer" and "manage_availability" in session_perms %}
+                            <a href="{% routablepageurl sessions_index 'manage_availability' session_id=page.session.id %}"
+                               class="session-detail__action-btn">
+                                {% heroicon_mini "calendar-days" size=16 %}
+                                {% trans "Availability" %}
+                            </a>
+                        {% endif %}
+                        {% if form %}
+                            <form method="post" class="session-detail__publish-form">
+                                {% csrf_token %}
+                                <div class="hidden" aria-hidden="true">{{ form.is_published }}</div>
+                                <button type="submit"
+                                        class="session-detail__action-btn {% if page.session.is_published %}session-detail__action-btn--danger{% endif %}">
+                                    {% if page.session.is_published %}
+                                        {% heroicon_mini "eye-slash" size=16 %}
+                                        {% trans "Unpublish" %}
+                                    {% else %}
+                                        {% heroicon_mini "eye" size=16 %}
+                                        {% trans "Publish" %}
+                                    {% endif %}
+                                </button>
+                            </form>
                         {% endif %}
                     </div>
-                {% endaccordion %}
-            {% endwith %}
-            {% if page.session.durations %}
-                {% trans "Durations" as accordion_heading %}
-                {% with accordion_name="details-group" accordion_classes="view_session__details_group" %}
-                    {% accordion %}
-                        {% if page.session.durations_display|length > 0 %}
-                            <p class="mt-4 font-body">{% trans "You may schedule sessions for the following amounts of time:" %}</p>
-                            <ul class="mb-4">
-                                {% for duration in page.session.durations_display %}<li class="text-2xl">{{ duration }}</li>{% endfor %}
-                            </ul>
-                        {% else %}
-                            <p class="text-2xl">No sessions available.</p>
-                        {% endif %}
-                    {% endaccordion %}
-                {% endwith %}
+                {% endif %}
             {% endif %}
+        </header>
+        {# Main content #}
+        <div class="session-detail__content">
+            {# Description #}
+            <section class="session-detail__section">
+                <h2 class="session-detail__section-title">{% trans "About this session" %}</h2>
+                <p class="session-detail__description">{{ page.session.description }}</p>
+            </section>
+            {# Filter tags #}
+            {% if page.session.filters %}
+                <section class="session-detail__section">
+                    <h2 class="session-detail__section-title">{% trans "Categories" %}</h2>
+                    <div class="session-detail__categories">
+                        {% for k, v in page.session.filters.items %}
+                            <div class="session-detail__category-group">
+                                <h3 class="session-detail__category-label">{{ v.label }}</h3>
+                                <div class="session-detail__tags">
+                                    {% for filterK, filter in v.items.items %}<span class="session-detail__tag">{{ filter.label }}</span>{% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+            {# Pricing details #}
+            {% if page.session.per_hour_price or page.session.concessionary_per_hour_price %}
+                <section class="session-detail__section">
+                    <h2 class="session-detail__section-title">{% trans "Pricing" %}</h2>
+                    <div class="session-detail__pricing-grid">
+                        <div class="session-detail__price-item">
+                            <span class="session-detail__price-label">{% trans "Standard price" %}</span>
+                            <span class="session-detail__price-value">{{ page.session.currency_symbol }}{{ page.session.price_display }}</span>
+                        </div>
+                        {% if page.session.concessionary_price %}
+                            <div class="session-detail__price-item">
+                                <span class="session-detail__price-label">{% trans "Concessionary price" %}</span>
+                                <span class="session-detail__price-value">{{ page.session.currency_symbol }}{{ page.session.concessionary_price_display }}</span>
+                            </div>
+                        {% endif %}
+                        {% if page.session.per_hour_price %}
+                            <div class="session-detail__price-item">
+                                <span class="session-detail__price-label">{% trans "Hourly rate" %}</span>
+                                <span class="session-detail__price-value">{{ page.session.currency_symbol }}{{ page.session.per_hour_price_display }}/hr</span>
+                            </div>
+                        {% endif %}
+                        {% if page.session.concessionary_per_hour_price %}
+                            <div class="session-detail__price-item">
+                                <span class="session-detail__price-label">{% trans "Conc. hourly rate" %}</span>
+                                <span class="session-detail__price-value">{{ page.session.currency_symbol }}{{ page.session.concessionary_per_hour_price_display }}/hr</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </section>
+            {% endif %}
+            {# Session duration options for peer sessions #}
+            {% if page.session_type == "peer" and page.session.durations_display|length > 0 %}
+                <section class="session-detail__section">
+                    <h2 class="session-detail__section-title">{% trans "Available durations" %}</h2>
+                    <div class="session-detail__durations">
+                        {% for duration in page.session.durations_display %}
+                            <span class="session-detail__duration-chip">{{ duration }}</span>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+            {# Languages #}
+            {% if page.session.languages_display|length > 0 %}
+                <section class="session-detail__section">
+                    <h2 class="session-detail__section-title">{% trans "Languages" %}</h2>
+                    <div class="session-detail__languages">
+                        {% if page.session_type == "peer" %}
+                            {% for lang in page.session.languages_display %}
+                                <span class="session-detail__language-chip">{{ lang }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="session-detail__language-chip">{{ page.session.language_display }}</span>
+                        {% endif %}
+                    </div>
+                </section>
+            {% endif %}
+            {# User's requests (peer sessions) #}
+            {% if user_requests %}
+                <section class="session-detail__section">
+                    <h2 class="session-detail__section-title">{% trans "Your Requests" %}</h2>
+                    <div class="session-detail__requests">
+                        {% for req in user_requests %}
+                            <div class="session-detail__request-card session-detail__request-card--{{ req.status|default:'2' }}">
+                                <div class="session-detail__request-header">
+                                    <time class="session-detail__request-date"
+                                          datetime="{{ req.starts_at|date:'c' }}">
+                                        {{ req.starts_at|date:"D, M j @ g:i A" }} – {{ req.ends_at|date:"g:i A" }}
+                                    </time>
+                                    {% if req.status == 0 %}
+                                        <span class="session-detail__request-status session-detail__request-status--approved">
+                                            {% heroicon_mini "check-circle" size=14 %}
+                                            {% trans "Approved" %}
+                                        </span>
+                                    {% elif req.status == 1 %}
+                                        <span class="session-detail__request-status session-detail__request-status--rejected">
+                                            {% heroicon_mini "x-circle" size=14 %}
+                                            {% trans "Not approved" %}
+                                        </span>
+                                    {% elif req.status == 2 %}
+                                        <span class="session-detail__request-status session-detail__request-status--pending">
+                                            {% heroicon_mini "clock" size=14 %}
+                                            {% trans "Pending" %}
+                                        </span>
+                                    {% elif req.status == 3 %}
+                                        <span class="session-detail__request-status session-detail__request-status--withdrawn">
+                                            {% heroicon_mini "arrow-uturn-left" size=14 %}
+                                            {% trans "Withdrawn" %}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <dl class="session-detail__request-details">
+                                    <div class="session-detail__request-detail">
+                                        <dt>{% trans "Language" %}</dt>
+                                        <dd>
+                                            {{ req.language_display }}
+                                        </dd>
+                                    </div>
+                                    {% if req.pay_concessionary_price %}
+                                        <div class="session-detail__request-detail">
+                                            <dt>{% trans "Concessionary" %}</dt>
+                                            <dd>
+                                                {% trans "Yes" %}
+                                            </dd>
+                                        </div>
+                                    {% endif %}
+                                </dl>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+            {# CTA section #}
+            <section class="session-detail__cta">
 
-            {% include "events/includes/view_session_request_or_join.html" %}
-        </main>
-    </div>
+                {% include "events/includes/view_session_request_or_join.html" %}
+            </section>
+        </div>
+    </main>
 {% endblock content %}

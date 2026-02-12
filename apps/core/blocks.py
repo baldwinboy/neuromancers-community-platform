@@ -8,8 +8,102 @@ to build pages without coding, similar to Squarespace/Webflow.
 from wagtail import blocks
 from wagtail.images.blocks import ImageChooserBlock
 
+from apps.core.custom_blocks import EmojiChooserBlock
 
-class HeroBlock(blocks.StructBlock):
+COLOR_CHOICES = [
+    ("transparent", "Transparent"),
+    ("white", "White"),
+    ("black", "Black"),
+    ("safeLightAccent", "Safe Light Accent"),
+    ("safeDarkAccent", "Safe Dark Accent"),
+    ("safeInverseAccent", "Safe Inverse Accent"),
+    ("safeInverseLightAccent", "Safe Inverse Light Accent"),
+    ("safeInverseDarkAccent", "Safe Inverse Dark Accent"),
+    ("accent", "Accent"),
+    ("lightAccent", "Light Accent"),
+    ("darkAccent", "Dark Accent"),
+]
+
+BORDER_CHOICES = [
+    ("none", "None"),
+    ("zigzag", "Zigzag"),
+    ("wave", "Wave"),
+    ("rounded", "Rounded"),
+    ("legoWave", "Lego Wave"),
+    ("leftCurve", "Left Curve"),
+    ("rightCurve", "Right Curve"),
+]
+
+
+class StyledBlock(blocks.StructBlock):
+    """
+    Base block with common styling options for all content blocks.
+    """
+
+    background_color = blocks.ChoiceBlock(
+        choices=COLOR_CHOICES,
+        default="white",
+        required=False,
+        help_text="Background color for the block",
+    )
+    text_color = blocks.ChoiceBlock(
+        choices=COLOR_CHOICES,
+        default="black",
+        required=False,
+        help_text="Text color for the block",
+    )
+    top_border_style = blocks.ChoiceBlock(
+        choices=BORDER_CHOICES,
+        default="none",
+        required=False,
+        help_text="Top border style for the block",
+    )
+    top_border_color = blocks.ChoiceBlock(
+        choices=COLOR_CHOICES,
+        default="transparent",
+        required=False,
+        help_text="Top border color for the block",
+    )
+    bottom_border_style = blocks.ChoiceBlock(
+        choices=BORDER_CHOICES,
+        default="none",
+        required=False,
+        help_text="Bottom border style for the block",
+    )
+    bottom_border_color = blocks.ChoiceBlock(
+        choices=COLOR_CHOICES,
+        default="transparent",
+        required=False,
+        help_text="Bottom border color for the block",
+    )
+
+    class Meta:
+        abstract = True
+
+
+class StyledButtonBlock(StyledBlock):
+    """
+    Base block with common styling options for all content blocks with buttons.
+    """
+
+    button_background_color = blocks.ChoiceBlock(
+        choices=COLOR_CHOICES,
+        default="safeLightAccent",
+        required=False,
+        help_text="Background color for buttons in the block",
+    )
+    button_text_color = blocks.ChoiceBlock(
+        choices=COLOR_CHOICES,
+        default="black",
+        required=False,
+        help_text="Text color for buttons in the block",
+    )
+
+    class Meta:
+        abstract = True
+
+
+class HeroBlock(StyledButtonBlock):
     """
     Full-width hero section with image, heading, subtitle, and CTA button.
     """
@@ -30,27 +124,6 @@ class HeroBlock(blocks.StructBlock):
         required=False,
         help_text="URL for the button to link to",
     )
-    background_color = blocks.ChoiceBlock(
-        choices=[
-            ("white", "White"),
-            ("blue", "Blue"),
-            ("navy", "Navy Blue"),
-            ("gray", "Light Gray"),
-            ("black", "Black"),
-        ],
-        default="white",
-        help_text="Background color for the hero section",
-    )
-    text_color = blocks.ChoiceBlock(
-        choices=[
-            ("white", "White"),
-            ("black", "Black"),
-            ("blue", "Blue"),
-            ("gray", "Dark Gray"),
-        ],
-        default="black",
-        help_text="Text color for heading and subheading",
-    )
     min_height = blocks.ChoiceBlock(
         choices=[
             ("300px", "Small (300px)"),
@@ -68,7 +141,7 @@ class HeroBlock(blocks.StructBlock):
         template = "core/blocks/hero_block.html"
 
 
-class TextBlock(blocks.StructBlock):
+class TextBlock(StyledBlock):
     """
     Rich text content block with formatting options.
     """
@@ -89,15 +162,6 @@ class TextBlock(blocks.StructBlock):
         ],
         help_text="Main content",
     )
-    background_color = blocks.ChoiceBlock(
-        choices=[
-            ("white", "White"),
-            ("light-gray", "Light Gray"),
-            ("blue-light", "Light Blue"),
-        ],
-        default="white",
-        required=False,
-    )
     max_width = blocks.ChoiceBlock(
         choices=[
             ("full", "Full Width"),
@@ -114,7 +178,7 @@ class TextBlock(blocks.StructBlock):
         template = "core/blocks/text_block.html"
 
 
-class TextImageBlock(blocks.StructBlock):
+class TextImageBlock(StyledBlock):
     """
     Two-column block with text on one side and image on the other.
     """
@@ -145,15 +209,6 @@ class TextImageBlock(blocks.StructBlock):
         ],
         default="right",
     )
-    background_color = blocks.ChoiceBlock(
-        choices=[
-            ("white", "White"),
-            ("light-gray", "Light Gray"),
-            ("blue-light", "Light Blue"),
-        ],
-        default="white",
-        required=False,
-    )
 
     class Meta:
         icon = "image"
@@ -162,7 +217,7 @@ class TextImageBlock(blocks.StructBlock):
         template = "core/blocks/text_image_block.html"
 
 
-class CTABlock(blocks.StructBlock):
+class CTABlock(StyledButtonBlock):
     """
     Call-to-action section with prominent button.
     """
@@ -180,30 +235,6 @@ class CTABlock(blocks.StructBlock):
         help_text="Text for the main button",
     )
     button_link = blocks.URLBlock(help_text="URL for the button")
-    button_style = blocks.ChoiceBlock(
-        choices=[
-            ("primary", "Primary (Blue)"),
-            ("secondary", "Secondary (Gray)"),
-            ("success", "Success (Green)"),
-        ],
-        default="primary",
-    )
-    background_color = blocks.ChoiceBlock(
-        choices=[
-            ("white", "White"),
-            ("navy", "Navy Blue"),
-            ("light-gray", "Light Gray"),
-        ],
-        default="navy",
-    )
-    text_color = blocks.ChoiceBlock(
-        choices=[
-            ("white", "White"),
-            ("black", "Black"),
-            ("blue", "Blue"),
-        ],
-        default="white",
-    )
 
     class Meta:
         icon = "link"
@@ -212,7 +243,7 @@ class CTABlock(blocks.StructBlock):
         template = "core/blocks/cta_block.html"
 
 
-class TestimonialBlock(blocks.StructBlock):
+class TestimonialBlock(StyledBlock):
     """
     Testimonial quote with author attribution.
     """
@@ -248,7 +279,7 @@ class TestimonialBlock(blocks.StructBlock):
         template = "core/blocks/testimonial_block.html"
 
 
-class FeatureGridBlock(blocks.StructBlock):
+class FeatureGridBlock(StyledBlock):
     """
     Grid of feature cards with icons/images and descriptions.
     """
@@ -271,15 +302,9 @@ class FeatureGridBlock(blocks.StructBlock):
                         ),
                         (
                             "icon",
-                            blocks.ChoiceBlock(
-                                choices=[
-                                    ("heart", "Heart"),
-                                    ("users", "Users"),
-                                    ("lock", "Lock"),
-                                    ("bell", "Bell"),
-                                    ("checkmark", "Checkmark"),
-                                    ("star", "Star"),
-                                ]
+                            EmojiChooserBlock(
+                                required=False,
+                                help_text="Optional icon for the feature",
                             ),
                         ),
                     ]
@@ -297,14 +322,6 @@ class FeatureGridBlock(blocks.StructBlock):
         ],
         default="3",
     )
-    background_color = blocks.ChoiceBlock(
-        choices=[
-            ("white", "White"),
-            ("light-gray", "Light Gray"),
-        ],
-        default="white",
-        required=False,
-    )
 
     class Meta:
         icon = "grip"
@@ -313,7 +330,7 @@ class FeatureGridBlock(blocks.StructBlock):
         template = "core/blocks/feature_grid_block.html"
 
 
-class FAQBlock(blocks.StructBlock):
+class FAQBlock(StyledBlock):
     """
     Frequently Asked Questions accordion.
     """
@@ -356,7 +373,7 @@ class FAQBlock(blocks.StructBlock):
         template = "core/blocks/faq_block.html"
 
 
-class SpacerBlock(blocks.StructBlock):
+class SpacerBlock(StyledBlock):
     """
     Empty block for adding vertical spacing between sections.
     """
@@ -376,3 +393,83 @@ class SpacerBlock(blocks.StructBlock):
         label = "Spacer"
         collapsed = True
         template = "core/blocks/spacer_block.html"
+
+
+class GridBlock(StyledBlock):
+    """
+    Generic grid block for flexible layouts.
+    """
+
+    items = blocks.StreamBlock(
+        [
+            (
+                "grid_item",
+                blocks.StreamBlock(
+                    [
+                        ("hero", HeroBlock()),
+                        ("text", TextBlock()),
+                        ("text_image", TextImageBlock()),
+                        ("cta", CTABlock()),
+                        ("testimonial", TestimonialBlock()),
+                        ("features", FeatureGridBlock()),
+                        ("faq", FAQBlock()),
+                        ("spacer", SpacerBlock()),
+                    ]
+                ),
+            )
+        ],
+        help_text="Add items to the grid",
+    )
+    columns = blocks.ChoiceBlock(
+        choices=[
+            ("2", "2 columns"),
+            ("3", "3 columns"),
+            ("4", "4 columns"),
+        ],
+        default="2",
+    )
+
+    class Meta:
+        icon = "grip"
+        label = "Generic Grid"
+        collapsed = True
+        template = "core/blocks/grid_block.html"
+
+
+class MarqueeBlock(StyledBlock):
+    """
+    Marquee block for scrolling text or images.
+    """
+
+    content = blocks.CharBlock(
+        max_length=255,
+        help_text="Text to scroll in the marquee",
+    )
+    repeat = blocks.IntegerBlock(
+        min_value=-1,
+        max_value=10,
+        default=-1,
+        help_text="Number of times to repeat the marquee content. Set to -1 for infinite repetition.",
+    )
+    size = blocks.ChoiceBlock(
+        choices=[
+            ("small", "Small"),
+            ("medium", "Medium"),
+            ("large", "Large"),
+        ],
+        default="medium",
+    )
+    speed = blocks.ChoiceBlock(
+        choices=[
+            ("slow", "Slow"),
+            ("medium", "Medium"),
+            ("fast", "Fast"),
+        ],
+        default="medium",
+    )
+
+    class Meta:
+        icon = "move"
+        label = "Marquee"
+        collapsed = True
+        template = "core/blocks/marquee_block.html"

@@ -1,25 +1,50 @@
 {% extends "base.html" %}
 
-{% load wagtailcore_tags %}
+{% load i18n wagtailcore_tags heroicons %}
 
 {% block body_class %}
     template-blogindexpage
 {% endblock body_class %}
 
 {% block content %}
-    <div class="w-full h-full bg-darkAccent">
-        <div class="w-full container mx-auto py-9 px-6 lg:px-0">
-            <div>
-                <h1 class="text-white">{{ page.title }}</h1>
-                <div class="intro">{{ page.intro|richtext }}</div>
-                {% for post in page.get_children %}
-                    <h2>
-                        <a href="{% pageurl post %}">{{ post.title }}</a>
-                    </h2>
-                    {{ post.specific.intro }}
-                    {{ post.specific.body|richtext }}
-                {% endfor %}
-            </div>
+    {# Render StreamField body blocks #}
+    {% for block in page.body %}
+        {% include_block block %}
+    {% endfor %}
+    {# Blog listing section #}
+    <section class="blog-index">
+        <div class="blog-index__container">
+            {% if page.intro %}<div class="blog-index__intro">{{ page.intro|richtext }}</div>{% endif %}
+            {% if blog_posts %}
+                <div class="blog-index__list">
+                    {% for post in blog_posts %}
+                        <a href="{% pageurl post %}"
+                           class="blog-item"
+                           aria-label="{{ post.title }}">
+                            <article class="blog-item__content">
+                                {# Date #}
+                                <time datetime="{{ post.date|date:'c' }}" class="blog-item__date">
+                                    {% heroicon_mini "calendar" size=14 %}
+                                    {{ post.date|date:"M j, Y" }}
+                                </time>
+                                {# Title #}
+                                <h2 class="blog-item__title">{{ post.title }}</h2>
+                                {# Intro/excerpt #}
+                                {% if post.intro %}<p class="blog-item__excerpt">{{ post.intro }}</p>{% endif %}
+                                {# Read more indicator #}
+                                <span class="blog-item__read-more">
+                                    {% trans "Read more" %}
+                                    {% heroicon_mini "arrow-right" size=16 %}
+                                </span>
+                            </article>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="blog-index__empty">
+                    <p>{% trans "No blog posts yet." %}</p>
+                </div>
+            {% endif %}
         </div>
-    </div>
+    </section>
 {% endblock content %}

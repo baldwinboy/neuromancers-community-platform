@@ -1,6 +1,15 @@
 from allauth.account.models import EmailAddress
 from django.contrib import messages
 
+from apps.accounts.models_users.user_settings import Notifications
+
+
+def unread_notification_count(request):
+    if request.user.is_authenticated:
+        count = Notifications.objects.filter(sent_to=request.user, read=False).count()
+        return {"unread_notification_count": count}
+    return {"unread_notification_count": 0}
+
 
 def onboarding_banner(request):
     if request.user.is_authenticated:
@@ -41,7 +50,12 @@ def onboarding_banner(request):
         if not request.user.profile.has_customized and not any(
             msg.message.startswith("Review your profile") for msg in list(storage)
         ):
-            messages.add_message(request, messages.INFO, "Review your profile")
+            messages.add_message(
+                request,
+                messages.INFO,
+                "Review your profile",
+                extra_tags="accounts_user_settings",
+            )
 
             return {}
 
@@ -56,7 +70,10 @@ def onboarding_banner(request):
             for msg in list(storage)
         ):
             messages.add_message(
-                request, messages.INFO, "Review your notification preferences"
+                request,
+                messages.INFO,
+                "Review your notification preferences",
+                extra_tags="accounts_user_settings",
             )
 
             return {}

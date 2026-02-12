@@ -1,0 +1,375 @@
+{% load i18n heroicons %}
+{# Profile Calendar Component - Redesigned for clarity and intuition #}
+{# Shows availability at a glance with meaningful information #}
+{# Usage: {% include "includes/profile_calendar.html" with user=user show_calendar=True calendar_data=calendar_data %} #}
+{% if show_calendar %}
+    <section class="profile-calendar" id="profile-calendar">
+        {# Calendar header #}
+        <div class="profile-calendar__header">
+            <h2 class="profile-calendar__title">{% trans "Availability" %}</h2>
+            {# View toggle #}
+            <div class="profile-calendar__views">
+                <button type="button"
+                        class="profile-calendar__view-btn profile-calendar__view-btn--active"
+                        data-view="calendar"
+                        aria-pressed="true">
+                    {% heroicon_mini "calendar-days" size=18 %}
+                    <span class="visually-hidden">{% trans "Calendar view" %}</span>
+                </button>
+                <button type="button"
+                        class="profile-calendar__view-btn"
+                        data-view="list"
+                        aria-pressed="false">
+                    {% heroicon_mini "queue-list" size=18 %}
+                    <span class="visually-hidden">{% trans "List view" %}</span>
+                </button>
+            </div>
+        </div>
+        {# Calendar view #}
+        <div class="profile-calendar__content" data-view-content="calendar">
+            <div class="profile-calendar__grid-container">
+                {# Month navigation #}
+                <div class="profile-calendar__nav">
+                    <button type="button"
+                            class="profile-calendar__nav-btn"
+                            data-direction="prev"
+                            aria-label="{% trans "Previous month" %}">
+                        {% heroicon_mini "chevron-left" size=20 %}
+                    </button>
+                    <h3 class="profile-calendar__month-year" id="calendar-month-year"></h3>
+                    <button type="button"
+                            class="profile-calendar__nav-btn"
+                            data-direction="next"
+                            aria-label="{% trans "Next month" %}">{% heroicon_mini "chevron-right" size=20 %}</button>
+                </div>
+                {# Day headers #}
+                <div class="profile-calendar__weekdays">
+                    <span>{% trans "Sun" %}</span>
+                    <span>{% trans "Mon" %}</span>
+                    <span>{% trans "Tue" %}</span>
+                    <span>{% trans "Wed" %}</span>
+                    <span>{% trans "Thu" %}</span>
+                    <span>{% trans "Fri" %}</span>
+                    <span>{% trans "Sat" %}</span>
+                </div>
+                {# Calendar days - rendered by JS #}
+                <div id="calendar-days" class="profile-calendar__days"></div>
+            </div>
+            {# Selected day detail panel #}
+            <div id="calendar-detail"
+                 class="profile-calendar__detail profile-calendar__detail--hidden">
+                <div class="profile-calendar__detail-header">
+                    <h4 id="calendar-detail-date" class="profile-calendar__detail-title"></h4>
+                    <button type="button"
+                            class="profile-calendar__detail-close"
+                            id="calendar-detail-close"
+                            aria-label="{% trans "Close" %}">{% heroicon_mini "x-mark" size=20 %}</button>
+                </div>
+                <div id="calendar-detail-content" class="profile-calendar__detail-content"></div>
+            </div>
+        </div>
+        {# List view - shows upcoming availability in chronological order #}
+        <div class="profile-calendar__content profile-calendar__content--hidden"
+             data-view-content="list">
+            <div class="profile-calendar__list" id="calendar-list-view">{# Populated by JS #}</div>
+        </div>
+        {# Legend #}
+        <div class="profile-calendar__legend">
+            <div class="profile-calendar__legend-item">
+                <span class="profile-calendar__legend-dot profile-calendar__legend-dot--available"></span>
+                <span>{% trans "Available" %}</span>
+            </div>
+            {% if show_peer_session_details or show_group_session_details %}
+                <div class="profile-calendar__legend-item">
+                    <span class="profile-calendar__legend-dot profile-calendar__legend-dot--scheduled"></span>
+                    <span>{% trans "Booked" %}</span>
+                </div>
+            {% endif %}
+            <div class="profile-calendar__legend-item profile-calendar__legend-item--count">
+                <span class="profile-calendar__legend-badge">#</span>
+                <span>{% trans "Slot count" %}</span>
+            </div>
+        </div>
+    </section>
+    <script>
+(function() {
+    const calendarData = {{ calendar_data|safe }};
+    const showPeerDetails = {{ show_peer_session_details|yesno:"true,false" }};
+    const showGroupDetails = {{ show_group_session_details|yesno:"true,false" }};
+    const langCode = '{{ LANGUAGE_CODE|default:"en" }}';
+
+    let currentDate = new Date();
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
+    let selectedDate = null;
+
+    const monthNames = [
+        '{% trans "January" %}', '{% trans "February" %}', '{% trans "March" %}',
+        '{% trans "April" %}', '{% trans "May" %}', '{% trans "June" %}',
+        '{% trans "July" %}', '{% trans "August" %}', '{% trans "September" %}',
+        '{% trans "October" %}', '{% trans "November" %}', '{% trans "December" %}'
+    ];
+
+    function formatTime(timeStr) {
+        try {
+            const [hours, minutes] = timeStr.split(':');
+            const h = parseInt(hours, 10);
+            const m = minutes || '00';
+            if (langCode === 'en') {
+                const period = h >= 12 ? 'PM' : 'AM';
+                const h12 = h % 12 || 12;
+                return `${h12}:${m} ${period}`;
+            }
+            return `${hours}:${m}`;
+        } catch (e) {
+            return timeStr;
+        }
+    }
+
+    function renderCalendar() {
+        const monthYear = document.getElementById('calendar-month-year');
+        const daysContainer = document.getElementById('calendar-days');
+
+        monthYear.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let html = '';
+
+        // Empty cells for days before first day
+        for (let i = 0; i < firstDay; i++) {
+            html += '<div class="profile-calendar__day profile-calendar__day--empty"></div>';
+        }
+
+        // Days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dayData = calendarData[dateStr] || {};
+            const slots = dayData.slots || [];
+            const events = dayData.events || [];
+            const hasAvailability = slots.length > 0;
+            const hasScheduled = events.length > 0;
+            const thisDate = new Date(currentYear, currentMonth, day);
+            const isPast = thisDate < today;
+            const isToday = thisDate.getTime() === today.getTime();
+            const isSelected = selectedDate === dateStr;
+
+            let classes = ['profile-calendar__day'];
+            if (isPast) classes.push('profile-calendar__day--past');
+            if (isToday) classes.push('profile-calendar__day--today');
+            if (isSelected) classes.push('profile-calendar__day--selected');
+            if (hasAvailability && !isPast) classes.push('profile-calendar__day--available');
+            if (hasScheduled) classes.push('profile-calendar__day--scheduled');
+
+            let content = `<span class="profile-calendar__day-number">${day}</span>`;
+
+            // Show slot count badge if multiple slots
+            if (hasAvailability && slots.length > 0 && !isPast) {
+                content += `<span class="profile-calendar__day-badge">${slots.length}</span>`;
+            }
+
+            // Show scheduled indicator
+            if (hasScheduled) {
+                content += `<span class="profile-calendar__day-indicator profile-calendar__day-indicator--scheduled"></span>`;
+            }
+
+            html += `<button type="button" class="${classes.join(' ')}" data-date="${dateStr}" ${isPast ? 'disabled' : ''}>${content}</button>`;
+        }
+
+        daysContainer.innerHTML = html;
+
+        // Add click handlers
+        daysContainer.querySelectorAll('.profile-calendar__day:not([disabled])').forEach(btn => {
+            btn.addEventListener('click', () => selectDay(btn.dataset.date));
+        });
+    }
+
+    function selectDay(dateStr) {
+        selectedDate = dateStr;
+
+        // Update selected state in grid
+        document.querySelectorAll('.profile-calendar__day--selected').forEach(el => {
+            el.classList.remove('profile-calendar__day--selected');
+        });
+        const selectedBtn = document.querySelector(`[data-date="${dateStr}"]`);
+        if (selectedBtn) selectedBtn.classList.add('profile-calendar__day--selected');
+
+        // Show detail panel
+        const detailPanel = document.getElementById('calendar-detail');
+        const detailDate = document.getElementById('calendar-detail-date');
+        const detailContent = document.getElementById('calendar-detail-content');
+
+        const date = new Date(dateStr + 'T12:00:00');
+        detailDate.textContent = date.toLocaleDateString(langCode, {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        const dayData = calendarData[dateStr] || {};
+        const slots = dayData.slots || [];
+        const events = dayData.events || [];
+
+        let html = '';
+
+        // Available slots
+        if (slots.length > 0) {
+            html += '<div class="profile-calendar__slots">';
+            html += `<h5 class="profile-calendar__slots-title">{% trans "Available Times" %}</h5>`;
+            html += '<div class="profile-calendar__slots-grid">';
+            for (const slot of slots) {
+                const startFormatted = formatTime(slot.start);
+                const endFormatted = formatTime(slot.end);
+                html += `<div class="profile-calendar__slot">
+                    <span class="profile-calendar__slot-time">${startFormatted}</span>
+                    <span class="profile-calendar__slot-separator">–</span>
+                    <span class="profile-calendar__slot-time">${endFormatted}</span>
+                </div>`;
+            }
+            html += '</div></div>';
+        }
+
+        // Scheduled events
+        if (events.length > 0) {
+            html += '<div class="profile-calendar__events">';
+            html += `<h5 class="profile-calendar__events-title">{% trans "Scheduled Sessions" %}</h5>`;
+            for (const event of events) {
+                const isPeer = event.type === 'peer';
+                const showDetails = isPeer ? showPeerDetails : showGroupDetails;
+                const typeLabel = isPeer ? '{% trans "Peer" %}' : '{% trans "Group" %}';
+                const typeClass = isPeer ? 'profile-calendar__event--peer' : 'profile-calendar__event--group';
+
+                html += `<div class="profile-calendar__event ${typeClass}">`;
+                html += `<span class="profile-calendar__event-badge">${typeLabel}</span>`;
+                if (showDetails && event.title) {
+                    html += `<span class="profile-calendar__event-title">${event.title}</span>`;
+                }
+                if (event.time) {
+                    html += `<span class="profile-calendar__event-time">${event.time}</span>`;
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+
+        if (!html) {
+            html = `<p class="profile-calendar__empty">{% trans "No availability or sessions on this day." %}</p>`;
+        }
+
+        detailContent.innerHTML = html;
+        detailPanel.classList.remove('profile-calendar__detail--hidden');
+    }
+
+    function renderListView() {
+        const listContainer = document.getElementById('calendar-list-view');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Collect all future dates with availability
+        const futureDates = Object.keys(calendarData)
+            .filter(dateStr => {
+                const date = new Date(dateStr + 'T12:00:00');
+                const dayData = calendarData[dateStr];
+                return date >= today && (dayData.slots?.length > 0 || dayData.events?.length > 0);
+            })
+            .sort();
+
+        if (futureDates.length === 0) {
+            listContainer.innerHTML = `<p class="profile-calendar__empty">{% trans "No upcoming availability." %}</p>`;
+            return;
+        }
+
+        let html = '';
+        for (const dateStr of futureDates.slice(0, 14)) { // Show next 14 days max
+            const date = new Date(dateStr + 'T12:00:00');
+            const dayData = calendarData[dateStr];
+            const slots = dayData.slots || [];
+            const events = dayData.events || [];
+            const isToday = date.getTime() === today.getTime();
+
+            html += `<div class="profile-calendar__list-day">`;
+            html += `<div class="profile-calendar__list-date">`;
+            html += `<span class="profile-calendar__list-weekday">${date.toLocaleDateString(langCode, { weekday: 'short' })}</span>`;
+            html += `<span class="profile-calendar__list-daynum ${isToday ? 'profile-calendar__list-daynum--today' : ''}">${date.getDate()}</span>`;
+            html += `<span class="profile-calendar__list-month">${date.toLocaleDateString(langCode, { month: 'short' })}</span>`;
+            html += `</div>`;
+
+            html += `<div class="profile-calendar__list-slots">`;
+            if (slots.length > 0) {
+                for (const slot of slots) {
+                    html += `<span class="profile-calendar__list-slot">${formatTime(slot.start)} – ${formatTime(slot.end)}</span>`;
+                }
+            }
+            if (events.length > 0) {
+                html += `<span class="profile-calendar__list-booked">${events.length} {% trans "session" %}${events.length > 1 ? 's' : ''} {% trans "booked" %}</span>`;
+            }
+            html += `</div></div>`;
+        }
+
+        listContainer.innerHTML = html;
+    }
+
+    // View toggle
+    document.querySelectorAll('.profile-calendar__view-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const view = this.dataset.view;
+
+            // Update button states
+            document.querySelectorAll('.profile-calendar__view-btn').forEach(b => {
+                b.classList.remove('profile-calendar__view-btn--active');
+                b.setAttribute('aria-pressed', 'false');
+            });
+            this.classList.add('profile-calendar__view-btn--active');
+            this.setAttribute('aria-pressed', 'true');
+
+            // Toggle content visibility
+            document.querySelectorAll('[data-view-content]').forEach(content => {
+                content.classList.toggle('profile-calendar__content--hidden', content.dataset.viewContent !== view);
+            });
+
+            // Render list view on demand
+            if (view === 'list') {
+                renderListView();
+            }
+        });
+    });
+
+    // Month navigation
+    document.querySelectorAll('.profile-calendar__nav-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (this.dataset.direction === 'prev') {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+            } else {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+            }
+            selectedDate = null;
+            document.getElementById('calendar-detail').classList.add('profile-calendar__detail--hidden');
+            renderCalendar();
+        });
+    });
+
+    // Close detail panel
+    document.getElementById('calendar-detail-close').addEventListener('click', function() {
+        document.getElementById('calendar-detail').classList.add('profile-calendar__detail--hidden');
+        selectedDate = null;
+        document.querySelectorAll('.profile-calendar__day--selected').forEach(el => {
+            el.classList.remove('profile-calendar__day--selected');
+        });
+    });
+
+    // Initial render
+    renderCalendar();
+})();
+    </script>
+{% endif %}

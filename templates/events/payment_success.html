@@ -1,67 +1,100 @@
 {% extends "base.html" %}
 
-{% load i18n %}
+{% load i18n heroicons %}
 
 {% block title %}
     {% trans "Payment Successful" %}
 {% endblock title %}
 
+{% block body_class %}
+    template-payment-success
+{% endblock body_class %}
+
 {% block content %}
-    <div class="w-full container mx-auto py-9 px-6 lg:px-0">
-        <div class="max-w-2xl mx-auto">
-            <div class="bg-green-50 border-l-4 border-green-500 p-6 mb-6">
-                <h1 class="text-2xl font-bold text-green-900 mb-2">{% trans "Payment Successful!" %}</h1>
-                <p class="text-green-700">{% trans "Your payment has been processed successfully." %}</p>
-            </div>
-            {% if session_request %}
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-xl font-bold mb-4">{% trans "Session Details" %}</h2>
-                    <dl class="space-y-3">
-                        <div class="flex justify-between">
-                            <dt class="font-semibold">{% trans "Session" %}:</dt>
-                            <dd>
-                                {{ session_request.session.title }}
-                            </dd>
-                        </div>
-                        <div class="flex justify-between">
-                            <dt class="font-semibold">{% trans "Host" %}:</dt>
-                            <dd>
-                                {{ session_request.session.host.username }}
-                            </dd>
-                        </div>
-                        <div class="flex justify-between">
-                            <dt class="font-semibold">{% trans "Start Time" %}:</dt>
-                            <dd>
-                                {{ session_request.starts_at|date:"DATETIME_FORMAT" }}
-                            </dd>
-                        </div>
-                        <div class="flex justify-between">
-                            <dt class="font-semibold">{% trans "Duration" %}:</dt>
-                            <dd>
-                                {{ session_request.duration }}
-                            </dd>
-                        </div>
-                        <div class="flex justify-between">
-                            <dt class="font-semibold">{% trans "Amount Paid" %}:</dt>
-                            <dd>
-                                {{ session_request.session.currency_symbol }}{{ session_request.price }}
-                            </dd>
-                        </div>
-                    </dl>
-                    {% if session_request.meeting_link %}
-                        <div class="mt-6 p-4 bg-blue-50 rounded">
-                            <h3 class="font-bold mb-2">{% trans "Meeting Link" %}</h3>
-                            <a href="{{ session_request.meeting_link }}"
-                               target="_blank"
-                               class="text-blue-600 hover:text-blue-800 underline">{% trans "Join Session" %}</a>
-                        </div>
-                    {% endif %}
-                </div>
-            {% endif %}
-            <div class="mt-6 flex gap-4">
-                <a href="{% url 'accounts_user_settings' %}" class="btn btn-primary">{% trans "View My Sessions" %}</a>
-                <a href="{% url 'payment_history' %}" class="btn btn-secondary">{% trans "Payment History" %}</a>
+    <main class="payment-success">
+        {# Success banner #}
+        <div class="payment-success__banner">
+            {% heroicon_solid "check-circle" size=32 class="payment-success__banner-icon" %}
+            <div>
+                <h1 class="payment-success__banner-title font-heading">{% trans "Payment Successful!" %}</h1>
+                <p class="payment-success__banner-text font-body">{% trans "Your payment has been processed successfully." %}</p>
             </div>
         </div>
-    </div>
+        {% if session_request %}
+            {# Session card using the reusable component #}
+            <section class="payment-success__session">
+                <h2 class="payment-success__section-title font-heading">{% trans "Session Details" %}</h2>
+                {% if session_card %}
+                    {% session_item session=session_card session_type=session_card.type / %}
+                {% endif %}
+            </section>
+            {# Payment details #}
+            <section class="payment-success__details">
+                <dl class="payment-success__details-grid">
+                    <div class="payment-success__detail">
+                        <dt>{% trans "Amount Paid" %}</dt>
+                        <dd>
+                            {{ session_request.session.currency_symbol }}{{ session_request.price }}
+                        </dd>
+                    </div>
+                    <div class="payment-success__detail">
+                        <dt>{% trans "Host" %}</dt>
+                        <dd>
+                            {{ session_request.session.host.first_name }} {{ session_request.session.host.last_name }}
+                        </dd>
+                    </div>
+                    {% if session_request.starts_at %}
+                        <div class="payment-success__detail">
+                            <dt>{% trans "Session Time" %}</dt>
+                            <dd>
+                                <dd>
+                                    {{ session_request.starts_at|date:"D, M j" }} · {{ session_request.starts_at|time:"g:i A" }} – {{ session_request.ends_at|time:"g:i A" }}
+                                </dd>
+                            </dd>
+                        </div>
+                    {% elif session_request.session.starts_at %}
+                        <div class="payment-success__detail">
+                            <dt>{% trans "Session Time" %}</dt>
+                            <dd>
+                                <dd>
+                                    {{ session_request.session.starts_at|date:"D, M j" }} · {{ session_request.session.starts_at|time:"g:i A" }} – {{ session_request.session.ends_at|time:"g:i A" }}
+                                </dd>
+                            </dd>
+                        </div>
+                    {% endif %}
+                    {% if session_request.language_display %}
+                        <div class="payment-success__detail">
+                            <dt>{% trans "Language" %}</dt>
+                            <dd>
+                                {{ session_request.language_display }}
+                            </dd>
+                        </div>
+                    {% endif %}
+                </dl>
+            </section>
+            {% if session_request.meeting_link %}
+                <section class="payment-success__meeting">
+                    <a href="{{ session_request.meeting_link }}"
+                       target="_blank"
+                       class="inline_button inline_button__sessions">
+                        {% heroicon_mini "video-camera" size=16 %}
+                        {% trans "Join Session" %}
+                    </a>
+                </section>
+            {% endif %}
+        {% endif %}
+        {# Navigation links #}
+        <div class="payment-success__actions">
+            <a href="{% url 'accounts_profile' %}"
+               class="inline_button inline_button__sessions">
+                {% heroicon_mini "user" size=16 %}
+                {% trans "View My Sessions" %}
+            </a>
+            <a href="{% url 'payment_history' %}"
+               class="inline_button inline_button__sessions_alt">
+                {% heroicon_mini "banknotes" size=16 %}
+                {% trans "Payment History" %}
+            </a>
+        </div>
+    </main>
 {% endblock content %}

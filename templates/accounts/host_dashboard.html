@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+
+{% load i18n heroicons %}
+
+{% block body_class %}
+    template-host-dashboard
+{% endblock body_class %}
+
+{% block title %}
+    {% trans "Host Dashboard" %}
+{% endblock title %}
+
+{% block content %}
+    <main class="host-dashboard">
+        <div class="host-dashboard__header">
+            <h1 class="host-dashboard__title font-heading">{% trans "Host Dashboard" %}</h1>
+            <p class="host-dashboard__subtitle font-body">{% trans "Manage your session requests, approvals, and refunds." %}</p>
+        </div>
+        {# Tab navigation #}
+        <nav class="host-dashboard__tabs" role="tablist">
+            <a href="?tab=peer"
+               role="tab"
+               aria-selected="{% if active_tab == 'peer' %}true{% else %}false{% endif %}"
+               class="host-dashboard__tab {% if active_tab == 'peer' %}host-dashboard__tab--active{% endif %}">
+                {% heroicon_mini "user" size=16 %}
+                {% trans "Peer Requests" %}
+                {% if peer_pending_count %}<span class="host-dashboard__badge">{{ peer_pending_count }}</span>{% endif %}
+            </a>
+            <a href="?tab=group"
+               role="tab"
+               aria-selected="{% if active_tab == 'group' %}true{% else %}false{% endif %}"
+               class="host-dashboard__tab {% if active_tab == 'group' %}host-dashboard__tab--active{% endif %}">
+                {% heroicon_mini "user-group" size=16 %}
+                {% trans "Group Requests" %}
+                {% if group_pending_count %}<span class="host-dashboard__badge">{{ group_pending_count }}</span>{% endif %}
+            </a>
+            <a href="?tab=refunds"
+               role="tab"
+               aria-selected="{% if active_tab == 'refunds' %}true{% else %}false{% endif %}"
+               class="host-dashboard__tab {% if active_tab == 'refunds' %}host-dashboard__tab--active{% endif %}">
+                {% heroicon_mini "banknotes" size=16 %}
+                {% trans "Refunds" %}
+                {% if refund_pending_count %}<span class="host-dashboard__badge">{{ refund_pending_count }}</span>{% endif %}
+            </a>
+        </nav>
+        {# Filters #}
+        <div class="host-dashboard__filters">
+            <form method="get" class="host-dashboard__filter-form">
+                <input type="hidden" name="tab" value="{{ active_tab }}">
+                <div class="host-dashboard__filter-group">
+                    <label for="session-filter" class="host-dashboard__filter-label font-body">
+                        {% heroicon_mini "funnel" size=16 %}
+                        {% trans "Session" %}
+                    </label>
+                    <select id="session-filter"
+                            name="session"
+                            class="host-dashboard__filter-select font-body"
+                            onchange="this.form.submit()">
+                        <option value="">{% trans "All sessions" %}</option>
+                        {% for pk, title in host_sessions %}
+                            <option value="{{ pk }}"
+                                    {% if session_filter == pk|stringformat:"s" %}selected{% endif %}>
+                                {{ title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="host-dashboard__filter-group">
+                    <span class="host-dashboard__filter-label font-body">
+                        {% heroicon_mini "clock" size=16 %}
+                        {% trans "Time" %}
+                    </span>
+                    <div class="host-dashboard__filter-toggles"
+                         role="group"
+                         aria-label="{% trans "Time filter" %}">
+                        <button type="submit"
+                                name="time"
+                                value=""
+                                class="host-dashboard__filter-toggle {% if not time_filter %}host-dashboard__filter-toggle--active{% endif %}">
+                            {% trans "All" %}
+                        </button>
+                        <button type="submit"
+                                name="time"
+                                value="upcoming"
+                                class="host-dashboard__filter-toggle {% if time_filter == 'upcoming' %}host-dashboard__filter-toggle--active{% endif %}">
+                            {% trans "Upcoming" %}
+                        </button>
+                        <button type="submit"
+                                name="time"
+                                value="past"
+                                class="host-dashboard__filter-toggle {% if time_filter == 'past' %}host-dashboard__filter-toggle--active{% endif %}">
+                            {% trans "Past" %}
+                        </button>
+                    </div>
+                </div>
+                {% if session_filter or time_filter %}
+                    <a href="?tab={{ active_tab }}"
+                       class="host-dashboard__filter-clear font-body">
+                        {% heroicon_mini "x-mark" size=14 %}
+                        {% trans "Clear filters" %}
+                    </a>
+                {% endif %}
+            </form>
+        </div>
+        {# Peer Requests Tab #}
+        {% if active_tab == "peer" %}
+            <section class="host-dashboard__panel" role="tabpanel">
+                {% if peer_requests %}
+                    <div class="host-dashboard__list">
+                        {% for req in peer_requests %}
+                            <div class="host-dashboard__card {% if req.status == 2 %}host-dashboard__card--pending{% elif req.status == 0 %}host-dashboard__card--approved{% elif req.status == 1 %}host-dashboard__card--rejected{% endif %}">
+                                <div class="host-dashboard__card-header">
+                                    <div class="host-dashboard__card-info">
+                                        <h3 class="host-dashboard__card-title font-heading">{{ req.session.title }}</h3>
+                                        <p class="host-dashboard__card-meta font-body">
+                                            {% trans "From" %} <strong>{{ req.attendee.first_name }} {{ req.attendee.last_name }}</strong>
+                                            (@{{ req.attendee.username }})
+                                        </p>
+                                    </div>
+                                    <span class="host-dashboard__status host-dashboard__status--{{ req.status }}">{{ req.get_status_display }}</span>
+                                </div>
+                                <div class="host-dashboard__card-body">
+                                    <dl class="host-dashboard__details">
+                                        <div class="host-dashboard__detail">
+                                            <dt>{% trans "Requested" %}</dt>
+                                            <dd>
+                                                {{ req.created_at|date:"SHORT_DATETIME_FORMAT" }}
+                                            </dd>
+                                        </div>
+                                        <div class="host-dashboard__detail">
+                                            <dt>{% trans "Session time" %}</dt>
+                                            <dd>
+                                                {{ req.starts_at|date:"SHORT_DATETIME_FORMAT" }} — {{ req.ends_at|date:"SHORT_DATETIME_FORMAT" }}
+                                            </dd>
+                                        </div>
+                                        <div class="host-dashboard__detail">
+                                            <dt>{% trans "Language" %}</dt>
+                                            <dd>
+                                                {{ req.language_display }}
+                                            </dd>
+                                        </div>
+                                        {% if req.pay_concessionary_price %}
+                                            <div class="host-dashboard__detail">
+                                                <dt>{% trans "Concessionary" %}</dt>
+                                                <dd>
+                                                    {% trans "Requested" %}
+                                                </dd>
+                                            </div>
+                                        {% endif %}
+                                        {% if req.accessibility_needs %}
+                                            <div class="host-dashboard__detail host-dashboard__detail--full">
+                                                <dt>{% trans "Accessibility needs" %}</dt>
+                                                <dd class="whitespace-pre-wrap">
+                                                    {{ req.accessibility_needs }}
+                                                </dd>
+                                            </div>
+                                        {% endif %}
+                                    </dl>
+                                </div>
+                                <div class="host-dashboard__card-actions">
+                                    {% if req.status == 2 %}
+                                        <form method="post" class="inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="request_id" value="{{ req.id }}">
+                                            <input type="hidden" name="request_type" value="peer">
+                                            <button type="submit"
+                                                    name="action"
+                                                    value="approve"
+                                                    class="host-dashboard__action-btn host-dashboard__action-btn--approve">
+                                                {% heroicon_mini "check" size=16 %}
+                                                {% trans "Approve" %}
+                                            </button>
+                                            <button type="submit"
+                                                    name="action"
+                                                    value="reject"
+                                                    class="host-dashboard__action-btn host-dashboard__action-btn--reject">
+                                                {% heroicon_mini "x-mark" size=16 %}
+                                                {% trans "Reject" %}
+                                            </button>
+                                        </form>
+                                    {% elif req.status == 0 %}
+                                        {# Meeting link management for approved requests #}
+                                        {% if req.meeting_link %}
+                                            <div class="host-dashboard__meeting-link">
+                                                <a href="{{ req.meeting_link }}"
+                                                   target="_blank"
+                                                   rel="noopener"
+                                                   class="host-dashboard__action-btn host-dashboard__action-btn--link">
+                                                    {% heroicon_mini "video-camera" size=16 %}
+                                                    {% trans "Join Meeting" %}
+                                                </a>
+                                                <form method="post" action="{% url 'manage_meeting_link' %}" class="inline">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="request_id" value="{{ req.id }}">
+                                                    <input type="hidden" name="request_type" value="peer">
+                                                    <button type="submit"
+                                                            name="link_action"
+                                                            value="regenerate"
+                                                            class="host-dashboard__action-btn host-dashboard__action-btn--secondary">
+                                                        {% heroicon_mini "arrow-path" size=16 %}
+                                                        {% trans "Change Link" %}
+                                                    </button>
+                                                    <button type="submit"
+                                                            name="link_action"
+                                                            value="remove"
+                                                            class="host-dashboard__action-btn host-dashboard__action-btn--secondary">
+                                                        {% heroicon_mini "trash" size=16 %}
+                                                        {% trans "Remove" %}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% else %}
+                                            <form method="post" action="{% url 'manage_meeting_link' %}" class="inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="request_id" value="{{ req.id }}">
+                                                <input type="hidden" name="request_type" value="peer">
+                                                <button type="submit"
+                                                        name="link_action"
+                                                        value="generate"
+                                                        class="host-dashboard__action-btn host-dashboard__action-btn--link">
+                                                    {% heroicon_mini "video-camera" size=16 %}
+                                                    {% trans "Generate Meeting Link" %}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        {# Revoke button #}
+                                        <form method="post"
+                                              class="inline"
+                                              onsubmit="return confirm('{% trans "Are you sure you want to revoke this approved request? The attendee will be notified and any payment will be refunded." %}')">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="request_id" value="{{ req.id }}">
+                                            <input type="hidden" name="request_type" value="peer">
+                                            <button type="submit"
+                                                    name="action"
+                                                    value="revoke"
+                                                    class="host-dashboard__action-btn host-dashboard__action-btn--revoke">
+                                                {% heroicon_mini "no-symbol" size=16 %}
+                                                {% trans "Revoke" %}
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="host-dashboard__empty">
+                        {% heroicon_outline "inbox" size=48 %}
+                        <p>{% trans "No peer session requests." %}</p>
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
+        {# Group Requests Tab #}
+        {% if active_tab == "group" %}
+            <section class="host-dashboard__panel" role="tabpanel">
+                {% if group_requests %}
+                    <div class="host-dashboard__list">
+                        {% for req in group_requests %}
+                            <div class="host-dashboard__card {% if req.status == 2 %}host-dashboard__card--pending{% elif req.status == 0 %}host-dashboard__card--approved{% elif req.status == 1 %}host-dashboard__card--rejected{% endif %}">
+                                <div class="host-dashboard__card-header">
+                                    <div class="host-dashboard__card-info">
+                                        <h3 class="host-dashboard__card-title font-heading">{{ req.session.title }}</h3>
+                                        <p class="host-dashboard__card-meta font-body">
+                                            {% trans "From" %} <strong>{{ req.attendee.first_name }} {{ req.attendee.last_name }}</strong>
+                                            (@{{ req.attendee.username }})
+                                        </p>
+                                    </div>
+                                    <span class="host-dashboard__status host-dashboard__status--{{ req.status }}">{{ req.get_status_display }}</span>
+                                </div>
+                                <div class="host-dashboard__card-body">
+                                    <dl class="host-dashboard__details">
+                                        <div class="host-dashboard__detail">
+                                            <dt>{% trans "Requested" %}</dt>
+                                            <dd>
+                                                {{ req.created_at|date:"SHORT_DATETIME_FORMAT" }}
+                                            </dd>
+                                        </div>
+                                        <div class="host-dashboard__detail">
+                                            <dt>{% trans "Session time" %}</dt>
+                                            <dd>
+                                                {{ req.session.starts_at|date:"SHORT_DATETIME_FORMAT" }} — {{ req.session.ends_at|date:"SHORT_DATETIME_FORMAT" }}
+                                            </dd>
+                                        </div>
+                                        {% if req.pay_concessionary_price %}
+                                            <div class="host-dashboard__detail">
+                                                <dt>{% trans "Concessionary" %}</dt>
+                                                <dd>
+                                                    {% trans "Requested" %}
+                                                </dd>
+                                            </div>
+                                        {% endif %}
+                                    </dl>
+                                </div>
+                                <div class="host-dashboard__card-actions">
+                                    {% if req.status == 2 %}
+                                        <form method="post" class="inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="request_id" value="{{ req.id }}">
+                                            <input type="hidden" name="request_type" value="group">
+                                            <button type="submit"
+                                                    name="action"
+                                                    value="approve"
+                                                    class="host-dashboard__action-btn host-dashboard__action-btn--approve">
+                                                {% heroicon_mini "check" size=16 %}
+                                                {% trans "Approve" %}
+                                            </button>
+                                            <button type="submit"
+                                                    name="action"
+                                                    value="reject"
+                                                    class="host-dashboard__action-btn host-dashboard__action-btn--reject">
+                                                {% heroicon_mini "x-mark" size=16 %}
+                                                {% trans "Reject" %}
+                                            </button>
+                                        </form>
+                                    {% elif req.status == 0 %}
+                                        {# Meeting link: for group sessions the link is on the session itself #}
+                                        {% if req.session.meeting_link %}
+                                            <div class="host-dashboard__meeting-link">
+                                                <a href="{{ req.session.meeting_link }}"
+                                                   target="_blank"
+                                                   rel="noopener"
+                                                   class="host-dashboard__action-btn host-dashboard__action-btn--link">
+                                                    {% heroicon_mini "video-camera" size=16 %}
+                                                    {% trans "Join Meeting" %}
+                                                </a>
+                                                <form method="post" action="{% url 'manage_meeting_link' %}" class="inline">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="request_id" value="{{ req.id }}">
+                                                    <input type="hidden" name="request_type" value="group">
+                                                    <button type="submit"
+                                                            name="link_action"
+                                                            value="regenerate"
+                                                            class="host-dashboard__action-btn host-dashboard__action-btn--secondary">
+                                                        {% heroicon_mini "arrow-path" size=16 %}
+                                                        {% trans "Change Link" %}
+                                                    </button>
+                                                    <button type="submit"
+                                                            name="link_action"
+                                                            value="remove"
+                                                            class="host-dashboard__action-btn host-dashboard__action-btn--secondary">
+                                                        {% heroicon_mini "trash" size=16 %}
+                                                        {% trans "Remove" %}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% else %}
+                                            <form method="post" action="{% url 'manage_meeting_link' %}" class="inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="request_id" value="{{ req.id }}">
+                                                <input type="hidden" name="request_type" value="group">
+                                                <button type="submit"
+                                                        name="link_action"
+                                                        value="generate"
+                                                        class="host-dashboard__action-btn host-dashboard__action-btn--link">
+                                                    {% heroicon_mini "video-camera" size=16 %}
+                                                    {% trans "Generate Meeting Link" %}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        {# Revoke button #}
+                                        <form method="post"
+                                              class="inline"
+                                              onsubmit="return confirm('{% trans "Are you sure you want to revoke this approved request? The attendee will be notified and any payment will be refunded." %}')">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="request_id" value="{{ req.id }}">
+                                            <input type="hidden" name="request_type" value="group">
+                                            <button type="submit"
+                                                    name="action"
+                                                    value="revoke"
+                                                    class="host-dashboard__action-btn host-dashboard__action-btn--revoke">
+                                                {% heroicon_mini "no-symbol" size=16 %}
+                                                {% trans "Revoke" %}
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="host-dashboard__empty">
+                        {% heroicon_outline "inbox" size=48 %}
+                        <p>{% trans "No group session requests." %}</p>
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
+        {# Refunds Tab #}
+        {% if active_tab == "refunds" %}
+            <section class="host-dashboard__panel" role="tabpanel">
+                {% if refund_requests %}
+                    <div class="host-dashboard__list">
+                        {% for req in refund_requests %}
+                            <div class="host-dashboard__card host-dashboard__card--pending">
+                                <div class="host-dashboard__card-header">
+                                    <div class="host-dashboard__card-info">
+                                        <h3 class="host-dashboard__card-title font-heading">{{ req.session.title }}</h3>
+                                        <p class="host-dashboard__card-meta font-body">
+                                            {% trans "From" %} <strong>{{ req.attendee.first_name }} {{ req.attendee.last_name }}</strong>
+                                            (@{{ req.attendee.username }})
+                                        </p>
+                                    </div>
+                                    <span class="host-dashboard__status host-dashboard__status--pending">{% trans "Pending Refund" %}</span>
+                                </div>
+                                <div class="host-dashboard__card-body">
+                                    <dl class="host-dashboard__details">
+                                        <div class="host-dashboard__detail">
+                                            <dt>{% trans "Session" %}</dt>
+                                            <dd>
+                                                {{ req.session.title }}
+                                            </dd>
+                                        </div>
+                                        <div class="host-dashboard__detail">
+                                            <dt>{% trans "Attendee" %}</dt>
+                                            <dd>
+                                                {{ req.attendee.first_name }} {{ req.attendee.last_name }}
+                                            </dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                                <div class="host-dashboard__card-actions">
+                                    <form method="post" action="{% url 'approve_refund' request_id=req.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                class="host-dashboard__action-btn host-dashboard__action-btn--approve">
+                                            {% heroicon_mini "check" size=16 %}
+                                            {% trans "Approve Refund" %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="host-dashboard__empty">
+                        {% heroicon_outline "inbox" size=48 %}
+                        <p>{% trans "No pending refund requests." %}</p>
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
+    </main>
+{% endblock content %}

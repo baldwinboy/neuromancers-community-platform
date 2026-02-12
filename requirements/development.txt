@@ -191,6 +191,8 @@ editorconfig==0.17.1
     #   -r requirements/development.in
     #   cssbeautifier
     #   jsbeautifier
+emoji==2.15.0
+    # via -r requirements/base.in
 et-xmlfile==2.0.0
     # via
     #   -r requirements/base.in
@@ -535,7 +537,7 @@ urllib3==2.6.3
     # via
     #   -r requirements/base.in
     #   requests
-virtualenv==20.32.0
+virtualenv==20.36.1
     # via
     #   -r requirements/development.in
     #   pre-commit
@@ -543,11 +545,8 @@ virtualenv==20.32.0
 wagtail==7.3
     # via
     #   -r requirements/base.in
-    #   wagtail-modeladmin
     #   wagtailmenus
-wagtail-modeladmin==2.2.0
-    # via -r requirements/base.in
-wagtailmenus==4.0.4
+wagtailmenus @ git+https://github.com/baldwinboy/wagtailmenus@master
     # via -r requirements/base.in
 wcwidth==0.2.13
     # via

@@ -127,12 +127,14 @@ apps/events/
 ├── models.py                    # Aggregates all models via star imports
 ├── models_sessions/
 │   ├── __init__.py
-│   ├── abstract.py              # AbstractSession, AbstractAvailability
-│   ├── peer.py                  # PeerSession, PeerSessionAvailability, PeerSessionRequest
-│   └── group.py                 # GroupSession, GroupSessionRequest
+│   ├── abstract.py              # AbstractSession, AbstractAvailability, AbstractSessionRequest, AbstractSessionReview
+│   ├── peer.py                  # PeerSession, PeerSessionAvailability, PeerSessionRequest, PeerScheduledSession, PeerSessionReview
+│   └── group.py                 # GroupSession, GroupSessionRequest, GroupSessionReview
 └── models_pages/
+    ├── __init__.py
     ├── wagtail_pages.py         # SessionsIndexPage (RoutablePage)
-    └── wagtail_detail_pages.py  # PeerSessionDetailPage, GroupSessionDetailPage
+    ├── wagtail_detail_pages.py  # PeerSessionDetailPage, GroupSessionDetailPage
+    └── wagtail_settings.py      # StripeSettings, WherebySettings, SessionFilterSettings, SocialMediaSettings
 ```
 
 **Naming conventions**:
@@ -160,6 +162,8 @@ apps/{app_name}/
 ├── factories.py                 # factory-boy factories for testing/seeding
 ├── wagtail_hooks.py             # Wagtail admin customizations
 ├── admin.py                     # Django admin configuration
+├── notifications.py             # Notification helpers
+├── calendar_export.py           # Calendar export logic (if applicable)
 ├── management/commands/         # Management commands
 └── templatetags/                # Custom template tags
 ```
@@ -237,15 +241,17 @@ class PeerSessionForm(forms.ModelForm):
 
 ### Templates
 
-**Use django-components for reusable UI**:
+**Use django-components for reusable UI** (shorthand syntax via `component_shorthand_formatter`):
 ```django
-{# templates/includes/session_card.html #}
-{% element card class="session-card" %}
-    {% slot header %}{{ session.title }}{% endslot %}
-    {% slot body %}{{ session.description }}{% endslot %}
-    {% slot footer %}£{{ session.price|currency }}{% endslot %}
-{% endelement %}
+{# Component shorthand — NOT {% element %}, which is allauth's system #}
+{% session_item session=session_data session_type="peer" / %}
+{% accordion %}...{% endaccordion %}
+{% hero heading="Welcome" subheading="Join our community" / %}
+{% peer_item peer=peer_data / %}
+{% request_calendar available_slots=slots durations=durations / %}
 ```
+
+**Note**: `{% element %}` tags in `templates/allauth/elements/` are django-allauth's own template tag system, not django-components.
 
 **Always escape user content** (Django does this by default):
 ```django
@@ -497,12 +503,15 @@ Closes #123
 
 ```
 neuromancers/settings/
-├── base.py          # Core settings (import from here)
-├── dev.py           # Development overrides (DEBUG=True, console email)
-├── production.py    # Production overrides (security settings)
-├── countries.py     # ISO country list
-├── currencies.py    # ISO currency list
-└── languages.py     # ISO language list
+├── base.py              # Core settings (USE_TZ=True, TIME_ZONE="UTC", AUTH_USER_MODEL="accounts.User")
+├── dev.py               # Development overrides (DEBUG=True, console email, debug toolbar)
+├── production.py        # Production overrides (security headers, HSTS, min password 12)
+├── countries.py         # ISO country list
+├── currencies.py        # ISO currency list
+├── languages.py         # ISO language list
+├── stripe_currencies.py # Stripe-supported currencies
+├── blacklist.py         # Username blacklist
+└── bots.py              # Bot user agent list (production)
 ```
 
 **Environment control**:
@@ -531,17 +540,11 @@ STRIPE_API_SECRET_KEY = env('STRIPE_API_SECRET_KEY', default='')
 
 ## Common Pitfalls
 
-### 1. Timezone Handling (⚠️ CRITICAL ISSUE)
+### 1. Timezone Handling
 
-**Current state**: `USE_TZ = False` breaks SQLite tests
+`USE_TZ = True` is configured in `base.py` with `TIME_ZONE = "UTC"`. All datetimes are stored as UTC.
 
-**Required fix**:
-```python
-# neuromancers/settings/base.py
-USE_TZ = True  # Store all datetimes as UTC
-```
-
-Then convert in templates/views:
+Always use timezone-aware datetimes:
 ```python
 # views.py
 from django.utils import timezone
@@ -569,7 +572,7 @@ TEMPLATES[0]['OPTIONS']['loaders'] = [
 ### 3. Collectstatic Not Just Copying
 
 **Important**: `make django-collectstatic` does MORE than copy files:
-1. Compiles Sass (`assets/scss/styles.scss` → `assets/css/styles.css`)
+1. Compiles Sass (`assets/scss/styles.scss` > `assets/css/styles.css`)
 2. Generates SVG sprite (`scripts/load_icons.sh`)
 3. Runs Django's collectstatic
 
@@ -592,8 +595,8 @@ from apps.accounts.models import User  # ❌ Breaks if AUTH_USER_MODEL changes
 
 Before handoff:
 
-- [ ] Enable `USE_TZ = True` and fix timezone handling
-- [ ] Audit and remove unused `*ObjectPermission` models
+- [x] Enable `USE_TZ = True` and fix timezone handling
+- [ ] Audit and remove unused `*ObjectPermission` models (24 classes: 16 in accounts, 8 in events)
 - [ ] Remove dead code (commented code, unused imports)
 - [ ] Add docstrings to all complex business logic
 - [ ] Ensure all tests pass (`make django-test`)

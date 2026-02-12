@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
@@ -127,6 +128,10 @@ class FilterGroupBlock(blocks.StructBlock):
         form_classname = "filter-group-block struct-block flex flex-wrap gap-8"
 
 
+CACHE_KEY = "filter_settings_normalized"
+CACHE_TIMEOUT = 60 * 60  # 1 hour (or None for no expiry)
+
+
 @register_setting(icon="filter")
 class FilterSettings(BaseGenericSetting):
     filters = StreamField(
@@ -186,3 +191,58 @@ class FilterSettings(BaseGenericSetting):
                 }
 
         return normalized
+
+    @classmethod
+    def get_cached_mapping(cls):
+        cached = cache.get(CACHE_KEY)
+        if cached is not None:
+            return cached
+
+        instance = cls.load()
+        mapping = instance.as_normalized_mapping()
+
+        cache.set(CACHE_KEY, mapping, CACHE_TIMEOUT)
+        return mapping
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Invalidate cache on save
+        cache.delete(CACHE_KEY)
+
+
+@register_setting(icon="image")
+class ImageUploadSettings(BaseGenericSetting):
+    get_pronto_api_key = models.CharField(
+        "Get Pronto API Key",
+        help_text=(
+            "Your Get Pronto API key. This can be obtained from your Get Pronto dashboard."
+        ),
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+    get_pronto_api_url = models.URLField(
+        "Get Pronto API URL",
+        help_text=(
+            "The base URL for the Get Pronto API. This is typically in the format 'https://api.getpronto.com/v1/'"
+        ),
+        null=True,
+        blank=True,
+        default="https://api.getpronto.io/v1/",
+    )
+    get_pronto_email = models.EmailField(
+        "Get Pronto Email",
+        help_text=("The email address associated with your Get Pronto account."),
+        null=True,
+        blank=True,
+    )
+    get_pronto_password = models.CharField(
+        "Get Pronto Password",
+        help_text=("The password for your Get Pronto account."),
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = "Image Upload API Settings"

@@ -14,7 +14,7 @@ from wagtail.admin.panels import PanelPlaceholder
 from wagtail.contrib.routable_page.models import RoutablePage, route
 from wagtail.fields import StreamField
 
-from apps.events.blocks import SessionFeedBlock
+from apps.events.blocks import PeerFeedBlock, SessionFeedBlock
 from apps.events.decorators import (
     parse_uuid_param,
     stripe_account_required,
@@ -57,6 +57,7 @@ class SessionsIndexPage(RoutablePage):
     content = StreamField(
         [
             ("session_feed", SessionFeedBlock()),
+            ("peer_feed", PeerFeedBlock()),
         ],
         use_json_field=True,
         null=True,
@@ -152,10 +153,11 @@ class SessionsIndexPage(RoutablePage):
         )
 
     @route(
-        r"^availability/delete/(?P<session_id>[0-9a-f-]+)/$", name="delete_availability"
+        r"^availability/delete/(?P<availability_id>[0-9a-f-]+)/$",
+        name="delete_availability",
     )
     @with_route_name("delete_availability")
-    @parse_uuid_param("session_id")
+    @parse_uuid_param("availability_id")
     @method_decorator(login_required)
     @method_decorator(stripe_account_required)
     def delete_availability(
@@ -207,7 +209,7 @@ class SessionsIndexPage(RoutablePage):
                 if data:
                     instance = list(serializers.deserialize("json", data))[0].object
                     # Final tweaks
-                    instance.user = request.user
+                    instance.attendee = request.user
                     instance.session = session
                     instance.save()
 

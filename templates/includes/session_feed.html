@@ -1,14 +1,148 @@
-{% load i18n %}
-<main class="flex flex-col w-full h-full container mx-auto overflow-hidden py-9 px-6 lg:px-0">
-    {% if sessions %}
-        <section class="flex flex-col gap-4 mx-auto mb-auto w-full lg:w-3/4">
-            {% for session in sessions %}
-                {% session_item session=session session_type=session.type / %}
-            {% endfor %}
-        </section>
-    {% else %}
-        <section class="flex flex-col justify-center items-center h-full">
-            <p class="self-center">{% trans "No sessions yet." %}</p>
-        </section>
+{% load i18n heroicons static %}
+<div class="session-feed" data-feed-type="session">
+    {# Collapsible filter panel #}
+    {% if show_filters %}
+        <aside class="feed-filters">
+            <div class="feed-filters__container">
+                {# Mobile toggle header #}
+                <button type="button"
+                        class="feed-filters__toggle"
+                        aria-expanded="false"
+                        aria-controls="session-feed-filters">
+                    <span class="feed-filters__toggle-label">
+                        {% heroicon_mini "adjustments-horizontal" size=20 %}
+                        {% trans "Filters" %}
+                    </span>
+                    {% heroicon_mini "chevron-down" size=20 class="feed-filters__toggle-icon" %}
+                </button>
+                {# Filter content - hidden on mobile by default #}
+                <div id="session-feed-filters" class="feed-filters__content">
+                    <h3 class="feed-filters__title">{% trans "Filters" %}</h3>
+                    <form method="get" class="feed-filter-form" data-feed-filter-form>
+                        {# Session type filters #}
+                        <fieldset class="feed-filters__group">
+                            <legend class="feed-filters__legend">{% trans "Session Types" %}</legend>
+                            <div class="feed-filters__options">
+                                <label class="feed-filters__option">
+                                    <input type="checkbox"
+                                           name="include_peer"
+                                           value="1"
+                                           {% if include_peer_sessions %}checked{% endif %}
+                                           class="feed-filters__checkbox"
+                                           data-simple-checkbox>
+                                    <span class="feed-filters__option-text font-body">{% trans "Peer Sessions" %}</span>
+                                </label>
+                                <label class="feed-filters__option">
+                                    <input type="checkbox"
+                                           name="include_group"
+                                           value="1"
+                                           {% if include_group_sessions %}checked{% endif %}
+                                           class="feed-filters__checkbox"
+                                           data-simple-checkbox>
+                                    <span class="feed-filters__option-text font-body">{% trans "Group Sessions" %}</span>
+                                </label>
+                            </div>
+                        </fieldset>
+                        {# Language filter #}
+                        {% if available_languages %}
+                            <fieldset class="feed-filters__group" data-filter-group="languages">
+                                <legend class="feed-filters__legend">{% trans "Languages" %}</legend>
+                                <div class="feed-filters__options feed-filters__options--scrollable">
+                                    {% for code, name in available_languages.items %}
+                                        <label class="feed-filters__option">
+                                            <input type="checkbox"
+                                                   name="lang_{{ code }}"
+                                                   value="{{ code }}"
+                                                   {% if code in selected_languages %}checked{% endif %}
+                                                   class="feed-filters__checkbox"
+                                                   data-category="languages">
+                                            <span class="feed-filters__option-text font-body">{{ name }}</span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </fieldset>
+                        {% endif %}
+                        {# Category filters from FilterSettings #}
+                        {% for group_slug, group_data in filter_categories.items %}
+                            <fieldset class="feed-filters__group" data-filter-group="{{ group_slug }}">
+                                <legend class="feed-filters__legend">{{ group_data.label }}</legend>
+                                <div class="feed-filters__options">
+                                    {% for item_slug, item_data in group_data.items.items %}
+                                        <label class="feed-filters__option">
+                                            <input type="checkbox"
+                                                   name="cat_{{ group_slug }}_{{ item_slug }}"
+                                                   value="{{ item_slug }}"
+                                                   class="feed-filters__checkbox"
+                                                   data-category="{{ group_slug }}">
+                                            <span class="feed-filters__option-text font-body">{{ item_data.label }}</span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </fieldset>
+                        {% endfor %}
+                        {# Availability filters #}
+                        <fieldset class="feed-filters__group">
+                            <legend class="feed-filters__legend">{% trans "Availability" %}</legend>
+                            <div class="feed-filters__options">
+                                <label class="feed-filters__option">
+                                    <input type="checkbox"
+                                           name="include_unavailable"
+                                           value="1"
+                                           {% if include_unavailable %}checked{% endif %}
+                                           class="feed-filters__checkbox"
+                                           data-simple-checkbox>
+                                    <span class="feed-filters__option-text font-body">
+                                        {% trans "Include unavailable" %}
+                                        <small class="feed-filters__hint">({% trans "no availability" %})</small>
+                                    </span>
+                                </label>
+                                <label class="feed-filters__option">
+                                    <input type="checkbox"
+                                           name="include_full"
+                                           value="1"
+                                           {% if include_full_capacity %}checked{% endif %}
+                                           class="feed-filters__checkbox"
+                                           data-simple-checkbox>
+                                    <span class="feed-filters__option-text font-body">
+                                        {% trans "Include full capacity" %}
+                                        <small class="feed-filters__hint">({% trans "group sessions" %})</small>
+                                    </span>
+                                </label>
+                            </div>
+                        </fieldset>
+                        {# Sort options #}
+                        <div class="feed-filters__group">
+                            <label for="session-sort" class="feed-filters__legend">{% trans "Sort by" %}</label>
+                            <select name="sort" id="session-sort" class="feed-filters__select">
+                                <option value="newest" {% if sort_order == 'newest' %}selected{% endif %}>{% trans "Newest First" %}</option>
+                                <option value="oldest" {% if sort_order == 'oldest' %}selected{% endif %}>{% trans "Oldest First" %}</option>
+                            </select>
+                        </div>
+                        {# Apply button #}
+                        <button type="submit" class="feed-filters__submit">{% trans "Apply Filters" %}</button>
+                    </form>
+                </div>
+            </div>
+        </aside>
     {% endif %}
-</main>
+    <main class="feed-content">
+        {% if sessions %}
+            <section class="feed-list">
+                {% for session in sessions %}
+                    {% session_item session=session session_type=session.type / %}
+                {% endfor %}
+            </section>
+            {% if enable_pagination and paginator %}
+
+                {% include "includes/feed_pagination.html" with paginator=paginator page_obj=page_obj %}
+            {% endif %}
+        {% else %}
+            <section class="feed-empty">
+                <p class="feed-empty__text">{% trans "No sessions available." %}</p>
+            </section>
+        {% endif %}
+    </main>
+</div>
+{% if show_filters %}
+    <script src="{% static 'js/feed-filters.js' %}"></script>
+{% endif %}

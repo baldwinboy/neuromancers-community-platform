@@ -107,8 +107,8 @@
 @mixin checkbox($color: $black) {
   cursor: pointer;
   position: relative;
-  width: 2rem;
-  height: 2rem;
+  width: $spacer * 2;
+  height: $spacer * 2;
   border: 1px solid $color;
   margin-left: auto;
   background-color: transparent;

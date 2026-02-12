@@ -1,7 +1,7 @@
 {% load wagtailimages_tags %}
-<section class="testimonial-block py-12 bg-gray-50">
+<section class="testimonial-block py-12 {% if self.background_color %}bg-{{ self.background_color }}{% endif %}{% if self.top_border_color %} border-t-{{ self.top_border_color }}{% endif %}{% if self.bottom_border_color %} border-b-{{ self.bottom_border_color }}{% endif %}{% if self.top_border_style %} border-t-{{ self.top_border_style }}{% endif %}{% if self.bottom_border_style %} border-b-{{ self.bottom_border_style }}{% endif %}">
     <div class="container mx-auto px-6 lg:px-0">
-        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
+        <div class="max-w-2xl mx-auto rounded-lg shadow-md p-8">
             <div class="flex items-center justify-center mb-6">
                 {% if self.rating %}
                     {% for star in "12345"|make_list %}
@@ -13,7 +13,7 @@
                     {% endfor %}
                 {% endif %}
             </div>
-            <blockquote class="text-xl text-gray-700 mb-8 italic text-center">
+            <blockquote class="text-xl {% if self.text_color %}text-{{ self.text_color }}{% endif %} mb-8 italic text-center">
                 "{{ self.quote }}"
             </blockquote>
             <div class="flex items-center justify-center">
@@ -26,8 +26,10 @@
                          class="w-16 h-16 rounded-full object-cover mr-4">
                 {% endif %}
                 <div>
-                    <p class="font-semibold text-gray-900">{{ self.author_name }}</p>
-                    {% if self.author_title %}<p class="text-gray-600 text-sm">{{ self.author_title }}</p>{% endif %}
+                    <p class="font-semibold {% if self.text_color %}text-{{ self.text_color }}{% endif %}">{{ self.author_name }}</p>
+                    {% if self.author_title %}
+                        <p class="{% if self.text_color %}text-{{ self.text_color }}{% endif %} text-sm">{{ self.author_title }}</p>
+                    {% endif %}
                 </div>
             </div>
         </div>

@@ -1,0 +1,15 @@
+<fieldset class="wagtailadmin grouped_checkbox_select grid grid-cols-1 container-sm lg:grid-cols-2 gap-4">
+    {% for group_label, group_options, group_value in widget.optgroups %}
+        <div class="checkbox-group w-full container-sm"
+             data-group-value="{{ group_value }}">
+            <strong class="font-subheading">{{ group_label }}</strong>
+            <br>
+            <div class="flex flex-col gap-4 h-24 overflow my-4">
+                {% for option in group_options %}
+                    <label>{{ option.tag }} {{ option.label }}</label>
+                    <br>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</fieldset>

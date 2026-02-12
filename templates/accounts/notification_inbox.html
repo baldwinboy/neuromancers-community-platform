@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load i18n %}
+{% load i18n heroicons %}
 
 {% block body_class %}
     template-notification-inbox
@@ -11,109 +11,150 @@
 {% endblock title %}
 
 {% block content %}
-    <main class="w-full container mx-auto py-9 px-6 lg:px-0">
-        <div class="max-w-2xl mx-auto">
-            <div class="flex items-center justify-between mb-8">
-                <div>
-                    <h1 class="text-3xl font-bold">{% trans "Notifications" %}</h1>
-                    {% if unread_count %}
-                        <p class="text-gray-600 mt-1">
-                            {% blocktrans count counter=unread_count %}
-                                {{ counter }} unread notification
-                            {% plural %}
-                                {{ counter }} unread notifications
-                            {% endblocktrans %}
-                        </p>
-                    {% endif %}
-                </div>
-                <div class="space-y-2">
-                    {% if unread_count %}
-                        <button onclick="markAllRead()"
-                                class="block w-full px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg border border-blue-200">
-                            {% trans "Mark all as read" %}
-                        </button>
-                    {% endif %}
-                    {% if notifications %}
-                        <button onclick="clearNotifications()"
-                                class="block w-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg border border-red-200">
-                            {% trans "Clear read" %}
-                        </button>
-                    {% endif %}
-                </div>
+    <main class="notification-inbox">
+        <a href="{% url 'accounts_profile' %}" class="back-link">
+            {% heroicon_mini "arrow-left" size=16 %}
+            <span>{% trans "Back to profile" %}</span>
+        </a>
+        <header class="notification-inbox__header">
+            <div class="notification-inbox__header-info">
+                <h1 class="notification-inbox__title font-heading">{% trans "Notifications" %}</h1>
+                {% if unread_count %}
+                    <p class="notification-inbox__subtitle font-body">
+                        {% blocktrans count counter=unread_count %}
+                            {{ counter }} unread notification
+                        {% plural %}
+                            {{ counter }} unread notifications
+                        {% endblocktrans %}
+                    </p>
+                {% endif %}
             </div>
-            <!-- Notifications List -->
-            {% if notifications %}
-                <div class="space-y-4">
-                    {% for notification in notifications %}
-                        <div class="border rounded-lg p-4 {% if not notification.read %}bg-blue-50 border-blue-200{% else %}bg-white border-gray-200{% endif %} hover:shadow-md transition">
-                            <div class="flex items-start justify-between">
-                                <div class="flex-1">
-                                    <h3 class="font-semibold text-gray-900">
-                                        {% if notification.subject == 0 %}
-                                            {% trans "Account" %}
-                                        {% elif notification.subject == 1 %}
-                                            {% trans "Payment" %}
-                                        {% elif notification.subject == 2 %}
-                                            {% trans "Session" %}
-                                        {% else %}
-                                            {% trans "Reminder" %}
-                                        {% endif %}
-                                    </h3>
-                                    <p class="text-gray-600 text-sm mt-2">{{ notification.body|truncatewords:50 }}</p>
-                                    <p class="text-gray-500 text-xs mt-2">{{ notification.sent_at|date:"SHORT_DATETIME_FORMAT" }}</p>
-                                </div>
-                                {% if not notification.read %}
-                                    <button onclick="markRead('{{ notification.id }}')"
-                                            class="ml-4 px-3 py-1 text-sm font-medium text-blue-600 hover:bg-blue-100 rounded-lg">
-                                        ✓ {% trans "Mark read" %}
-                                    </button>
+            <div class="notification-inbox__actions">
+                {% if unread_count %}
+                    <button onclick="markAllRead()"
+                            class="inline_button inline_button_sm inline_button__sessions"
+                            aria-label="{% trans "Mark all notifications as read" %}">
+                        {% heroicon_mini "check" size=14 %}
+                        {% trans "Mark all read" %}
+                    </button>
+                {% endif %}
+                {% if notifications %}
+                    <button onclick="clearNotifications()"
+                            class="inline_button inline_button_sm inline_button__sessions_alt"
+                            aria-label="{% trans "Clear all read notifications" %}">
+                        {% heroicon_mini "trash" size=14 %}
+                        {% trans "Clear read" %}
+                    </button>
+                {% endif %}
+            </div>
+        </header>
+        {# Notifications list #}
+        {% if notifications %}
+            <ul class="notification-inbox__list"
+                role="list"
+                aria-label="{% trans "Notifications" %}">
+                {% for notification in notifications %}
+                    <li class="notification-inbox__item {% if not notification.read %}notification-inbox__item--unread{% endif %}"
+                        role="listitem">
+                        {% if notification.link_url %}
+                            <a href="{{ notification.link_url }}"
+                               class="notification-inbox__item-link"
+                               aria-label="{{ notification.get_subject_display }}: {{ notification.body|striptags|truncatewords:10 }}">
+                            {% endif %}
+                            <div class="notification-inbox__item-indicator" aria-hidden="true">
+                                {% if notification.subject == 0 %}
+                                    {% heroicon_mini "user-circle" size=20 %}
+                                {% elif notification.subject == 1 %}
+                                    {% heroicon_mini "credit-card" size=20 %}
+                                {% elif notification.subject == 2 %}
+                                    {% heroicon_mini "calendar" size=20 %}
+                                {% else %}
+                                    {% heroicon_mini "bell" size=20 %}
                                 {% endif %}
                             </div>
-                        </div>
-                    {% endfor %}
-                </div>
-                <!-- Pagination -->
-                {% if page_obj.has_other_pages %}
-                    <div class="flex justify-center gap-2 mt-8">
-                        {% if page_obj.has_previous %}
-                            <a href="?page=1"
-                               class="px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg">
-                                {% trans "First" %}
-                            </a>
-                            <a href="?page={{ page_obj.previous_page_number }}"
-                               class="px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg">
-                                {% trans "Previous" %}
-                            </a>
+                            <div class="notification-inbox__item-content">
+                                <h2 class="notification-inbox__item-subject font-subheading">{{ notification.get_subject_display }}</h2>
+                                <p class="notification-inbox__item-body font-body">{{ notification.body|striptags }}</p>
+                                <time class="notification-inbox__item-time font-body"
+                                      datetime="{{ notification.sent_at|date:'c' }}">
+                                    {{ notification.sent_at|date:"SHORT_DATETIME_FORMAT" }}
+                                </time>
+                            </div>
+                            {% if notification.link_url %}</a>{% endif %}
+                        {% if not notification.read %}
+                            <button onclick="event.stopPropagation(); markRead('{{ notification.id }}')"
+                                    class="notification-inbox__item-action"
+                                    aria-label="{% blocktrans with subject=notification.get_subject_display %}Mark {{ subject }} notification as read{% endblocktrans %}">
+                                {% heroicon_mini "check-circle" size=18 %}
+                                <span>{% trans "Mark read" %}</span>
+                            </button>
                         {% endif %}
-                        <span class="px-3 py-2 text-sm text-gray-600">
-                            {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
-                        </span>
-                        {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}"
-                               class="px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg">
-                                {% trans "Next" %}
-                            </a>
-                            <a href="?page={{ page_obj.paginator.num_pages }}"
-                               class="px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg">
-                                {% trans "Last" %}
-                            </a>
-                        {% endif %}
-                    </div>
-                {% endif %}
-            {% else %}
-                <div class="text-center py-12">
-                    <p class="text-gray-600 text-lg">{% trans "No notifications yet" %}</p>
-                    <p class="text-gray-500 text-sm mt-2">{% trans "You'll see notifications about your sessions and payments here." %}</p>
-                </div>
+                    </li>
+                {% endfor %}
+            </ul>
+            {# Pagination #}
+            {% if page_obj.has_other_pages %}
+                <nav class="notification-inbox__pagination"
+                     aria-label="{% trans "Pagination" %}">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1"
+                           class="inline_button inline_button_sm inline_button__sessions_alt"
+                           aria-label="{% trans "First page" %}">{% trans "First" %}</a>
+                        <a href="?page={{ page_obj.previous_page_number }}"
+                           class="inline_button inline_button_sm inline_button__sessions_alt"
+                           aria-label="{% trans "Previous page" %}">
+                            {% heroicon_mini "chevron-left" size=14 %}
+                            {% trans "Previous" %}
+                        </a>
+                    {% endif %}
+                    <span class="notification-inbox__pagination-info font-body"
+                          aria-current="page">
+                        {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
+                    </span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}"
+                           class="inline_button inline_button_sm inline_button__sessions_alt"
+                           aria-label="{% trans "Next page" %}">
+                            {% trans "Next" %}
+                            {% heroicon_mini "chevron-right" size=14 %}
+                        </a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}"
+                           class="inline_button inline_button_sm inline_button__sessions_alt"
+                           aria-label="{% trans "Last page" %}">{% trans "Last" %}</a>
+                    {% endif %}
+                </nav>
             {% endif %}
-        </div>
+        {% else %}
+            <div class="notification-inbox__empty">
+                {% heroicon_outline "bell-slash" size=48 %}
+                <p class="notification-inbox__empty-title font-subheading">{% trans "No notifications yet" %}</p>
+                <p class="notification-inbox__empty-hint font-body">
+                    {% trans "You'll see notifications about your sessions and payments here." %}
+                </p>
+            </div>
+        {% endif %}
     </main>
     <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
         async function markRead(notificationId) {
             const response = await fetch(`/notifications/${notificationId}/mark-read/`, {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                    'X-CSRFToken': getCookie('csrftoken'),
                     'Content-Type': 'application/json',
                 }
             });
@@ -127,7 +168,7 @@
             const response = await fetch('/notifications/mark-all-read/', {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                    'X-CSRFToken': getCookie('csrftoken'),
                     'Content-Type': 'application/json',
                 }
             });
@@ -142,7 +183,7 @@
                 const response = await fetch('/notifications/clear/', {
                     method: 'POST',
                     headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                        'X-CSRFToken': getCookie('csrftoken'),
                         'Content-Type': 'application/json',
                     }
                 });

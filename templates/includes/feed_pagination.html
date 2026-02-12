@@ -1,0 +1,48 @@
+{% load i18n heroicons %}
+{# Pagination Component #}
+{# Usage: {% include "includes/feed_pagination.html" with paginator=paginator page_obj=page_obj %} #}
+{% if paginator and page_obj.paginator.num_pages > 1 %}
+    <nav class="feed_pagination flex items-center justify-center gap-2 py-6"
+         aria-label="{% trans "Pagination" %}">
+        {# Previous page #}
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+               class="pagination_button flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
+               aria-label="{% trans "Previous page" %}">{% heroicon_mini "chevron-left" size=20 %}</a>
+        {% else %}
+            <span class="pagination_button flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed"
+                  aria-disabled="true">{% heroicon_mini "chevron-left" size=20 %}</span>
+        {% endif %}
+        {# Page numbers #}
+        <div class="flex items-center gap-1">
+            {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}
+                    <span class="pagination_page flex items-center justify-center w-10 h-10 rounded-full bg-accent text-white font-medium"
+                          aria-current="page">{{ num }}</span>
+                {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                    <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                       class="pagination_page flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-300 hover:bg-gray-50 transition-colors font-medium">
+                        {{ num }}
+                    </a>
+                {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+                    <span class="pagination_ellipsis px-2 text-gray-500">...</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {# Next page #}
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+               class="pagination_button flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
+               aria-label="{% trans "Next page" %}">{% heroicon_mini "chevron-right" size=20 %}</a>
+        {% else %}
+            <span class="pagination_button flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed"
+                  aria-disabled="true">{% heroicon_mini "chevron-right" size=20 %}</span>
+        {% endif %}
+    </nav>
+    {# Results summary #}
+    <div class="text-center text-sm text-gray-500 pb-4">
+        {% blocktrans with start=page_obj.start_index end=page_obj.end_index total=paginator.count %}
+        Showing {{ start }}-{{ end }} out of {{ total }} results
+    {% endblocktrans %}
+    </div>
+{% endif %}

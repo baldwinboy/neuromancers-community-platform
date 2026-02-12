@@ -15,5 +15,9 @@ class Hero(Component):
             "subheading": kwargs.get("subheading", ""),
             "button_text": kwargs.get("button_text", ""),
             "button_link": kwargs.get("button_link", "#"),
+            "button_text_color": kwargs.get("button_text_color", "black"),
+            "button_background_color": kwargs.get(
+                "button_background_color", "safeLightAccent"
+            ),
             "image": kwargs.get("image", None),
         }

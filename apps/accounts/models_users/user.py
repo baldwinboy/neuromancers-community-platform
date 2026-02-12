@@ -9,7 +9,6 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from guardian.mixins import GuardianGroupMixin, GuardianUserMixin
 from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionAbstract
-from guardian.shortcuts import get_objects_for_user
 
 from apps.accounts.mixins import UserGroupPermissionsMixin
 from apps.accounts.validators import (
@@ -103,16 +102,18 @@ class User(AbstractBaseUser, GuardianUserMixin, UserGroupPermissionsMixin):
 
     @property
     def get_hosted_sessions(self):
-        perms = [
-            ["events.change_peersession", "events.delete_peersession"],
-            ["events.change_groupsession", "events.delete_groupsession"],
-        ]
+        """
+        Return sessions where this user is the host (author/creator).
+        Does NOT use permission-based filtering to ensure superusers/admins
+        only see their own sessions, not all sessions they have access to.
+        """
+        from apps.events.models_sessions.group import GroupSession
+        from apps.events.models_sessions.peer import PeerSession
 
-        return [
-            obj
-            for perm in perms
-            for obj in get_objects_for_user(self, perm, accept_global_perms=False)
-        ]
+        peer_sessions = list(PeerSession.objects.filter(host=self, is_published=True))
+        group_sessions = list(GroupSession.objects.filter(host=self, is_published=True))
+
+        return peer_sessions + group_sessions
 
 
 class BigUserObjectPermission(UserObjectPermissionAbstract):

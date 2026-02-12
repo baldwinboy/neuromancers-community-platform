@@ -1,38 +1,169 @@
-{% load i18n l10n account guardian_tags wagtailroutablepage_tags %}
+{% load i18n l10n heroicons account guardian_tags wagtailroutablepage_tags %}
 {% if "change_peersession" not in session_perms and "change_groupsession" not in session_perms %}
-    {% if attendee_approved and meeting_link %}
-        <a href="{{ meeting_link }}"
-           class="auth_button auth_button__sessions block text-center mt-8 mx-auto">{% trans "Join session" %}</a>
-    {% elif attendee_approved %}
-        <div class="auth_button auth_button__sessions_disabled block text-center mt-8 mx-auto">{% trans "Join session" %}</div>
-        <small class="text-xl text-darkAccent w-3/4 mx-auto text-center mt-4">{% trans "You'll be able to join this session once a meeting link is available." %}</small>
-    {% elif attendee_requested %}
-        <small class="text-xl text-darkAccent w-3/4 mx-auto text-center mt-4">{% trans "You've requested to join the session. You'll be able to join once your request has been approved and a meeting link is available." %}</small>
-    {% elif page.session_type == "peer" and "request_session" in session_perms %}
-        <a href="{% routablepageurl sessions_index "request_schedule_session" session_id=page.session.id %}"
-           class="auth_button auth_button__sessions block text-center mt-8 mx-auto">{% trans "Schedule a session" %}</a>
-    {% elif page.session_type == "group" and "request_join_session" in session_perms and form %}
-        <form method="post" class="mt-8">
-            {% csrf_token %}
-            <div class="create_session__field_item create_session__field_item_solo w-fit mx-auto pb-8">
-                {{ form.pay_concessionary_price.errors }}
-                <div class="flex flex-wrap">
-                    {% if form.pay_concessionary_price.id_for_label %}
-                        <label for="{{ form.pay_concessionary_price.id_for_label }}"
-                               class="text-2xl">{{ form.pay_concessionary_price.label }}</label>
-                    {% else %}
-                        <label for="id_{{ form.pay_concessionary_price.name }}_0" class="text-2xl">
-                            {{ form.pay_concessionary_price.label }}
-                        </label>
-                    {% endif %}
-                    {{ form.pay_concessionary_price }}
-                    <p class="create_session__field_item_help_text w-full font-subheading font-light">
-                        {{ form.pay_concessionary_price.help_text }}
-                    </p>
-                </div>
+    {% if attendee_approved and is_paid_session and not has_paid %}
+        {# Approved but needs payment #}
+        {% if requires_payment_for_access %}
+            <div class="session-detail__cta-status session-detail__cta-status--payment">
+                {% heroicon_mini "credit-card" size=20 %}
+                <span>{% trans "Payment required" %}</span>
             </div>
+            <p class="session-detail__cta-note">
+                {% trans "Your request has been approved! Please complete payment to access the session meeting link." %}
+            </p>
+        {% else %}
+            <div class="session-detail__cta-status">
+                {% heroicon_mini "check-circle" size=20 %}
+                <span>{% trans "Approved" %}</span>
+            </div>
+            {% if meeting_link %}
+                <a href="{{ meeting_link }}"
+                   class="session-detail__cta-btn session-detail__cta-btn--primary">
+                    {% heroicon_mini "video-camera" size=18 %}
+                    {% trans "Join session" %}
+                </a>
+            {% endif %}
+            {% if host_has_stripe %}
+                <p class="session-detail__cta-note">
+                    {% trans "Your request has been approved. You can join the session, but please also complete payment." %}
+                </p>
+            {% else %}
+                <p class="session-detail__cta-note">{% trans "Your request has been approved." %}</p>
+            {% endif %}
+        {% endif %}
+        {% if host_has_stripe %}
+            <a href="{% url 'create_payment_link' request_id=attendee_request.id %}"
+               class="session-detail__cta-btn session-detail__cta-btn--payment">
+                {% heroicon_mini "credit-card" size=18 %}
+                {% trans "Pay now" %}
+            </a>
+        {% endif %}
+        {# Withdraw approved request #}
+        {% if attendee_request %}
+            <div class="session-detail__cta-actions">
+                <form method="post"
+                      action="{% if page.session_type == 'group' %}{% url 'withdraw_group_request' request_id=attendee_request.id %}{% else %}{% url 'withdraw_peer_request' request_id=attendee_request.id %}{% endif %}"
+                      class="session-detail__withdraw-form">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="session-detail__cta-btn session-detail__cta-btn--danger"
+                            onclick="return confirm('{% trans "Are you sure you want to withdraw? You have not paid yet." %}')">
+                        {% heroicon_mini "x-mark" size=18 %}
+                        {% trans "Withdraw request" %}
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+    {% elif attendee_approved and meeting_link %}
+        <a href="{{ meeting_link }}"
+           class="session-detail__cta-btn session-detail__cta-btn--primary">
+            {% heroicon_mini "video-camera" size=18 %}
+            {% trans "Join session" %}
+        </a>
+        {# Withdraw approved request #}
+        {% if attendee_request %}
+            <div class="session-detail__cta-actions">
+                <form method="post"
+                      action="{% if page.session_type == 'group' %}{% url 'withdraw_group_request' request_id=attendee_request.id %}{% else %}{% url 'withdraw_peer_request' request_id=attendee_request.id %}{% endif %}"
+                      class="session-detail__withdraw-form">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="session-detail__cta-btn session-detail__cta-btn--danger"
+                            onclick="return confirm('{% if has_paid %}{% trans "Are you sure you want to withdraw? A refund will be requested for your payment." %}{% else %}{% trans "Are you sure you want to withdraw this approved request?" %}{% endif %}')">
+                        {% heroicon_mini "x-mark" size=18 %}
+                        {% trans "Withdraw request" %}
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+    {% elif attendee_approved %}
+        <div class="session-detail__cta-btn session-detail__cta-btn--disabled">
+            {% heroicon_mini "video-camera" size=18 %}
+            {% trans "Join session" %}
+        </div>
+        <p class="session-detail__cta-note">
+            {% trans "You'll be able to join this session once a meeting link is available." %}
+        </p>
+        {# Withdraw approved request #}
+        {% if attendee_request %}
+            <div class="session-detail__cta-actions">
+                <form method="post"
+                      action="{% if page.session_type == 'group' %}{% url 'withdraw_group_request' request_id=attendee_request.id %}{% else %}{% url 'withdraw_peer_request' request_id=attendee_request.id %}{% endif %}"
+                      class="session-detail__withdraw-form">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="session-detail__cta-btn session-detail__cta-btn--danger"
+                            onclick="return confirm('{% if has_paid %}{% trans "Are you sure you want to withdraw? A refund will be requested for your payment." %}{% else %}{% trans "Are you sure you want to withdraw this approved request?" %}{% endif %}')">
+                        {% heroicon_mini "x-mark" size=18 %}
+                        {% trans "Withdraw request" %}
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+    {% elif attendee_requested %}
+        <div class="session-detail__cta-status">
+            {% heroicon_mini "clock" size=20 %}
+            <span>{% trans "Request pending" %}</span>
+        </div>
+        <p class="session-detail__cta-note">
+            {% trans "You've requested to join this session. You'll be notified when the host responds." %}
+        </p>
+        {% if pending_request %}
+            <div class="session-detail__cta-actions">
+                <form method="post"
+                      action="{% if page.session_type == 'group' %}{% url 'withdraw_group_request' request_id=pending_request.id %}{% else %}{% url 'withdraw_peer_request' request_id=pending_request.id %}{% endif %}"
+                      class="session-detail__withdraw-form">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="session-detail__cta-btn session-detail__cta-btn--danger"
+                            onclick="return confirm('{% trans "Are you sure you want to withdraw this request?" %}')">
+                        {% heroicon_mini "x-mark" size=18 %}
+                        {% trans "Withdraw request" %}
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+    {% elif page.session_type == "peer" and "request_session" in session_perms %}
+        <a href="{% routablepageurl sessions_index 'request_schedule_session' session_id=page.session.id %}"
+           class="session-detail__cta-btn session-detail__cta-btn--primary">
+            {% heroicon_mini "calendar" size=18 %}
+            {% trans "Schedule a session" %}
+        </a>
+    {% elif page.session_type == "group" and "request_join_session" in session_perms and form %}
+        <form method="post" class="session-detail__join-form">
+            {% csrf_token %}
+            {% if page.session.concessionary_price %}
+                <div class="session-detail__form-field">
+                    <label for="{{ form.pay_concessionary_price.id_for_label }}"
+                           class="session-detail__form-label">{{ form.pay_concessionary_price.label }}</label>
+                    {{ form.pay_concessionary_price }}
+                    {% if form.pay_concessionary_price.help_text %}
+                        <p class="session-detail__form-help">{{ form.pay_concessionary_price.help_text }}</p>
+                    {% endif %}
+                    {% if form.pay_concessionary_price.errors %}
+                        <p class="session-detail__form-error">{{ form.pay_concessionary_price.errors }}</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+            {% if page.session.host.profile.terms_and_conditions %}
+                <div class="session-detail__form-field">
+                    <div class="session-detail__terms">
+                        <h3 class="session-detail__terms-title">{% trans "Host's Terms and Conditions" %}</h3>
+                        <div class="session-detail__terms-body">{{ page.session.host.profile.terms_and_conditions }}</div>
+                    </div>
+                    <div class="session-detail__terms-accept">
+                        {{ form.accept_terms }}
+                        <label for="{{ form.accept_terms.id_for_label }}"
+                               class="session-detail__form-label">
+                            {{ form.accept_terms.label }}
+                            {% if form.accept_terms.required %}<span class="session-detail__form-error">*</span>{% endif %}
+                        </label>
+                    </div>
+                    {% if form.accept_terms.errors %}<p class="session-detail__form-error">{{ form.accept_terms.errors }}</p>{% endif %}
+                </div>
+            {% endif %}
             <button type="submit"
-                    class="auth_button auth_button__sessions block text-center mx-auto">
+                    class="session-detail__cta-btn session-detail__cta-btn--primary">
+                {% heroicon_mini "user-plus" size=18 %}
                 {% trans "Join session" %}
             </button>
         </form>

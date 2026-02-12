@@ -1,6 +1,9 @@
+@use "../variables" as *;
+
 .base__header {
-    height: 7.6875rem;
+    height: $spacer * 7.6875;
     font-size: 1.4rem;
+    flex-shrink: 0;
 }
 
 .base__header__nav-home {
@@ -12,4 +15,39 @@
 
 .base__header__nav-link {
     font-weight: 200;
+}
+
+.base__header__notifications {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    padding: $spacer * 0.5;
+    color: inherit;
+    opacity: 0.8;
+    transition: opacity 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+        opacity: 1;
+    }
+}
+
+.base__header__notifications-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: $spacer;
+    height: $spacer;
+    padding: 0 $spacer * 0.25;
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    background: $accent;
+    border-radius: 999px;
 }

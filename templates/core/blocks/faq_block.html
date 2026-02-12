@@ -1,15 +1,27 @@
-<section class="faq-block py-12">
+<section class="faq-block py-12 {% if self.background_color %}bg-{{ self.background_color }}{% endif %}{% if self.top_border_color %} border-t-{{ self.top_border_color }}{% endif %}{% if self.bottom_border_color %} border-b-{{ self.bottom_border_color }}{% endif %}{% if self.top_border_style %} border-t-{{ self.top_border_style }}{% endif %}{% if self.bottom_border_style %} border-b-{{ self.bottom_border_style }}{% endif %}">
     <div class="container mx-auto px-6 lg:px-24 max-w-xl">
         {% if self.heading %}
-            <h2 class="font-heading text-3xl mb-12 text-center lg:text-5xl">{{ self.heading }}</h2>
+            <h2 class="font-heading text-3xl mb-12 text-center lg:text-5xl {% if self.text_color %}text-{{ self.text_color }}{% endif %}">
+                {{ self.heading }}
+            </h2>
         {% endif %}
         <div class="space-y-4">
             {% for item in self.items %}
-                {% with accordion_heading=item.value.question accordion_name=item.value.question|urlencode accordion_classes="accordion__prose" %}
-                    {% accordion %}
-                        <div class="prose prose-sm max-w-none">{{ item.value.answer|safe }}</div>
-                    {% endaccordion %}
-                {% endwith %}
+                {% if self.text_color %}
+                    {% with accordion_heading=item.value.question accordion_name=item.value.question|urlencode accordion_classes="accordion__prose {{ self.text_color }}" %}
+                        {% accordion %}
+                            <div class="prose prose-sm max-w-none {% if self.text_color %}text-{{ self.text_color }}{% endif %}">
+                                {{ item.value.answer|safe }}
+                            </div>
+                        {% endaccordion %}
+                    {% endwith %}
+                {% else %}
+                    {% with accordion_heading=item.value.question accordion_name=item.value.question|urlencode accordion_classes="accordion__prose" %}
+                        {% accordion %}
+                            <div class="prose prose-sm max-w-none">{{ item.value.answer|safe }}</div>
+                        {% endaccordion %}
+                    {% endwith %}
+                {% endif %}
             {% endfor %}
         </div>
     </div>

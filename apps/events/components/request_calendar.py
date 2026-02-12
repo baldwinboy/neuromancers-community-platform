@@ -4,6 +4,8 @@ from datetime import datetime
 
 from django_components import Component, register
 
+from apps.events.utils import parse_int_csv_string
+
 
 def get_calendar_for_availability(available_slots: list[tuple[datetime, datetime]]):
     grouped = defaultdict(list)
@@ -43,7 +45,7 @@ class RequestCalendar(Component):
 
     def get_template_data(self, args, kwargs, slots, context):
         calendar_data = get_calendar_for_availability(self.kwargs["available_slots"])
-        durations = [int(i) for i in self.kwargs["durations"].split(",")]
+        durations = parse_int_csv_string(self.kwargs["durations"])
         return {
             "calendar_data": calendar_data,
             "available_slots": self.kwargs["available_slots"],

@@ -54,7 +54,11 @@
             <ul class="w-full">
                 {% for message in messages %}
                     <li class="base_message w-full bg-lightAccent">
-                        <span>{{ message }}</span>
+                        {% if message.extra_tags %}
+                            <a href="{% url message.extra_tags %}" class="w-fit link_alt">{{ message }}</a>
+                        {% else %}
+                            <span>{{ message }}</span>
+                        {% endif %}
                     </li>
                 {% endfor %}
             </ul>
@@ -71,6 +75,7 @@
         <script type="text/javascript" src="{% static 'js/core.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/accordion.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/hero.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/request_calendar.js' %}"></script>
 
         {% block extra_js %}
             {# Override this in templates to add extra javascript #}

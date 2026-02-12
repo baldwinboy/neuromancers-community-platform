@@ -1,10 +1,16 @@
-<section class="cta-block py-16 {% if self.background_color == 'white' %}bg-white{% elif self.background_color == 'navy' %}bg-blue-900{% else %}bg-gray-100{% endif %} {% if self.text_color == 'white' %}text-white{% elif self.text_color == 'blue' %}text-blue-600{% else %}text-black{% endif %}">
+<section class="cta-block py-16{% if self.background_color %} bg-{{ self.background_color }}{% endif %}{% if self.top_border_color %} border-t-{{ self.top_border_color }}{% endif %}{% if self.bottom_border_color %} border-b-{{ self.bottom_border_color }}{% endif %}{% if self.top_border_style %} border-t-{{ self.top_border_style }}{% endif %}{% if self.bottom_border_style %} border-b-{{ self.bottom_border_style }}{% endif %}">
     <div class="container mx-auto px-6 lg:px-0">
         <div class="max-w-2xl mx-auto text-center">
-            <h2 class="text-3xl font-bold mb-4">{{ self.heading }}</h2>
-            {% if self.description %}<p class="text-lg mb-8 opacity-90">{{ self.description }}</p>{% endif %}
+            <h2 class="text-3xl font-bold mb-4 {% if self.text_color %}text-{{ self.text_color }}{% endif %}">
+                {{ self.heading }}
+            </h2>
+            {% if self.description %}
+                <p class="text-lg mb-8 opacity-90 {% if self.text_color %}text-{{ self.text_color }}{% endif %}">
+                    {{ self.description }}
+                </p>
+            {% endif %}
             <a href="{{ self.button_link }}"
-               class="inline_button py-3 px-8 rounded-lg font-medium transition {% if self.button_style == 'primary' %}bg-blue-600 text-white hover:bg-blue-700{% elif self.button_style == 'secondary' %}bg-gray-600 text-white hover:bg-gray-700{% else %}bg-green-600 text-white hover:bg-green-700{% endif %}">
+               class="inline_button py-3 px-8 rounded-lg font-medium transition duration-300 {% if self.button_text_color %}text-{{ self.button_text_color }}{% endif %}{% if self.button_background_color %} bg-{{ self.button_background_color }}{% endif %}">
                 {{ self.button_text }}
             </a>
         </div>

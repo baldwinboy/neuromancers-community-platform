@@ -1,0 +1,103 @@
+@use "../mixins" as *;
+@use "../variables" as *;
+
+.payment-success {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: calc($spacer * 2.25) calc($spacer * 1.5);
+
+    @include media(lg) {
+        padding: calc($spacer * 2.25) 0;
+    }
+}
+
+// Success banner
+.payment-success__banner {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacer;
+    padding: calc($spacer * 1.25) calc($spacer * 1.5);
+    margin-bottom: $spacer * 2;
+    border-left: 4px solid $green-500;
+    border-radius: 0.5rem;
+    background: rgba($green-400, 0.08);
+}
+
+.payment-success__banner-icon {
+    flex-shrink: 0;
+    color: $green-500;
+}
+
+.payment-success__banner-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: $black;
+}
+
+.payment-success__banner-text {
+    margin-top: $spacer * 0.25;
+    font-size: 0.9375rem;
+    color: $gray-600;
+}
+
+// Section title
+.payment-success__section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: $black;
+    margin-bottom: $spacer * 0.75;
+}
+
+// Session card area
+.payment-success__session {
+    margin-bottom: $spacer * 1.5;
+}
+
+// Payment details
+.payment-success__details {
+    margin-bottom: $spacer * 1.5;
+}
+
+.payment-success__details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacer;
+    padding: $spacer * 1.25;
+    border: 1px solid $gray-100;
+    border-radius: 0.75rem;
+    background: $white;
+}
+
+.payment-success__detail {
+    display: flex;
+    flex-direction: column;
+    gap: $spacer * 0.125;
+
+    dt {
+        font-family: $body;
+        font-size: 0.75rem;
+        color: $gray-500;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    dd {
+        font-family: $subheading;
+        font-size: 0.9375rem;
+        color: $black;
+        font-weight: 500;
+    }
+}
+
+// Meeting link
+.payment-success__meeting {
+    margin-bottom: $spacer * 1.5;
+}
+
+// Action buttons
+.payment-success__actions {
+    display: flex;
+    gap: $spacer * 0.75;
+    flex-wrap: wrap;
+}

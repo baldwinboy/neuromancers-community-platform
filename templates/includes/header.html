@@ -1,4 +1,4 @@
-{% load i18n static allauth account wagtailcore_tags navigation_tags menu_tags %}
+{% load i18n static allauth account heroicons wagtailcore_tags navigation_tags menu_tags %}
 <header class="base__header flex items-center w-full px-6 bg-black text-safeLightAccent lg:px-19">
     {% get_site_root as site_root %}
     {% url 'account_login' as login_url %}
@@ -25,6 +25,14 @@
                 {% endelement %}
             {% endif %}
             {% if user.is_authenticated %}
+                <a href="{% url 'notification_inbox' %}"
+                   class="base__header__notifications"
+                   aria-label="{% trans "Notifications" %}">
+                    {% heroicon_mini "bell" size=20 %}
+                    {% if unread_notification_count %}
+                        <span class="base__header__notifications-badge">{{ unread_notification_count }}</span>
+                    {% endif %}
+                </a>
 
                 {% element button type="submit" tags="prominent,logout" class="auth_button__navbar block text-center xl:ml-9" href=logout_url %}
                     {% trans "Log Out" %}

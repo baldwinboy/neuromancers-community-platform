@@ -155,6 +155,11 @@ class GroupSessionPublishForm(PublishFormMixin, forms.ModelForm):
 class GroupSessionRequestForm(forms.ModelForm):
     attendee = forms.CharField(required=False)
     session = forms.CharField(required=False)
+    accept_terms = forms.BooleanField(
+        required=False,
+        label=_("I have read and accept the host's terms and conditions"),
+        help_text=_("You must accept the terms to request this session"),
+    )
 
     class Meta:
         model = GroupSessionRequest
@@ -165,6 +170,31 @@ class GroupSessionRequestForm(forms.ModelForm):
 
         self.initial["attendee"] = attendee
         self.initial["session"] = session
+
+        # Only require terms acceptance if host has set terms
+        if session.host.profile.terms_and_conditions:
+            self.fields["accept_terms"].required = True
+        else:
+            self.fields["accept_terms"].widget = forms.HiddenInput()
+
+        # Show concessionary price amount in help text, or hide the field
+        if session.concessionary_price:
+            self.fields["pay_concessionary_price"].help_text = _(
+                "Request to pay the concessionary price of "
+                "%(symbol)s%(price)s instead of %(symbol)s%(standard)s. "
+                "%(approval_note)s"
+            ) % {
+                "symbol": session.currency_symbol,
+                "price": session.concessionary_price_display,
+                "standard": session.price_display,
+                "approval_note": (
+                    _("The host will need to approve this request.")
+                    if session.require_concessionary_approval
+                    else ""
+                ),
+            }
+        else:
+            self.fields["pay_concessionary_price"].widget = forms.HiddenInput()
 
     def clean_session(self):
         return self.initial["session"]

@@ -11,13 +11,20 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from wagtail.contrib.settings.registry import registry
 
 from apps.events.choices import (
     SessionAvailabilityOccurrenceChoices,
     SessionRequestStatusChoices,
     filtered_currencies,
 )
-from apps.events.utils import get_language_display, get_languages, subtract_event
+from apps.events.utils import (
+    get_language_display,
+    get_languages,
+    parse_csv_string,
+    parse_int_csv_string,
+    subtract_event,
+)
 from apps.events.validators import validate_language_codes
 
 from .abstract import (
@@ -112,7 +119,10 @@ class PeerSession(AbstractSession):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._initial_host = self.host
+        if hasattr(self, "host"):
+            self._initial_host = self.host
+        if hasattr(self, "filters"):
+            self._initial_filters = self.filters
 
     @property
     def durations_display(self) -> list[str]:
@@ -120,12 +130,7 @@ class PeerSession(AbstractSession):
             return []
 
         durations = []
-        for part in self.durations.split(","):
-            try:
-                total_minutes = int(part.strip())
-            except ValueError:
-                continue  # ignore invalid parts
-
+        for total_minutes in parse_int_csv_string(self.durations):
             hours = total_minutes // 60
             minutes = total_minutes % 60
 
@@ -142,32 +147,34 @@ class PeerSession(AbstractSession):
 
         return durations
 
-    @property
+    @cached_property
     def languages_display(self) -> list[str]:
         if not self.languages:
             return []
         all_languages = get_languages()
-        return [all_languages.get(part) for part in self.languages.split(",")]
+        return [all_languages.get(part) for part in parse_csv_string(self.languages)]
 
-    @property
+    @cached_property
     def language_choices(self) -> list[tuple[str, str]]:
         if not self.languages:
             return []
         all_languages = get_languages()
-        return {part: all_languages.get(part) for part in self.languages.split(",")}
+        return {
+            part: all_languages.get(part) for part in parse_csv_string(self.languages)
+        }
 
-    @property
+    @cached_property
     def per_hour_price_display(self):
         return "{:.2f}".format(self.per_hour_price / 100)
 
-    @property
+    @cached_property
     def concessionary_per_hour_price_display(self):
         if not self.concessionary_price:
             return "{:.2f}".format(0)
 
         return "{:.2f}".format(self.concessionary_price / 100)
 
-    @property
+    @cached_property
     def currency_symbol(self):
         _currency = filtered_currencies.get(self.currency, None)
 
@@ -176,15 +183,29 @@ class PeerSession(AbstractSession):
 
         return _currency.get("symbol", None)
 
-    @cached_property
     def attendee_requested(self, user):
-        return self.requests.filter(attendee=user).exists()
+        return self.requests.filter(
+            attendee=user,
+            status__in=[
+                SessionRequestStatusChoices.PENDING,
+                SessionRequestStatusChoices.APPROVED,
+            ],
+        ).exists()
 
-    @cached_property
     def attendee_approved(self, user):
         return self.requests.filter(
             attendee=user, status=SessionRequestStatusChoices.APPROVED
         ).exists()
+
+    def get_pending_request(self, user):
+        """Return the user's pending request for this session, if any."""
+        return (
+            self.requests.filter(
+                attendee=user, status=SessionRequestStatusChoices.PENDING
+            )
+            .order_by("-created_at")
+            .first()
+        )
 
     @cached_property
     def available_slots(self) -> list[tuple[datetime, datetime]]:
@@ -287,6 +308,55 @@ class PeerSession(AbstractSession):
             if not can_add:
                 return
 
+        # Convert list of grouped filters to JSON
+        # This allows the admin interface to work with the grouped checkbox widget
+        # List format: ['group::item', ...]
+        if isinstance(self.filters, list):
+            # Load registry object and get current filter settings to validate against
+            filter_settings = registry.get_by_natural_key(
+                "events", "FilterSettings"
+            ).load()
+            filters_mapping = filter_settings.get_cached_mapping()
+
+            normalized_filters = {}
+
+            for filter_str in self.filters:
+                try:
+                    group_slug, item_slug = filter_str.split("::")
+                except ValueError:
+                    continue  # skip invalid format
+
+                group = filters_mapping.get(group_slug)
+                if not group:
+                    continue  # skip invalid group
+
+                item = group["items"].get(item_slug)
+                if not item:
+                    continue  # skip invalid item
+
+                if group_slug not in normalized_filters:
+                    normalized_filters[group_slug] = {"items": {}}
+
+                normalized_filters[group_slug]["items"][item_slug] = {}
+
+            # Merge normalized filters with existing filters to preserve any additional data
+            if self._initial_filters:
+                if not isinstance(self._initial_filters, dict):
+                    self._initial_filters = {}
+                existing = self._initial_filters
+                for group_slug, group_data in normalized_filters.items():
+                    if group_slug not in existing:
+                        existing[group_slug] = group_data
+                    else:
+                        existing[group_slug]["items"].update(group_data["items"])
+                self.filters = existing
+            else:
+                self.filters = normalized_filters
+
+            self._initial_filters = (
+                self.filters
+            )  # Update initial filters after normalization
+
         super().save(*args, **kwargs)
 
 
@@ -347,25 +417,25 @@ class PeerSessionAvailability(AbstractSessionAvailability):
         starts_at_formatted = self.starts_at.strftime("%H:%M")
         ends_at_formatted = self.ends_at.strftime("%H:%M")
 
-        if self.occurrence_starts_at:
-            occurrence_starts_at_formatted = self.occurrence_starts_at.strftime(
-                "%A, %d %B %Y, %H:%M"
-            )
-
-        if self.occurrence_ends_at:
-            occurrence_ends_at_formatted = self.occurrence_ends_at.strftime(
-                "%A, %d %B %Y, %H:%M"
-            )
+        occurrence_starts_at_formatted = (
+            self.occurrence_starts_at.strftime("%A, %d %B %Y, %H:%M")
+            if self.occurrence_starts_at
+            else ""
+        )
+        occurrence_ends_at_formatted = (
+            self.occurrence_ends_at.strftime("%A, %d %B %Y, %H:%M")
+            if self.occurrence_ends_at
+            else ""
+        )
 
         display = self.get_occurrence_display()
         display += f" from {starts_at_formatted} to {ends_at_formatted}"
         if occurrence_starts_at_formatted and occurrence_ends_at_formatted:
             display += f" between {occurrence_starts_at_formatted}"
             display += f" and {occurrence_ends_at_formatted}"
-
-        if occurrence_starts_at_formatted:
+        elif occurrence_starts_at_formatted:
             display += f" after {occurrence_starts_at_formatted}"
-        if occurrence_ends_at_formatted:
+        elif occurrence_ends_at_formatted:
             display += f" until {occurrence_ends_at_formatted}"
 
         return display
@@ -382,6 +452,15 @@ class PeerSessionRequest(AbstractSessionRequest):
         choices=get_languages,
         help_text=_("This is the language that the session will be provided in"),
         max_length=2,
+    )
+    accessibility_needs = models.TextField(
+        max_length=2048,
+        null=True,
+        blank=True,
+        help_text=_(
+            "Let the host know about any accessibility needs you have "
+            "so they can accommodate you"
+        ),
     )
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
@@ -416,8 +495,10 @@ class PeerSessionRequest(AbstractSessionRequest):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._initial_attendee = self.attendee
-        self._initial_session = self.session
+        if hasattr(self, "attendee"):
+            self._initial_attendee = self.attendee
+        if hasattr(self, "session"):
+            self._initial_session = self.session
         self._initial_starts_at = self.starts_at
         self._initial_ends_at = self.ends_at
         self._initial_status = self.status
@@ -483,7 +564,7 @@ class PeerSessionRequest(AbstractSessionRequest):
                     )
         else:
             if (
-                self.attendee.has_perm("request_session", self.session)
+                not self.attendee.has_perm("request_session", self.session)
                 or not self.session.is_published
             ):
                 return
@@ -504,8 +585,7 @@ class PeerSessionRequest(AbstractSessionRequest):
         super().clean()
 
         # Parse languages stored in the PeerSession
-        language_list = self.session.languages.split(",")
-        session_languages = [lang.strip() for lang in language_list]
+        session_languages = parse_csv_string(self.session.languages)
 
         if self.language not in session_languages:
             raise ValidationError(

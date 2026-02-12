@@ -3,7 +3,7 @@
 
 .auth_panel {
     border-radius: 10px;
-    max-width: 38.5rem;
+    max-width: $spacer * 38.5;
 
     .richtext {
         p {
@@ -29,8 +29,8 @@
                 background: transparent;
                 color: $white;
                 width: 100%;
-                padding-block: 1rem;
-                padding-left: 1rem;
+                padding-block: $spacer;
+                padding-left: $spacer;
 
                 &::placeholder {
                     color: $white;
@@ -52,13 +52,13 @@
             }
 
             label {
-                margin-bottom: 1rem;
-                margin-right: 1rem;
+                margin-bottom: $spacer;
+                margin-right: $spacer;
 
                 & + input[type=text],
                 & + input[type=password] {
-                    margin-top: 0.25rem;
-                    margin-bottom: 1rem;
+                    margin-top: $spacer * 0.25;
+                    margin-bottom: $spacer;
                 }
             }
 
@@ -83,7 +83,7 @@
                 font-weight: 300;
 
                 & + select {
-                    margin-left: 1rem;
+                    margin-left: $spacer;
                 }
             }
         }
@@ -105,7 +105,7 @@
         p:has(> input[type="checkbox"]) {
             display: flex;
             align-items: flex-start;
-            gap: 1rem;
+            gap: $spacer;
 
             label {
                 flex: 1 1 auto;
@@ -114,7 +114,7 @@
             input[type="checkbox"] {
                 flex: 0 0 auto;
                 align-self: anchor-center;
-                margin-top: -1rem;
+                margin-top: -$spacer;
             }
 
             a {
@@ -127,6 +127,6 @@
     }
 
     p + p, .auth_form, .auth_form + p {
-        margin-top: 2rem;
+        margin-top: $spacer * 2;
     }
 }

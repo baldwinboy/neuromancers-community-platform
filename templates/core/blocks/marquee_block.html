@@ -1,0 +1,3 @@
+<section class="marquee marquee-{{ self.size }} {% if self.background_color %}bg-{{ self.background_color }}{% endif %}{% if self.top_border_color %} border-t-{{ self.top_border_color }}{% endif %}{% if self.bottom_border_color %} border-b-{{ self.bottom_border_color }}{% endif %}{% if self.top_border_style %} border-t-{{ self.top_border_style }}{% endif %}{% if self.bottom_border_style %} border-b-{{ self.bottom_border_style }}{% endif %}">
+    <p class="marquee__content {% if self.text_color %}text-{{ self.text_color }}{% endif %}">{{ self.content }}</p>
+</section>

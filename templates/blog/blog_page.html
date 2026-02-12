@@ -1,17 +1,28 @@
 {% extends "base.html" %}
 
-{% load wagtailcore_tags %}
+{% load wagtailcore_tags heroicons i18n %}
 
 {% block body_class %}
     template-blogpage
 {% endblock body_class %}
 
 {% block content %}
-    <h1>{{ page.title }}</h1>
-    <p class="meta">{{ page.date }}</p>
-    <div class="intro">{{ page.intro }}</div>
-    {{ page.body|richtext }}
-    <p>
-        <a href="{{ page.get_parent.url }}">Return to {{ page.get_parent.title }}</a>
-    </p>
+    <main class="blog-post">
+        {# Back button #}
+        <a href="{{ page.get_parent.url }}" class="blog-post__back">
+            {% heroicon_mini "arrow-left" size=16 %}
+            <span>{% trans "Back to" %} {{ page.get_parent.title }}</span>
+        </a>
+        {# Post header #}
+        <header class="blog-post__header">
+            <time datetime="{{ page.date|date:'c' }}" class="blog-post__date">
+                {% heroicon_mini "calendar" size=14 %}
+                {{ page.date|date:"F j, Y" }}
+            </time>
+            <h1 class="blog-post__title">{{ page.title }}</h1>
+            {% if page.intro %}<p class="blog-post__intro">{{ page.intro }}</p>{% endif %}
+        </header>
+        {# Post content #}
+        <article class="blog-post__content">{{ page.body|richtext }}</article>
+    </main>
 {% endblock content %}

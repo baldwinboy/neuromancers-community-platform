@@ -2,10 +2,12 @@ from django import forms
 from django.db import models
 from django.utils.text import slugify
 from modelcluster.fields import ParentalKey
-from wagtail.admin.panels import FieldPanel, InlinePanel
+from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
-from wagtail.fields import RichTextField
+from wagtail.fields import RichTextField, StreamField
+
+from apps.core.models import get_shared_streamfield_blocks
 
 
 class ContactTopic(models.Model):
@@ -62,13 +64,34 @@ class ContactFormField(AbstractFormField):
 
 
 class ContactFormPage(AbstractEmailForm):
-    intro = RichTextField(blank=True)
-    thank_you_text = RichTextField(blank=True)
+    """
+    Contact form page with StreamField content above the form.
+    """
+
+    # StreamField for flexible content above the form
+    body = StreamField(
+        get_shared_streamfield_blocks(),
+        blank=True,
+        null=True,
+        use_json_field=True,
+        help_text="Optional content blocks above the contact form",
+    )
+
+    intro = RichTextField(blank=True, help_text="Text displayed above the form")
+    thank_you_text = RichTextField(
+        blank=True, help_text="Text displayed after form submission"
+    )
 
     content_panels = AbstractEmailForm.content_panels + [
-        FieldPanel("intro"),
-        InlinePanel("form_fields", label="Form fields"),
-        FieldPanel("thank_you_text"),
+        FieldPanel("body"),
+        MultiFieldPanel(
+            [
+                FieldPanel("intro"),
+                InlinePanel("form_fields", label="Form fields"),
+                FieldPanel("thank_you_text"),
+            ],
+            heading="Form Settings",
+        ),
     ]
 
     parent_page_types = ["core.HomePage"]
@@ -86,7 +109,13 @@ class ContactFormPage(AbstractEmailForm):
 
     def get_to_address(self):
         settings = ContactEmailSettings.load(self._request)
-        return [settings.default_recipient]
+        if settings.default_recipient:
+            return [settings.default_recipient]
+        return []
+
+    def get_from_address(self):
+        settings = ContactEmailSettings.load(self._request)
+        return settings.default_sender or ""
 
     def get_subject(self, form):
         # Topic: use the label of the submitted choice
@@ -107,3 +136,23 @@ class ContactFormPage(AbstractEmailForm):
             username = form.cleaned_data.get("contact_email", "Unknown User")
 
         return f"[{topic_label}] Query from {username}"
+
+    def send_mail(self, form):
+        """Override to use settings from ContactEmailSettings."""
+        from django.core.mail import send_mail
+
+        addresses = self.get_to_address()
+        if not addresses or not addresses[0]:
+            return  # No recipient configured, skip sending
+
+        from_address = self.get_from_address()
+        subject = self.get_subject(form)
+        content = self.render_email(form)
+
+        send_mail(
+            subject,
+            content,
+            from_address,
+            addresses,
+            fail_silently=True,
+        )

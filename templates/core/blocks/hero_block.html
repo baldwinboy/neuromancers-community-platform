@@ -1,7 +1,7 @@
 {% load wagtailimages_tags %}
 {% if self.image %}
     {% image self.image width-400 as img %}
-    {% hero min_height=self.min_height background_color=self.background_color text_color=self.text_color button_text=self.button_text button_link=self.button_link image=img.url heading=self.heading subheading=self.subheading / %}
+    {% hero min_height=self.min_height background_color=self.background_color text_color=self.text_color button_text=self.button_text button_link=self.button_link image=img.url heading=self.heading subheading=self.subheading button_text_color=self.button_text_color button_background_color=self.button_background_color top_border_color=self.top_border_color bottom_border_color=self.bottom_border_color top_border_style=self.top_border_style bottom_border_style=self.bottom_border_style / %}
 {% else %}
-    {% hero min_height=self.min_height background_color=self.background_color text_color=self.text_color button_text=self.button_text button_link=self.button_link heading=self.heading subheading=self.subheading / %}
+    {% hero min_height=self.min_height background_color=self.background_color text_color=self.text_color button_text=self.button_text button_link=self.button_link heading=self.heading subheading=self.subheading button_text_color=self.button_text_color button_background_color=self.button_background_color top_border_color=self.top_border_color bottom_border_color=self.bottom_border_color top_border_style=self.top_border_style bottom_border_style=self.bottom_border_style / %}
 {% endif %}

@@ -1,37 +1,107 @@
 {% extends "base.html" %}
 
-{% load i18n heroicons %}
+{% load i18n heroicons getpronto %}
 
 {% block body_class %}
     template-accounts-profile
 {% endblock body_class %}
 
 {% block content %}
-    <main class="w-full container mx-auto py-9 px-6 lg:px-0">
-        <div class="flex flex-col items-center gap-4 mb-4 lg:flex-row">
-            <div class="accounts-profile__display_picture flex items-center justify-center bg-accent border-lightAccent overflow-hidden"
-                 aria-hidden="true">
-                {% if user.display_picture %}
-                    <img src={{ user.display_picture }} width="128" height="128" alt="" />
-                {% else %}
-                    {% heroicon_solid "user" size=64 class="text-lightAccent" %}
-                {% endif %}
+    <main class="profile">
+        {# Profile header #}
+        <header class="profile__header">
+            <div class="profile__info">
+                <div class="profile__avatar">
+                    {% if user.profile.display_picture_url %}
+                        {% pronto_img user.profile.display_picture_url alt="" w=128 h=128 q=90 fit="cover" %}
+                    {% else %}
+                        {% heroicon_solid "user" size=64 class="profile__avatar-icon" %}
+                    {% endif %}
+                </div>
+                <div class="profile__identity">
+                    <h1 class="profile__name font-heading font-medium text-4xl">{{ user.first_name }} {{ user.last_name }}</h1>
+                    <p class="profile__username font-body">@{{ user.username }}</p>
+                    <p class="profile__joined font-body opacity-50">
+                        {% heroicon_mini "calendar" size=16 %}
+                        <span class="-ml-2 font-body text-xs">{% trans "Joined" %} {{ user.date_joined|date:"F Y" }}</span>
+                    </p>
+                    {% if user.profile.country_display %}
+                        <p class="profile__location font-body opacity-50">
+                            {% heroicon_mini "map-pin" size=16 %}
+                            <span class="-ml-2 font-body text-xs">{{ user.profile.country_display }}</span>
+                        </p>
+                    {% endif %}
+                    {% if user.certificate %}
+                        <p class="bg-black text-accent rounded-2xl py-2 mt-2 uppercase text-center select-none">
+                            {% trans "Trained with Neuromancers" %}
+                        </p>
+                    {% endif %}
+                </div>
             </div>
-            <h1>{{ user }}</h1>
-        </div>
-        <section class="mb-4">
-            <h2 class="font-light">About me</h2>
-            <hr class="w-60" />
-            <p class="font-body mt-2">{{ user.profile_bio }}</p>
+            {# Settings link for own profile #}
+            {% if request.user == user %}
+                <div class="flex items-center gap-2">
+                    {% if perms.events.add_peersession %}
+                        <a href="{% url 'host_dashboard' %}"
+                           class="inline_button inline_button_sm inline_button__sessions py-2 px-4 text-xs flex items-center gap-1">
+                            {% heroicon_mini "chart-bar-square" size=16 %}
+                            {% trans "Dashboard" %}
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'accounts_user_settings' %}"
+                       class="inline_button inline_button_sm inline_button__sessions_alt py-2 px-4 text-xs flex items-center gap-1">
+                        {% heroicon_mini "cog-6-tooth" size=16 %}
+                        {% trans "Settings" %}
+                    </a>
+                </div>
+            {% endif %}
+        </header>
+        {# About section #}
+        <section class="profile__section">
+            <h2 class="profile__section-title">{% trans "About me" %}</h2>
+            <p class="profile__about">{{ user.profile.about|default:"" }}</p>
         </section>
-        <section class="mb-4">
-            <h2 class="font-light">{% trans "Workshops" %}</h2>
-            <hr class="w-60" />
-            {% for event in user.get_hosted_sessions %}
-                <a href="{{ event.page.full_url }}">
-                    <p class="font-body mt-2">{{ event }}</p>
-                </a>
-            {% endfor %}
+        {# Sessions section #}
+        <section class="profile__section">
+            {# Hosting section — only show if user has hosted sessions #}
+            {% if hosted_sessions %}
+                <div class="profile__subsection">
+                    <h2 class="profile__section-title">
+                        {% heroicon_mini "megaphone" size=20 %}
+                        {% trans "Hosting" %}
+                    </h2>
+                    <div class="grid grid-cols-1 {% if show_calendar %}md:grid-cols-2{% endif %} gap-8">
+                        <div class="profile__sessions">
+                            {% for session in hosted_sessions %}
+                                {% session_item session=session session_type=session.type / %}
+                            {% endfor %}
+                        </div>
+                        {# Calendar section for peer users #}
+                        {% if show_calendar %}
+
+                            {% include "includes/profile_calendar.html" with user=user show_calendar=show_calendar show_peer_session_details=show_peer_session_details show_group_session_details=show_group_session_details calendar_data=calendar_data %}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+            {# Attending section — only show on own profile #}
+            {% if attending_sessions %}
+                <div class="profile__subsection">
+                    <h2 class="profile__section-title">
+                        {% heroicon_mini "ticket" size=20 %}
+                        {% trans "Attending" %}
+                    </h2>
+                    <div class="profile__sessions">
+                        {% for session in attending_sessions %}
+                            {% session_item session=session session_type=session.type / %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+            {% if not hosted_sessions and not attending_sessions %}
+                <h2 class="profile__section-title">{% trans "Sessions" %}</h2>
+                <p class="profile__empty">{% trans "No sessions available." %}</p>
+            {% endif %}
         </section>
     </main>
 {% endblock content %}
