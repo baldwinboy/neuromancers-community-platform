@@ -69,8 +69,8 @@ RUN python manage.py collectstatic --noinput --clear
 # Note: Database migrations and setup commands run at runtime in entrypoint.sh
 # (they require database access which isn't available during build)
 
-# Expose the port that Gunicorn will run on
-EXPOSE 8000
+# Expose ports (443 for HTTPS, 8000 for HTTP fallback)
+EXPOSE 443 8000
 
 # Run the entrypoint script (it execs gunicorn bound to Tailscale IP)
 ENTRYPOINT ["/app/entrypoint.sh"]

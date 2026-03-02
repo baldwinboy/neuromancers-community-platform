@@ -26,8 +26,8 @@ ALLOWED_HOSTS += [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.ts.net",
-    "http://neuromancers-community-platform:8000",  # Tailscale MagicDNS (HTTP)
+    "https://*.ts.net",  # Tailscale HTTPS via MagicDNS FQDN
+    "http://neuromancers-community-platform:8000",  # Fallback HTTP
 ]
 
 # Support Render's external hostname (if deploying there)
@@ -65,14 +65,13 @@ IGNORABLE_404_URLS = [
 
 DISALLOWED_USER_AGENTS = bots
 
-# Security settings
-# For Tailscale HTTP-only access, set these to False via env vars
-# For Tailscale HTTPS (with `tailscale cert`), keep them True
-CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=False)
-SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=False)
+# Security settings for Tailscale HTTPS
+# Secure cookies enabled by default for HTTPS
+CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=True)
+SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=True)
 
-# SSL redirect - disable for Tailscale-only HTTP access
-# Set SECURE_SSL_REDIRECT=True in env if using Tailscale HTTPS certificates
+# SSL redirect - disabled since gunicorn serves HTTPS directly (no proxy)
+# Only enable if using a reverse proxy that terminates SSL
 SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
 
 SECURE_HSTS_SECONDS = 31536000  # 1 year

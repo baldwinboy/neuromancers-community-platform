@@ -41,8 +41,23 @@ echo "Connecting to Tailscale network..."
 IPV4=$(/app/tailscale ip -4)
 echo "Tailscale IP: ${IPV4}"
 
-# Add Tailscale IP to allowed hosts for Django
-export DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS},${IPV4}"
+# Get Tailscale HTTPS certificates (MagicDNS hostname)
+TAILNET=$(/app/tailscale status --json | grep -o '"MagicDNSSuffix":"[^"]*"' | cut -d'"' -f4)
+HOSTNAME="neuromancers-community-platform"
+FQDN="${HOSTNAME}.${TAILNET}"
+
+echo "Fetching TLS certificates for ${FQDN}..."
+mkdir -p /app/certs
+if /app/tailscale cert --cert-file=/app/certs/server.crt --key-file=/app/certs/server.key "${FQDN}"; then
+    echo "TLS certificates obtained for ${FQDN}"
+    USE_HTTPS=true
+else
+    echo "Warning: Could not obtain TLS certificates, falling back to HTTP"
+    USE_HTTPS=false
+fi
+
+# Add Tailscale IP and FQDN to allowed hosts for Django
+export DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS},${IPV4},${FQDN}"
 echo "DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}"
 
 # Run database migrations
@@ -58,5 +73,13 @@ echo "Publishing sessions index..."
 python manage.py publish_sessions_index || true
 
 # Run the main application (Gunicorn) bound ONLY to Tailscale IP
-echo "Starting Gunicorn on ${IPV4}:8000 (Tailscale-only)..."
-exec gunicorn --bind "${IPV4}:8000" --workers 2 neuromancers.wsgi
+if [ "$USE_HTTPS" = true ]; then
+    echo "Starting Gunicorn with HTTPS on ${IPV4}:443 (Tailscale-only)..."
+    exec gunicorn --bind "${IPV4}:443" --workers 2 \
+        --certfile=/app/certs/server.crt \
+        --keyfile=/app/certs/server.key \
+        neuromancers.wsgi
+else
+    echo "Starting Gunicorn on ${IPV4}:8000 (Tailscale-only, HTTP)..."
+    exec gunicorn --bind "${IPV4}:8000" --workers 2 neuromancers.wsgi
+fi
