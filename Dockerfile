@@ -21,7 +21,6 @@ RUN apt-get update && apt-get install -y \
     git \
     ca-certificates \
     iptables \
-    ip6tables \
     dnsutils \
     && rm -rf /var/lib/apt/lists/*
 
@@ -68,6 +67,15 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Collect static files (venv is on PATH so python/gunicorn are available)
 RUN python manage.py collectstatic --noinput --clear
+
+# Migrate the database (venv is on PATH so python/gunicorn are available)
+RUN python manage.py migrate --noinput
+
+# Setup default groups
+RUN python manage.py setup_default_groups || true
+
+# Publish sessions index page
+RUN python manage.py publish_sessions_index || true
 
 # Expose the port that Gunicorn will run on
 EXPOSE 8000
