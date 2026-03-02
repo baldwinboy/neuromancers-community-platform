@@ -12,26 +12,25 @@ env = environ.Env(
     ENVIRONMENT=(str, "production"),
 )
 
-# Render.com deployment settings
-ALLOWED_HOSTS = (
-    env("DJANGO_ALLOWED_HOSTS", default="")
-    .split(", ")
-    .append(
-        "neuromancers-community-platform",
-        ".localhost",
-        "127.0.0.1",
-        "[::1]",
-        "*.neuromancers-community-platform.fly.dev",
-        "*.ts.net",
-    )
-)
+# Build ALLOWED_HOSTS from env var + static entries
+_allowed_hosts_env = env("DJANGO_ALLOWED_HOSTS", default="")
+ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(",") if h.strip()]
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://neuromancers-community-platform.fly.dev",
-    "https://*.ts.net",
+# Add static allowed hosts
+ALLOWED_HOSTS += [
+    "neuromancers-community-platform",  # Tailscale MagicDNS hostname
+    ".ts.net",  # Tailscale domain suffix (matches any subdomain)
+    "localhost",
+    "127.0.0.1",
+    "[::1]",
 ]
 
-# Support Render's external hostname
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.ts.net",
+    "http://neuromancers-community-platform:8000",  # Tailscale MagicDNS (HTTP)
+]
+
+# Support Render's external hostname (if deploying there)
 RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
@@ -67,9 +66,15 @@ IGNORABLE_404_URLS = [
 DISALLOWED_USER_AGENTS = bots
 
 # Security settings
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-SECURE_SSL_REDIRECT = True
+# For Tailscale HTTP-only access, set these to False via env vars
+# For Tailscale HTTPS (with `tailscale cert`), keep them True
+CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=False)
+SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=False)
+
+# SSL redirect - disable for Tailscale-only HTTP access
+# Set SECURE_SSL_REDIRECT=True in env if using Tailscale HTTPS certificates
+SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
+
 SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True

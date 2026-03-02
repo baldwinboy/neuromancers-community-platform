@@ -2,6 +2,10 @@
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
+# TAILSCALE-ONLY DEPLOYMENT:
+# - No [http_service] or [[services]] = no public Fly.io proxy
+# - Access only via Tailscale IP or MagicDNS hostname
+#
 
 app = 'neuromancers-community-platform'
 primary_region = 'lhr'
@@ -10,19 +14,17 @@ console_command = '/app/manage.py shell'
 [build]
 
 [deploy]
-  # Migrations run in entrypoint.sh after Tailscale is up
-  # release_command runs before the app starts, without Tailscale
+  # Migrations run in entrypoint.sh after Tailscale connects
+  # (release_command runs before app starts, without network access to Tailscale)
 
 [env]
   PORT = '8000'
+  ENVIRONMENT = 'production'
 
-[processes]
-  app = "/app/entrypoint.sh"
-
-# No [http_service] - we don't want public HTTP access
-# Access is Tailscale-only
+# No [http_service] - Tailscale-only access
+# No [[services]] - no public port exposure
 
 [[vm]]
   memory = '1gb'
+  cpu_kind = 'shared'
   cpus = 1
-  memory_mb = 1024

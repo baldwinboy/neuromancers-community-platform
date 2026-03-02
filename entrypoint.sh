@@ -41,6 +41,10 @@ echo "Connecting to Tailscale network..."
 IPV4=$(/app/tailscale ip -4)
 echo "Tailscale IP: ${IPV4}"
 
+# Add Tailscale IP to allowed hosts for Django
+export DJANGO_ALLOWED_HOSTS="${DJANGO_ALLOWED_HOSTS},${IPV4}"
+echo "DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}"
+
 # Run database migrations
 echo "Running database migrations..."
 python manage.py migrate --noinput
