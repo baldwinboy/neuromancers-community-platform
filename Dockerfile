@@ -27,16 +27,18 @@ RUN apt-get update && apt-get install -y \
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Copy Tailscale binaries from the tailscale image on Docker Hub.
+# Copy Tailscale binaries from the tailscale image on GitHub Container Registry.
 RUN mkdir -p /app
-COPY --from=docker.io/tailscale/tailscale:stable /usr/local/bin/tailscaled /app/tailscaled
-COPY --from=docker.io/tailscale/tailscale:stable /usr/local/bin/tailscale /app/tailscale
+COPY --from=ghcr.io/tailscale/tailscale:stable /usr/local/bin/tailscaled /app/tailscaled
+COPY --from=ghcr.io/tailscale/tailscale:stable /usr/local/bin/tailscale /app/tailscale
 RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale \
     && chown -R root:root /var/run/tailscale /var/cache/tailscale /var/lib/tailscale \
     && chmod -R 755 /var/run/tailscale /var/cache/tailscale /var/lib/tailscale
 
 # Enable IP forwarding for both IPv4 and IPv6 (required for subnet routing)
-RUN echo 'net.ipv4.ip_forward = 1' > /etc/sysctl.d/99-tailscale.conf \
+RUN mkdir -p /etc/sysctl.d \
+    && touch /etc/sysctl.d/99-tailscale.conf \
+    && echo 'net.ipv4.ip_forward = 1' > /etc/sysctl.d/99-tailscale.conf \
     && echo 'net.ipv6.conf.all.forwarding = 1' >> /etc/sysctl.d/99-tailscale.conf \
     && sysctl -p /etc/sysctl.d/99-tailscale.conf
 
