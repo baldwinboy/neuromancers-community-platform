@@ -22,6 +22,8 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     iptables \
     dnsutils \
+    procps \
+    iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
