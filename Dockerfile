@@ -52,8 +52,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Copy the project into the image
 COPY . .
 
-# Explicitly copy entrypoint and make executable
-COPY entrypoint.sh /app/entrypoint.sh
+# Make entrypoint executable
 RUN chmod +x /app/entrypoint.sh
 
 # Sync the project (installs the project itself)
