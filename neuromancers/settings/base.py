@@ -369,8 +369,7 @@ STRIPE_REDIRECT_URL = env("STRIPE_REDIRECT_URL", default="")
 STRIPE_CURRENCIES = stripe_currencies  # Currencies supported by Stripe
 STRIPE_APPLICATION_FEE = 0.15  # Decimal value of Stripe Application Fee (15%)
 
-# Get Pronto
-GETPRONTO_API_KEY = env("GETPRONTO_API_KEY", default="")
-GETPRONTO_API_URL = env("GETPRONTO_API_URL", default="")
-GETPRONTO_EMAIL = env("GETPRONTO_EMAIL", default="")
-GETPRONTO_PASSWORD = env("GETPRONTO_PASSWORD", default="")
+# ImageKit
+IMAGEKIT_PRIVATE_KEY = env("IMAGEKIT_PRIVATE_KEY", default="")
+IMAGEKIT_PUBLIC_KEY = env("IMAGEKIT_PUBLIC_KEY", default="")
+IMAGEKIT_URL_ENDPOINT = env("IMAGEKIT_URL_ENDPOINT", default="")

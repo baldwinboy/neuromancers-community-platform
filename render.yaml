@@ -1,0 +1,72 @@
+# Render.com Blueprint configuration
+# https://docs.render.com/blueprint-spec
+
+databases:
+  - name: neuromancers-db
+    plan: free
+    databaseName: neuromancers
+    user: neuromancers
+
+services:
+  - type: web
+    plan: free
+    name: neuromancers
+    runtime: python
+    buildCommand: './build.sh'
+    startCommand: 'python -m gunicorn neuromancers.asgi:application -k uvicorn.workers.UvicornWorker'
+    envVars:
+      # Database connection
+      - key: DATABASE_URL
+        fromDatabase:
+          name: neuromancers-db
+          property: connectionString
+
+      # Django settings
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: 'false'
+
+      # Wagtail
+      - key: WAGTAILADMIN_BASE_URL
+        sync: false
+
+      # Gunicorn workers
+      - key: WEB_CONCURRENCY
+        value: '4'
+
+      # Stripe API keys (set manually in Render dashboard)
+      - key: STRIPE_API_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_API_SECRET_KEY
+        sync: false
+      - key: STRIPE_API_CLIENT_ID
+        sync: false
+      - key: STRIPE_REDIRECT_URL
+        sync: false
+
+      # Whereby API (set manually in Render dashboard)
+      - key: WHEREBY_API_KEY
+        sync: false
+
+      # ImageKit API (set manually in Render dashboard)
+      - key: IMAGEKIT_PRIVATE_KEY
+        sync: false
+      - key: IMAGEKIT_PUBLIC_KEY
+        sync: false
+      - key: IMAGEKIT_URL_ENDPOINT
+        sync: false
+
+      # Email settings (set manually in Render dashboard)
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false

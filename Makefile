@@ -73,10 +73,11 @@ update-requirements: # Compile and update requirements from .in files
 	pip-compile requirements/production.in
 
 install: # Install Python development requirements
-	uv pip install -r requirements/development.txt
+	uv add -r requirements/production.in -c requirements/production.txt --active
+	sed '/^-r /d' requirements/development.in | uv add --dev -r - -c requirements/development.txt --active
 	pre-commit install
 install-prod: # Install Python production requirements
-	uv pip install -r requirements/production.txt
+	uv add -r requirements/production.in -c requirements/production.txt --active
 
 fresh: install django-makemigrations django-migrate django-createsuperuser django-setupdefaultgroups django-publishsessionsindex django-collectstatic django-runserver
 

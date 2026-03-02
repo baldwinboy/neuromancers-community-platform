@@ -4,10 +4,16 @@
 #
 #    pip-compile requirements/production.in
 #
+annotated-types==0.7.0
+    # via pydantic
 anyascii==0.3.3
     # via
     #   -r requirements/base.in
     #   wagtail
+anyio==4.12.1
+    # via
+    #   httpx
+    #   imagekitio
 appnope==0.1.4
     # via
     #   -r requirements/base.in
@@ -36,6 +42,8 @@ beautifulsoup4==4.14.3
     #   wagtail
 bleach==6.2.0
     # via -r requirements/base.in
+brotli==1.2.0
+    # via -r requirements/production.in
 build==1.3.0
     # via -r requirements/base.in
 cachetools==6.1.0
@@ -45,6 +53,8 @@ calmjs-parse==1.3.3
 certifi==2026.1.4
     # via
     #   -r requirements/base.in
+    #   httpcore
+    #   httpx
     #   requests
 chardet==5.2.0
     # via -r requirements/base.in
@@ -53,7 +63,9 @@ charset-normalizer==3.4.4
     #   -r requirements/base.in
     #   requests
 click==8.3.1
-    # via -r requirements/base.in
+    # via
+    #   -r requirements/base.in
+    #   uvicorn
 csscompressor==0.9.5
     # via -r requirements/base.in
 decorator==5.2.1
@@ -66,9 +78,14 @@ defusedxml==0.7.1
     #   willow
 distlib==0.4.0
     # via -r requirements/base.in
+distro==1.9.0
+    # via imagekitio
+dj-database-url==3.1.2
+    # via -r requirements/production.in
 django==6.0.2
     # via
     #   -r requirements/base.in
+    #   dj-database-url
     #   django-allauth
     #   django-appconf
     #   django-components
@@ -162,14 +179,28 @@ filetype==1.2.0
     # via
     #   -r requirements/base.in
     #   willow
+gunicorn==25.1.0
+    # via -r requirements/production.in
+h11==0.16.0
+    # via
+    #   httpcore
+    #   uvicorn
 heroicons==2.11.0
     # via -r requirements/base.in
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via imagekitio
 identify==2.6.12
     # via -r requirements/base.in
 idna==3.11
     # via
     #   -r requirements/base.in
+    #   anyio
+    #   httpx
     #   requests
+imagekitio==5.2.0
+    # via -r requirements/base.in
 importlib-metadata==8.7.0
     # via -r requirements/base.in
 ipython==8.12.3
@@ -215,6 +246,7 @@ openpyxl==3.1.5
 packaging==25.0
     # via
     #   build
+    #   gunicorn
     #   wheel
 parso==0.8.4
     # via
@@ -247,6 +279,8 @@ prompt-toolkit==3.0.51
     # via
     #   -r requirements/base.in
     #   ipython
+psycopg2-binary==2.9.11
+    # via -r requirements/production.in
 ptyprocess==0.7.0
     # via
     #   -r requirements/base.in
@@ -255,6 +289,10 @@ pure-eval==0.2.3
     # via
     #   -r requirements/base.in
     #   stack-data
+pydantic==2.12.5
+    # via imagekitio
+pydantic-core==2.41.5
+    # via pydantic
 pygments==2.19.2
     # via ipython
 pyproject-hooks==1.2.0
@@ -293,6 +331,8 @@ rpds-py==0.26.0
     #   referencing
 six==1.17.0
     # via python-dateutil
+sniffio==1.3.1
+    # via imagekitio
 soupsieve==2.8.3
     # via
     #   -r requirements/base.in
@@ -323,18 +363,27 @@ traitlets==5.14.3
 typing-extensions==4.15.0
     # via
     #   -r requirements/base.in
+    #   anyio
     #   beautifulsoup4
     #   django-components
     #   django-stubs-ext
     #   django-tasks
+    #   imagekitio
+    #   pydantic
+    #   pydantic-core
     #   referencing
     #   stripe
+    #   typing-inspection
+typing-inspection==0.4.2
+    # via pydantic
 uritemplate==4.2.0
     # via -r requirements/base.in
 urllib3==2.6.3
     # via
     #   -r requirements/base.in
     #   requests
+uvicorn==0.41.0
+    # via -r requirements/production.in
 wagtail==7.3
     # via
     #   -r requirements/base.in
@@ -352,6 +401,8 @@ webencodings==0.5.1
     #   tinycss2
 wheel==0.46.2
     # via -r requirements/base.in
+whitenoise==6.12.0
+    # via -r requirements/production.in
 willow[heif]==1.12.0
     # via
     #   -r requirements/base.in

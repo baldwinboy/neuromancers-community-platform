@@ -212,37 +212,26 @@ class FilterSettings(BaseGenericSetting):
 
 @register_setting(icon="image")
 class ImageUploadSettings(BaseGenericSetting):
-    get_pronto_api_key = models.CharField(
-        "Get Pronto API Key",
-        help_text=(
-            "Your Get Pronto API key. This can be obtained from your Get Pronto dashboard."
-        ),
+    imagekit_private_key = models.CharField(
+        "ImageKit Private Key",
+        help_text="Your ImageKit Private Key. This can be obtained from your ImageKit dashboard.",
         max_length=255,
         null=True,
         blank=True,
     )
-    get_pronto_api_url = models.URLField(
-        "Get Pronto API URL",
-        help_text=(
-            "The base URL for the Get Pronto API. This is typically in the format 'https://api.getpronto.com/v1/'"
-        ),
-        null=True,
-        blank=True,
-        default="https://api.getpronto.io/v1/",
-    )
-    get_pronto_email = models.EmailField(
-        "Get Pronto Email",
-        help_text=("The email address associated with your Get Pronto account."),
-        null=True,
-        blank=True,
-    )
-    get_pronto_password = models.CharField(
-        "Get Pronto Password",
-        help_text=("The password for your Get Pronto account."),
+    imagekit_public_key = models.CharField(
+        "ImageKit Public Key",
+        help_text="Your ImageKit Public Key. This can be obtained from your ImageKit dashboard.",
         max_length=255,
+        null=True,
+        blank=True,
+    )
+    imagekit_url_endpoint = models.URLField(
+        "ImageKit URL Endpoint",
+        help_text="Your ImageKit URL Endpoint. This can be obtained from your ImageKit dashboard.",
         null=True,
         blank=True,
     )
 
     class Meta:
-        verbose_name = "Image Upload API Settings"
+        verbose_name = "Image Upload Settings"

@@ -9,13 +9,13 @@ from .user import User
 
 class Profile(models.Model):
     display_picture_url = models.URLField(
-        help_text=_("URL of the profile picture hosted on GetPronto"),
+        help_text=_("URL of the profile picture hosted on ImageKit"),
         max_length=1024,
         null=True,
         blank=True,
     )
     display_picture_id = models.CharField(
-        help_text=_("GetPronto file ID for the profile picture"),
+        help_text=_("ImageKit file ID for the profile picture"),
         max_length=255,
         null=True,
         blank=True,

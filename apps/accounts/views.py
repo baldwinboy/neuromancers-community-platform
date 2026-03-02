@@ -27,7 +27,7 @@ from apps.accounts.models_users.user_settings import (
     PeerNotificationSettings,
     PeerPrivacySettings,
 )
-from apps.common.getpronto import GetProntoClient, GetProntoError
+from apps.common.imagekit import ImageKitClient, ImageKitError
 from apps.common.utils import (
     get_stripe_oauth,
     get_stripe_oauth_url,
@@ -370,11 +370,11 @@ class UserSettingsView(LoginRequiredMixin, FormView):
             if form.is_valid():
                 profile = form.save(commit=False)
 
-                # Handle display picture upload to GetPronto
+                # Handle display picture upload to ImageKit
                 uploaded_file = form.cleaned_data.get("display_picture_file")
                 if uploaded_file:
                     try:
-                        client = GetProntoClient(request=request)
+                        client = ImageKitClient(request=request)
                         # Compress the image before uploading
                         buffer, _mime = client.compress_image(
                             uploaded_file,
@@ -384,25 +384,25 @@ class UserSettingsView(LoginRequiredMixin, FormView):
                         )
                         filename = f"avatar-{request.user.username}.webp"
 
-                        # Delete old file from GetPronto if one exists
+                        # Delete old file from ImageKit if one exists
                         if profile.display_picture_id:
                             try:
                                 client.delete_file(profile.display_picture_id)
-                            except GetProntoError:
+                            except ImageKitError:
                                 logger.warning(
-                                    "Failed to delete old avatar %s from GetPronto",
+                                    "Failed to delete old avatar %s from ImageKit",
                                     profile.display_picture_id,
                                 )
 
                         result = client.upload_file(
                             buffer,
                             filename=filename,
-                            custom_filename=filename,
+                            folder="/avatars",
                         )
                         profile.display_picture_url = result.url
-                        profile.display_picture_id = result.id
-                    except GetProntoError as exc:
-                        logger.error("GetPronto upload failed: %s", exc)
+                        profile.display_picture_id = result.file_id
+                    except ImageKitError as exc:
+                        logger.error("ImageKit upload failed: %s", exc)
                         messages.error(
                             request,
                             "Profile saved but image upload failed. "

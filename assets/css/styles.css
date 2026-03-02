@@ -7904,36 +7904,6 @@
   letter-spacing: 0.1em;
 }
 
-h6 {
-  margin: 0;
-  padding: 0;
-  font-family: "Roboto", sans-serif;
-}
-
-h5 {
-  margin: 0;
-  padding: 0;
-  font-family: "Roboto", sans-serif;
-}
-
-h4 {
-  margin: 0;
-  padding: 0;
-  font-family: "Roboto", sans-serif;
-}
-
-h3 {
-  margin: 0;
-  padding: 0;
-  font-family: "Roboto", sans-serif;
-}
-
-h2 {
-  margin: 0;
-  padding: 0;
-  font-family: "Roboto", sans-serif;
-}
-
 .overflow {
   overflow: auto;
 }
@@ -43548,7 +43518,8 @@ h2 {
   color: hsl(0, 0%, 45%);
 }
 
-.profile-calendar, .profile_calendar {
+.profile-calendar,
+.profile_calendar {
   margin-bottom: 2rem;
   background: hsl(0, 0%, 100%);
   border: 1px solid rgba(3.978, 0, 0, 0.08);
@@ -44722,6 +44693,31 @@ h2 {
 .host-dashboard__action-btn--reject:not([disabled]):hover, .host-dashboard__action-btn--reject:not([disabled]):focus-visible {
   background: #fecaca;
 }
+.host-dashboard__action-btn--link {
+  color: #1d4ed8;
+  background: #dbeafe;
+  border-color: #bfdbfe;
+}
+.host-dashboard__action-btn--link:not([disabled]):hover, .host-dashboard__action-btn--link:not([disabled]):focus-visible {
+  background: #bfdbfe;
+}
+.host-dashboard__action-btn--secondary {
+  color: hsl(0, 0%, 45%);
+  background: hsl(0, 0%, 100%);
+  border-color: hsl(0, 0%, 90%);
+}
+.host-dashboard__action-btn--secondary:not([disabled]):hover, .host-dashboard__action-btn--secondary:not([disabled]):focus-visible {
+  color: hsl(0, 100%, 0.78%);
+  background: hsl(0, 0%, 96%);
+}
+.host-dashboard__action-btn--revoke {
+  color: #92400e;
+  background: #fef3c7;
+  border-color: #fde68a;
+}
+.host-dashboard__action-btn--revoke:not([disabled]):hover, .host-dashboard__action-btn--revoke:not([disabled]):focus-visible {
+  background: #fde68a;
+}
 
 .host-dashboard__empty {
   display: flex;
@@ -44845,32 +44841,6 @@ h2 {
   gap: 0.5rem;
 }
 
-.host-dashboard__action-btn--link {
-  color: #1d4ed8;
-  background: #dbeafe;
-  border-color: #bfdbfe;
-}
-.host-dashboard__action-btn--link:not([disabled]):hover, .host-dashboard__action-btn--link:not([disabled]):focus-visible {
-  background: #bfdbfe;
-}
-.host-dashboard__action-btn--secondary {
-  color: hsl(0, 0%, 45%);
-  background: hsl(0, 0%, 100%);
-  border-color: hsl(0, 0%, 90%);
-}
-.host-dashboard__action-btn--secondary:not([disabled]):hover, .host-dashboard__action-btn--secondary:not([disabled]):focus-visible {
-  color: hsl(0, 100%, 0.78%);
-  background: hsl(0, 0%, 96%);
-}
-.host-dashboard__action-btn--revoke {
-  color: #92400e;
-  background: #fef3c7;
-  border-color: #fde68a;
-}
-.host-dashboard__action-btn--revoke:not([disabled]):hover, .host-dashboard__action-btn--revoke:not([disabled]):focus-visible {
-  background: #fde68a;
-}
-
 .notification-inbox {
   width: 100%;
   max-width: 720px;
@@ -44940,9 +44910,6 @@ h2 {
 }
 .notification-inbox__item--unread {
   position: relative;
-}
-.notification-inbox__item--unread .notification-inbox__item-indicator {
-  color: hsl(343.29, 95.89%, 71.37%);
 }
 .notification-inbox__item--unread .notification-inbox__item-subject {
   font-weight: 700;

@@ -44,6 +44,7 @@ filetype==1.2.0
 heroicons==2.11.0
 identify==2.6.12
 idna==3.11
+imagekitio==5.2.0
 importlib-metadata==8.7.0
 ipython==8.12.3
 jedi==0.19.2
