@@ -37,21 +37,8 @@ RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale \
     && chown -R root:root /var/run/tailscale /var/cache/tailscale /var/lib/tailscale \
     && chmod -R 755 /var/run/tailscale /var/cache/tailscale /var/lib/tailscale
 
-# Enable IP forwarding for both IPv4 and IPv6 (required for subnet routing)
-RUN mkdir -p /etc/sysctl.d \
-    && touch /etc/sysctl.d/99-tailscale.conf \
-    && echo 'net.ipv4.ip_forward = 1' > /etc/sysctl.d/99-tailscale.conf \
-    && echo 'net.ipv6.conf.all.forwarding = 1' >> /etc/sysctl.d/99-tailscale.conf \
-    && sysctl -p /etc/sysctl.d/99-tailscale.conf
-
-# Start the Tailscale daemon in the background (required for subnet routing)
-RUN tailscaled --state=mem: --socket=/var/run/tailscale/tailscaled.sock &
-
-# Set network prefix
-RUN export NETWORK_IPV6=$(dig +short aaaa neuromancers-community-platform.internal @fdaa::3) \
-    && export NETWORK_IPV4=$(dig +short a neuromancers-community-platform.internal @fdaa::3) \
-    && echo "NETWORK_IPV6=$NETWORK_IPV6" >> /etc/environment \
-    && echo "NETWORK_IPV4=$NETWORK_IPV4" >> /etc/environment
+# Note: IP forwarding (sysctl) must be configured at runtime, not build time
+# The entrypoint script handles this
 
 # Change the working directory to the `app` directory
 WORKDIR /app
@@ -72,14 +59,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Collect static files (venv is on PATH so python/gunicorn are available)
 RUN python manage.py collectstatic --noinput --clear
 
-# Migrate the database (venv is on PATH so python/gunicorn are available)
-RUN python manage.py migrate --noinput
-
-# Setup default groups
-RUN python manage.py setup_default_groups || true
-
-# Publish sessions index page
-RUN python manage.py publish_sessions_index || true
+# Note: Database migrations and setup commands run at runtime in entrypoint.sh
+# (they require database access which isn't available during build)
 
 # Expose the port that Gunicorn will run on
 EXPOSE 8000
