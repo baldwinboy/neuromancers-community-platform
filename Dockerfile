@@ -5,6 +5,14 @@ FROM python:${PYTHON_VERSION}
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# uv configuration
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV UV_PROJECT_ENVIRONMENT=/app/.venv
+
+# Add venv to PATH so installed packages are available
+ENV PATH="/app/.venv/bin:$PATH"
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     libpq-dev \
@@ -31,15 +39,15 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Copy the project into the image
 COPY . /app
 
-# Sync the project
+# Sync the project (installs the project itself)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
-# Collect static files using build secrets
-RUN uv run python manage.py collectstatic --noinput --clear
+# Collect static files (venv is on PATH so python/gunicorn are available)
+RUN python manage.py collectstatic --noinput --clear
 
 # Expose the port that Gunicorn will run on
 EXPOSE 8000
 
 # Runtime command with Tailscale
-CMD ["sh", "-c", "tailscale up --auth-key $TAILSCALE_AUTHKEY && TAILSCALE_IP=$(tailscale ip -4) && uv run gunicorn --bind $TAILSCALE_IP:8000 --workers 2 neuromancers.wsgi"]
+CMD ["sh", "-c", "tailscale up --auth-key $TAILSCALE_AUTHKEY && TAILSCALE_IP=$(tailscale ip -4) && gunicorn --bind $TAILSCALE_IP:8000 --workers 2 neuromancers.wsgi"]
