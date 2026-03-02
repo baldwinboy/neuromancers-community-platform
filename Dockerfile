@@ -72,5 +72,5 @@ RUN python manage.py collectstatic --noinput --clear
 # Expose the port that Gunicorn will run on
 EXPOSE 8000
 
-# Run the entrypoint script
+# Run the entrypoint script (it execs gunicorn bound to Tailscale IP)
 ENTRYPOINT ["/app/entrypoint.sh"]

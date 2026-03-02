@@ -53,6 +53,6 @@ python manage.py setup_default_groups || true
 echo "Publishing sessions index..."
 python manage.py publish_sessions_index || true
 
-# Run the main application (Gunicorn)
-echo "Starting Gunicorn on ${IPV4}:8000..."
+# Run the main application (Gunicorn) bound ONLY to Tailscale IP
+echo "Starting Gunicorn on ${IPV4}:8000 (Tailscale-only)..."
 exec gunicorn --bind "${IPV4}:8000" --workers 2 neuromancers.wsgi

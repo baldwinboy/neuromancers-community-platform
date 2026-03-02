@@ -13,12 +13,29 @@ env = environ.Env(
 )
 
 # Render.com deployment settings
-ALLOWED_HOSTS = env("DJANGO_ALLOWED_HOSTS", default="").split(", ")
+ALLOWED_HOSTS = (
+    env("DJANGO_ALLOWED_HOSTS", default="")
+    .split(", ")
+    .append(
+        "neuromancers-community-platform",
+        ".localhost",
+        "127.0.0.1",
+        "[::1]",
+        "*.neuromancers-community-platform.fly.dev",
+        "*.ts.net",
+    )
+)
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://neuromancers-community-platform.fly.dev",
+    "https://*.ts.net",
+]
 
 # Support Render's external hostname
 RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 
