@@ -29,6 +29,10 @@ RUN apt-get update && apt-get install -y \
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+# Get Tailscale auth key from build secret and set it as an environment variable for the build (if needed for build steps)
+RUN --mount=type=secret,id=TAILSCALE_AUTHKEY \
+    export TAILSCALE_AUTHKEY="$(cat /run/secrets/TAILSCALE_AUTHKEY)"
+
 # Copy Tailscale binaries from the tailscale image on GitHub Container Registry.
 RUN mkdir -p /app
 COPY --from=ghcr.io/tailscale/tailscale:stable /usr/local/bin/tailscaled /app/tailscaled

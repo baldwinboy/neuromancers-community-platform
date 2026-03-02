@@ -31,7 +31,7 @@ NETWORK_PREFIX=$(echo $IPV6 | cut -d':' -f1-3)::/48
 echo "Connecting to Tailscale network..."
 # Run Tailscale with the prefix
 /app/tailscale up \
-  --auth-key="${TS_AUTHKEY}" \
+  --auth-key="${TAILSCALE_AUTHKEY}" \
   --advertise-connector \
   --advertise-routes="${NETWORK_PREFIX}" \
   --advertise-tags="tag:neuromancers-community-platform" \
