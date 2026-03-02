@@ -19,13 +19,36 @@ RUN apt-get update && apt-get install -y \
     gcc \
     curl \
     git \
+    ca-certificates \
+    iptables \
+    ip6tables \
+    dnsutils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Install Tailscale
-RUN curl -fsSL https://tailscale.com/install.sh | sh
+# Copy Tailscale binaries from the tailscale image on Docker Hub.
+RUN mkdir -p /app
+COPY --from=docker.io/tailscale/tailscale:stable /usr/local/bin/tailscaled /app/tailscaled
+COPY --from=docker.io/tailscale/tailscale:stable /usr/local/bin/tailscale /app/tailscale
+RUN mkdir -p /var/run/tailscale /var/cache/tailscale /var/lib/tailscale \
+    && chown -R root:root /var/run/tailscale /var/cache/tailscale /var/lib/tailscale \
+    && chmod -R 755 /var/run/tailscale /var/cache/tailscale /var/lib/tailscale
+
+# Enable IP forwarding for both IPv4 and IPv6 (required for subnet routing)
+RUN echo 'net.ipv4.ip_forward = 1' > /etc/sysctl.d/99-tailscale.conf \
+    && echo 'net.ipv6.conf.all.forwarding = 1' >> /etc/sysctl.d/99-tailscale.conf \
+    && sysctl -p /etc/sysctl.d/99-tailscale.conf
+
+# Start the Tailscale daemon in the background (required for subnet routing)
+RUN tailscaled --state=mem: --socket=/var/run/tailscale/tailscaled.sock &
+
+# Set network prefix
+RUN export NETWORK_IPV6=$(dig +short aaaa neuromancers-community-platform.internal @fdaa::3) \
+    && export NETWORK_IPV4=$(dig +short a neuromancers-community-platform.internal @fdaa::3) \
+    && echo "NETWORK_IPV6=$NETWORK_IPV6" >> /etc/environment \
+    && echo "NETWORK_IPV4=$NETWORK_IPV4" >> /etc/environment
 
 # Change the working directory to the `app` directory
 WORKDIR /app
@@ -37,7 +60,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project
 
 # Copy the project into the image
-COPY . /app
+COPY . .
 
 # Sync the project (installs the project itself)
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -49,5 +72,8 @@ RUN python manage.py collectstatic --noinput --clear
 # Expose the port that Gunicorn will run on
 EXPOSE 8000
 
-# Runtime command with Tailscale
-CMD ["sh", "-c", "tailscale up --auth-key $TAILSCALE_AUTHKEY && TAILSCALE_IP=$(tailscale ip -4) && gunicorn --bind $TAILSCALE_IP:8000 --workers 2 neuromancers.wsgi"]
+# Allow entrypoint.sh to be executable
+RUN chmod +x /app/entrypoint.sh
+
+# Run the entrypoint script
+ENTRYPOINT ["/app/entrypoint.sh"]

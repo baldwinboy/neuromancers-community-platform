@@ -1,7 +1,20 @@
 # Django project
-/media/
-/static/
+media/
+reports/
+static/
 *.sqlite3
 fly.toml
 .git/
+.github/
+.tox/
 .venv/
+.vscode/
+.env
+.env.development
+.env.example
+.flake8
+.pre-commit-config.yaml
+.stylelintrc.json
+Makefile
+render.yaml
+.tox.ini
