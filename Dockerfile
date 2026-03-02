@@ -52,6 +52,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Copy the project into the image
 COPY . .
 
+# Explicitly copy entrypoint and make executable
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 # Sync the project (installs the project itself)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
@@ -64,9 +68,6 @@ RUN python manage.py collectstatic --noinput --clear
 
 # Expose the port that Gunicorn will run on
 EXPOSE 8000
-
-# Allow entrypoint.sh to be executable
-RUN chmod +x /app/entrypoint.sh
 
 # Run the entrypoint script
 ENTRYPOINT ["/app/entrypoint.sh"]
