@@ -34,7 +34,7 @@ platformdirs==4.3.8
 pre-commit==4.2.0
 pycodestyle==2.14.0
 pyflakes==3.4.0
-pygments==2.19.2
+pygments==2.20.0
 pyproject-api==1.9.1
 pyproject-hooks==1.2.0
 pyyaml==6.0.2
