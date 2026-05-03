@@ -92,7 +92,7 @@ dependencies = [
     "stripe==12.3.0",
     "telepath==0.3.1",
     "tinycss2==1.4.0",
-    "tornado==6.5.1",
+    "tornado==6.5.5",
     "traitlets==5.14.3",
     "typing-extensions==4.15.0",
     "uritemplate==4.2.0",
