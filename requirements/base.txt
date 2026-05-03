@@ -298,7 +298,7 @@ referencing==0.36.2
     #   jsonschema-specifications
 regex==2024.11.6
     # via -r requirements/base.in
-requests==2.32.5
+requests==2.33.0
     # via
     #   -r requirements/base.in
     #   stripe

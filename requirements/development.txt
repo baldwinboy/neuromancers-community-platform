@@ -479,7 +479,7 @@ regex==2024.11.6
     # via
     #   -r requirements/base.in
     #   djlint
-requests==2.32.5
+requests==2.33.0
     # via
     #   -r requirements/base.in
     #   genbadge
