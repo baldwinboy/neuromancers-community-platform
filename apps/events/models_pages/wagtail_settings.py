@@ -42,12 +42,13 @@ class StripeSettings(BaseGenericSetting):
         null=True,
         blank=True,
     )
-    redirect_url = models.URLField(
+    redirect_url = models.CharField(
         "Redirect URL",
         help_text=(
             "The URL that you'd like users to be directed to after payments"
             " are made using Stripe's embedded elements"
         ),
+        max_length=255,
         null=True,
         blank=True,
     )
