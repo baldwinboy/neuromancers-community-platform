@@ -80,7 +80,7 @@ distro==1.9.0
     # via imagekitio
 dj-database-url==3.1.2
     # via -r requirements/production.in
-django==6.0.2
+django==6.0.4
     # via
     #   -r requirements/base.in
     #   dj-database-url
@@ -327,7 +327,7 @@ rpds-py==0.26.0
     #   -r requirements/base.in
     #   jsonschema
     #   referencing
-setuptools==82.0.0
+setuptools==82.0.1
     # via calmjs-parse
 six==1.17.0
     # via python-dateutil
