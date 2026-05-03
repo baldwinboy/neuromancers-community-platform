@@ -74,7 +74,7 @@ distlib==0.4.0
     # via -r requirements/base.in
 distro==1.9.0
     # via imagekitio
-django==6.0.2
+django==6.0.4
     # via
     #   -r requirements/base.in
     #   django-allauth
@@ -93,7 +93,7 @@ django==6.0.2
     #   laces
     #   modelsearch
     #   wagtail
-django-allauth==65.13.0
+django-allauth==65.14.1
     # via -r requirements/base.in
 django-appconf==1.1.0
     # via
@@ -277,7 +277,7 @@ pydantic==2.12.5
     # via imagekitio
 pydantic-core==2.41.5
     # via pydantic
-pygments==2.19.2
+pygments==2.20.0
     # via ipython
 pyproject-hooks==1.2.0
     # via build
@@ -368,7 +368,7 @@ urllib3==2.6.3
     # via
     #   -r requirements/base.in
     #   requests
-wagtail==7.3
+wagtail==7.3.1
     # via
     #   -r requirements/base.in
     #   wagtailmenus
