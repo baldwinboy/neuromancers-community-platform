@@ -368,7 +368,7 @@ urllib3==2.6.3
     # via
     #   -r requirements/base.in
     #   requests
-wagtail==7.3
+wagtail==7.3.1
     # via
     #   -r requirements/base.in
     #   wagtailmenus
