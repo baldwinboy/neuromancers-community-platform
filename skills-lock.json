@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "django-access-review": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/django-access-review/SKILL.md",
+      "computedHash": "f113820ea68a0a8d5b36b36a293da6caed8cb6f2d7115cfc12d63c448e1b7613"
+    },
+    "django-perf-review": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/django-perf-review/SKILL.md",
+      "computedHash": "8f30431b3c007e2dfe7fea44f3805e2dff0f633c078512d33f9b7ebb4c71c19b"
+    },
+    "django-python": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "django-python/SKILL.md",
+      "computedHash": "11d3d0acdfeb14fa0d34f01fc059bf1d39e134afe2abe1dbb2cbe346effacce3"
+    },
+    "python-testing-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/python-development/skills/python-testing-patterns/SKILL.md",
+      "computedHash": "69915bb276b6aec61fe5b283a933f96584f66d14b616ce2060d95757629c6866"
+    }
+  }
+}
