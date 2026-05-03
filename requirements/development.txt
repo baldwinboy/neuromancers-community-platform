@@ -583,7 +583,7 @@ virtualenv==20.36.1
     #   -r requirements/development.in
     #   pre-commit
     #   tox
-wagtail==7.3
+wagtail==7.3.1
     # via
     #   -r requirements/base.in
     #   wagtailmenus
