@@ -100,7 +100,7 @@ django==6.0.2
     #   laces
     #   modelsearch
     #   wagtail
-django-allauth==65.13.0
+django-allauth==65.14.1
     # via -r requirements/base.in
 django-appconf==1.1.0
     # via
