@@ -15,9 +15,7 @@ anyio==4.12.1
     #   httpx
     #   imagekitio
 appnope==0.1.4
-    # via
-    #   -r requirements/base.in
-    #   ipython
+    # via -r requirements/base.in
 asgiref==3.11.1
     # via
     #   -r requirements/base.in
@@ -43,7 +41,7 @@ beautifulsoup4==4.14.3
     #   wagtail
 black==25.1.0
     # via -r requirements/development.in
-bleach[css]==6.2.0
+bleach==6.2.0
     # via
     #   -r requirements/base.in
     #   nbconvert
@@ -110,7 +108,7 @@ distlib==0.4.0
     #   virtualenv
 distro==1.9.0
     # via imagekitio
-django==6.0.2
+django==6.0.4
     # via
     #   -r requirements/base.in
     #   django-allauth
@@ -131,7 +129,7 @@ django==6.0.2
     #   model-bakery
     #   modelsearch
     #   wagtail
-django-allauth==65.13.0
+django-allauth==65.14.1
     # via -r requirements/base.in
 django-appconf==1.1.0
     # via
@@ -392,6 +390,10 @@ pillow-heif==1.2.0
     # via
     #   -r requirements/base.in
     #   willow
+pip==26.0
+    # via
+    #   -r requirements/development.in
+    #   pip-tools
 pip-tools==7.5.2
     # via -r requirements/development.in
 platformdirs==4.3.8
@@ -493,6 +495,12 @@ rpds-py==0.26.0
     #   -r requirements/base.in
     #   jsonschema
     #   referencing
+setuptools==80.9.0
+    # via
+    #   -r requirements/development.in
+    #   calmjs-parse
+    #   genbadge
+    #   pip-tools
 six==1.17.0
     # via
     #   -r requirements/development.in
@@ -575,11 +583,11 @@ virtualenv==20.36.1
     #   -r requirements/development.in
     #   pre-commit
     #   tox
-wagtail==7.3
+wagtail==7.3.1
     # via
     #   -r requirements/base.in
     #   wagtailmenus
-wagtailmenus @ git+https://github.com/baldwinboy/wagtailmenus@master
+wagtailmenus @ git+https://github.com/baldwinboy/wagtailmenus@e7aba7dec168736b7013fcef360046b63137329e
     # via -r requirements/base.in
 wcwidth==0.2.13
     # via
@@ -594,7 +602,7 @@ wheel==0.46.2
     # via
     #   -r requirements/base.in
     #   pip-tools
-willow[heif]==1.12.0
+willow==1.12.0
     # via
     #   -r requirements/base.in
     #   wagtail
@@ -604,7 +612,3 @@ zipp==3.23.0
     # via
     #   -r requirements/base.in
     #   importlib-metadata
-
-# The following packages are considered to be unsafe in a requirements file:
-# pip
-# setuptools
