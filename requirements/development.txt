@@ -108,7 +108,7 @@ distlib==0.4.0
     #   virtualenv
 distro==1.9.0
     # via imagekitio
-django==6.0.2
+django==6.0.4
     # via
     #   -r requirements/base.in
     #   django-allauth
@@ -129,7 +129,7 @@ django==6.0.2
     #   model-bakery
     #   modelsearch
     #   wagtail
-django-allauth==65.13.0
+django-allauth==65.14.1
     # via -r requirements/base.in
 django-appconf==1.1.0
     # via
@@ -390,7 +390,7 @@ pillow-heif==1.2.0
     # via
     #   -r requirements/base.in
     #   willow
-pip==25.1.1
+pip==26.0
     # via
     #   -r requirements/development.in
     #   pip-tools
@@ -583,7 +583,7 @@ virtualenv==20.36.1
     #   -r requirements/development.in
     #   pre-commit
     #   tox
-wagtail==7.3
+wagtail==7.3.1
     # via
     #   -r requirements/base.in
     #   wagtailmenus
