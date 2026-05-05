@@ -335,7 +335,7 @@ nbclient==0.10.2
     # via
     #   -r requirements/development.in
     #   nbconvert
-nbconvert==7.16.6
+nbconvert==7.17.1
     # via -r requirements/development.in
 nbformat==5.10.4
     # via
@@ -380,7 +380,7 @@ pickleshare==0.7.5
     # via
     #   -r requirements/base.in
     #   ipython
-pillow==12.1.0
+pillow==12.2.0
     # via
     #   -r requirements/base.in
     #   genbadge

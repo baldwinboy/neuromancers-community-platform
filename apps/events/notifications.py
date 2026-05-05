@@ -177,6 +177,10 @@ def send_notification(
                 "contact", "ContactEmailSettings"
             ).load(request)
             email_from = settings.default_sender or None
+            if not email_from:
+                from django.conf import settings as django_settings
+
+                email_from = django_settings.DEFAULT_FROM_EMAIL or None
             email_body = render_to_string(email_template, context)
             send_mail(
                 subject=email_subject,

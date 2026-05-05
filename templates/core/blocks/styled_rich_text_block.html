@@ -1,0 +1,47 @@
+{% load wagtailcore_tags heroicons %}
+<section class="styled-rich-text-block"
+         style="{% if self.background_color %}background-color: var(--color-{{ self.background_color }}, {{ self.background_color }});
+                {% endif %}{% if self.text_color %}color: var(--color-{{ self.text_color }}, {{ self.text_color }});
+                {% endif %}"
+         {% if self.link_hover_style %} data-link-hover-color="{{ self.link_hover_style.hover_color }}" data-link-hover-underline="{{ self.link_hover_style.hover_underline|yesno:'true,false' }}" data-link-hover-opacity="{{ self.link_hover_style.hover_opacity|default:'1' }}" data-link-transition="{{ self.link_hover_style.transition_duration|default:'150ms' }}" {% endif %}>
+    {% if self.show_back_button %}
+        <div class="block-back-button block-back-button--{{ self.back_button_position|default:'left' }}">
+            <a href="{{ self.back_button_link|default:'javascript:history.back() ' }}"
+               class="back-button"
+               {% if self.back_button_color %}style="color: var(--color-{{ self.back_button_color }}, {{ self.back_button_color }});"{% endif %}>
+                {% heroicon_mini "arrow-left" size=16 %}
+                <span>{{ self.back_button_text|default:"Back" }}</span>
+            </a>
+        </div>
+    {% endif %}
+
+    {% include "includes/block_border.html" with border_style=self.top_border.style border_color=self.top_border.color border_size=self.top_border.size position="top" background_color=self.background_color %}
+    <div class="styled-rich-text-block__content"
+         style="max-width: {{ self.max_width|default:'900px' }};
+                margin: 0 auto;
+                {% if self.link_color %}--link-color: var(--color-{{ self.link_color }}, {{ self.link_color }});{% endif %}">{{ self.content|richtext }}</div>
+
+    {% include "includes/block_border.html" with border_style=self.bottom_border.style border_color=self.bottom_border.color border_size=self.bottom_border.size position="bottom" background_color=self.background_color %}
+</section>
+<style>
+    .styled-rich-text-block a {
+        color: var(--link-color, inherit);
+        transition: all {{ self.link_hover_style.transition_duration|default:'150ms' }} ease;
+    }
+    
+    {% if self.link_hover_style %}
+    .styled-rich-text-block a:hover {
+        {% if self.link_hover_style.hover_color %}
+        color: var(--color-{{ self.link_hover_style.hover_color }}, {{ self.link_hover_style.hover_color }}) !important;
+        {% endif %}
+        {% if self.link_hover_style.hover_underline %}
+        text-decoration: underline;
+        {% else %}
+        text-decoration: none;
+        {% endif %}
+        {% if self.link_hover_style.hover_opacity %}
+        opacity: {{ self.link_hover_style.hover_opacity }};
+        {% endif %}
+    }
+    {% endif %}
+</style>

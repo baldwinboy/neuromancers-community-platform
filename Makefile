@@ -45,6 +45,12 @@ django-findstatic: # Find files that will be added when a `static` directory is 
 	python ./manage.py findstatic
 
 django-collectstatic: # Generate `static` directory
+	sass assets/scss/draftail/font_family.scss assets/css/draftail/font_family.css
+	sass assets/scss/draftail/font_size.scss assets/css/draftail/font_size.css
+	sass assets/scss/draftail/text_color.scss assets/css/draftail/text_color.css
+	sass assets/scss/draftail/highlight_color.scss assets/css/draftail/highlight_color.css
+	sass assets/scss/_fonts.scss assets/css/_fonts.css
+	sass assets/scss/_common.scss assets/css/common.css
 	sass assets/scss/styles.scss assets/css/styles.css
 	scripts/load_icons.sh assets/icons templates/includes/sprite.svg
 	python ./manage.py collectstatic -i scss -i icons
@@ -79,7 +85,7 @@ install: # Install Python development requirements
 install-prod: # Install Python production requirements
 	uv add -r requirements/production.in -c requirements/production.txt --active
 
-fresh: install django-makemigrations django-migrate django-createsuperuser django-setupdefaultgroups django-publishsessionsindex django-collectstatic django-runserver
+fresh: install django-makemigrations django-migrate django-createsuperuser django-setupdefaultgroups django-publishsessionsindex django-platformguide django-collectstatic django-runserver
 
 dev: django-makemigrations django-migrate django-collectstatic django-runserver
 
@@ -100,4 +106,9 @@ django-seedusers: # Automatically generate fake users, i.e generate 50 Peer user
 django-seedsessions: # Automatically generate fake sessions, i.e generate 50 sessions -> `make django-seedsessions SIZE=50`.
 	@echo "Seeding sessions..."
 	python manage.py seed_sessions --size ${SIZE}
+	@echo "Done!"
+
+django-platformguide: # Start Django server with platform guide pages
+	@echo "Creating platform guide pages..."
+	python manage.py build_platform_guide
 	@echo "Done!"

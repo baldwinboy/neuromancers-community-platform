@@ -258,7 +258,7 @@ pickleshare==0.7.5
     # via
     #   -r requirements/base.in
     #   ipython
-pillow==12.1.0
+pillow==12.2.0
     # via
     #   -r requirements/base.in
     #   pillow-heif

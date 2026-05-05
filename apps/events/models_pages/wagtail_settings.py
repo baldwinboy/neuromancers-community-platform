@@ -3,7 +3,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
 from wagtail import blocks
-from wagtail.admin.panels import FieldPanel, FieldRowPanel
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel
 from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
 from wagtail.fields import StreamField, StreamValue
 
@@ -213,6 +213,21 @@ class FilterSettings(BaseGenericSetting):
 
 @register_setting(icon="image")
 class ImageUploadSettings(BaseGenericSetting):
+
+    IMAGE_PROVIDER_CHOICES = [
+        ("imagekit", "ImageKit"),
+        ("getpronto", "GetPronto"),
+    ]
+
+    image_provider = models.CharField(
+        "Image Provider",
+        max_length=20,
+        choices=IMAGE_PROVIDER_CHOICES,
+        default="imagekit",
+        help_text="Select which image upload service to use.",
+    )
+
+    # ImageKit fields
     imagekit_private_key = models.CharField(
         "ImageKit Private Key",
         help_text="Your ImageKit Private Key. This can be obtained from your ImageKit dashboard.",
@@ -233,6 +248,55 @@ class ImageUploadSettings(BaseGenericSetting):
         null=True,
         blank=True,
     )
+
+    # GetPronto fields
+    get_pronto_api_key = models.CharField(
+        "GetPronto API Key",
+        help_text="Your GetPronto API Key.",
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+    get_pronto_api_url = models.URLField(
+        "GetPronto API URL",
+        help_text="GetPronto API base URL (e.g. https://api.getpronto.io/v1).",
+        null=True,
+        blank=True,
+    )
+    get_pronto_email = models.EmailField(
+        "GetPronto Email",
+        help_text="Email for GetPronto API authentication.",
+        null=True,
+        blank=True,
+    )
+    get_pronto_password = models.CharField(
+        "GetPronto Password",
+        help_text="Password for GetPronto API authentication.",
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
+    panels = [
+        FieldPanel("image_provider"),
+        MultiFieldPanel(
+            [
+                FieldPanel("imagekit_private_key"),
+                FieldPanel("imagekit_public_key"),
+                FieldPanel("imagekit_url_endpoint"),
+            ],
+            heading="ImageKit Settings",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("get_pronto_api_key"),
+                FieldPanel("get_pronto_api_url"),
+                FieldPanel("get_pronto_email"),
+                FieldPanel("get_pronto_password"),
+            ],
+            heading="GetPronto Settings",
+        ),
+    ]
 
     class Meta:
         verbose_name = "Image Upload Settings"

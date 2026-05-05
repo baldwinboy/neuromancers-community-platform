@@ -1,0 +1,25 @@
+{# Decorative border shape for blocks. #}
+{# Paths match section divider clip-paths defined in sprite.svg. #}
+{# Parameters: border_style, border_color, border_size (small|medium|large), position (top|bottom), background_color #}
+{# When border_color is transparent/empty, inherits block's background_color (fill only, no stroke). #}
+
+{% load unique_id %}
+{% if border_style and border_style != "none" %}
+    <div id="block-border-{% unique_id %}"
+         class="block-border block-border--{{ position }} block-border--{{ border_size|default:'medium' }}"
+         style="color: {% if background_color and background_color != "transparent" %}var(--color-{{ background_color }}, {{ background_color }}){% else %}transparent{% endif %}"
+         aria-hidden="true"
+         data-border-style="{{ border_style }}"
+         data-has-border-color="true">
+        {% comment %} {% if border_color and border_color != "transparent" %} {% endcomment %}
+        <div class="block-border--color" style="color: var(--color-white, white)"></div>
+        {% comment %} {% endif %} {% endcomment %}
+    </div>
+{% else %}
+    <div id="block-border-{% unique_id %}"
+         class="block-border-simple block-border-simple--{{ position }} block-border-simple--{{ border_size|default:'medium' }}"
+         style="background: {% if border_color and border_color != "transparent" %}var(--color-{{ border_color }}, {{ border_color }}){% elif background_color and background_color != "transparent" %}var(--color-{{ background_color }}, {{ background_color }}){% else %}transparent{% endif %}"
+         aria-hidden="true"
+         data-has-border-color="{% if border_color and border_color != "transparent" %}true{% else %}false{% endif %}">
+    </div>
+{% endif %}

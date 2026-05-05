@@ -7618,36 +7618,6 @@
   letter-spacing: 0.1em;
 }
 
-h6 {
-  margin: 0;
-  padding: 0;
-  font-family: "Roboto", sans-serif;
-}
-
-h5 {
-  margin: 0;
-  padding: 0;
-  font-family: "Roboto", sans-serif;
-}
-
-h4 {
-  margin: 0;
-  padding: 0;
-  font-family: "Roboto", sans-serif;
-}
-
-h3 {
-  margin: 0;
-  padding: 0;
-  font-family: "Roboto", sans-serif;
-}
-
-h2 {
-  margin: 0;
-  padding: 0;
-  font-family: "Roboto", sans-serif;
-}
-
 .overflow {
   overflow: auto;
 }
@@ -7888,6 +7858,9 @@ h2 {
   color: hsl(342.11, 40.43%, 27.65%);
   text-decoration: none;
   transition: opacity 0.2s ease;
+}
+.back-link, .back-link * {
+  font-family: "Open Dyslexic", sans-serif;
 }
 .back-link:not([disabled]):hover, .back-link:not([disabled]):focus-visible {
   opacity: 0.7;

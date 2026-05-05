@@ -33,32 +33,37 @@
                     {% endif %}
                     {% if user.certificate %}
                         <p class="bg-black text-accent rounded-2xl py-2 mt-2 uppercase text-center select-none">
-                            {% trans "Trained with Neuromancers" %}
+                            {% if profile_content %}{{ profile_content.badge_text }}{% else %}{% trans "Trained with Neuromancers" %}{% endif %}
                         </p>
                     {% endif %}
                 </div>
             </div>
-            {# Settings link for own profile #}
+            {# Action buttons for own profile #}
             {% if request.user == user %}
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                     {% if perms.events.add_peersession %}
                         <a href="{% url 'host_dashboard' %}"
                            class="inline_button inline_button_sm inline_button__sessions py-2 px-4 text-xs flex items-center gap-1">
                             {% heroicon_mini "chart-bar-square" size=16 %}
-                            {% trans "Dashboard" %}
+                            {% if profile_content %}{{ profile_content.dashboard_button_label }}{% else %}{% trans "Dashboard" %}{% endif %}
+                        </a>
+                        <a href="{{ sessions_index_url }}"
+                           class="inline_button inline_button_sm inline_button__sessions py-2 px-4 text-xs flex items-center gap-1">
+                            {% heroicon_mini "plus-circle" size=16 %}
+                            {% if profile_content %}{{ profile_content.create_session_button_label }}{% else %}{% trans "Create Session" %}{% endif %}
                         </a>
                     {% endif %}
                     <a href="{% url 'accounts_user_settings' %}"
                        class="inline_button inline_button_sm inline_button__sessions_alt py-2 px-4 text-xs flex items-center gap-1">
                         {% heroicon_mini "cog-6-tooth" size=16 %}
-                        {% trans "Settings" %}
+                        {% if profile_content %}{{ profile_content.settings_button_label }}{% else %}{% trans "Settings" %}{% endif %}
                     </a>
                 </div>
             {% endif %}
         </header>
         {# About section #}
         <section class="profile__section">
-            <h2 class="profile__section-title">{% trans "About me" %}</h2>
+            <h2 class="profile__section-title">{% if profile_content %}{{ profile_content.about_heading }}{% else %}{% trans "About me" %}{% endif %}</h2>
             <p class="profile__about">{{ user.profile.about|default:"" }}</p>
         </section>
         {# Sessions section #}
@@ -68,7 +73,7 @@
                 <div class="profile__subsection">
                     <h2 class="profile__section-title">
                         {% heroicon_mini "megaphone" size=20 %}
-                        {% trans "Hosting" %}
+                        {% if profile_content %}{{ profile_content.hosting_heading }}{% else %}{% trans "Hosting" %}{% endif %}
                     </h2>
                     <div class="grid grid-cols-1 {% if show_calendar %}md:grid-cols-2{% endif %} gap-8">
                         <div class="profile__sessions">
@@ -89,7 +94,7 @@
                 <div class="profile__subsection">
                     <h2 class="profile__section-title">
                         {% heroicon_mini "ticket" size=20 %}
-                        {% trans "Attending" %}
+                        {% if profile_content %}{{ profile_content.attending_heading }}{% else %}{% trans "Attending" %}{% endif %}
                     </h2>
                     <div class="profile__sessions">
                         {% for session in attending_sessions %}
@@ -100,7 +105,7 @@
             {% endif %}
             {% if not hosted_sessions and not attending_sessions %}
                 <h2 class="profile__section-title">{% trans "Sessions" %}</h2>
-                <p class="profile__empty">{% trans "No sessions available." %}</p>
+                <p class="profile__empty">{% if profile_content %}{{ profile_content.no_sessions_text }}{% else %}{% trans "No sessions available." %}{% endif %}</p>
             {% endif %}
         </section>
     </main>

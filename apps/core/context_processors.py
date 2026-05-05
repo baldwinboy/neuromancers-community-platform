@@ -1,5 +1,6 @@
 from allauth.account.models import EmailAddress
 from django.contrib import messages
+from wagtail.models import Site
 
 from apps.accounts.models_users.user_settings import Notifications
 
@@ -9,6 +10,56 @@ def unread_notification_count(request):
         count = Notifications.objects.filter(sent_to=request.user, read=False).count()
         return {"unread_notification_count": count}
     return {"unread_notification_count": 0}
+
+
+def web_design_settings(request):
+    """
+    Add web design settings to the template context.
+    Makes fonts, colors, logo, and other design settings available globally.
+    """
+    from apps.core.models import (
+        DashboardPageContent,
+        NavigationSettings,
+        NotificationsPageContent,
+        ProfilePageContent,
+        SessionDetailPageContent,
+        WebDesignSettings,
+    )
+
+    try:
+        site = Site.find_for_request(request)
+        settings = WebDesignSettings.load(request_or_site=site)
+        nav_settings = NavigationSettings.load(request_or_site=site)
+        profile_content = ProfilePageContent.load(request_or_site=site)
+        dashboard_content = DashboardPageContent.load(request_or_site=site)
+        notifications_content = NotificationsPageContent.load(request_or_site=site)
+        session_detail_content = SessionDetailPageContent.load(request_or_site=site)
+
+        return {
+            "web_design": settings,
+            "font_links": settings.get_font_links() if settings else [],
+            "color_map": settings.get_color_map() if settings else {},
+            "color_choices": settings.get_color_choices() if settings else [],
+            "font_choices": settings.get_font_choices() if settings else [],
+            "nav_settings": nav_settings,
+            "profile_content": profile_content,
+            "dashboard_content": dashboard_content,
+            "notifications_content": notifications_content,
+            "session_detail_content": session_detail_content,
+        }
+    except Exception:
+        return {
+            "web_design": None,
+            "font_links": [],
+            "color_map": {},
+            "color_choices": [],
+            "font_choices": [],
+            "nav_settings": None,
+            "profile_content": None,
+            "dashboard_content": None,
+            "notifications_content": None,
+            "session_detail_content": None,
+        }
 
 
 def onboarding_banner(request):

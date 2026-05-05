@@ -7,14 +7,20 @@
 {% endblock body_class %}
 
 {% block title %}
-    {% trans "Host Dashboard" %}
+    {% if dashboard_content %}{{ dashboard_content.page_title }}{% else %}{% trans "Host Dashboard" %}{% endif %}
 {% endblock title %}
 
 {% block content %}
     <main class="host-dashboard">
         <div class="host-dashboard__header">
-            <h1 class="host-dashboard__title font-heading">{% trans "Host Dashboard" %}</h1>
-            <p class="host-dashboard__subtitle font-body">{% trans "Manage your session requests, approvals, and refunds." %}</p>
+            <div class="host-dashboard__header-top">
+                <a href="{% url 'accounts_profile' %}" class="host-dashboard__back">
+                    {% heroicon_mini "arrow-left" size=16 %}
+                    {% if dashboard_content %}{{ dashboard_content.back_to_profile_label }}{% else %}{% trans "Back to Profile" %}{% endif %}
+                </a>
+            </div>
+            <h1 class="host-dashboard__title font-heading">{% if dashboard_content %}{{ dashboard_content.page_title }}{% else %}{% trans "Host Dashboard" %}{% endif %}</h1>
+            <p class="host-dashboard__subtitle font-body">{% if dashboard_content %}{{ dashboard_content.page_subtitle }}{% else %}{% trans "Manage your session requests, approvals, and refunds." %}{% endif %}</p>
         </div>
         {# Tab navigation #}
         <nav class="host-dashboard__tabs" role="tablist">
@@ -23,7 +29,7 @@
                aria-selected="{% if active_tab == 'peer' %}true{% else %}false{% endif %}"
                class="host-dashboard__tab {% if active_tab == 'peer' %}host-dashboard__tab--active{% endif %}">
                 {% heroicon_mini "user" size=16 %}
-                {% trans "Peer Requests" %}
+                {% if dashboard_content %}{{ dashboard_content.peer_tab_label }}{% else %}{% trans "Peer Requests" %}{% endif %}
                 {% if peer_pending_count %}<span class="host-dashboard__badge">{{ peer_pending_count }}</span>{% endif %}
             </a>
             <a href="?tab=group"
@@ -31,7 +37,7 @@
                aria-selected="{% if active_tab == 'group' %}true{% else %}false{% endif %}"
                class="host-dashboard__tab {% if active_tab == 'group' %}host-dashboard__tab--active{% endif %}">
                 {% heroicon_mini "user-group" size=16 %}
-                {% trans "Group Requests" %}
+                {% if dashboard_content %}{{ dashboard_content.group_tab_label }}{% else %}{% trans "Group Requests" %}{% endif %}
                 {% if group_pending_count %}<span class="host-dashboard__badge">{{ group_pending_count }}</span>{% endif %}
             </a>
             <a href="?tab=refunds"
@@ -39,7 +45,7 @@
                aria-selected="{% if active_tab == 'refunds' %}true{% else %}false{% endif %}"
                class="host-dashboard__tab {% if active_tab == 'refunds' %}host-dashboard__tab--active{% endif %}">
                 {% heroicon_mini "banknotes" size=16 %}
-                {% trans "Refunds" %}
+                {% if dashboard_content %}{{ dashboard_content.refunds_tab_label }}{% else %}{% trans "Refunds" %}{% endif %}
                 {% if refund_pending_count %}<span class="host-dashboard__badge">{{ refund_pending_count }}</span>{% endif %}
             </a>
         </nav>
@@ -246,7 +252,7 @@
                 {% else %}
                     <div class="host-dashboard__empty">
                         {% heroicon_outline "inbox" size=48 %}
-                        <p>{% trans "No peer session requests." %}</p>
+                        <p>{% if dashboard_content %}{{ dashboard_content.empty_peer_text }}{% else %}{% trans "No peer session requests." %}{% endif %}</p>
                     </div>
                 {% endif %}
             </section>
@@ -381,7 +387,7 @@
                 {% else %}
                     <div class="host-dashboard__empty">
                         {% heroicon_outline "inbox" size=48 %}
-                        <p>{% trans "No group session requests." %}</p>
+                        <p>{% if dashboard_content %}{{ dashboard_content.empty_group_text }}{% else %}{% trans "No group session requests." %}{% endif %}</p>
                     </div>
                 {% endif %}
             </section>
@@ -435,7 +441,7 @@
                 {% else %}
                     <div class="host-dashboard__empty">
                         {% heroicon_outline "inbox" size=48 %}
-                        <p>{% trans "No pending refund requests." %}</p>
+                        <p>{% if dashboard_content %}{{ dashboard_content.empty_refund_text }}{% else %}{% trans "No pending refund requests." %}{% endif %}</p>
                     </div>
                 {% endif %}
             </section>

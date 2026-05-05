@@ -20,4 +20,10 @@ class Hero(Component):
                 "button_background_color", "safeLightAccent"
             ),
             "image": kwargs.get("image", None),
+            "top_border_style": kwargs.get("top_border_style", "none"),
+            "top_border_color": kwargs.get("top_border_color", ""),
+            "top_border_size": kwargs.get("top_border_size", "medium"),
+            "bottom_border_style": kwargs.get("bottom_border_style", "none"),
+            "bottom_border_color": kwargs.get("bottom_border_color", ""),
+            "bottom_border_size": kwargs.get("bottom_border_size", "medium"),
         }

@@ -7,44 +7,10 @@
 {% endblock body_class %}
 
 {% block content %}
-    {# Render StreamField body blocks #}
-    {% for block in page.body %}
-        {% include_block block %}
-    {% endfor %}
-    {# Blog listing section #}
-    <section class="blog-index">
-        <div class="blog-index__container">
-            {% if page.intro %}<div class="blog-index__intro">{{ page.intro|richtext }}</div>{% endif %}
-            {% if blog_posts %}
-                <div class="blog-index__list">
-                    {% for post in blog_posts %}
-                        <a href="{% pageurl post %}"
-                           class="blog-item"
-                           aria-label="{{ post.title }}">
-                            <article class="blog-item__content">
-                                {# Date #}
-                                <time datetime="{{ post.date|date:'c' }}" class="blog-item__date">
-                                    {% heroicon_mini "calendar" size=14 %}
-                                    {{ post.date|date:"M j, Y" }}
-                                </time>
-                                {# Title #}
-                                <h2 class="blog-item__title">{{ post.title }}</h2>
-                                {# Intro/excerpt #}
-                                {% if post.intro %}<p class="blog-item__excerpt">{{ post.intro }}</p>{% endif %}
-                                {# Read more indicator #}
-                                <span class="blog-item__read-more">
-                                    {% trans "Read more" %}
-                                    {% heroicon_mini "arrow-right" size=16 %}
-                                </span>
-                            </article>
-                        </a>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="blog-index__empty">
-                    <p>{% trans "No blog posts yet." %}</p>
-                </div>
-            {% endif %}
-        </div>
-    </section>
+    <main>
+        {# Render StreamField body blocks #}
+        {% for block in page.body %}
+            {% include_block block %}
+        {% endfor %}
+    </main>
 {% endblock content %}

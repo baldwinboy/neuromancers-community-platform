@@ -7,15 +7,37 @@
         <p class="base__header__nav-wrapper flex justify-space-between items-center cursor-pointer mr-auto">
             <a class="base__header__nav-home inline-flex items-center"
                href="{% pageurl site_root %}">
-                <img src="{% static 'images/favicon.png' %}"
-                     width="50"
-                     height="50"
-                     alt=""
-                     aria-hidden="true">
-                <span>Sessions</span>
+                {% if web_design.logo %}
+                    <img src="{{ web_design.logo.file.url }}"
+                         width="50"
+                         height="50"
+                         alt="{{ web_design.logo_alt_text|default:'' }}"
+                         aria-hidden="true">
+                {% else %}
+                    <img src="{% static 'images/favicon.png' %}"
+                         width="50"
+                         height="50"
+                         alt=""
+                         aria-hidden="true">
+                {% endif %}
+                <span>{% if nav_settings %}{{ nav_settings.logo_text }}{% else %}Sessions{% endif %}</span>
             </a>
             <ul class="base__header__nav-list flex items-center gap-9">
                 {% main_menu %}
+                {# Extra links from NavigationSettings #}
+                {% if nav_settings and nav_settings.extra_links %}
+                    {% for block in nav_settings.extra_links %}
+                        {% if block.block_type == "link" %}
+                            <li>
+                                <a href="{{ block.value.url }}"
+                                   {% if block.value.open_in_new_tab %}target="_blank" rel="noopener noreferrer"{% endif %}
+                                   class="base__header__nav-link">
+                                    {{ block.value.label }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
             </ul>
             {#  When site registration is available #}
             {% if not SOCIALACCOUNT_ONLY and not user.is_authenticated %}
@@ -25,18 +47,61 @@
                 {% endelement %}
             {% endif %}
             {% if user.is_authenticated %}
-                <a href="{% url 'notification_inbox' %}"
-                   class="base__header__notifications"
-                   aria-label="{% trans "Notifications" %}">
-                    {% heroicon_mini "bell" size=20 %}
-                    {% if unread_notification_count %}
-                        <span class="base__header__notifications-badge">{{ unread_notification_count }}</span>
-                    {% endif %}
-                </a>
+                {% if not nav_settings or nav_settings.show_notifications_button %}
+                    <a href="{% url 'notification_inbox' %}"
+                       class="base__header__notifications"
+                       aria-label="{% trans "Notifications" %}">
+                        {% heroicon_mini "bell" size=20 %}
+                        {% if unread_notification_count %}
+                            <span class="base__header__notifications-badge">{{ unread_notification_count }}</span>
+                        {% endif %}
+                    </a>
+                {% endif %}
 
-                {% element button type="submit" tags="prominent,logout" class="auth_button__navbar block text-center xl:ml-9" href=logout_url %}
-                    {% trans "Log Out" %}
-                {% endelement %}
+                {% if not nav_settings or nav_settings.show_profile_button %}
+                    <div class="base__header__profile-dropdown" style="position:relative;">
+                        <button class="base__header__profile-btn inline-flex items-center gap-1"
+                                aria-haspopup="true" aria-expanded="false"
+                                onclick="this.parentElement.classList.toggle('open'); this.setAttribute('aria-expanded', this.parentElement.classList.contains('open'))">
+                            {% heroicon_mini "user-circle" size=22 %}
+                            <span class="base__header__profile-name">{{ user.get_short_name|default:user.username }}</span>
+                            {% heroicon_mini "chevron-down" size=14 %}
+                        </button>
+                        <ul class="base__header__profile-menu" role="menu">
+                            <li role="menuitem">
+                                <a href="{% url 'accounts_profile' %}">
+                                    {% heroicon_mini "user" size=16 %}
+                                    {% trans "Profile" %}
+                                </a>
+                            </li>
+                            {% if perms.events.add_peersession %}
+                                <li role="menuitem">
+                                    <a href="{% url 'host_dashboard' %}">
+                                        {% heroicon_mini "chart-bar-square" size=16 %}
+                                        {% trans "Dashboard" %}
+                                    </a>
+                                </li>
+                            {% endif %}
+                            <li role="menuitem">
+                                <a href="{% url 'accounts_user_settings' %}">
+                                    {% heroicon_mini "cog-6-tooth" size=16 %}
+                                    {% trans "Settings" %}
+                                </a>
+                            </li>
+                            <li role="menuitem" class="base__header__profile-menu-divider"></li>
+                            <li role="menuitem">
+                                <a href="{{ logout_url }}">
+                                    {% heroicon_mini "arrow-right-on-rectangle" size=16 %}
+                                    {% trans "Log Out" %}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                {% else %}
+                    {% element button type="submit" tags="prominent,logout" class="auth_button__navbar block text-center xl:ml-9" href=logout_url %}
+                        {% trans "Log Out" %}
+                    {% endelement %}
+                {% endif %}
             {% endif %}
         </p>
     </nav>

@@ -25,10 +25,106 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {# Force all links in the live preview panel to be opened in a new tab #}
         {% if request.in_preview_panel %}<base target="_blank">{% endif %}
-        {# Favicon #}
-        <link rel="shortcut icon"
-              type="image/png"
-              href="{% static 'images/favicon.png' %}">
+        {# Favicon from WebDesignSettings or default #}
+        {% if web_design.favicon %}
+            <link rel="shortcut icon"
+                  type="image/png"
+                  href="{{ web_design.favicon.file.url }}">
+        {% else %}
+            <link rel="shortcut icon"
+                  type="image/png"
+                  href="{% static 'images/favicon.png' %}">
+        {% endif %}
+        {# Custom fonts from WebDesignSettings #}
+        {% for font_link in font_links %}<link rel="stylesheet" href="{{ font_link }}">{% endfor %}
+        {# CSS variables for colors and fonts from WebDesignSettings #}
+        <style>
+            :root {
+                {# Font families #}
+                --font-heading: {% if web_design %}{{ web_design.heading_font }}{% else %}"Handjet", monospace{% endif %};
+                --font-subheading: {% if web_design %}{{ web_design.subheading_font }}{% else %}"Roboto", sans-serif{% endif %};
+                --font-body: {% if web_design %}{{ web_design.body_font }}{% else %}"Open Dyslexic", sans-serif{% endif %};
+                
+                {# Colors #}
+                {% if color_map %}
+                    {% for name, value in color_map.items %}
+                        --color-{{ name }}: {{ value }};
+                    {% endfor %}
+                {% else %}
+                    --color-white: hsl(0, 0%, 100%);
+                    --color-black: hsl(0, 100%, 0.78%);
+                    --color-safeLightAccent: hsl(342.63, 80.85%, 81.57%);
+                    --color-safeDarkAccent: hsl(0, 0%, 0%);
+                    --color-safeInverseAccent: hsl(0, 0%, 0%);
+                    --color-safeInverseLightAccent: hsl(0, 0%, 0%);
+                    --color-safeInverseDarkAccent: hsl(0, 0%, 100%);
+                    --color-accent: hsl(342.63, 80.85%, 81.57%);
+                    --color-lightAccent: hsl(343.29, 95.89%, 71.37%);
+                    --color-darkAccent: hsl(342.11, 40.43%, 27.65%);
+                {% endif %}
+                
+                {# Link hover styles #}
+                {% if web_design %}
+                    --link-transition: {{ web_design.link_transition_duration|default:"150ms" }};
+                    {% if web_design.link_hover_color %}
+                        --link-hover-color: var(--color-{{ web_design.link_hover_color }}, {{ web_design.link_hover_color }});
+                    {% endif %}
+                {% else %}
+                    --link-transition: 150ms;
+                {% endif %}
+            }
+            
+            {# Global link hover styles #}
+            a {
+                transition: color var(--link-transition) ease, opacity var(--link-transition) ease;
+            }
+            
+            {% if web_design and web_design.link_hover_color %}
+            a:hover {
+                color: var(--link-hover-color) !important;
+                {% if not web_design.link_hover_underline %}
+                text-decoration: none;
+                {% endif %}
+                {% if web_design.link_hover_opacity %}
+                opacity: {{ web_design.link_hover_opacity }};
+                {% endif %}
+            }
+            {% endif %}
+            
+            {# Back button styles #}
+            .global-back-button {
+                position: fixed;
+                z-index: 100;
+                padding: 0.5rem 1rem;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                text-decoration: none;
+                border-radius: 4px;
+                font-family: var(--font-body);
+                transition: all 0.2s ease;
+            }
+            
+            .global-back-button--top-left {
+                top: 5rem;
+                left: 1rem;
+            }
+            
+            .global-back-button--top-right {
+                top: 5rem;
+                right: 1rem;
+            }
+            
+            .global-back-button--top-center {
+                top: 5rem;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            
+            .global-back-button:hover {
+                opacity: 0.8;
+            }
+        </style>
         {% component_css_dependencies %}
         {% compress css %}
             {# Global stylesheets #}
@@ -43,6 +139,22 @@
     <body class="{% block body_class %}{% endblock body_class %}">
     {# djlint:on #}
     {% wagtailuserbar %}
+    {# Global back button from WebDesignSettings #}
+    {% if web_design.show_back_button %}
+        <a href="javascript:history.back()"
+           class="global-back-button global-back-button--{{ web_design.back_button_position|default:'top-left' }}"
+           style="{% if web_design.back_button_text_color %}color: var(--color-{{ web_design.back_button_text_color }}, {{ web_design.back_button_text_color }});
+                  {% endif %}{% if web_design.back_button_background_color %}background-color: var(--color-{{ web_design.back_button_background_color }}, {{ web_design.back_button_background_color }});
+                  {% endif %}{% if web_design.back_button_font %}font-family: {{ web_design.back_button_font }};
+                  {% endif %}">
+            {% if web_design.back_button_show_icon %}
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
+                </svg>
+            {% endif %}
+            <span>{{ web_design.back_button_text|default:"Back" }}</span>
+        </a>
+    {% endif %}
 
     {% block top_navigation_bar %}
 
@@ -76,6 +188,7 @@
         <script type="text/javascript" src="{% static 'js/accordion.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/hero.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/request_calendar.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/block_border.js' %}"></script>
 
         {% block extra_js %}
             {# Override this in templates to add extra javascript #}

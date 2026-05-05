@@ -20,7 +20,7 @@
         {# Back button #}
         <a href="{{ sessions_index.url }}" class="session-detail__back">
             {% heroicon_mini "arrow-left" size=16 %}
-            <span>{% trans "Back to sessions" %}</span>
+            <span>{% if session_detail_content %}{{ session_detail_content.back_to_sessions_label }}{% else %}{% trans "Back to sessions" %}{% endif %}</span>
         </a>
         {# Header section #}
         <header class="session-detail__header">
@@ -29,10 +29,10 @@
                 <span class="session-detail__type-badge {% if page.session_type == 'group' %}session-detail__type-badge--group{% endif %}">
                     {% if page.session_type == "peer" %}
                         {% heroicon_mini "user" size=14 %}
-                        {% trans "Peer Session" %}
+                        {% if session_detail_content %}{{ session_detail_content.peer_session_label }}{% else %}{% trans "Peer Session" %}{% endif %}
                     {% else %}
                         {% heroicon_mini "users" size=14 %}
-                        {% trans "Group Session" %}
+                        {% if session_detail_content %}{{ session_detail_content.group_session_label }}{% else %}{% trans "Group Session" %}{% endif %}
                     {% endif %}
                 </span>
                 <h1 class="session-detail__title">{{ page.session.title }}</h1>
@@ -40,7 +40,7 @@
                 <a href="{% url 'accounts_user_profile' username=page.session.host.username %}"
                    class="session-detail__host">
                     {% heroicon_mini "user-circle" size=20 %}
-                    <span>{% trans "Hosted by" %} <strong>{{ page.session.host }}</strong></span>
+                    <span>{% if session_detail_content %}{{ session_detail_content.hosted_by_label }}{% else %}{% trans "Hosted by" %}{% endif %} <strong>{{ page.session.host }}</strong></span>
                     {% if page.session.host.certificate %}
                         <span class="bg-black text-accent text-sm rounded-2xl py-2 px-4 uppercase text-center select-none">
                             {% trans "Trained with Neuromancers" %}
@@ -133,7 +133,7 @@
         <div class="session-detail__content">
             {# Description #}
             <section class="session-detail__section">
-                <h2 class="session-detail__section-title">{% trans "About this session" %}</h2>
+                <h2 class="session-detail__section-title">{% if session_detail_content %}{{ session_detail_content.about_section_title }}{% else %}{% trans "About this session" %}{% endif %}</h2>
                 <p class="session-detail__description">{{ page.session.description }}</p>
             </section>
             {# Filter tags #}
@@ -262,6 +262,24 @@
                         {% endfor %}
                     </div>
                 </section>
+            {% endif %}
+            {# Add to Calendar – shown for scheduled/approved sessions #}
+            {% if user.is_authenticated %}
+                {% if page.session_type == "group" and page.session.starts_at and attendee_approved %}
+                    <section class="session-detail__section session-detail__section--calendar">
+                        <h2 class="session-detail__section-title">
+                            {% if session_detail_content %}{{ session_detail_content.add_to_calendar_label }}{% else %}{% trans "Add to Calendar" %}{% endif %}
+                        </h2>
+                        {% include "includes/calendar_sync.html" with session_type="group" session_id=page.session.id request_id=attendee_request.id %}
+                    </section>
+                {% elif page.session_type == "peer" and attendee_approved %}
+                    <section class="session-detail__section session-detail__section--calendar">
+                        <h2 class="session-detail__section-title">
+                            {% if session_detail_content %}{{ session_detail_content.add_to_calendar_label }}{% else %}{% trans "Add to Calendar" %}{% endif %}
+                        </h2>
+                        {% include "includes/calendar_sync.html" with session_type="peer" session_id=page.session.id request_id=attendee_request.id %}
+                    </section>
+                {% endif %}
             {% endif %}
             {# CTA section #}
             <section class="session-detail__cta">

@@ -1,0 +1,20 @@
+.Draftail--highlight-color-control {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.Draftail--highlight-color-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 3px;
+  font-size: 1rem;
+}
+.Draftail--highlight-color-icon .bi-highlighter {
+  font-size: 1rem;
+}
+
+/*# sourceMappingURL=highlight_color.css.map */

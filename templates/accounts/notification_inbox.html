@@ -7,7 +7,7 @@
 {% endblock body_class %}
 
 {% block title %}
-    {% trans "Notifications" %}
+    {% if notifications_content %}{{ notifications_content.page_title }}{% else %}{% trans "Notifications" %}{% endif %}
 {% endblock title %}
 
 {% block content %}
@@ -18,7 +18,7 @@
         </a>
         <header class="notification-inbox__header">
             <div class="notification-inbox__header-info">
-                <h1 class="notification-inbox__title font-heading">{% trans "Notifications" %}</h1>
+                <h1 class="notification-inbox__title font-heading">{% if notifications_content %}{{ notifications_content.page_title }}{% else %}{% trans "Notifications" %}{% endif %}</h1>
                 {% if unread_count %}
                     <p class="notification-inbox__subtitle font-body">
                         {% blocktrans count counter=unread_count %}
@@ -35,7 +35,7 @@
                             class="inline_button inline_button_sm inline_button__sessions"
                             aria-label="{% trans "Mark all notifications as read" %}">
                         {% heroicon_mini "check" size=14 %}
-                        {% trans "Mark all read" %}
+                        {% if notifications_content %}{{ notifications_content.mark_all_read_label }}{% else %}{% trans "Mark all read" %}{% endif %}
                     </button>
                 {% endif %}
                 {% if notifications %}
@@ -43,7 +43,7 @@
                             class="inline_button inline_button_sm inline_button__sessions_alt"
                             aria-label="{% trans "Clear all read notifications" %}">
                         {% heroicon_mini "trash" size=14 %}
-                        {% trans "Clear read" %}
+                        {% if notifications_content %}{{ notifications_content.clear_label }}{% else %}{% trans "Clear read" %}{% endif %}
                     </button>
                 {% endif %}
             </div>
@@ -127,7 +127,7 @@
         {% else %}
             <div class="notification-inbox__empty">
                 {% heroicon_outline "bell-slash" size=48 %}
-                <p class="notification-inbox__empty-title font-subheading">{% trans "No notifications yet" %}</p>
+                <p class="notification-inbox__empty-title font-subheading">{% if notifications_content %}{{ notifications_content.empty_text }}{% else %}{% trans "No notifications yet" %}{% endif %}</p>
                 <p class="notification-inbox__empty-hint font-body">
                     {% trans "You'll see notifications about your sessions and payments here." %}
                 </p>

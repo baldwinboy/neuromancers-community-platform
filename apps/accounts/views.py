@@ -28,6 +28,7 @@ from apps.accounts.models_users.user_settings import (
     PeerPrivacySettings,
 )
 from apps.common.imagekit import ImageKitClient, ImageKitError
+from apps.common.getpronto import GetProntoClient, GetProntoError
 from apps.common.utils import (
     get_stripe_oauth,
     get_stripe_oauth_url,
@@ -136,10 +137,18 @@ class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = "accounts/profile.html"
 
     def get_context_data(self, **kwargs):
+        from apps.events.models_pages.wagtail_pages import SessionsIndexPage
         from apps.events.utils import format_session_for_card
 
         context = super().get_context_data(**kwargs)
         user = self.request.user
+
+        # Sessions index create URL
+        sessions_index = SessionsIndexPage.objects.live().first()
+        if sessions_index:
+            context["sessions_index_url"] = sessions_index.url + sessions_index.reverse_subpage("choose_session_type")
+        else:
+            context["sessions_index_url"] = ""
 
         # Check if user is a peer and has privacy settings
         try:
@@ -370,39 +379,72 @@ class UserSettingsView(LoginRequiredMixin, FormView):
             if form.is_valid():
                 profile = form.save(commit=False)
 
-                # Handle display picture upload to ImageKit
+                # Handle display picture upload
                 uploaded_file = form.cleaned_data.get("display_picture_file")
                 if uploaded_file:
                     try:
-                        client = ImageKitClient(request=request)
-                        # Compress the image before uploading
-                        buffer, _mime = client.compress_image(
-                            uploaded_file,
-                            max_dimension=512,
-                            quality=85,
-                            output_format="WEBP",
+                        # Determine which image provider to use
+                        from apps.events.models_pages.wagtail_settings import (
+                            ImageUploadSettings,
                         )
-                        filename = f"avatar-{request.user.username}.webp"
 
-                        # Delete old file from ImageKit if one exists
-                        if profile.display_picture_id:
-                            try:
-                                client.delete_file(profile.display_picture_id)
-                            except ImageKitError:
-                                logger.warning(
-                                    "Failed to delete old avatar %s from ImageKit",
-                                    profile.display_picture_id,
-                                )
+                        img_settings = ImageUploadSettings.load(request)
+                        provider = getattr(img_settings, "image_provider", "imagekit")
 
-                        result = client.upload_file(
-                            buffer,
-                            filename=filename,
-                            folder="/avatars",
-                        )
-                        profile.display_picture_url = result.url
-                        profile.display_picture_id = result.file_id
-                    except ImageKitError as exc:
-                        logger.error("ImageKit upload failed: %s", exc)
+                        if provider == "getpronto":
+                            client = GetProntoClient(request=request)
+                            buffer, _mime = client.compress_image(
+                                uploaded_file,
+                                max_dimension=512,
+                                quality=85,
+                                output_format="WEBP",
+                            )
+                            filename = f"avatar-{request.user.username}.webp"
+
+                            if profile.display_picture_id:
+                                try:
+                                    client.delete_file(profile.display_picture_id)
+                                except GetProntoError:
+                                    logger.warning(
+                                        "Failed to delete old avatar %s from GetPronto",
+                                        profile.display_picture_id,
+                                    )
+
+                            result = client.upload_file(
+                                buffer,
+                                filename=filename,
+                                custom_filename=filename,
+                            )
+                            profile.display_picture_url = result.url
+                            profile.display_picture_id = result.id
+                        else:
+                            client = ImageKitClient(request=request)
+                            buffer, _mime = client.compress_image(
+                                uploaded_file,
+                                max_dimension=512,
+                                quality=85,
+                                output_format="WEBP",
+                            )
+                            filename = f"avatar-{request.user.username}.webp"
+
+                            if profile.display_picture_id:
+                                try:
+                                    client.delete_file(profile.display_picture_id)
+                                except ImageKitError:
+                                    logger.warning(
+                                        "Failed to delete old avatar %s from ImageKit",
+                                        profile.display_picture_id,
+                                    )
+
+                            result = client.upload_file(
+                                buffer,
+                                filename=filename,
+                                folder="/avatars",
+                            )
+                            profile.display_picture_url = result.url
+                            profile.display_picture_id = result.file_id
+                    except (ImageKitError, GetProntoError) as exc:
+                        logger.error("Image upload failed: %s", exc)
                         messages.error(
                             request,
                             "Profile saved but image upload failed. "

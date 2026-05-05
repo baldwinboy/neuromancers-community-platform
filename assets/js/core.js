@@ -68,3 +68,42 @@ var toggleEl = (id, currentId) => {
   }
   window.addEventListener("beforeunload", unmountKeydownPrevention);
 })();
+
+/**
+ * Convert RGB to Hex. Allows whitespace. If given hex, returns that hex. Alpha opacity is discarded.
+ * https://gist.github.com/RadGH/c277f220cb41cd0c222f297bad0bbbf5
+ * Supports formats:
+ * #fc0
+ * #ffcc00
+ * rgb( 255, 255, 255 )
+ * rgba( 255, 255, 255, 0.5 )
+ * rgba( 255 255 255 / 0.5 )
+ */
+var rgb_any_to_hex = function(orig) {	
+	var regex_hex, regex_trim, color, regex_rgb, matches, hex;
+	
+	// Remove whitespace
+	regex_trim = new RegExp(/[^#0-9a-f\.\(\)rgba]+/gim);
+	color = orig.replace( regex_trim, ' ' ).trim();
+	
+	// Check if already hex
+	regex_hex = new RegExp(/#(([0-9a-f]{1})([0-9a-f]{1})([0-9a-f]{1}))|(([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2}))/gi);
+	if ( regex_hex.exec( color ) ) {
+		return color;
+	}
+	
+	// Extract RGB values
+	regex_rgb = new RegExp( /rgba?\([\t\s]*([0-9]{1,3})[\t\s]*[, ][\t\s]*([0-9]{1,3})[\t\s]*[, ][\t\s]*([0-9]{1,3})[\t\s]*([,\/][\t\s]*[0-9\.]{1,})?[\t\s]*\);?/gim );
+	matches = regex_rgb.exec( orig );
+	
+	if ( matches ) {
+		hex = 
+			'#' +
+			(matches[1] | 1 << 8).toString(16).slice(1) +
+			(matches[2] | 1 << 8).toString(16).slice(1) +
+			(matches[3] | 1 << 8).toString(16).slice(1);
+		return hex;
+	}else{
+		return orig;
+	}
+}

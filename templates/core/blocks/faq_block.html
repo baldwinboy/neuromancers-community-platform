@@ -1,4 +1,6 @@
-<section class="faq-block py-12 {% if self.background_color %}bg-{{ self.background_color }}{% endif %}{% if self.top_border_color %} border-t-{{ self.top_border_color }}{% endif %}{% if self.bottom_border_color %} border-b-{{ self.bottom_border_color }}{% endif %}{% if self.top_border_style %} border-t-{{ self.top_border_style }}{% endif %}{% if self.bottom_border_style %} border-b-{{ self.bottom_border_style }}{% endif %}">
+<section class="faq-block py-12 {% if self.background_color %}bg-{{ self.background_color }}{% endif %}">
+
+    {% include "includes/block_border.html" with border_style=self.top_border.style border_color=self.top_border.color border_size=self.top_border.size position="top" background_color=self.background_color %}
     <div class="container mx-auto px-6 lg:px-24 max-w-xl">
         {% if self.heading %}
             <h2 class="font-heading text-3xl mb-12 text-center lg:text-5xl {% if self.text_color %}text-{{ self.text_color }}{% endif %}">
@@ -25,4 +27,6 @@
             {% endfor %}
         </div>
     </div>
+
+    {% include "includes/block_border.html" with border_style=self.bottom_border.style border_color=self.bottom_border.color border_size=self.bottom_border.size position="bottom" background_color=self.background_color %}
 </section>

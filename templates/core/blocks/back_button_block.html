@@ -1,0 +1,20 @@
+{% load heroicons %}
+<div class="back-button-block back-button-block--{{ self.position|default:'left' }}"
+     {% if self.background_color %}style="background-color: var(--color-{{ self.background_color }}, {{ self.background_color }});"{% endif %}>
+
+    {% include "includes/block_border.html" with border_style=self.top_border.style border_color=self.top_border.color border_size=self.top_border.size position="top" background_color=self.background_color %}
+    <div class="back-button-block__container">
+        <a href="{{ self.link|default:'javascript:history.back() ' }}"
+           class="back-button"
+           style="{% if self.button_text_color %}color: var(--color-{{ self.button_text_color }}, {{ self.button_text_color }});
+                  {% endif %}{% if self.button_background_color %}background-color: var(--color-{{ self.button_background_color }}, {{ self.button_background_color }});
+                  {% endif %}">
+            {% if self.show_icon %}
+                {% heroicon_mini "arrow-left" size=16 %}
+            {% endif %}
+            <span>{{ self.text|default:"Back" }}</span>
+        </a>
+    </div>
+
+    {% include "includes/block_border.html" with border_style=self.bottom_border.style border_color=self.bottom_border.color border_size=self.bottom_border.size position="bottom" background_color=self.background_color %}
+</div>

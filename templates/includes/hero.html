@@ -1,4 +1,4 @@
-<section class="hero_block__container flex items-center justify-center py-20 {% if background_color %}bg-{{ background_color }}{% endif %} {% if top_border_color %}border-t-{{ top_border_color }}{% endif %}{% if bottom_border_color %} border-b-{{ bottom_border_color }}{% endif %}{% if top_border_style %} border-t-{{ top_border_style }}{% endif %}{% if bottom_border_style %} border-b-{{ bottom_border_style }}{% endif %}"
+<section class="hero_block__container flex items-center justify-center py-20 {% if background_color %}bg-{{ background_color }}{% endif %}"
          style="min-height: {{ min_height }};
                 height: auto"
          data-id="hero_block__container">
@@ -7,6 +7,8 @@
              class="hero_block__image w-full h-auto rounded-lg {% if background_color %}bg-{{ background_color }}{% endif %}"
              style="background-image: url('{{ image }}')"></div>
     {% endif %}
+
+    {% include "includes/block_border.html" with border_style=top_border_style border_color=top_border_color border_size=top_border_size position="top" background_color=background_color only %}
     <div class="hero_block__content container mx-auto px-6 lg:px-0 flex items-center justify-center">
         <div class="max-w-2xl text-center">
             <h2 class="font-heading text-5xl lg:text-6xl font-bold mb-4 {% if text_color %}text-{{ text_color }}{% endif %}">
@@ -21,4 +23,6 @@
             {% endif %}
         </div>
     </div>
+
+    {% include "includes/block_border.html" with border_style=bottom_border_style border_color=bottom_border_color border_size=bottom_border_size position="bottom" background_color=background_color only %}
 </section>

@@ -129,6 +129,7 @@ TEMPLATES = [
                 "wagtailmenus.context_processors.wagtailmenus",
                 "apps.core.context_processors.onboarding_banner",
                 "apps.core.context_processors.unread_notification_count",
+                "apps.core.context_processors.web_design_settings",
                 "wagtail.contrib.settings.context_processors.settings",
             ],
             "loaders": [
@@ -271,6 +272,15 @@ WAGTAILDOCS_EXTENSIONS = [
     "zip",
 ]
 
+# WAGTAILADMIN_RICH_TEXT_EDITORS = {
+#     "default": {
+#         "WIDGET": "wagtail.admin.rich_text.DraftailRichTextArea",
+#         "OPTIONS": {
+#             "features": ["bold", "italic", "link", "font-family"],
+#         },
+#     },
+# }
+
 AUTH_USER_MODEL = "accounts.User"
 
 AUTHENTICATION_BACKENDS = (
@@ -347,7 +357,10 @@ EMAIL_HOST = env("EMAIL_HOST", default="localhost")
 EMAIL_PORT = env("EMAIL_PORT", default=25)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL",
+    default=EMAIL_HOST_USER or "noreply@neuromancers.org.uk",
+)
 EMAIL_USE_TLS = True
 
 # Django components

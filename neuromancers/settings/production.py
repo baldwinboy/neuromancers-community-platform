@@ -40,13 +40,11 @@ SECRET_KEY = env("DJANGO_SECRET_KEY") or env("SECRET_KEY")
 
 ENVIRONMENT = env("ENVIRONMENT")
 
-DATABASE_URL = env(
-    "DATABASE_URL", default="postgresql://postgres:postgres@localhost:5432/neuromancers"
-)
+DATABASE_URL = env("DATABASE_URL")
 
 DEBUG = env("DEBUG")
 
-# Database - use DATABASE_URL from Render PostgreSQL
+# Database - requires DATABASE_URL (Fly Postgres)
 DATABASES = {
     "default": dj_database_url.config(
         default=DATABASE_URL,
