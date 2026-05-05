@@ -1,7 +1,0 @@
-<section class="marquee marquee-{{ self.size }} {% if self.background_color %}bg-{{ self.background_color }}{% endif %}">
-
-    {% include "includes/block_border.html" with border_style=self.top_border.style border_color=self.top_border.color border_size=self.top_border.size position="top" background_color=self.background_color %}
-    <p class="marquee__content {% if self.text_color %}text-{{ self.text_color }}{% endif %}">{{ self.content }}</p>
-
-    {% include "includes/block_border.html" with border_style=self.bottom_border.style border_color=self.bottom_border.color border_size=self.bottom_border.size position="bottom" background_color=self.background_color %}
-</section>
