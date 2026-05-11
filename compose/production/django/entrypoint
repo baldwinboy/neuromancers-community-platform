@@ -4,6 +4,15 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+# Bootstrap: re-exec under `bws run` to inject Bitwarden secrets as env vars.
+# BWS_ACCESS_TOKEN is provided by Coolify at deploy time; all other required
+# secrets (POSTGRES_*, REDIS_URL, DJANGO_SECRET_KEY, etc.) live in BWS.
+# _BWS_BOOTSTRAPPED prevents infinite re-exec after secrets are injected.
+if [ -n "${BWS_ACCESS_TOKEN:-}" ] && [ -z "${_BWS_BOOTSTRAPPED:-}" ]; then
+  export _BWS_BOOTSTRAPPED=1
+  exec bws run -- /entrypoint "$@"
+fi
+
 if [ -z "${POSTGRES_USER}" ]; then
     base_postgres_image_default_user='postgres'
     export POSTGRES_USER="${base_postgres_image_default_user}"

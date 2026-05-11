@@ -1,0 +1,62 @@
+{% extends "events/session_base.html" %}
+{% load static i18n %}
+
+{% block session_content %}
+<div class="max-w-3xl mx-auto">
+  <h2 class="text-2xl font-bold mb-6">{% trans "Participants" %}</h2>
+
+  {% if bookings %}
+    <div class="overflow-x-auto">
+      <table class="table table-zebra w-full">
+        <thead>
+          <tr>
+            <th>{% trans "Attendee" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Date" %}</th>
+            <th>{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in bookings %}
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  <div class="avatar placeholder">
+                    <div class="bg-neutral text-neutral-content rounded-full w-8">
+                      <span>{{ booking.attendee.username|first|upper }}</span>
+                    </div>
+                  </div>
+                  <span class="font-medium">{{ booking.attendee.username }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge badge-{% if booking.booking_status == 'confirmed' %}success{% elif booking.booking_status == 'pending_approval' %}warning{% elif booking.booking_status == 'cancelled' %}error{% else %}ghost{% endif %}">
+                  {{ booking.get_booking_status_display }}
+                </span>
+              </td>
+              <td class="text-sm">{{ booking.starts_at|date:"M d, Y H:i" }}</td>
+              <td>
+                {% if booking.booking_status == "pending_approval" and user == session.host %}
+                  <form method="post" action="{{ page.url }}{{ session.id }}/booking/{{ booking.id }}/approve/" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-xs btn-success">{% trans "Approve" %}</button>
+                  </form>
+                {% endif %}
+                {% if booking.booking_status != "cancelled" and booking.booking_status != "completed" %}
+                  <a href="{{ page.url }}{{ session.id }}/cancel/" class="btn btn-xs btn-ghost text-error">{% trans "Cancel" %}</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="card bg-base-100 shadow">
+      <div class="card-body text-center py-12">
+        <p class="text-base-content/60">{% trans "No participants yet." %}</p>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock session_content %}

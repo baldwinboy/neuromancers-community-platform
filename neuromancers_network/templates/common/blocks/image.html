@@ -1,0 +1,11 @@
+{% load wagtailimages_tags content_blocks %}
+
+{% block_visible value as is_visible %}
+{% if is_visible and value.image %}
+    {% block_style value as block_styles %}
+    {% block_size_classes value centered=False as block_sizes %}
+    <figure class="overflow-hidden rounded-box bg-base-200 {{ block_sizes }}"
+            {% if block_styles %}style="{{ block_styles }}"{% endif %}>
+        {% image value.image original class="h-full w-full object-cover" %}
+    </figure>
+{% endif %}

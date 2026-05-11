@@ -1,0 +1,15 @@
+<section class="panel nice-padding">
+    <h2>Onboarding Checklist</h2>
+    <ul class="list-unstyled">
+        {% for task in tasks %}
+            <li class="mb-2">
+                {% if task.completed %}
+                    ☑
+                {% else %}
+                    ☐
+                {% endif %}
+                <strong>{{ task.title }}</strong>
+            </li>
+        {% endfor %}
+    </ul>
+</section>

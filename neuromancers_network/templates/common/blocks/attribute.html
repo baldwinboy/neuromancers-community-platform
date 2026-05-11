@@ -1,0 +1,12 @@
+{% load content_blocks %}
+
+{% block_visible value as is_visible %}
+{% if is_visible %}
+    {% attribute_value value as resolved_value %}
+    {% if resolved_value %}
+        {% block_style value as block_styles %}
+        {% block_size_classes value centered=False as block_sizes %}
+        <span class="inline-flex items-center {{ block_sizes }}"
+              {% if block_styles %}style="{{ block_styles }}"{% endif %}>{{ resolved_value }}</span>
+    {% endif %}
+{% endif %}

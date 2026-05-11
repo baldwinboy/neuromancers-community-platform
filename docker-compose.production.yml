@@ -1,10 +1,7 @@
 volumes:
   production_postgres_data: {}
   production_postgres_data_backups: {}
-  production_traefik: {}
-  
   production_redis_data: {}
-  
 
 
 services:
@@ -14,12 +11,10 @@ services:
       dockerfile: ./compose/production/django/Dockerfile
 
     image: neuromancers_network_production_django
+    restart: unless-stopped
     depends_on:
       - postgres
       - redis
-    env_file:
-      - ./.envs/.production/.django
-      - ./.envs/.production/.postgres
     command: /start
 
   postgres:
@@ -27,11 +22,14 @@ services:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
     image: neuromancers_network_production_postgres
+    restart: unless-stopped
     volumes:
       - production_postgres_data:/var/lib/postgresql/18/docker
       - production_postgres_data_backups:/backups
-    env_file:
-      - ./.envs/.production/.postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?POSTGRES_PASSWORD is required}
 
   traefik:
     build:
@@ -49,10 +47,9 @@ services:
 
   redis:
     image: docker.io/redis:8.6
-    
+    restart: unless-stopped
     volumes:
       - production_redis_data:/data
-    
 
   celeryworker:
     <<: *django
@@ -73,7 +70,5 @@ services:
     build:
       context: .
       dockerfile: ./compose/production/aws/Dockerfile
-    env_file:
-      - ./.envs/.production/.django
     volumes:
       - production_postgres_data_backups:/backups:z

@@ -1,0 +1,38 @@
+{% extends "events/session_base.html" %}
+{% load static i18n %}
+
+{% block session_content %}
+<div class="card bg-base-100 shadow">
+  <div class="card-body">
+    <h2 class="card-title">{% trans "Edit Session" %}</h2>
+    <form method="post" action="{{ page.url }}{{ session.id }}/edit/">
+      {% csrf_token %}
+      <div class="form-control mb-4">
+        <label class="label" for="title">{% trans "Title" %}</label>
+        <input type="text" name="title" id="title" value="{{ session.title }}" class="input input-bordered" required>
+      </div>
+      <div class="form-control mb-4">
+        <label class="label" for="description">{% trans "Description" %}</label>
+        <textarea name="description" id="description" class="textarea textarea-bordered h-32">{{ session.description }}</textarea>
+      </div>
+      <div class="form-control mb-4">
+        <label class="label" for="visibility">{% trans "Visibility" %}</label>
+        <select name="visibility" id="visibility" class="select select-bordered">
+          <option value="public" {% if session.visibility == "public" %}selected{% endif %}>{% trans "Public" %}</option>
+          <option value="private" {% if session.visibility == "private" %}selected{% endif %}>{% trans "Private" %}</option>
+        </select>
+      </div>
+      <div class="form-control mb-6">
+        <label class="label cursor-pointer">
+          <span class="label-text">{% trans "Published" %}</span>
+          <input type="checkbox" name="is_published" class="toggle" {% if session.is_published %}checked{% endif %}>
+        </label>
+      </div>
+      <div class="flex gap-4">
+        <button type="submit" class="btn btn-primary">{% trans "Save changes" %}</button>
+        <a href="{{ page.url }}{{ session.id }}/" class="btn btn-outline">{% trans "Cancel" %}</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock session_content %}

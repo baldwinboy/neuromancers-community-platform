@@ -1,0 +1,7 @@
+{% load static i18n django_htmx compress tailwind_cli design %}
+{% render_background_css as background_css %}
+{% if background_css %}
+    <style id="background-css">
+    {{ background_css }}
+    </style>
+{% endif %}

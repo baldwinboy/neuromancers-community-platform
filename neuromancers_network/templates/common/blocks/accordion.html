@@ -1,0 +1,14 @@
+{% load wagtailcore_tags content_blocks %}
+
+{% block_visible value as is_visible %}
+{% if is_visible %}
+    {% block_style value as block_styles %}
+    {% block_size_classes value as block_sizes %}
+    {% block_id "accordion" as accordion_id %}
+    <section class="space-y-3 {{ block_sizes }}"
+             {% if block_styles %}style="{{ block_styles }}"{% endif %}>
+        {% for item in value.items %}
+            {% include_block item with accordion_id=accordion_id default_item_border=value.default_item_border is_first=forloop.first %}
+        {% endfor %}
+    </section>
+{% endif %}

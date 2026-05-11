@@ -1,0 +1,43 @@
+{% extends "wagtailadmin/base.html" %}
+{% load i18n %}
+
+{% block titletag %}
+  {% translate "Email Template" %} — {{ object.name }}
+{% endblock titletag %}
+
+{% block content %}
+  {% include "wagtailadmin/shared/header.html" with title=object.name icon="mail" %}
+
+  <div class="nice-padding">
+    <dl class="inline">
+      <dt>{% trans "Name" %}:</dt>
+      <dd>{{ object.name }}</dd>
+      <dt>{% trans "Event Type" %}:</dt>
+      <dd>{{ object.get_event_type_display }}</dd>
+      <dt>{% trans "Subject" %}:</dt>
+      <dd>{{ object.subject }}</dd>
+      <dt>{% trans "Active" %}:</dt>
+      <dd>{{ object.is_active|yesno:_("Yes,No") }}</dd>
+    </dl>
+
+    <a href="{% url viewset.get_url_name 'edit' object.pk %}" class="button button-primary">
+      {% trans "Edit template" %}
+    </a>
+    <a href="{% url viewset.get_url_name 'index' %}" class="button button-secondary">
+      {% trans "Back to Email Templates" %}
+    </a>
+
+    <hr>
+
+    <h2>{% trans "Rendered Email" %}</h2>
+    {% if email_html %}
+      <div style="border:1px solid #ddd;border-radius:4px;padding:20px;background:#fff;margin-top:1em;">
+        {{ email_html|safe }}
+      </div>
+    {% else %}
+      <div class="help-block help-warning">
+        <p>{% trans "Could not render email preview. Check MJML API configuration and template content." %}</p>
+      </div>
+    {% endif %}
+  </div>
+{% endblock content %}

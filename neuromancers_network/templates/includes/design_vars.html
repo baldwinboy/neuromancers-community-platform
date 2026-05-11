@@ -1,0 +1,90 @@
+<!-- Site Design Variables -->
+{% if site_design.color_schemes %}
+{% with light=site_design.color_schemes.light dark=site_design.color_schemes.dark %}
+<style id="daisyui-theme-vars">
+  :root,
+  [data-theme="neuromancers"],
+  [data-theme="light"] {
+    --color-base-100: {{ light.colors.base_100 }};
+    --color-base-200: {{ light.colors.base_200 }};
+    --color-base-300: {{ light.colors.base_300 }};
+    --color-base-content: {{ light.colors.base_content }};
+    --color-primary: {{ light.colors.primary }};
+    --color-primary-content: {{ light.colors.primary_content }};
+    --color-secondary: {{ light.colors.secondary }};
+    --color-secondary-content: {{ light.colors.secondary_content }};
+    --color-accent: {{ light.colors.accent }};
+    --color-accent-content: {{ light.colors.accent_content }};
+    --color-neutral: {{ light.colors.neutral }};
+    --color-neutral-content: {{ light.colors.neutral_content }};
+    --color-info: {{ light.colors.info }};
+    --color-info-content: {{ light.colors.info_content }};
+    --color-success: {{ light.colors.success }};
+    --color-success-content: {{ light.colors.success_content }};
+    --color-warning: {{ light.colors.warning }};
+    --color-warning-content: {{ light.colors.warning_content }};
+    --color-error: {{ light.colors.error }};
+    --color-error-content: {{ light.colors.error_content }};
+
+    --font-heading: {{ site_design.typography.font_heading|default:'"Handjet", monospace' }};
+    --font-subheading: {{ site_design.typography.font_subheading|default:'"Space Mono", monospace' }};
+    --font-body: {{ site_design.typography.font_body|default:'"Atkinson Hyperlegible", sans-serif' }};
+    --font-size-base: {{ site_design.typography.base_font_size|default:16 }}px;
+  }
+
+  [data-theme="dark"] {
+    --color-base-100: {{ dark.colors.base_100 }};
+    --color-base-200: {{ dark.colors.base_200 }};
+    --color-base-300: {{ dark.colors.base_300 }};
+    --color-base-content: {{ dark.colors.base_content }};
+    --color-primary: {{ dark.colors.primary }};
+    --color-primary-content: {{ dark.colors.primary_content }};
+    --color-secondary: {{ dark.colors.secondary }};
+    --color-secondary-content: {{ dark.colors.secondary_content }};
+    --color-accent: {{ dark.colors.accent }};
+    --color-accent-content: {{ dark.colors.accent_content }};
+    --color-neutral: {{ dark.colors.neutral }};
+    --color-neutral-content: {{ dark.colors.neutral_content }};
+    --color-info: {{ dark.colors.info }};
+    --color-info-content: {{ dark.colors.info_content }};
+    --color-success: {{ dark.colors.success }};
+    --color-success-content: {{ dark.colors.success_content }};
+    --color-warning: {{ dark.colors.warning }};
+    --color-warning-content: {{ dark.colors.warning_content }};
+    --color-error: {{ dark.colors.error }};
+    --color-error-content: {{ dark.colors.error_content }};
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root,
+    [data-theme="neuromancers"] {
+      --color-base-100: {{ dark.colors.base_100 }};
+      --color-base-200: {{ dark.colors.base_200 }};
+      --color-base-300: {{ dark.colors.base_300 }};
+      --color-base-content: {{ dark.colors.base_content }};
+      --color-primary: {{ dark.colors.primary }};
+      --color-primary-content: {{ dark.colors.primary_content }};
+      --color-secondary: {{ dark.colors.secondary }};
+      --color-secondary-content: {{ dark.colors.secondary_content }};
+      --color-accent: {{ dark.colors.accent }};
+      --color-accent-content: {{ dark.colors.accent_content }};
+      --color-neutral: {{ dark.colors.neutral }};
+      --color-neutral-content: {{ dark.colors.neutral_content }};
+      --color-info: {{ dark.colors.info }};
+      --color-info-content: {{ dark.colors.info_content }};
+      --color-success: {{ dark.colors.success }};
+      --color-success-content: {{ dark.colors.success_content }};
+      --color-warning: {{ dark.colors.warning }};
+      --color-warning-content: {{ dark.colors.warning_content }};
+      --color-error: {{ dark.colors.error }};
+      --color-error-content: {{ dark.colors.error_content }}
+    }
+  }
+</style>
+{% endwith %}
+
+{% for font_url in site_design.typography.font_urls %}
+<link rel="stylesheet" href="{{ font_url }}" />
+{% endfor %}
+{% endif %}
+

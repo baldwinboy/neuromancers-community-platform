@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Notification Preferences" %} — {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-lg">
+  <div class="breadcrumbs text-sm mb-6">
+    <ul>
+      <li><a href="/">{% trans "Home" %}</a></li>
+      <li><a href="{{ page.url }}">{% trans "Profile" %}</a></li>
+      <li><a href="{{ page.url }}settings/">{% trans "Settings" %}</a></li>
+      <li class="text-base-content/60">{{ user_settings.notification_label }}</li>
+    </ul>
+  </div>
+
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h1 class="card-title text-2xl mb-4">{{ user_settings.notification_label }}</h1>
+
+      <form method="post">
+        {% csrf_token %}
+
+        {% with prefs=profile.notification_prefs|default:"" %}
+        <div class="form-control">
+          <label class="label cursor-pointer">
+            <span class="label-text">{% trans "Booking confirmations" %}</span>
+            <input type="checkbox" name="notify_booking" class="toggle toggle-primary"
+              {% if prefs.notify_booking or prefs == "" %}checked{% endif %}>
+          </label>
+        </div>
+
+        <div class="form-control">
+          <label class="label cursor-pointer">
+            <span class="label-text">{% trans "Payment received" %}</span>
+            <input type="checkbox" name="notify_payment" class="toggle toggle-primary"
+              {% if prefs.notify_payment or prefs == "" %}checked{% endif %}>
+          </label>
+        </div>
+
+        <div class="form-control">
+          <label class="label cursor-pointer">
+            <span class="label-text">{% trans "Session reminders" %}</span>
+            <input type="checkbox" name="notify_reminder" class="toggle toggle-primary"
+              {% if prefs.notify_reminder or prefs == "" %}checked{% endif %}>
+          </label>
+        </div>
+
+        <div class="form-control">
+          <label class="label cursor-pointer">
+            <span class="label-text">{% trans "Review prompts" %}</span>
+            <input type="checkbox" name="notify_review" class="toggle toggle-primary"
+              {% if prefs.notify_review or prefs == "" %}checked{% endif %}>
+          </label>
+        </div>
+
+        <div class="form-control">
+          <label class="label cursor-pointer">
+            <span class="label-text">{% trans "Messages" %}</span>
+            <input type="checkbox" name="notify_message" class="toggle toggle-primary"
+              {% if prefs.notify_message or prefs == "" %}checked{% endif %}>
+          </label>
+        </div>
+        {% endwith %}
+
+        <div class="form-control mt-6">
+          <button type="submit" class="btn btn-primary">{% trans "Save Preferences" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock content %}

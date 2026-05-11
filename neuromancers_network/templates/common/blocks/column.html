@@ -1,0 +1,16 @@
+{% load wagtailcore_tags content_blocks %}
+
+{% block_visible value as is_visible %}
+{% if is_visible %}
+    {% justify_class value.vertical_alignment as justify_classes %}
+    {% align_class value.horizontal_alignment as align_classes %}
+    {% block_style value as block_styles %}
+    {% block_size_classes value as block_sizes %}
+    <section class="flex flex-col {{ justify_classes }} {{ align_classes }} {{ block_sizes }}"
+             style="{% if block_styles %}{{ block_styles }};
+                    {% endif %}gap: {{ value.spacing|default:16 }}px">
+        {% for child in value.content %}
+            <div class="min-w-0 {% if value.scale_items_to_fill %}flex-1{% endif %}">{% include_block child %}</div>
+        {% endfor %}
+    </section>
+{% endif %}

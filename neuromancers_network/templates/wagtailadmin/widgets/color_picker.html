@@ -1,0 +1,36 @@
+{% load i18n %}
+
+<div class="palette-color-picker mb-4">
+  {% if palette_groups %}
+    <details open
+             class="palette-dropdown border border-[color:var(--w-color-border,#e5e7eb)] mb-3 rounded-md border-solid bg-[color:var(--w-color-surface-page,#fff)]">
+      <summary class="palette-summary cursor-pointer font-semibold text-[0.85rem] text-[color:var(--w-color-text-label,#374151)] select-none px-3 py-2 rounded-md hover:bg-[color:var(--w-color-surface-hover,#f9fafb)]">
+        {% trans "Palette" %}
+      </summary>
+      <div class="palette-groups pt-0 pb-2 px-2">
+        {% for group_name, swatches in palette_groups %}
+          <details open class="palette-group-details mb-1">
+            <summary class="palette-group-summary cursor-pointer text-xs font-semibold uppercase tracking-wider text-[color:var(--w-color-text-meta,#6b7280)] select-none rounded px-1.5 py-1 hover:bg-[color:var(--w-color-surface-hover,#f9fafb)]">
+              {{ group_name }}
+            </summary>
+            <div class="palette-row flex flex-wrap gap-1.5 pl-2.5 pr-1.5 py-1.5">
+              {% for key, label, hex in swatches %}
+                <button type="button"
+                        class="group palette-swatch relative w-9 h-9 border-[color:var(--w-color-border,#e5e7eb)] cursor-pointer transition-transform duration-[0.1s,border-color] delay-[0.1s] shrink-0 rounded-md border-2 border-solid hover:border-[color:var(--w-color-text-link,#1e40af)] hover:z-[2] hover:scale-[1.15] active:scale-95"
+                        style="background-color:{{ hex }}"
+                        title="{{ label }} — {{ hex }}"
+                        data-color="{{ hex }}"
+                        onclick="var input=this.closest('.palette-color-picker').querySelector('.color-input-widget__text-input');input.value=this.dataset.color;input.dispatchEvent(new Event('input',{bubbles:true}));">
+                  <span class="palette-swatch-label absolute bottom-[-18px] -translate-x-2/4 text-[9px] whitespace-nowrap text-[color:var(--w-color-text-meta,#6b7280)] opacity-0 transition-opacity duration-[0.15s] pointer-events-none left-2/4 group-hover:opacity-100">{{ label }}</span>
+                </button>
+              {% endfor %}
+            </div>
+          </details>
+        {% endfor %}
+      </div>
+    </details>
+  {% endif %}
+  <div class="color-input-row flex items-center gap-2">
+    {% include "wagtail_color_panel/widgets/color-input-widget.html" with widget=widget name=name value=value attrs=attrs %}
+  </div>
+</div>

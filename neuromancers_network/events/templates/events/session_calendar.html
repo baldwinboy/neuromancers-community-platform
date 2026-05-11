@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Session Calendar" %} — {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-6xl">
+  <div class="breadcrumbs text-sm mb-6">
+    <ul>
+      <li><a href="/">{% trans "Home" %}</a></li>
+      <li><a href="{{ page.url }}">{% trans "Sessions" %}</a></li>
+      <li class="text-base-content/60">{% trans "Calendar" %}</li>
+    </ul>
+  </div>
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-3xl font-bold">{% trans "Session Calendar" %}</h1>
+
+    <div class="flex items-center gap-2">
+      <a href="{{ page.url }}calendar/?year={{ prev_year }}&month={{ prev_month }}" class="btn btn-outline btn-sm">
+        &larr; {% trans "Previous" %}
+      </a>
+      <span class="font-semibold text-lg px-4">{{ current_month_name }} {{ current_year }}</span>
+      <a href="{{ page.url }}calendar/?year={{ next_year }}&month={{ next_month }}" class="btn btn-outline btn-sm">
+        {% trans "Next" %} &rarr;
+      </a>
+    </div>
+  </div>
+
+  <div class="bg-base-100 rounded-box shadow-xl overflow-hidden">
+    <div class="grid grid-cols-7 bg-base-200 text-sm font-semibold">
+      <div class="p-3 text-center">{% trans "Mon" %}</div>
+      <div class="p-3 text-center">{% trans "Tue" %}</div>
+      <div class="p-3 text-center">{% trans "Wed" %}</div>
+      <div class="p-3 text-center">{% trans "Thu" %}</div>
+      <div class="p-3 text-center">{% trans "Fri" %}</div>
+      <div class="p-3 text-center">{% trans "Sat" %}</div>
+      <div class="p-3 text-center">{% trans "Sun" %}</div>
+    </div>
+
+    {% for week in calendar_weeks %}
+    <div class="grid grid-cols-7 border-t border-base-200">
+      {% for day in week %}
+      <div class="min-h-[120px] p-2 border-r border-base-200 {% if not day.in_month %}bg-base-100/50{% endif %}">
+        {% if day.in_month %}
+        <div class="text-sm font-semibold mb-1 {% if day.events %}text-primary{% endif %}">
+          {{ day.day }}
+        </div>
+        <div class="space-y-1">
+          {% for event in day.events|slice:":5" %}
+          <a href="{{ event.url }}"
+             class="block text-xs px-1.5 py-0.5 rounded truncate
+                    {% if event.is_group %}bg-secondary text-secondary-content
+                    {% else %}bg-primary text-primary-content{% endif %}">
+            {{ event.title|truncatechars:20 }}
+          </a>
+          {% endfor %}
+          {% if day.events|length > 5 %}
+          <span class="text-xs text-base-content/50">+{{ day.events|length|add:"-5" }} {% trans "more" %}</span>
+          {% endif %}
+          {% if not day.events %}
+          <span class="text-xs text-base-content/30">&nbsp;</span>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="flex items-center gap-4 mt-4 text-sm">
+    <span class="flex items-center gap-1">
+      <span class="w-3 h-3 rounded bg-primary inline-block"></span> 1:1 {% trans "Session" %}
+    </span>
+    <span class="flex items-center gap-1">
+      <span class="w-3 h-3 rounded bg-secondary inline-block"></span> {% trans "Group Session" %}
+    </span>
+  </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,26 @@
+# Gatus health-check configuration for Neuromancers Network
+# Docs: https://github.com/TwiN/gatus
+#
+# Deploy via: ansible-playbook playbooks/site.yml (copies to /opt/gatus/config.yml)
+
+endpoints:
+  - name:  Web
+    url: "${APP_HEALTHCHECK_URL}"
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 500"
+
+  - name: Coolify Dashboard
+    url: "${COOLIFY_HEALTHCHECK_URL}"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+alerting:
+  discord:
+    webhook-url: "${GATUS_DISCORD_WEBHOOK_URL}"
+    default-alert:
+      enabled: true
+      description: "Service health degraded"
+      send-on-resolved: true

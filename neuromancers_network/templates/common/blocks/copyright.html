@@ -1,0 +1,9 @@
+{% load content_blocks %}
+
+{% block_visible value as is_visible %}
+{% if is_visible %}
+    {% block_style value as block_styles %}
+    {% block_size_classes value centered=False as block_sizes %}
+    <p class="text-sm opacity-80 {{ block_sizes }}"
+       {% if block_styles %}style="{{ block_styles }}"{% endif %}>© {% now "Y" %} {{ value.text }}</p>
+{% endif %}

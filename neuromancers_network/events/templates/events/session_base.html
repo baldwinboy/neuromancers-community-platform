@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{{ session.title }} — {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-5xl">
+  <div class="breadcrumbs text-sm mb-6">
+    <ul>
+      <li><a href="/">{% trans "Home" %}</a></li>
+      <li><a href="{{ page.url }}">{% trans "Sessions" %}</a></li>
+      <li class="text-base-content/60">{{ session.title }}</li>
+    </ul>
+  </div>
+
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="flex-1">
+          <div class="flex items-center gap-3 mb-2">
+            {% if session.is_peer %}
+              <span class="badge badge-primary">{% trans "1:1 Session" %}</span>
+            {% else %}
+              <span class="badge badge-secondary">{% trans "Group Session" %}</span>
+            {% endif %}
+            {% if not session.is_published %}
+              <span class="badge badge-warning">{% trans "Draft" %}</span>
+            {% endif %}
+          </div>
+          <h1 class="text-3xl font-bold">{{ session.title }}</h1>
+          <p class="text-base-content/70 mt-2">
+            {% trans "Hosted by" %} <strong>{{ session.host.username }}</strong>
+          </p>
+        </div>
+
+        {% if session.is_published %}
+          <div class="flex flex-col items-end gap-2">
+            {% if user == session.host %}
+              <a href="{{ page.url }}{{ session.id }}/edit/" class="btn btn-outline btn-sm">
+                {% trans "Edit" %}
+              </a>
+            {% else %}
+              <a href="{{ page.url }}{{ session.id }}/book/" class="btn btn-primary">
+                {% trans "Book now" %}
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% block session_content %}
+  {% endblock session_content %}
+</div>
+{% endblock content %}

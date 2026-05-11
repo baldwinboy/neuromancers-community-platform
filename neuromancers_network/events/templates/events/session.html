@@ -1,0 +1,112 @@
+{% extends "events/session_base.html" %}
+{% load static i18n wagtailcore_tags %}
+
+{% block session_content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <div class="lg:col-span-2 space-y-6">
+    {% if session.description %}
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h2 class="card-title">{% trans "About this session" %}</h2>
+          <div class="prose max-w-none">{{ session.description|richtext }}</div>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if session.is_peer %}
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h2 class="card-title">{% trans "Duration & Availability" %}</h2>
+          <dl class="grid grid-cols-2 gap-4">
+            <div>
+              <dt class="text-sm text-base-content/60">{% trans "Minimum duration" %}</dt>
+              <dd class="font-medium">{{ session.min_duration_minutes }} min</dd>
+            </div>
+            <div>
+              <dt class="text-sm text-base-content/60">{% trans "Maximum duration" %}</dt>
+              <dd class="font-medium">{{ session.max_duration_minutes }} min</dd>
+            </div>
+            {% if session.starts_at %}
+            <div>
+              <dt class="text-sm text-base-content/60">{% trans "Available from" %}</dt>
+              <dd class="font-medium">{{ session.starts_at|date:"M d, Y" }}</dd>
+            </div>
+            {% endif %}
+            {% if session.ends_at %}
+            <div>
+              <dt class="text-sm text-base-content/60">{% trans "Available until" %}</dt>
+              <dd class="font-medium">{{ session.ends_at|date:"M d, Y" }}</dd>
+            </div>
+            {% endif %}
+          </dl>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if session.is_group and session.capacity %}
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h2 class="card-title">{% trans "Group Details" %}</h2>
+          <dl class="grid grid-cols-2 gap-4">
+            <div>
+              <dt class="text-sm text-base-content/60">{% trans "Capacity" %}</dt>
+              <dd class="font-medium">{{ session.capacity }} {% trans "attendees" %}</dd>
+            </div>
+            <div>
+              <dt class="text-sm text-base-content/60">{% trans "Date & Time" %}</dt>
+              <dd class="font-medium">{{ session.starts_at|date:"M d, Y H:i" }} — {{ session.ends_at|date:"H:i" }}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if session.languages %}
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h2 class="card-title">{% trans "Languages" %}</h2>
+          <div class="flex flex-wrap gap-2">
+            {% for lang in session.languages %}
+              <span class="badge badge-outline">{{ lang }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="space-y-4">
+    {% if user == session.host %}
+      <div class="card bg-base-200">
+        <div class="card-body p-4">
+          <h3 class="font-semibold text-sm">{% trans "Host Actions" %}</h3>
+          <div class="flex flex-col gap-2 mt-2">
+            <a href="{{ page.url }}{{ session.id }}/edit/" class="btn btn-sm btn-outline">{% trans "Edit" %}</a>
+            <a href="{{ page.url }}{{ session.id }}/participants/" class="btn btn-sm btn-outline">{% trans "Participants" %}</a>
+            <a href="{{ page.url }}bookings/" class="btn btn-sm btn-outline">{% trans "All Bookings" %}</a>
+            <a href="{{ page.url }}availability/" class="btn btn-sm btn-outline">{% trans "Availability" %}</a>
+            <a href="{{ page.url }}{{ session.id }}/reviews/" class="btn btn-sm btn-outline">{% trans "Reviews" %}</a>
+            <a href="{{ page.url }}{{ session.id }}/delete/" class="btn btn-sm btn-outline btn-error">{% trans "Delete" %}</a>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if user.is_authenticated and user != session.host and session.is_published %}
+      <div class="card bg-base-100 shadow">
+        <div class="card-body p-4">
+          <h3 class="font-semibold text-sm">{% trans "Pricing" %}</h3>
+          {% for price in session.price_options.all %}
+            <div class="flex justify-between py-1 text-sm">
+              <span>{{ price.get_price_type_display }}</span>
+              <span class="font-medium">£{{ price.amount_subunit|floatformat:2 }}</span>
+            </div>
+          {% empty %}
+            <p class="text-sm text-base-content/60">{% trans "Contact host for pricing" %}</p>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock session_content %}

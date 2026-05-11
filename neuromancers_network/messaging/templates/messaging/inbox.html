@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Messages" %} — {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+  <h1 class="text-2xl font-bold mb-6">{% trans "Messages" %}</h1>
+
+  {% if conversations %}
+    <div class="space-y-2">
+      {% for conversation in conversations %}
+        <a href="{% url 'messaging:conversation-detail' pk=conversation.pk %}"
+           class="block card bg-base-100 shadow hover:shadow-md transition-shadow">
+          <div class="card-body p-4">
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="font-medium">
+                  {% for participant in conversation.participants.all %}
+                    {% if participant != user %}
+                      {{ participant.get_full_name|default:participant.username }}
+                    {% endif %}
+                  {% endfor %}
+                </p>
+                {% with last_msg=conversation.messages.last %}
+                  {% if last_msg %}
+                    <p class="text-sm text-base-content/60 truncate">{{ last_msg.body|truncatechars:80 }}</p>
+                  {% endif %}
+                {% endwith %}
+              </div>
+              <span class="text-xs text-base-content/40">{{ conversation.updated_at|date:"M d, H:i" }}</span>
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card bg-base-100 shadow">
+      <div class="card-body text-center py-12">
+        <p class="text-base-content/60">{% trans "No conversations yet." %}</p>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

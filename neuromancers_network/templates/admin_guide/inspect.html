@@ -1,0 +1,32 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% load static i18n wagtailmarkdown %}
+
+{% translate "Admin Guide" as admin_guide_title %}
+{% block titletag %}
+    {{ object.title }} | {{ admin_guide_title }}
+{% endblock titletag %}
+{% block content %}
+    {% include "wagtailadmin/shared/header.html" with title=object.title icon="doc-full" %}
+    <div class="nice-padding">
+        <p>
+            <a href="{% url viewset.get_url_name 'edit' object.pk %}"
+               class="button button-primary">{% translate "Edit this page" %}</a>
+            <a href="{% url viewset.get_url_name 'index' %}"
+               class="button button-secondary">{% translate "Back to Admin Guide" %}</a>
+        </p>
+        {% if object.summary %}
+            <p>
+                <em>{{ object.summary }}</em>
+            </p>
+        {% endif %}
+        <hr />
+        <article class="documentation-content">{{ object.content|markdown }}</article>
+        {% if object.tags.all %}
+            <p>
+                <strong>{% translate "Tags:" %}</strong>
+                {% for tag in object.tags.all %}{{ tag }}{% endfor %}
+            </p>
+        {% endif %}
+    </div>
+{% endblock content %}

@@ -1,11 +1,48 @@
 # NEUROMANCERS Network
 
-NEUROMANCERS offers a network for users to offer and request online support
+NEUROMANCERS offers a network for users to offer and request online support.
+
+## Implementation Status
+
+**Audit snapshot:** `docs/implementation-audit-2026-05-09.md`
+
+This project is under active development. Features described below are **intended design** unless explicitly marked as implemented. See the ROADMAP for current delivery phases and the audit snapshot for verified implementation evidence.
 
 [![Built with Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 License: MIT
+
+---
+
+## Platform Flow (Design)
+
+The platform is designed around the following 20-point user flow:
+
+1. Unauthenticated users see only the login page (`/login`)
+2. Superuser logs in
+3. Superuser visits `/cms` for Wagtail Admin
+4. Superuser prepares branding, API keys, AllAuth theme
+5. Superuser creates initial pages + admin checklist
+6. Blocks inherit branding styling unless overridden
+7. Standard forms (email submissions) and model-connected forms (create/update model instances)
+8. Admin-editable email content via MJML (AllAuth + notification emails)
+9. Standard users login and verify accounts with expected branding
+10. Attribute blocks display model fields in page content
+11. Index pages with model-backed layout blocks (grid, row, column)
+12. Session detail pages at `/sessions/<uuid>/` (path fixed, content configurable)
+13. User profile pages at `/users/<username>/` (path fixed, content configurable)
+14. Admin-configured settings pages replacing AllAuth defaults
+15. Session detail with conditional buttons (schedule, pay now, add to calendar)
+16. Schedule page with calendar block
+17. Host Stripe Connect onboarding
+18. Peer subscription flow via Stripe
+19. Webhook setup via Wagtail admin menu
+20. Navbar customization via wagtailmenus + button/card blocks
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the system diagram and [ROADMAP.md](ROADMAP.md) for phased delivery status.
+
+---
 
 ## Settings
 
@@ -143,44 +180,49 @@ just manage loaddata languages_plus
 
 ## Feature Overview
 
-### User Accounts & Tiers
-- Email-based authentication via **django-allauth** (social login: Google, Microsoft)
-- Four account tiers: Seeker, Peer, Verified Peer, Admin
-- Profiles with languages, tags, and profile pictures
-- Tier progression managed by finite state machines (**django-fsm-2**)
+### ✅ Implemented (audited)
 
-### Sessions
-- One-to-one and group session types
-- Recurring sessions with full RRULE support (**django-recurrence**)
-- Automatic Whereby video room creation
-- Public and private visibility with object-level permissions (**django-guardian**)
-- Admin-configurable boundary settings (auto-approval, concessionary pricing, etc.)
-- Reviews and feedback (star rating + text)
-- Host-attendee messaging via **django-notifications-hq**
+- **Authentication**: django-allauth with email-based login, login-by-code, username+email login, social account linking for calendar sync
+- **User tiers**: Profile.tier_state FSM (Seeker/Peer/Verified Peer/Admin), groups + django-guardian object permissions
+- **Session data model**: Peer/group session foundations, pricing structures, host availability rules, reviews, session categories
+- **Wagtail CMS**: Full admin at `/cms/`, slug validation, admin guide, onboarding checklist
+- **Content block system**: 50+ StreamBlock types including backgrounds, typography, themes, buttons, cards, accordions, grids, forms, and model-mapped form fields
+- **Design system**: DaisyUI 5 color palette (system/light/dark), typography, backgrounds (flat/gradient/image), all themeable per-page via StyledPageMixin
+- **Branding**: Site-wide settings for colors, fonts, logo, navbar, footer, allauth form labels
+- **Site lock**: Maintenance mode with password protection, middleware redirects for non-staff users
+- **Email template model**: MJML-based template structure with StreamField for email body content
+- **Form system**: 14 field types, multi-step forms, form layouts (rows/columns/grids), model-mapped form fields, success/error handling
+- **Notifications**: Profile.notification_prefs JSONField for per-event-type delivery preferences
+- **Stripe Connect**: Connected account persistence model, OAuth token exchange, account readiness checks
+- **External API settings**: Wagtail-admin-managed keys for Stripe, Whereby, GetPronto, MJML
+- **CI/CD**: GitHub Actions pipeline (lint/test/build/deploy), Ansible infrastructure management, `iac/` directory
+- **User administration**: Wagtail ModelAdmin, user impersonation foundations
 
-### Payments
-- Stripe integration via **dj-stripe** (webhooks auto-sync all objects)
-- Three pricing types: fixed, hourly, concessionary
-- Refund processing via Stripe dashboard or admin action
-- Email notifications for all payment events (**django-anymail**)
+### 🔶 Partial (scaffolded, not end-to-end)
 
-### Calendar & Scheduling
-- `.ics` file export for all sessions (**django-recurring**)
-- Two-way Google Calendar and Microsoft Outlook sync
-- iCloud CalDAV free/busy detection
-- Proton Calendar manual import/export (no API available)
-- Samsung Calendar syncs via Google/Microsoft account
+- **Session page routes**: SessionPage with routable URLs exists but templates are missing (10 referenced templates don't exist)
+- **User profile page**: UserProfilePage exists but template (`users/profile.html`) is missing
+- **MJML email rendering**: EmailTemplate model + MJMLClient exist; `_block_to_mjml()` method is missing; no MJML template files; no email sending logic wired
+- **Session event models**: events/models/ peer, group, category, host, duration, review modules are missing (imported in __init__.py but files don't exist)
+- **Stripe payment views**: Checkout strategy logic exists (`events/checkout.py`); `events/views/stripe.py` is empty — no webhook handlers or checkout creation views
+- **Celery tasks**: Only a demo `get_users_count` task exists; no email, reminder, or payment processing tasks
+- **Bootstrap command**: `bootstrap_admin_guide` references markdown files that don't exist; no command to create initial pages
+- **AllAuth templates**: Override templates exist but use Bootstrap classes instead of Tailwind/DaisyUI
+- **Admin guide**: Model and onboarding tasks exist; markdown source files are missing
 
-### Administration
-- Full Wagtail CMS with `ModelAdmin` for users, sessions, and tiers
-- Site branding customisation: logo, fonts, colours (**wagtail-color-panel**)
-- Editable admin guide page (**wagtail-markdown**)
-- Customisable session filters
+### ❌ Not Started
 
-### Asset Storage
-- All media and static assets stored on **GetPronto** (api.getpronto.io/v1)
-- On-the-fly image transformations via URL parameters
-- Global CDN delivery
+- **Calendar sync**: Google, Microsoft, iCloud sync (OAuth flows, push/free-busy)
+- **Moderation**: Flag model, FlagRule, automated flagging Celery tasks
+- **Private messaging**: DirectMessage model, inbox
+- **Group chat**: SessionThread for group sessions
+- **GDPR automation**: Account anonymization, data export
+- **Audit log**: django-auditlog not registered/wired
+- **i18n**: django-rosetta not installed; no language switcher
+- **Analytics**: Admin dashboard charts
+- **Waitlist**: WaitlistEntry model
+- **Subscriptions**: Stripe subscription for Verified Peer status
+- **End-to-end booking/payment flow**: No wired checkout creation, no webhook handling
 
 ---
 
@@ -190,32 +232,19 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full system diagram, data models,
 
 Key architectural decisions:
 - **Monolithic Django + Wagtail** — no decoupled frontend; all interactivity via HTMX
-- **Celery for async work** — calendar sync, email sending, asset processing
-- **GetPronto REST API** — asset storage with CDN delivery (no Python SDK; direct HTTP integration)
+- **Celery for async work** — email delivery, external API calls (calendar sync, payment processing)
+- **Django signals for sync work** — permission assignment, notification records, status transitions
+- **Stripe SDK directly** — no `dj-stripe` for Connect; dj-stripe retained only for subscription/webhook admin UI
+- **GetPronto for images, S3 for documents** — images need CDN + transformations; documents use standard S3
+- **MJML API for email rendering** — write MJML templates, Wagtail stores content vars, API converts to production-ready HTML
+- **Proton Mail SMTP** — transactional email delivery with TLS
 - **PostgreSQL 18** — primary data store
 
 ---
 
 ## Environment Variables
 
-Copy `.envs/.local/.django` and `.envs/.local/.postgres` from the template. Key variables:
-
-| Variable | Purpose |
-|----------|---------|
-| `DJANGO_SECRET_KEY` | Django secret key |
-| `DJANGO_ALLOWED_HOSTS` | Comma-separated allowed hosts |
-| `STRIPE_SECRET_KEY` | Stripe secret API key |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
-| `DJSTRIPE_WEBHOOK_SECRET` | Same as above, for dj-stripe |
-| `GETPRONTO_API_KEY` | GetPronto API key |
-| `WHEREBY_API_KEY` | Whereby API key |
-| `PROTON_SMTP_TOKEN` | Proton Mail SMTP token (generated in Proton Settings → IMAP/SMTP → SMTP tokens) |
-| `PROTON_SMTP_EMAIL` | Proton Mail custom domain address used for sending (e.g. noreply@yourdomain.com) |
-| `PROTON_SMTP_HOST` | Proton Mail SMTP host (default: `smtp.protonmail.ch`) |
-| `PROTON_SMTP_PORT` | Proton Mail SMTP port (default: `587`) |
-| `SENTRY_DSN` | Sentry project DSN |
-| `REDIS_URL` | Redis connection URL (auto-set by Docker) |
-| `DATABASE_URL` | PostgreSQL connection URL (auto-set by Docker) |
+For local development, set environment variables in `.envs/local` as needed. See [secrets runbook](iac/docs/secrets-runbook.md) for the full inventory of secrets, their storage locations, and rotation procedures.
 
 ---
 
@@ -232,139 +261,99 @@ just manage test sessions.tests.test_models
 just coverage
 ```
 
-Tests use **pytest-django** with **factory_boy** fixtures. A full test suite covers:
-- User registration and authentication
-- Session creation, booking, and visibility rules
-- Stripe webhook handling
-- Calendar sync task execution
+Tests use **pytest-django** with **factory_boy** fixtures. Current test coverage is limited to the users app.
 
 ---
 
-## Deployment (Leapcell.io)
+## Deployment (Coolify + Hetzner)
 
-Deployment is automated via GitHub Actions:
+The application is deployed to a **Hetzner Cloud VPS** running **Coolify**, but Coolify is treated as a **private control plane**, not a public dashboard.
 
-1. Push to `main` triggers the CI/CD workflow
-2. Workflow runs linting + tests with PostgreSQL
-3. On success, Docker image is built and pushed to Leapcell
-4. Leapcell CLI deploys the new image
+All infrastructure configuration lives in the `iac/` directory at the repository root:
 
-### Manual Deployment
-
-```bash
-# Build and push Docker image
-just deploy
-
-# Or use Leapcell CLI directly
-leapcell deploy
 ```
+iac/
+├── monitoring/
+│   ├── gatus-config.yml
+│   └── prometheus.yml
+├── security/
+│   ├── crowdsec-config.yml
+│   └── fail2ban-jail.local
+├── backups/
+│   └── backup-script.sh
+└── scripts/
+    └── server-bootstrap.sh
+```
+
+### Secrets and runbooks
+
+- Bitwarden Secrets Manager is the source of truth for deployment and runtime secrets.
+- GitHub stores only `BWS_ACCESS_TOKEN` for workflow authentication to Bitwarden.
+- Coolify should hold only `BWS_ACCESS_TOKEN` for runtime secret resolution.
+- Production containers are expected to pull their own secrets from Bitwarden at startup.
+- See `iac/docs/secrets-runbook.md` for inventory and rotation procedures.
+- See `iac/docs/operator-guide.md` for operator flow and completion checklist.
+- See `iac/docs/coolify-env-mapping.md` for the runtime key registry.
+
+### Deployment Pipeline
+
+```mermaid
+graph TD
+    A[Developer pushes to main or staging] --> B[CI workflow runs tests, lint, image build];
+    B --> C{CI successful};
+    C --> D[Deploy workflow starts from workflow_run];
+    D --> E[GitHub runner joins tailnet with Tailscale];
+    E --> F[Runner verifies private Coolify reachability];
+    F --> G[Runner runs Ansible converge against host];
+    G --> H[Runner triggers Coolify deploy by application UUID];
+    H --> I[Containers resolve runtime secrets from Bitwarden using BWS CLI];
+    I --> J[Runner executes public and control-plane smoke checks];
+```
+
+### Control Plane Rules
+
+- Coolify is reachable only over Tailscale.
+- Do not use Tailscale Funnel for Coolify.
+- Public ports are limited to the application ingress on `80` and `443`.
+- Operators reach Coolify using its Tailscale IP or MagicDNS hostname.
+- GitHub `production` environment protection must be configured with required reviewers and branch restrictions for `main`.
+
+### Environment Variables (Coolify)
+
+| Variable | Purpose |
+|----------|---------|
+| `DJANGO_SECRET_KEY` | Django secret key |
+| `DJANGO_ALLOWED_HOSTS` | Comma-separated allowed hosts |
+| `DJANGO_AWS_ACCESS_KEY_ID` | S3 access key for document storage |
+| `DJANGO_AWS_SECRET_ACCESS_KEY` | S3 secret key for document storage |
+| `DJANGO_AWS_STORAGE_BUCKET_NAME` | S3 bucket name |
+| `DJANGO_SERVER_EMAIL` | Server sender address |
+| `REDIS_URL` | Redis connection URL |
+| `DATABASE_URL` | PostgreSQL connection URL |
+| `CELERY_FLOWER_USER` | Flower username |
+| `CELERY_FLOWER_PASSWORD` | Flower password |
+
+Third-party API credentials (Stripe, Whereby, GetPronto, MJML, SMTP, Sentry) are runtime-administered through Wagtail Site Settings.
 
 ---
 
 ## Monitoring
 
-- **Sentry**: Exception tracking and performance monitoring
-- **Mailpit**: Local email testing (port 8025)
-- **django-debug-toolbar**: Request/query profiling in development
-- **Celery task results**: Viewable in Django admin (django-celery-results)
+- **Sentry**: Exception tracking and performance monitoring.
+- **Mailpit**: Local email testing (port 8025).
+- **django-debug-toolbar**: Request/query profiling in development.
+- **Celery task results**: Viewable in Django admin (django-celery-results).
 
 ---
 
 ## Project Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for the complete 2-day implementation plan and task checklist.
+See [ROADMAP.md](ROADMAP.md) for the complete implementation plan and phased delivery.
 
-**Day 1:** Core platform — authentication, user tiers, sessions, payments (Stripe), admin customisation, CI/CD pipeline.
-
-**Day 2:** Advanced scheduling — `.ics` export, Google/Microsoft calendar sync, iCloud free/busy, reviews, messaging, end-to-end testing, client handover.
-
----
-
-## Handover Criteria
-
-- All features in the client brief are functional
-- Automated tests pass on every push
-- Code is consistently typed (`django-stubs` + `mypy`)
-- Sentry error tracking active
-- Production environment stable on Leapcell
-- Admin users can modify site branding and content without touching code
-
----
-
-## Dependencies
-
-All primary dependencies have had releases in 2025 or 2026. See [ARCHITECTURE.md §3](ARCHITECTURE.md#3-verified-dependency-register-20252026-releases-only) for the full verified register with version pins and release dates.
-
-```requirements
-# Core
-Django>=6.2
-wagtail>=7.0
-psycopg[binary]>=3.2
-
-# Auth & Permissions
-django-allauth>=65.13.0
-django-guardian>=3.3.0
-
-# Profiles
-django-languages-plus>=2.1.1
-django-taggit>=6.1.0
-easy-thumbnails>=2.10.1
-
-# State Machine
-django-fsm-2>=4.2.4
-
-# Frontend
-django-htmx>=1.27.0
-django-widget-tweaks>=1.5.1
-
-# API
-django-ninja>=1.5.0
-django-cors-headers>=4.9.0
-django-filter>=25.2
-
-# Payments & Email
-dj-stripe>=2.9.1
-django-anymail>=14.0
-stripe
-
-# Async & Scheduling
-celery>=5.5
-django-celery-beat>=2.8.1
-django-celery-results>=2.6.0
-redis
-
-# Calendar
-django-recurrence>=1.14
-django-recurring>=1.3.3
-django5-scheduler>=1.0.1
-google-api-python-client
-msgraph-sdk
-python-caldav>=2.0.1
-icalendar>=6.3.2
-
-# Notifications
-django-notifications-hq>=1.8.3
-
-# Security
-django-cryptography>=2.0.3
-
-# Admin
-wagtail-color-panel>=1.7.1
-wagtail-markdown>=0.13.0
-django-colorfield>=0.14.0
-
-# Asset Storage
-httpx
-django-storages>=1.14.6
-
-# Monitoring
-sentry-sdk
-
-# Dev & Testing
-django-extensions>=4.1
-django-debug-toolbar>=6.1.0
-factory_boy>=3.3.3
-pytest-django>=4.11.1
-django-stubs>=5.2.8
-mypy
-```
+The roadmap is organized around the 20-point platform flow:
+- **Phase A**: Foundation & Block System *(current — largely complete)*
+- **Phase B**: Auth, Pages & Admin Experience *(in progress)*
+- **Phase C**: Session Models, Routes & Forms *(in progress)*
+- **Phase D**: Booking, Payments & Stripe Connect *(scaffolded)*
+- **Phase E**: Email, Notifications & MJML *(scaffolded)*
+- **Phase F**: Calendar, Moderation & Production Hardening *(not started)*

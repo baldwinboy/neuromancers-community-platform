@@ -1,0 +1,44 @@
+{% load wagtailcore_tags content_blocks %}
+
+{% block_visible value as is_visible %}
+{% if is_visible %}
+    {% block_style value as block_styles %}
+    {% block_size_classes value as block_sizes %}
+    <section class="space-y-4 {{ block_sizes }}"
+             {% if block_styles %}style="{{ block_styles }}"{% endif %}>
+        {% if value.heading %}
+            {% include_block value.bound_blocks.heading %}
+        {% endif %}
+        {% if value.ordering %}
+            {% if value.ordering == "ordered" %}
+                <ol class="list-inside list-decimal space-y-3 pl-4">
+                    {% for item in value.content %}
+                        <li>{% include_block item %}</li>
+                    {% endfor %}
+                </ol>
+            {% else %}
+                <ul class="list-inside list-disc space-y-3 pl-4">
+                    {% for item in value.content %}
+                        <li>{% include_block item %}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% else %}
+            <ul class="space-y-3">
+                {% for item in value.content %}
+                    {% link_url item.link as href %}
+                    {% link_target_attrs item.link as target_attrs %}
+                    <li>
+                        {% if href %}
+                            <a href="{{ href }}"
+                               class="link link-hover text-base-content"
+                               {{ target_attrs }}>{{ item.text|default:href }}</a>
+                        {% else %}
+                            <span>{{ item.text }}</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+{% endif %}

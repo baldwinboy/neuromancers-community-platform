@@ -1,4 +1,5 @@
 /* These styles are generated from project.scss. */
+@import url(https://fonts.bunny.net/css?family=atkinson-hyperlegible:400,400i,700,700i|handjet:100,200,300,400,500,600,700,800,900|space-mono:400,400i,700,700i);
 
 .alert-debug {
   color: black;

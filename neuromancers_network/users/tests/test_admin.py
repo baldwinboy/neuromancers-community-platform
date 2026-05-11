@@ -12,6 +12,7 @@ from neuromancers_network.users.models import User
 
 
 class TestUserAdmin:
+
     def test_changelist(self, admin_client):
         url = reverse("admin:users_user_changelist")
         response = admin_client.get(url)
@@ -50,7 +51,8 @@ class TestUserAdmin:
         # Reload the admin module to apply the setting change
         import neuromancers_network.users.admin as users_admin  # noqa: PLC0415
 
-        with contextlib.suppress(admin.sites.AlreadyRegistered):  # type: ignore[attr-defined]
+        with contextlib.suppress(
+                admin.sites.AlreadyRegistered):  # type: ignore[attr-defined]
             reload(users_admin)
 
     @pytest.mark.django_db

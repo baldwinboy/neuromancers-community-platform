@@ -1,5 +1,6 @@
 # ruff: noqa: E501
 import logging
+from urllib.parse import urlparse
 
 import sentry_sdk
 from sentry_sdk.integrations.celery import CeleryIntegration
@@ -70,6 +71,13 @@ SECURE_CONTENT_TYPE_NOSNIFF = env.bool(
     default=True,
 )
 
+# Custom security headers middleware (HSTS, CSP, etc.)
+MIDDLEWARE = [
+    "neuromancers_network.core.security.SecurityHeadersMiddleware",
+    "neuromancers_network.core.security.ContentSecurityPolicyMiddleware",
+    *MIDDLEWARE,
+]
+
 
 # https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html#settings
 AWS_ACCESS_KEY_ID = env("DJANGO_AWS_ACCESS_KEY_ID")
@@ -92,8 +100,10 @@ AWS_S3_MAX_MEMORY_SIZE = env.int(
 )
 # https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html#settings
 AWS_S3_REGION_NAME = env("DJANGO_AWS_S3_REGION_NAME", default=None)
+AWS_S3_ENDPOINT_URL = env("DJANGO_AWS_S3_ENDPOINT_URL", default=None)
 # https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html#cloudfront
 AWS_S3_CUSTOM_DOMAIN = env("DJANGO_AWS_S3_CUSTOM_DOMAIN", default=None)
+AWS_S3_ADDRESSING_STYLE = env("DJANGO_AWS_S3_ADDRESSING_STYLE", default=None)
 aws_s3_domain = AWS_S3_CUSTOM_DOMAIN or f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
 # STATIC & MEDIA
 # ------------------------
@@ -220,5 +230,33 @@ sentry_sdk.init(
 )
 
 
-# Your stuff...
+# Django Smart Ratelimit
 # ------------------------------------------------------------------------------
+RATELIMIT_BACKEND = "django_smart_ratelimit.backends.RedisBackend"
+RATELIMIT_REDIS_URL = urlparse(REDIS_URL)
+RATELIMIT_REDIS = {
+    "host": RATELIMIT_REDIS_URL.hostname,
+    "port": RATELIMIT_REDIS_URL.port,
+    "db": int(RATELIMIT_REDIS_URL.path.lstrip("/") or 0),
+}
+
+RATELIMIT_MIDDLEWARE = {
+    "enabled": True,
+    "excluded_paths": ["/health/"],
+}
+
+# django-allauth
+# ------------------------------------------------------------------------------
+ACCOUNT_RATE_LIMITS = {
+    "change_password": "1/m/user",
+    "change_phone": "1/m/user",
+    "manage_email": "1/m/user",
+    "reset_password": "1/m/ip,1/m/key",
+    "reauthenticate": "1/m/user",
+    "reset_password_from_key": "1/m/ip",
+    "signup": "1/m/ip",
+    "login": "1/m/ip",
+    "login_failed": "1/m/ip,1/5m/key",
+    "confirm_email": "1/3m/key",
+}
+ACCOUNT_EMAIL_NOTIFICATIONS = True

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{{ profile.user.username }} — {% trans "Profile" %} — {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+        <div class="avatar placeholder">
+          <div class="bg-neutral text-neutral-content rounded-full w-24 h-24">
+            {% if profile.avatar_id %}
+              <img src="https://getpronto.example.com/{{ profile.avatar_id }}" alt="{{ profile.user.username }}" />
+            {% else %}
+              <span class="text-3xl">{{ profile.user.username|first|upper }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="flex-1 text-center sm:text-left">
+          <div class="flex items-center gap-3 justify-center sm:justify-start mb-2">
+            <h1 class="text-3xl font-bold">{{ profile.user.username }}</h1>
+            {% if profile.tier_state == "verified_peer" %}
+              <span class="badge badge-primary">{% trans "Verified Peer" %}</span>
+            {% elif profile.tier_state == "peer" %}
+              <span class="badge badge-secondary">{% trans "Peer" %}</span>
+            {% else %}
+              <span class="badge badge-ghost">{% trans "Seeker" %}</span>
+            {% endif %}
+          </div>
+          {% if profile.bio %}
+            <p class="text-base-content/70">{{ profile.bio }}</p>
+          {% endif %}
+          {% if profile.languages %}
+            <div class="flex flex-wrap gap-2 mt-3 justify-center sm:justify-start">
+              {% for lang in profile.languages %}
+                <span class="badge badge-outline">{{ lang }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+        {% if profile.user == request.user %}
+          <a href="{% url 'users:update' %}" class="btn btn-outline btn-sm">{% trans "Edit profile" %}</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if profile.user == request.user %}
+    <div class="card bg-base-100 shadow mb-8">
+      <div class="card-body">
+        <h2 class="card-title">{% trans "Account Settings" %}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <a href="{% url 'account_email' %}" class="btn btn-outline justify-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+            {% trans "Manage email" %}
+          </a>
+          <a href="{% url 'mfa_index' %}" class="btn btn-outline justify-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            {% trans "Security" %}
+          </a>
+          {% if profile.user.stripe_account %}
+            <a href="{% url 'users:detail' username=profile.user.username %}" class="btn btn-outline justify-start">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+              {% trans "Payment settings" %}
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if profile.user == request.user or request.user.is_staff %}
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title">{% trans "Sessions" %}</h2>
+        <p class="text-base-content/60 mb-4">{% trans "Sessions hosted by this user will appear here." %}</p>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock content %}

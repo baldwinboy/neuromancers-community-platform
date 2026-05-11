@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Availability" %} — {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-5xl">
+  <div class="breadcrumbs text-sm mb-6">
+    <ul>
+      <li><a href="/">{% trans "Home" %}</a></li>
+      <li><a href="{{ page.url }}">{% trans "Sessions" %}</a></li>
+      <li class="text-base-content/60">{% trans "Availability" %}</li>
+    </ul>
+  </div>
+
+  <h1 class="text-3xl font-bold mb-6">{% trans "Your Availability" %}</h1>
+
+  {% if errors %}
+    <div class="alert alert-error mb-6">
+      <ul>
+        {% for field, error in errors.items %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title">{% trans "Add Rule" %}</h2>
+        <form method="post" action="{{ page.url }}availability/">
+          {% csrf_token %}
+          <div class="form-control mb-4">
+            <label class="label" for="day_of_week">{% trans "Day of week" %}</label>
+            <select name="day_of_week" id="day_of_week" class="select select-bordered" required>
+              <option value="">{% trans "Select day..." %}</option>
+              <option value="0">{% trans "Monday" %}</option>
+              <option value="1">{% trans "Tuesday" %}</option>
+              <option value="2">{% trans "Wednesday" %}</option>
+              <option value="3">{% trans "Thursday" %}</option>
+              <option value="4">{% trans "Friday" %}</option>
+              <option value="5">{% trans "Saturday" %}</option>
+              <option value="6">{% trans "Sunday" %}</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="form-control">
+              <label class="label" for="start_time">{% trans "Start time" %}</label>
+              <input type="time" name="start_time" id="start_time" class="input input-bordered" required>
+            </div>
+            <div class="form-control">
+              <label class="label" for="end_time">{% trans "End time" %}</label>
+              <input type="time" name="end_time" id="end_time" class="input input-bordered" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">{% trans "Add Rule" %}</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title">{% trans "Current Rules" %}</h2>
+        {% if rules %}
+          <ul class="divide-y">
+            {% for rule in rules %}
+              <li class="py-3 flex items-center justify-between">
+                <div>
+                  <span class="font-medium">{{ rule.get_day_of_week_display }}</span>
+                  <span class="text-base-content/70 ml-2">{{ rule.start_time|time:"H:i" }} — {{ rule.end_time|time:"H:i" }}</span>
+                </div>
+                <form method="post" action="{{ page.url }}availability/{{ rule.id }}/delete/">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-xs btn-ghost text-error">{% trans "Remove" %}</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-base-content/60 py-4 text-center">{% trans "No availability rules set. You will be available at all times." %}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

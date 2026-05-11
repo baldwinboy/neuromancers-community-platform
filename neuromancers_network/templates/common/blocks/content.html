@@ -1,0 +1,13 @@
+{% load wagtailcore_tags content_blocks %}
+
+{% block_visible value as is_visible %}
+{% if is_visible %}
+    {% block_style value as block_styles %}
+    {% block_size_classes value as block_sizes %}
+    <section class="space-y-6 {{ block_sizes }}"
+             {% if block_styles %}style="{{ block_styles }}"{% endif %}>
+        {% for child in value.content %}
+            {% include_block child %}
+        {% endfor %}
+    </section>
+{% endif %}

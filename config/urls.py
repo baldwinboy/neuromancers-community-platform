@@ -1,15 +1,21 @@
 from django.conf import settings
+from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include
 from django.urls import path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
+from wagtail import urls as wagtail_urls
+from wagtail.admin import urls as wagtailadmin_urls
+from wagtail.documents import urls as wagtaildocs_urls
 
 from .api import api
 
+# Non-translatable URLs
+# Note: if you are using the Wagtail API or sitemaps,
+# these should not be added to `i18n_patterns` either
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
     path(
         "about/",
         TemplateView.as_view(template_name="pages/about.html"),
@@ -19,13 +25,33 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
     path("users/", include("neuromancers_network.users.urls", namespace="users")),
-    path("accounts/", include("allauth.urls")),
-    # Your stuff: custom urls includes go here
-    # ...
-    # Media files
-    *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
+    path("", include("allauth.urls")),
+    # Cookie consent
+    path("cookies/", include("cookie_consent.urls")),
+    # Wagtail URLs
+    path("cms/", include(wagtailadmin_urls)),
+    path("documents/", include(wagtaildocs_urls)),
+    # DJ Stripe — includes webhook endpoint at /stripe/webhook/<uuid>/
+    path("stripe/", include("djstripe.urls", namespace="djstripe")),
+    # Messaging
+    path("messages/", include("neuromancers_network.messaging.urls", namespace="messaging")),
+    # Events — Stripe Connect onboarding, checkout, subscription, account status
+    path("events/", include("neuromancers_network.events.urls")),
 ]
 
+# Translatable URLs
+# These will be available under a language code prefix. For example /en/search/
+urlpatterns += i18n_patterns(
+    path("", include(wagtail_urls)),
+    prefix_default_language=False,
+)
+
+# Translation / i18n
+if "rosetta" in settings.INSTALLED_APPS:
+    urlpatterns += [path("translations/", include("rosetta.urls"))]
+
+# Media files
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # API URLS
 urlpatterns += [

@@ -1,0 +1,51 @@
+{% load i18n %}
+
+<div class="calendar-block">
+  {% if self.show_filters %}
+  <div class="flex flex-wrap gap-4 mb-6 items-end">
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text">{% trans "View" %}</span>
+      </label>
+      <select class="select select-bordered select-sm" data-calendar-view>
+        <option value="month" {% if self.show_as == "month" %}selected{% endif %}>{% trans "Month" %}</option>
+        <option value="week" {% if self.show_as == "week" %}selected{% endif %}>{% trans "Week" %}</option>
+      </select>
+    </div>
+    <div class="form-control">
+      <label class="label">
+        <span class="label-text">{% trans "Session type" %}</span>
+      </label>
+      <select class="select select-bordered select-sm" data-calendar-type>
+        <option value="all">{% trans "All" %}</option>
+        <option value="peer">{% trans "1:1 Sessions" %}</option>
+        <option value="group">{% trans "Group Sessions" %}</option>
+      </select>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="calendar-grid" data-max-events="{{ self.max_events }}">
+    {% for week in calendar_weeks %}
+    <div class="grid grid-cols-7 gap-px bg-base-300 rounded-box overflow-hidden">
+      {% for day in week %}
+      <div class="calendar-day bg-base-100 p-2 min-h-[100px] {% if not day.in_month %}opacity-40{% endif %}">
+        <div class="text-sm font-semibold mb-1">{{ day.day }}</div>
+        <div class="space-y-1">
+          {% for event in day.events|slice:":5" %}
+          <a href="{{ event.url }}" class="block text-xs px-1 py-0.5 rounded truncate
+            {% if event.is_group %}bg-secondary text-secondary-content
+            {% else %}bg-primary text-primary-content{% endif %}">
+            {{ event.title }}
+          </a>
+          {% endfor %}
+          {% if day.events|length > 5 %}
+          <span class="text-xs text-base-content/50">+{{ day.events|length|add:"-5" }} {% trans "more" %}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</div>

@@ -1,0 +1,33 @@
+{% extends "events/session_base.html" %}
+{% load static i18n %}
+
+{% block session_content %}
+<div class="max-w-xl mx-auto">
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <h2 class="card-title">{% trans "Session Feedback" %}</h2>
+      <p class="text-base-content/70 mb-6">{% trans "How was your session? Your feedback helps the host improve." %}</p>
+      <form method="post" action="{{ page.url }}{{ session.id }}/feedback/">
+        {% csrf_token %}
+        <div class="form-control mb-4">
+          <label class="label">{% trans "Rating" %}</label>
+          <div class="rating rating-lg">
+            <input type="radio" name="rating" value="1" class="mask mask-star-2 bg-orange-400" />
+            <input type="radio" name="rating" value="2" class="mask mask-star-2 bg-orange-400" />
+            <input type="radio" name="rating" value="3" class="mask mask-star-2 bg-orange-400" />
+            <input type="radio" name="rating" value="4" class="mask mask-star-2 bg-orange-400" />
+            <input type="radio" name="rating" value="5" class="mask mask-star-2 bg-orange-400" checked />
+          </div>
+        </div>
+        <div class="form-control mb-6">
+          <label class="label" for="comment">
+            <span class="label-text">{% trans "Comments (optional)" %}</span>
+          </label>
+          <textarea name="comment" id="comment" class="textarea textarea-bordered" rows="4" placeholder="{% trans 'Share your experience...' %}"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">{% trans "Submit feedback" %}</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock session_content %}

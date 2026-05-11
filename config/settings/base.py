@@ -5,10 +5,21 @@ import ssl
 from pathlib import Path
 
 import environ
+from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # neuromancers_network/
 APPS_DIR = BASE_DIR / "neuromancers_network"
+# blacklist.txt
+BLACKLIST_PATH = BASE_DIR / "blacklist.txt"
+BLACKLIST = set()
+if BLACKLIST_PATH.exists():
+    with BLACKLIST_PATH.open() as f:
+        for file_line in f:
+            line = file_line.strip()
+            if line:
+                BLACKLIST.add(line)
+
 env = environ.Env()
 
 READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
@@ -26,18 +37,20 @@ DEBUG = env.bool("DJANGO_DEBUG", False)
 # In Windows, this must be set to your system time zone.
 TIME_ZONE = "UTC"
 # https://docs.djangoproject.com/en/dev/ref/settings/#language-code
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "en-GB"
 # https://docs.djangoproject.com/en/dev/ref/settings/#languages
-# from django.utils.translation import gettext_lazy as _
-# LANGUAGES = [
-#     ('en', _('English')),
-#     ('fr-fr', _('French')),
-#     ('pt-br', _('Portuguese')),
-# ]
+LANGUAGES = [
+    ("en", _("English")),
+    ("fr", _("French")),
+    ("de", _("German")),
+    ("es", _("Spanish")),
+    ("pt", _("Portuguese")),
+]
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
 SITE_ID = 1
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-i18n
 USE_I18N = True
+USE_L10N = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
 USE_TZ = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#locale-paths
@@ -67,24 +80,69 @@ DJANGO_APPS = [
     "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # "django.contrib.humanize", # Handy template tags
+    "django.contrib.humanize",  # Handy template tags
     "django.contrib.admin",
+    "django.contrib.postgres",
     "django.forms",
 ]
+WAGTAIL_APPS = [
+    "wagtail.contrib.forms",
+    "wagtail.contrib.redirects",
+    "wagtail.contrib.routable_page",
+    "wagtail.contrib.settings",
+    "wagtail.locales",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail.admin",
+    "wagtail",
+    "modelcluster",
+    "taggit",
+    "wagtail_link_block",
+    "wagtail_color_panel",
+    "wagtailmenus",
+    "wagtailmarkdown",
+]
 THIRD_PARTY_APPS = [
-    "crispy_forms",
-    "crispy_bootstrap5",
     "allauth",
     "allauth.account",
     "allauth.mfa",
     "allauth.socialaccount",
+    "auditlog",
     "django_celery_beat",
+    "colorfield",
+    "cookie_consent",
     "corsheaders",
+    "crispy_forms",
+    "crispy_tailwind",
+    "django_filters",
+    "django_fsm",
+    "guardian",
+    "django_htmx",
+    "djstripe",
+    "phonenumber_field",
+    "recurrence",
+    "recurring",
+    "rosetta",
+    "django_smart_ratelimit",
+    "django_tailwind_cli",
+    "widget_tweaks",
+    *WAGTAIL_APPS,
 ]
 
 LOCAL_APPS = [
+    "neuromancers_network.common",
     "neuromancers_network.users",
-    # Your stuff: custom apps go here
+    "neuromancers_network.core",
+    "neuromancers_network.emails",
+    "neuromancers_network.events",
+    "neuromancers_network.moderation",
+    "neuromancers_network.messaging",
+    "neuromancers_network.admin_guide",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -100,6 +158,7 @@ MIGRATION_MODULES = {"sites": "neuromancers_network.contrib.sites.migrations"}
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
+    "guardian.backends.ObjectPermissionBackend",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
@@ -143,6 +202,11 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
+    "neuromancers_network.core.middleware.SiteLockMiddleware",
+    "neuromancers_network.core.middleware.HealthCheckMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",
+    "django_smart_ratelimit.middleware.RateLimitMiddleware",
 ]
 
 # STATIC
@@ -189,6 +253,9 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
                 "neuromancers_network.users.context_processors.allauth_settings",
+                "neuromancers_network.core.context_processors.design_variables",
+                "wagtail.contrib.settings.context_processors.settings",
+                "wagtailmenus.context_processors.wagtailmenus",
             ],
         },
     },
@@ -198,8 +265,8 @@ TEMPLATES = [
 FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 # http://django-crispy-forms.readthedocs.io/en/latest/install.html#template-packs
-CRISPY_TEMPLATE_PACK = "bootstrap5"
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"
 
 # FIXTURES
 # ------------------------------------------------------------------------------
@@ -214,6 +281,13 @@ SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#x-frame-options
 X_FRAME_OPTIONS = "DENY"
+
+# SITE LOCK
+# ------------------------------------------------------------------------------
+SITE_LOCK_DEFAULT_PASSWORD = env(
+    "SITE_LOCK_DEFAULT_PASSWORD",
+    default="siteLock2026!!",
+)
 
 # EMAIL
 # ------------------------------------------------------------------------------
@@ -303,13 +377,59 @@ CELERY_WORKER_SEND_TASK_EVENTS = True
 CELERY_TASK_SEND_SENT_EVENT = True
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#worker-hijack-root-logger
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+
+# Celery Beat Schedule
+# ------------------------------------------------------------------------------
+CELERY_BEAT_SCHEDULE = {
+    "expire-stale-bookings": {
+        "task": "neuromancers_network.events.tasks.expire_stale_bookings",
+        "schedule": 3600,  # every hour
+    },
+}
+
+# Content Security Policy
+# ------------------------------------------------------------------------------
+CONTENT_SECURITY_POLICY = {
+    "default-src": ["'self'"],
+    "script-src": ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
+    "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    "img-src": ["'self'", "data:", "https://*.stripe.com"],
+    "font-src": ["'self'", "https://fonts.gstatic.com"],
+    "frame-src": ["https://js.stripe.com", "https://hooks.stripe.com"],
+    "connect-src": ["'self'", "https://api.stripe.com"],
+    "form-action": ["'self'"],
+    "base-uri": ["'self'"],
+}
 # django-allauth
 # ------------------------------------------------------------------------------
+# Decoy field for spam detection
+# Requires a field not used on sign up
+ACCOUNT_SIGNUP_FORM_HONEYPOT_FIELD = "is_staff"
 ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
 # https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_LOGIN_METHODS = {"username"}
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
+ACCOUNT_LOGIN_BY_CODE_ENABLED = True
+ACCOUNT_LOGIN_BY_CODE_SUPPORTS_RESEND = True
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
+ACCOUNT_EMAIL_NOTIFICATIONS = True
+ACCOUNT_PRESERVE_USERNAME_CASING = False
+ACCOUNT_USERNAME_BLACKLIST = list(BLACKLIST)
+ACCOUNT_CHANGE_EMAIL = True
+
+# Users can request email confirmation mails via the email management view, and, implicitly, when logging in with an unverified account. This rate limit prevents users from sending too many of these mails.
 # https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+ACCOUNT_SIGNUP_FIELDS = [
+    "username*",
+    "given_name*",
+    "family_name*",
+    "date_of_birth*",
+    "email*",
+    "email2*",
+    "password1*",
+    "password2*",
+    "accept_toc*",
+]
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 # https://docs.allauth.org/en/latest/account/configuration.html
@@ -319,7 +439,9 @@ ACCOUNT_FORMS = {"signup": "neuromancers_network.users.forms.UserSignupForm"}
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
 SOCIALACCOUNT_ADAPTER = "neuromancers_network.users.adapters.SocialAccountAdapter"
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_FORMS = {"signup": "neuromancers_network.users.forms.UserSocialSignupForm"}
+SOCIALACCOUNT_FORMS = {
+    "signup": "neuromancers_network.users.forms.UserSocialSignupForm",
+}
 # django-compressor
 # ------------------------------------------------------------------------------
 # https://django-compressor.readthedocs.io/en/latest/quickstart/#installation
@@ -328,3 +450,56 @@ STATICFILES_FINDERS += ["compressor.finders.CompressorFinder"]
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+# Wagtail
+# ------------------------------------------------------------------------------
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10_000
+WAGTAIL_SITE_NAME = "NEUROMANCERS Network"
+WAGTAILADMIN_BASE_URL = env("WAGTAILADMIN_BASE_URL", default="http://localhost:8000")
+WAGTAILDOCS_EXTENSIONS = [
+    "csv",
+    "docx",
+    "key",
+    "odt",
+    "pdf",
+    "pptx",
+    "rtf",
+    "txt",
+    "xlsx",
+]
+WAGTAILADMIN_LOGIN_URL = "/"  # Redirect to homepage to prevent too many redirects
+WAGTAIL_FRONTEND_LOGIN_URL = LOGIN_URL
+WAGTAILIMAGES_IMAGE_MODEL = "core.GetProntoImage"
+
+# Wagtail Markdown
+# ------------------------------------------------------------------------------
+# WAGTAILMARKDOWN = {
+#     "autodownload_fontawesome": False,
+#     "allowed_tags": [],  # optional. a list of HTML tags. e.g. ['div', 'p', 'a']
+#     "allowed_styles": [],  # optional. a list of styles
+#     "allowed_attributes": {},  # optional. a dict with HTML tag as key and a list of attributes as value
+#     "allowed_settings_mode": "extend",  # optional. Possible values: "extend" or "override". Defaults to "extend".
+#     "extensions": [],  # optional. a list of python-markdown supported extensions
+#     "extension_configs": {},  # optional. a dictionary with the extension name as key, and its configuration as value
+#     "extensions_settings_mode": "extend",  # optional. Possible values: "extend" or "override". Defaults to "extend".
+#     "tab_length": 4,  # optional. Sets the length of tabs used by python-markdown to render the output. This is the number of spaces used to replace with a tab character. Defaults to 4.
+# }
+
+# Django Tailwind CLI
+# ------------------------------------------------------------------------------
+# Pin specific Tailwind version
+TAILWIND_CLI_VERSION = "2.8.3"
+
+# Enable DaisyUI
+TAILWIND_CLI_USE_DAISY_UI = True
+
+# Django Guardian
+# ------------------------------------------------------------------------------
+# https://django-guardian.readthedocs.io/en/stable/configuration.html#anonymous
+ANONYMOUS_USER_NAME = "__anonymous__"
+GUARDIAN_MONKEY_PATCH_GROUP = False
+GUARDIAN_MONKEY_PATCH_USER = False
+# https://django-guardian.readthedocs.io/en/stable/userguide/upgrading-to-direct-foreign-keys/#step-3-enable-the-direct-models
+GUARDIAN_GET_INIT_ANONYMOUS_USER = (
+    "neuromancers_network.users.models.get_anonymous_user_instance"
+)

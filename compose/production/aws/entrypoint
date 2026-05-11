@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+if [ -n "${BWS_ACCESS_TOKEN:-}" ] && [ -z "${_BWS_BOOTSTRAPPED:-}" ]; then
+  export _BWS_BOOTSTRAPPED=1
+  exec bws run -- /entrypoint "$@"
+fi
+
+exec "$@"

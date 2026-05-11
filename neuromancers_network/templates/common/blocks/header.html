@@ -1,0 +1,9 @@
+{% load content_blocks %}
+
+{% block_visible value as is_visible %}
+{% if is_visible and value.text %}
+    {% block_style value as block_styles %}
+    {% block_size_classes value centered=False as block_sizes %}
+    <h2 class="text-3xl font-semibold leading-tight text-balance sm:text-4xl {{ block_sizes }}"
+        {% if block_styles %}style="{{ block_styles }}"{% endif %}>{{ value.text }}</h2>
+{% endif %}

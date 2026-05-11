@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Account Settings" %} — {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div class="breadcrumbs text-sm mb-6">
+    <ul>
+      <li><a href="/">{% trans "Home" %}</a></li>
+      <li><a href="{{ page.url }}">{% trans "Profile" %}</a></li>
+      <li class="text-base-content/60">{% trans "Settings" %}</li>
+    </ul>
+  </div>
+
+  <h1 class="text-3xl font-bold mb-8">{% trans "Account Settings" %}</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% if user_settings.enable_profile_edit %}
+    <a href="{{ page.url }}settings/profile/" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+      <div class="card-body">
+        <h2 class="card-title">{{ user_settings.profile_label }}</h2>
+        <p class="text-base-content/70">{% trans "Edit your name, bio, and profile information." %}</p>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if user_settings.enable_password_change %}
+    <a href="{{ page.url }}settings/password/" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+      <div class="card-body">
+        <h2 class="card-title">{{ user_settings.password_label }}</h2>
+        <p class="text-base-content/70">{% trans "Change your account password." %}</p>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if user_settings.enable_email_management %}
+    <a href="{{ page.url }}settings/email/" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+      <div class="card-body">
+        <h2 class="card-title">{{ user_settings.email_label }}</h2>
+        <p class="text-base-content/70">{% trans "Manage your email addresses." %}</p>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if user_settings.enable_notification_prefs %}
+    <a href="{{ page.url }}settings/notifications/" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+      <div class="card-body">
+        <h2 class="card-title">{{ user_settings.notification_label }}</h2>
+        <p class="text-base-content/70">{% trans "Configure your notification preferences." %}</p>
+      </div>
+    </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock content %}

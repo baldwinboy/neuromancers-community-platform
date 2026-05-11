@@ -1,0 +1,14 @@
+{
+  "[django-html]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "monosans.djlint"
+  },
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports.ruff": "explicit",
+      "source.fixAll": "explicit"
+    }
+  },
+  "python.defaultInterpreterPath": ".venv/bin/python3.14"
+}

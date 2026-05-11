@@ -1,0 +1,33 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% load static i18n %}
+
+{% translate "Admin Guide" as admin_guide_title %}
+{% block titletag %}
+    {{ admin_guide_title }}
+{% endblock titletag %}
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/calendar.css' %}" />
+{% endblock extra_css %}
+{% block content %}
+    {% include "wagtailadmin/shared/header.html" with title=admin_guide_title icon="pick" %}
+    <div class="nice-padding">
+        <p>
+            <a href="{{ add_url }}" class="button button-primary">{% trans "Add Guide" %}</a>
+        </p>
+        {% regroup object_list by group as grouped_guides %}
+        {% for group in grouped_guides %}
+            <section class="mb-4">
+                <h2>{{ group.grouper }}</h2>
+                <ul>
+                    {% for guide in group.list %}
+                        <li>
+                            <a href="{% url viewset.get_url_name 'inspect' guide.pk %}">{{ guide.title }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endfor %}
+    </div>
+{% endblock content %}

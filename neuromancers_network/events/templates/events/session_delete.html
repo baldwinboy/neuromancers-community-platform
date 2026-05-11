@@ -1,0 +1,32 @@
+{% extends "events/session_base.html" %}
+{% load static i18n %}
+
+{% block session_content %}
+<div class="max-w-xl mx-auto">
+  <div class="card bg-base-100 shadow border-2 border-error/20">
+    <div class="card-body text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-error mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+      <h2 class="card-title justify-center mb-2 text-error">{% trans "Delete Session" %}</h2>
+      <div class="alert alert-error mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <span>{% trans "This action cannot be undone. All bookings and data associated with this session will be permanently deleted." %}</span>
+      </div>
+      <form method="post" action="{{ page.url }}{{ session.id }}/delete/">
+        {% csrf_token %}
+        <div class="form-control mb-6">
+          <label class="label cursor-pointer justify-center gap-4">
+            <span class="label-text">{% trans "I understand this is permanent" %}</span>
+            <input type="checkbox" name="confirm" class="checkbox checkbox-error" required>
+          </label>
+        </div>
+        <div class="flex gap-4 justify-center">
+          <button type="submit" class="btn btn-error" onclick="return confirm('{% trans "Are you absolutely sure?" %}')">{% trans "Delete permanently" %}</button>
+          <a href="{{ page.url }}{{ session.id }}/" class="btn btn-outline">{% trans "Keep session" %}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock session_content %}

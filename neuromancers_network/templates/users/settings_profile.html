@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Edit Profile" %} — {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-lg">
+  <div class="breadcrumbs text-sm mb-6">
+    <ul>
+      <li><a href="/">{% trans "Home" %}</a></li>
+      <li><a href="{{ page.url }}">{% trans "Profile" %}</a></li>
+      <li><a href="{{ page.url }}settings/">{% trans "Settings" %}</a></li>
+      <li class="text-base-content/60">{{ user_settings.profile_label }}</li>
+    </ul>
+  </div>
+
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h1 class="card-title text-2xl mb-4">{{ user_settings.profile_label }}</h1>
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-control mb-4">
+          <label class="label" for="id_name">
+            <span class="label-text">{% trans "Name" %}</span>
+          </label>
+          <input type="text" name="name" id="id_name" class="input input-bordered"
+                 value="{{ user.name }}" maxlength="255">
+        </div>
+
+        <div class="form-control mb-4">
+          <label class="label" for="id_bio">
+            <span class="label-text">{% trans "Bio" %}</span>
+          </label>
+          <textarea name="bio" id="id_bio" class="textarea textarea-bordered" rows="4">{{ user.profile.bio }}</textarea>
+        </div>
+
+        <div class="form-control mt-6">
+          <button type="submit" class="btn btn-primary">{% trans "Save Profile" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock content %}

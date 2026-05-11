@@ -14,7 +14,7 @@ SECRET_KEY = env(
     default="u5OfNV6oDmKss8JXt3TbhfkuaBJjsPF55XaruD6ydzZkPgLA8xNy3zsUHBp4jR2m",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#test-runner
-TEST_RUNNER = "django.test.runner.DiscoverRunner"
+TEST_RUNNER = "tests.runner.CustomTestRunner"
 
 # PASSWORDS
 # ------------------------------------------------------------------------------
@@ -29,6 +29,10 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 # DEBUGGING FOR TEMPLATES
 # ------------------------------------------------------------------------------
 TEMPLATES[0]["OPTIONS"]["debug"] = True  # type: ignore[index]
+
+# dj-stripe
+# ------------------------------------------------------------------------------
+DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 
 # MEDIA
 # ------------------------------------------------------------------------------

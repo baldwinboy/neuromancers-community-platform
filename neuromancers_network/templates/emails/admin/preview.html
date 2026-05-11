@@ -1,0 +1,15 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{{ template_obj.subject }} — {% trans "Email Preview" %}</title>
+</head>
+<body>
+  {% if email_html %}
+    {{ email_html|safe }}
+  {% else %}
+    <p>{% trans "Could not render email preview. Check MJML API configuration and template content." %}</p>
+  {% endif %}
+</body>
+</html>

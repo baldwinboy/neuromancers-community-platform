@@ -1,0 +1,93 @@
+{% extends "events/session_base.html" %}
+{% load static i18n %}
+
+{% block session_content %}
+<div class="max-w-2xl mx-auto">
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <h2 class="card-title">{% trans "Book this session" %}</h2>
+
+      {% if errors %}
+      <div class="alert alert-error mb-6" role="alert">
+        <ul>
+          {% for field, error in errors.items %}
+            <li><strong>{{ field }}:</strong> {{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if session.is_peer %}
+      <div class="alert alert-info mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span>{% trans "You are booking a 1:1 session. Choose your preferred date and time." %}</span>
+      </div>
+      {% endif %}
+
+      <form method="post" action="{{ page.url }}{{ session.id }}/book/" novalidate>
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div class="form-control">
+            <label class="label" for="starts_at">{% trans "Start date & time" %}</label>
+            <input type="datetime-local" name="starts_at" id="starts_at" class="input input-bordered {% if errors.starts_at %}input-error{% endif %}" required aria-describedby="{% if errors.starts_at %}starts_at-error{% endif %}">
+            {% if errors.starts_at %}<span id="starts_at-error" class="text-error text-sm mt-1">{{ errors.starts_at }}</span>{% endif %}
+          </div>
+          <div class="form-control">
+            <label class="label" for="ends_at">{% trans "End date & time" %}</label>
+            <input type="datetime-local" name="ends_at" id="ends_at" class="input input-bordered {% if errors.ends_at %}input-error{% endif %}" required aria-describedby="{% if errors.ends_at %}ends_at-error{% endif %}">
+            {% if errors.ends_at %}<span id="ends_at-error" class="text-error text-sm mt-1">{{ errors.ends_at }}</span>{% endif %}
+          </div>
+        </div>
+
+        {% if session.is_peer %}
+        <div class="form-control mb-4">
+          <label class="label" for="duration">{% trans "Duration" %}</label>
+          <select name="duration" id="duration" class="select select-bordered {% if errors.duration %}select-error{% endif %}" aria-describedby="{% if errors.duration %}duration-error{% endif %}">
+            <option value="">{% trans "Select duration..." %}</option>
+            {% for dp in session.duration_prices.all %}
+              <option value="{{ dp.duration_minutes }}">{{ dp.duration_minutes }} min — £{{ dp.amount_cents|floatformat:2 }}</option>
+            {% endfor %}
+          </select>
+          {% if errors.duration %}<span id="duration-error" class="text-error text-sm mt-1">{{ errors.duration }}</span>{% endif %}
+          {% if session.min_duration_minutes or session.max_duration_minutes %}
+          <p class="text-base-content/60 text-xs mt-1">
+            {% if session.min_duration_minutes %}{% trans "Min" %}: {{ session.min_duration_minutes }} min{% endif %}
+            {% if session.max_duration_minutes %} | {% trans "Max" %}: {{ session.max_duration_minutes }} min{% endif %}
+          </p>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="form-control mb-4">
+          <label class="label" for="timezone">
+            <span class="label-text">{% trans "Timezone" %}</span>
+          </label>
+          <select name="timezone" id="timezone" class="select select-bordered">
+            <option value="UTC">UTC</option>
+            <option value="Europe/London">Europe/London</option>
+            <option value="America/New_York">America/New_York</option>
+            <option value="America/Chicago">America/Chicago</option>
+            <option value="America/Denver">America/Denver</option>
+            <option value="America/Los_Angeles">America/Los_Angeles</option>
+            <option value="Asia/Tokyo">Asia/Tokyo</option>
+            <option value="Asia/Shanghai">Asia/Shanghai</option>
+          </select>
+        </div>
+
+        <div class="form-control mb-6">
+          <label class="label" for="accessibility_needs">
+            <span class="label-text">{% trans "Accessibility needs (optional)" %}</span>
+          </label>
+          <textarea name="accessibility_needs" id="accessibility_needs" class="textarea textarea-bordered" rows="2" aria-describedby="accessibility_hint"></textarea>
+          <span id="accessibility_hint" class="text-base-content/60 text-xs mt-1">{% trans "Let the host know if you have any accessibility requirements." %}</span>
+        </div>
+
+        <div class="flex gap-4">
+          <button type="submit" class="btn btn-primary">{% trans "Submit booking request" %}</button>
+          <a href="{{ page.url }}{{ session.id }}/" class="btn btn-outline">{% trans "Cancel" %}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock session_content %}

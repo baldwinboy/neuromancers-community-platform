@@ -1,0 +1,127 @@
+name: Deploy Infrastructure
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+      - staging
+
+concurrency:
+  group: deploy-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DEPLOY_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Checkout deployment revision
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-python@v6
+      - run: pip install ansible==13.6.*
+      - name: Install latest Bitwarden Secrets Manager CLI
+        run: |
+          # Fetch the latest release tag from GitHub API
+          LATEST_TAG=$(curl -s https://api.github.com/repos/bitwarden/sdk-sm/releases/latest \
+          | jq -r '.tag_name')
+
+          # Get only the version number ('xxx-v1.2.3' -> '1.2.3')
+          VERSION=${LATEST_TAG#*-v}
+
+          # Construct the download URL for the Linux AMD64 binary
+          TAG="bws-v${VERSION}"
+          ASSET_NAME="bws-x86_64-unknown-linux-gnu-${VERSION}.zip"
+          DOWNLOAD_URL="https://github.com/bitwarden/sdk-sm/releases/download/${TAG}/${ASSET_NAME}"
+
+          # Download and unzip the binary
+          curl -L -o bws.zip "$DOWNLOAD_URL"
+          unzip bws.zip -d /usr/local/bin
+          rm bws.zip
+      - id: inject-secrets
+        name: Inject secrets from Bitwarden Secrets Manager
+        env:
+          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+        run: |
+          REQUIRED_SECRETS=(
+            "HETZNER_SSH_HOST"
+            "HETZNER_SSH_PRIVATE_KEY"
+            "HETZNER_SSH_USER"
+            "TS_OAUTH_CLIENT_ID"
+            "TS_OAUTH_CLIENT_SECRET"
+            "TAILSCALE_TAG"
+            "TAILSCALE_AUTH_KEY"
+            "COOLIFY_ADMIN_USERNAME"
+            "COOLIFY_ADMIN_EMAIL"
+            "COOLIFY_ADMIN_PASSWORD"
+            "GATUS_DISCORD_WEBHOOK_URL"
+            "AWS_ENDPOINT_URL_S3"
+            "AWS_S3_BUCKET_NAME"
+            "AWS_ACCESS_KEY_ID"
+            "AWS_SECRET_ACCESS_KEY"
+            "RETENTION_DAYS"
+            "POSTGRES_DB"
+            "POSTGRES_USER"
+            "POSTGRES_PASSWORD"
+            "POSTGRES_HOST"
+            "POSTGRES_PORT"
+            "REDIS_URL"
+            "DJANGO_SECRET_KEY"
+            "CELERY_FLOWER_USER"
+            "CELERY_FLOWER_PASSWORD"
+          )
+
+          secrets_json="$(bws secret list)"
+          missing=()
+
+          for key in "${REQUIRED_SECRETS[@]}"; do
+            value="$(jq -r --arg k "$key" '.[] | select(.key==$k) | .value' <<< "$secrets_json" | head -n 1)"
+            if [[ -z "$value" || "$value" == "null" ]]; then
+              missing+=("$key")
+              continue
+            fi
+
+            # Only export values needed by later workflow steps.
+            case "$key" in
+              HETZNER_SSH_PRIVATE_KEY|TS_OAUTH_CLIENT_ID|TS_OAUTH_CLIENT_SECRET|TAILSCALE_TAG)
+                echo "::add-mask::$value"
+                echo "$key=$value" >> "$GITHUB_OUTPUT"
+                ;;
+            esac
+          done
+
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Missing required Bitwarden secrets: ${missing[*]}"
+            exit 1
+          fi
+      - name: Connect to tailnet
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ steps.inject-secrets.outputs.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ steps.inject-secrets.outputs.TS_OAUTH_CLIENT_SECRET }}
+          tags: ${{ steps.inject-secrets.outputs.TAILSCALE_TAG }}
+      - name: Create SSH key file for Ansible
+        env:
+          HETZNER_SSH_PRIVATE_KEY: ${{ steps.inject-secrets.outputs.HETZNER_SSH_PRIVATE_KEY }}
+        run: |
+          echo "${HETZNER_SSH_PRIVATE_KEY}" > iac/inventory/ssh_key
+          chmod 600 iac/inventory/ssh_key
+      - name: Install Ansible Galaxy requirements
+        run: ansible-galaxy collection install -r iac/galaxy/requirements.yml --force
+
+      - name: Play Ansible Playbook
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "false"
+          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+        run: |
+          bws run -- 'ansible-playbook iac/playbooks/site.yml --skip-tags smoke --inventory iac/inventory/hosts.yml --private-key iac/inventory/ssh_key'

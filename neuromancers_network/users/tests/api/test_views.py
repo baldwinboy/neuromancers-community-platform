@@ -48,9 +48,7 @@ def test_list_users_as_authenticated_user(client: Client, user: User):
 def test_retrieve_current_user(client: Client, user: User):
     client.force_login(user)
 
-    response = client.get(
-        reverse("api:retrieve_current_user"),
-    )
+    response = client.get(reverse("api:retrieve_current_user"), )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
@@ -65,8 +63,7 @@ def test_retrieve_user(client: Client, user: User):
     client.force_login(user)
 
     response = client.get(
-        reverse("api:retrieve_user", kwargs={"username": user.username}),
-    )
+        reverse("api:retrieve_user", kwargs={"username": user.username}), )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
@@ -82,8 +79,7 @@ def test_retrieve_another_user(client: Client, user: User):
     user_2 = UserFactory.create()
 
     response = client.get(
-        reverse("api:retrieve_user", kwargs={"username": user_2.username}),
-    )
+        reverse("api:retrieve_user", kwargs={"username": user_2.username}), )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {"detail": "Not Found"}

@@ -1,0 +1,30 @@
+{% extends "events/session_base.html" %}
+{% load static i18n %}
+
+{% block session_content %}
+<div class="max-w-xl mx-auto">
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <h2 class="card-title">{% trans "Reschedule Booking" %}</h2>
+      <p class="text-base-content/70 mb-6">{% trans "Choose a new date and time for your booking." %}</p>
+      <form method="post" action="{{ page.url }}{{ session.id }}/reschedule/">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div class="form-control">
+            <label class="label" for="new_starts_at">{% trans "New start" %}</label>
+            <input type="datetime-local" name="new_starts_at" id="new_starts_at" class="input input-bordered" required>
+          </div>
+          <div class="form-control">
+            <label class="label" for="new_ends_at">{% trans "New end" %}</label>
+            <input type="datetime-local" name="new_ends_at" id="new_ends_at" class="input input-bordered" required>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <button type="submit" class="btn btn-primary">{% trans "Confirm reschedule" %}</button>
+          <a href="{{ page.url }}{{ session.id }}/" class="btn btn-outline">{% trans "Cancel" %}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock session_content %}

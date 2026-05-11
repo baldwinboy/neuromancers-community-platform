@@ -1,0 +1,18 @@
+{% load content_blocks %}
+
+{% block_visible value as is_visible %}
+{% if is_visible %}
+    {% link_url value.link as href %}
+    {% link_target_attrs value.link as target_attrs %}
+    {% block_style value as block_styles %}
+    {% block_size_classes value centered=False as block_sizes %}
+    {% if href %}
+        <a href="{{ href }}"
+           class="btn btn-primary {{ block_sizes }}"
+           {% if block_styles %}style="{{ block_styles }}"{% endif %}
+           {{ target_attrs }}>{{ value.text|default:href }}</a>
+    {% else %}
+        <span class="btn btn-disabled {{ block_sizes }}"
+              {% if block_styles %}style="{{ block_styles }}"{% endif %}>{{ value.text }}</span>
+    {% endif %}
+{% endif %}

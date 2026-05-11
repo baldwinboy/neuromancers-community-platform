@@ -1,0 +1,19 @@
+{% load wagtailcore_tags content_blocks %}
+
+{% if value.border %}
+    {% border_style value.border as item_border_style %}
+{% else %}
+    {% border_style default_item_border as item_border_style %}
+{% endif %}
+<div class="collapse {% if value.collapsed_icon == 'plus' %}collapse-plus{% else %}collapse-arrow{% endif %} rounded-box bg-base-100 shadow-sm"
+     {% if item_border_style %}style="{{ item_border_style }}"{% endif %}>
+    <input type="radio"
+           name="{{ accordion_id }}"
+           {% if is_first %}checked="checked"{% endif %} />
+    <div class="collapse-title pr-12">{% include_block value.bound_blocks.heading %}</div>
+    <div class="collapse-content pt-1">
+        {% for child in value.content %}
+            {% include_block child %}
+        {% endfor %}
+    </div>
+</div>

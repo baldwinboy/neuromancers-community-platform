@@ -1,0 +1,23 @@
+{% extends "events/session_base.html" %}
+{% load static i18n %}
+
+{% block session_content %}
+<div class="max-w-xl mx-auto">
+  <div class="card bg-base-100 shadow">
+    <div class="card-body text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-warning mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      </svg>
+      <h2 class="card-title justify-center mb-2">{% trans "Cancel Booking" %}</h2>
+      <p class="text-base-content/70 mb-6">{% trans "Are you sure you want to cancel your booking for this session? This action cannot be undone." %}</p>
+      <form method="post" action="{{ page.url }}{{ session.id }}/cancel/">
+        {% csrf_token %}
+        <div class="flex gap-4 justify-center">
+          <button type="submit" class="btn btn-error">{% trans "Yes, cancel booking" %}</button>
+          <a href="{{ page.url }}{{ session.id }}/" class="btn btn-outline">{% trans "Go back" %}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock session_content %}

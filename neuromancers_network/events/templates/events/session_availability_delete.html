@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "Remove Availability Rule" %} — {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-5xl">
+  <div class="card bg-base-100 shadow max-w-md mx-auto">
+    <div class="card-body text-center">
+      <h2 class="card-title justify-center">{% trans "Remove Rule?" %}</h2>
+      <p class="mb-6">
+        {% trans "Are you sure you want to remove this availability rule?" %}
+      </p>
+      <p class="text-lg font-medium mb-6">
+        {{ rule.get_day_of_week_display }} — {{ rule.start_time|time:"H:i" }} to {{ rule.end_time|time:"H:i" }}
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="flex gap-4 justify-center">
+          <button type="submit" class="btn btn-error">{% trans "Remove" %}</button>
+          <a href="{{ page.url }}availability/" class="btn btn-outline">{% trans "Cancel" %}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,22 @@
+<!-- DaisyUI 5 theme controller -->
+<input type="checkbox" value="neuromancers" class="theme-controller hidden" checked />
+<input type="checkbox" value="dark" class="theme-controller hidden" />
+
+<script>
+  /* Minimal theme toggle — persists to ``localStorage`` */
+  (function() {
+    var stored = localStorage.getItem('theme') || 'neuromancers';
+    var html = document.documentElement;
+    var cbs = document.querySelectorAll('.theme-controller');
+    function activate(name) {
+      html.setAttribute('data-theme', name);
+      cbs.forEach(function(cb) { cb.checked = cb.value === name; });
+    }
+    activate(stored);
+    cbs.forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        if (this.checked) { localStorage.setItem('theme', this.value); activate(this.value); }
+      });
+    });
+  })();
+</script>

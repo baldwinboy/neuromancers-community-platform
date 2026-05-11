@@ -12,3 +12,5 @@ venv
 .envs/
 .venv/
 **/__pycache__/
+dev.db
+.django_tailwind_cli

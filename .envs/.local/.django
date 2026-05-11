@@ -2,13 +2,34 @@
 # ------------------------------------------------------------------------------
 USE_DOCKER=yes
 IPYTHONDIR=/app/.ipython
+
 # Redis
 # ------------------------------------------------------------------------------
 REDIS_URL=redis://redis:6379/0
 
-# Celery
+# Security
 # ------------------------------------------------------------------------------
+# https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
+DJANGO_SECRET_KEY=Jb9bSDmsjeqClpiMJkqZ3aK6h4pp8AWk
+
+# Wagtail
+# ------------------------------------------------------------------------------
+WAGTAILADMIN_BASE_URL=http://localhost:8000
+
+# Site lock
+# ------------------------------------------------------------------------------
+SITE_LOCK_DEFAULT_PASSWORD=siteLock2026!!
+
+# django-allauth
+# ------------------------------------------------------------------------------
+DJANGO_ACCOUNT_ALLOW_REGISTRATION=True
+
+# Celery (eager mode — no Redis worker needed for local testing)
+# ------------------------------------------------------------------------------
+CELERY_TASK_ALWAYS_EAGER=True
+# CELERY_TASK_EAGER_PROPAGATES=True (already set in local.py)
 
 # Flower
-CELERY_FLOWER_USER=NeDOaWbUPoJQCaVYDLUOmIXqksATqKiu
-CELERY_FLOWER_PASSWORD=cEqk6n6cVDbNBfTs8Rik0YNZK1WT96WQm0evfSi9wBVcxa9HANTZH5BFd53d9o7c
+# ------------------------------------------------------------------------------
+CELERY_FLOWER_USER=devadmin
+CELERY_FLOWER_PASSWORD=devpassword123

@@ -1,0 +1,195 @@
+{% load content_blocks %}
+
+{% block_visible value as is_visible %}
+{% if is_visible and value.text %}
+    {% block_style value as block_styles %}
+    {% block_size_classes value as block_sizes %}
+    {% block_id "marquee" as marquee_id %}
+    {% if value.speed == "slow" %}
+        {% with duration="28s" %}
+            <style>
+              @keyframes {
+                  {
+                  marquee_id
+                }
+              }
+
+              -x {
+                from {
+                  transform: translateX(0);
+                }
+
+                to {
+                  transform: translateX(-50%);
+                }
+              }
+
+              @keyframes {
+                  {
+                  marquee_id
+                }
+              }
+
+              -y {
+                from {
+                  transform: translateY(0);
+                }
+
+                to {
+                  transform: translateY(-50%);
+                }
+              }
+            </style>
+            <section class="overflow-hidden rounded-box border border-base-300 bg-base-200/60 px-4 py-3 {{ block_sizes }}"
+                     {% if block_styles %}style="{{ block_styles }}"{% endif %}>
+                {% if value.direction == "up" or value.direction == "down" %}
+                    <div class="max-h-32 overflow-hidden">
+                        <div class="flex flex-col gap-4 whitespace-nowrap text-sm font-semibold uppercase tracking-[0.3em] sm:text-base"
+                             style="animation: {{ marquee_id }}-y {{ duration }} linear infinite;
+                                    {% if value.direction == 'down' %}animation-direction: reverse;{% endif %}">
+                            <span>{{ value.text }}</span>
+                            <span>{{ value.text }}</span>
+                            <span>{{ value.text }}</span>
+                            <span>{{ value.text }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="flex w-max min-w-full gap-8 whitespace-nowrap text-sm font-semibold uppercase tracking-[0.3em] sm:text-base"
+                         style="animation: {{ marquee_id }}-x {{ duration }} linear infinite;
+                                {% if value.direction == 'left' %}animation-direction: reverse;{% endif %}">
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                    </div>
+                {% endif %}
+            </section>
+        {% endwith %}
+    {% elif value.speed == "fast" %}
+        {% with duration="12s" %}
+            <style>
+              @keyframes {
+                  {
+                  marquee_id
+                }
+              }
+
+              -x {
+                from {
+                  transform: translateX(0);
+                }
+
+                to {
+                  transform: translateX(-50%);
+                }
+              }
+
+              @keyframes {
+                  {
+                  marquee_id
+                }
+              }
+
+              -y {
+                from {
+                  transform: translateY(0);
+                }
+
+                to {
+                  transform: translateY(-50%);
+                }
+              }
+            </style>
+            <section class="overflow-hidden rounded-box border border-base-300 bg-base-200/60 px-4 py-3 {{ block_sizes }}"
+                     {% if block_styles %}style="{{ block_styles }}"{% endif %}>
+                {% if value.direction == "up" or value.direction == "down" %}
+                    <div class="max-h-32 overflow-hidden">
+                        <div class="flex flex-col gap-4 whitespace-nowrap text-sm font-semibold uppercase tracking-[0.3em] sm:text-base"
+                             style="animation: {{ marquee_id }}-y {{ duration }} linear infinite;
+                                    {% if value.direction == 'down' %}animation-direction: reverse;{% endif %}">
+                            <span>{{ value.text }}</span>
+                            <span>{{ value.text }}</span>
+                            <span>{{ value.text }}</span>
+                            <span>{{ value.text }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="flex w-max min-w-full gap-8 whitespace-nowrap text-sm font-semibold uppercase tracking-[0.3em] sm:text-base"
+                         style="animation: {{ marquee_id }}-x {{ duration }} linear infinite;
+                                {% if value.direction == 'left' %}animation-direction: reverse;{% endif %}">
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                    </div>
+                {% endif %}
+            </section>
+        {% endwith %}
+    {% else %}
+        {% with duration="20s" %}
+            <style>
+              @keyframes {
+                  {
+                  marquee_id
+                }
+              }
+
+              -x {
+                from {
+                  transform: translateX(0);
+                }
+
+                to {
+                  transform: translateX(-50%);
+                }
+              }
+
+              @keyframes {
+                  {
+                  marquee_id
+                }
+              }
+
+              -y {
+                from {
+                  transform: translateY(0);
+                }
+
+                to {
+                  transform: translateY(-50%);
+                }
+              }
+            </style>
+            <section class="overflow-hidden rounded-box border border-base-300 bg-base-200/60 px-4 py-3 {{ block_sizes }}"
+                     {% if block_styles %}style="{{ block_styles }}"{% endif %}>
+                {% if value.direction == "up" or value.direction == "down" %}
+                    <div class="max-h-32 overflow-hidden">
+                        <div class="flex flex-col gap-4 whitespace-nowrap text-sm font-semibold uppercase tracking-[0.3em] sm:text-base"
+                             style="animation: {{ marquee_id }}-y {{ duration }} linear infinite;
+                                    {% if value.direction == 'down' %}animation-direction: reverse;{% endif %}">
+                            <span>{{ value.text }}</span>
+                            <span>{{ value.text }}</span>
+                            <span>{{ value.text }}</span>
+                            <span>{{ value.text }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="flex w-max min-w-full gap-8 whitespace-nowrap text-sm font-semibold uppercase tracking-[0.3em] sm:text-base"
+                         style="animation: {{ marquee_id }}-x {{ duration }} linear infinite;
+                                {% if value.direction == 'left' %}animation-direction: reverse;{% endif %}">
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                        <span>{{ value.text }}</span>
+                    </div>
+                {% endif %}
+            </section>
+        {% endwith %}
+    {% endif %}
+{% endif %}

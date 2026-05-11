@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "My Bookings" %} — {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-5xl">
+  <div class="breadcrumbs text-sm mb-6">
+    <ul>
+      <li><a href="/">{% trans "Home" %}</a></li>
+      <li><a href="{{ page.url }}">{% trans "Sessions" %}</a></li>
+      <li class="text-base-content/60">{% trans "My Bookings" %}</li>
+    </ul>
+  </div>
+
+  <h1 class="text-3xl font-bold mb-6">{% trans "My Bookings" %}</h1>
+
+  {% if bookings %}
+    <div class="overflow-x-auto">
+      <table class="table table-zebra w-full">
+        <thead>
+          <tr>
+            <th>{% trans "Session" %}</th>
+            <th>{% trans "Attendee" %}</th>
+            <th>{% trans "Date" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Payment" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in bookings %}
+            <tr>
+              <td>
+                <a href="{{ page.url }}{{ booking.session.id }}/" class="link link-hover font-medium">
+                  {{ booking.session.title }}
+                </a>
+              </td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <div class="avatar placeholder">
+                    <div class="bg-neutral text-neutral-content rounded-full w-6">
+                      <span class="text-xs">{{ booking.attendee.username|first|upper }}</span>
+                    </div>
+                  </div>
+                  <span>{{ booking.attendee.username }}</span>
+                </div>
+              </td>
+              <td class="text-sm">{{ booking.starts_at|date:"M d, Y H:i" }}</td>
+              <td>
+                <span class="badge badge-{% if booking.booking_status == 'confirmed' %}success{% elif booking.booking_status == 'pending_approval' %}warning{% elif booking.booking_status == 'cancelled' %}error{% else %}ghost{% endif %}">
+                  {{ booking.get_booking_status_display }}
+                </span>
+              </td>
+              <td>
+                <span class="badge badge-{% if booking.payment_status == 'paid' or booking.payment_status == 'not_required' %}success{% elif booking.payment_status == 'failed' %}error{% else %}ghost{% endif %}">
+                  {{ booking.get_payment_status_display }}
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="card bg-base-100 shadow">
+      <div class="card-body text-center py-12">
+        <p class="text-base-content/60">{% trans "No bookings yet." %}</p>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock content %}

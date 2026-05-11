@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Conversation" %} — {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+  <div class="flex items-center gap-4 mb-6">
+    <a href="{% url 'messaging:inbox' %}" class="btn btn-ghost btn-sm">&larr; {% trans "Back" %}</a>
+    <h1 class="text-2xl font-bold">
+      {% for participant in conversation.participants.all %}
+        {% if participant != user %}
+          {{ participant.get_full_name|default:participant.username }}
+        {% endif %}
+      {% endfor %}
+    </h1>
+  </div>
+
+  <div class="card bg-base-100 shadow">
+    <div class="card-body p-4 max-h-96 overflow-y-auto" id="message-list">
+      {% for message in conversation.messages.all %}
+        <div class="chat {% if message.sender == user %}chat-end{% else %}chat-start{% endif %}">
+          <div class="chat-header text-xs text-base-content/40 mb-1">
+            {{ message.sender.username }}
+            <time>{{ message.created_at|date:"M d, H:i" }}</time>
+          </div>
+          <div class="chat-bubble {% if message.sender == user %}chat-bubble-primary{% else %}chat-bubble{% endif %}">
+            {{ message.body|linebreaks }}
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-base-content/60 text-center py-8">{% trans "No messages yet." %}</p>
+      {% endfor %}
+    </div>
+
+    <div class="card-body border-t border-base-200 p-4">
+      <form method="post">
+        {% csrf_token %}
+        <div class="flex gap-2">
+          <textarea name="body" class="textarea textarea-bordered flex-1" rows="2" placeholder="{% trans 'Type your message...' %}" required></textarea>
+          <button type="submit" class="btn btn-primary self-end">{% trans "Send" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

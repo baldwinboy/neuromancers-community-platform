@@ -1,0 +1,15 @@
+{% load wagtailcore_tags content_blocks %}
+
+{% block_visible value as is_visible %}
+{% if is_visible %}
+    {% block_style value as block_styles %}
+    {% block_size_classes value centered=False as block_sizes %}
+    <article class="card card-border bg-base-200 shadow-sm {{ block_sizes }} overflow-hidden">
+        <div class="card-body gap-3 p-5"
+             {% if block_styles %}style="{{ block_styles }}"{% endif %}>
+            {% for child in value.content %}
+                {% include_block child %}
+            {% endfor %}
+        </div>
+    </article>
+{% endif %}

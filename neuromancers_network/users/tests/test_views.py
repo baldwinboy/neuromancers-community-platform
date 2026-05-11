@@ -79,6 +79,7 @@ class TestUserUpdateView:
 
 
 class TestUserRedirectView:
+
     def test_get_redirect_url(self, user: User, rf: RequestFactory):
         view = UserRedirectView()
         request = rf.get("/fake-url")
@@ -89,6 +90,7 @@ class TestUserRedirectView:
 
 
 class TestUserDetailView:
+
     def test_authenticated(self, user: User, rf: RequestFactory):
         request = rf.get("/fake-url/")
         request.user = UserFactory.create()

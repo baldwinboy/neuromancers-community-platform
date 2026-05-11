@@ -1,0 +1,41 @@
+{% extends "events/session_base.html" %}
+{% load static i18n %}
+
+{% block session_content %}
+<div class="max-w-3xl mx-auto">
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-2xl font-bold">{% trans "Reviews" %}</h2>
+    {% if user.is_authenticated and user != session.host %}
+      <a href="{{ page.url }}{{ session.id }}/feedback/" class="btn btn-primary btn-sm">{% trans "Leave a review" %}</a>
+    {% endif %}
+  </div>
+
+  {% if reviews %}
+    <div class="space-y-4">
+      {% for review in reviews %}
+        <div class="card bg-base-100 shadow">
+          <div class="card-body">
+            <div class="flex items-center justify-between">
+              <div class="rating rating-sm">
+                {% for i in "12345"|make_list %}
+                  <input type="radio" class="mask mask-star-2 bg-orange-400" {% if forloop.counter <= review.rating %}checked{% endif %} disabled />
+                {% endfor %}
+              </div>
+              <span class="text-sm text-base-content/60">{{ review.created_at|date:"M d, Y" }}</span>
+            </div>
+            {% if review.comment %}
+              <p class="mt-2">{{ review.comment }}</p>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card bg-base-100 shadow">
+      <div class="card-body text-center py-12">
+        <p class="text-base-content/60">{% trans "No reviews yet." %}</p>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock session_content %}

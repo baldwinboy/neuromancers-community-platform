@@ -28,6 +28,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --locked --no-dev
 
+FROM ghcr.io/bitwarden/bws:2.0.0 AS bws-cli
+
 # Python 'run' stage
 FROM python:3.14-slim-bookworm AS python-run-stage
 
@@ -50,6 +52,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   # cleaning up unused files
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*
+
+COPY --from=bws-cli /bin/bws /usr/local/bin/bws
 
 
 COPY --chown=django:django ./compose/production/django/entrypoint /entrypoint
