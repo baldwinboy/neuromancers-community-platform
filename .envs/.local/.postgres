@@ -1,0 +1,7 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=neuromancers_network
+POSTGRES_USER=NduViWHZtrdAmpfxTvpicswEIRAgoUoZ
+POSTGRES_PASSWORD=ODAYksJDP316cxjlFm5RCDw1C14DyKh78NVtjrM1uWanzFLQ7sRoTCYyrCBlrbSg
