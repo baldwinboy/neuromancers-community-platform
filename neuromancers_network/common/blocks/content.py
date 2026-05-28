@@ -119,11 +119,13 @@ class SectionBlock(ThemedBlock, PermissionBlock):
         null=True,
         blank=True,
         help_text=_("Set a fixed width in pixels (overrides width choice)"),
+        required=False,
     )
     fixed_height = blocks.IntegerBlock(
         null=True,
         blank=True,
         help_text=_("Set a fixed height in pixels (overrides height choice)"),
+        required=False,
     )
 
     class Meta:
@@ -149,11 +151,13 @@ class InlineBlock(ThemedTypographyBlock, PermissionBlock):
         null=True,
         blank=True,
         help_text=_("Set a fixed width in pixels (overrides width choice)"),
+        required=False,
     )
     fixed_height = blocks.IntegerBlock(
         null=True,
         blank=True,
         help_text=_("Set a fixed height in pixels (overrides height choice)"),
+        required=False,
     )
 
     class Meta:

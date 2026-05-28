@@ -1,3 +1,4 @@
+import django_filters
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
@@ -11,6 +12,18 @@ from wagtail.admin.viewsets.model import ModelViewSet
 
 from .models import Guide
 from .models import OnboardingTask
+
+
+class GuideFilterSet(django_filters.FilterSet):
+    tags = django_filters.CharFilter(
+        field_name="tags__name",
+        lookup_expr="icontains",
+        label=_("Tags"),
+    )
+
+    class Meta:
+        model = Guide
+        fields = ["topic", "tags"]
 
 
 class GuideViewSet(ModelViewSet):
@@ -33,10 +46,7 @@ class GuideViewSet(ModelViewSet):
         "live",
     ]
 
-    list_filter = [
-        "topic",
-        "tags",
-    ]
+    filterset_class = GuideFilterSet
 
     search_fields = [
         "title",

@@ -58,6 +58,7 @@ dependencies = [
   "uvicorn>=0.46.0",
   "wagtail>=7.3.1",
   "wagtail-color-panel>=1.8.1",
+  "wagtail-icon-chooser>=0.3.2",
   "wagtail-link-block>=1.2",
   "wagtail-markdown>=0.13.0",
   "wagtail-traverse>=1.0.1",

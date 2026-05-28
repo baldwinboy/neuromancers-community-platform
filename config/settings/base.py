@@ -106,6 +106,7 @@ WAGTAIL_APPS = [
     "wagtail_color_panel",
     "wagtailmenus",
     "wagtailmarkdown",
+    "wagtailiconchooser",
 ]
 THIRD_PARTY_APPS = [
     "allauth",

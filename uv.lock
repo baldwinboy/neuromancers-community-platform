@@ -1755,6 +1755,7 @@ dependencies = [
     { name = "uvicorn" },
     { name = "wagtail" },
     { name = "wagtail-color-panel" },
+    { name = "wagtail-icon-chooser" },
     { name = "wagtail-link-block" },
     { name = "wagtail-markdown" },
     { name = "wagtail-traverse" },
@@ -1835,6 +1836,7 @@ requires-dist = [
     { name = "uvicorn", specifier = ">=0.46.0" },
     { name = "wagtail", specifier = ">=7.3.1" },
     { name = "wagtail-color-panel", specifier = ">=1.8.1" },
+    { name = "wagtail-icon-chooser", specifier = ">=0.3.2" },
     { name = "wagtail-link-block", specifier = ">=1.2" },
     { name = "wagtail-markdown", specifier = ">=0.13.0" },
     { name = "wagtail-traverse", specifier = ">=1.0.1" },
@@ -2932,6 +2934,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/9e/44/bd3e5a9ee9bc9b72153e0a227aae5b7e181d2ce4e601ff9b01c1074fbbb5/wagtail_color_panel-1.8.1.tar.gz", hash = "sha256:aca26f8b7178ff596aa2eac8982167396bbbc222fadbae4b6b1f18291b33473a", size = 10776, upload-time = "2026-04-12T19:16:14.464Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6d/bb/86ee676a4613c0dade91685fb3402766de4c20874ad6f18d91807d9813cc/wagtail_color_panel-1.8.1-py3-none-any.whl", hash = "sha256:6e8aaeceac3618a9b69370b5097fa4d3c2db19b31bff95b7726343660793e55e", size = 9256, upload-time = "2026-04-12T19:16:13.68Z" },
+]
+
+[[package]]
+name = "wagtail-icon-chooser"
+version = "0.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "wagtail" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c8/28/711a5a368aa21cd8a27a5346caa677764709ef074194b92926df50ce8e30/wagtail_icon_chooser-0.3.2.tar.gz", hash = "sha256:9b99ff38ba5aabbc432b749bd049fb3750b4c05ead536200be5407d455877ca0", size = 8451, upload-time = "2026-04-01T09:35:02.831Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/26/4b/eaf9281142eed194626d9d3726b88e2db2b56ebc99fdedd61f4c9f8621c1/wagtail_icon_chooser-0.3.2-py3-none-any.whl", hash = "sha256:8d0285d9a7565143b9a2d80dda83c6d738c43bd91e4d98383fee56af8dd31ff9", size = 11776, upload-time = "2026-04-01T09:35:01.499Z" },
 ]
 
 [[package]]
