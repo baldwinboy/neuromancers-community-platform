@@ -1,0 +1,12 @@
+# CrowdSec acquisition configuration for Neuromancers Network
+# Monitors Traefik access logs on the Coolify proxy network.
+#
+# Deploy via: ansible-playbook playbooks/site.yml
+# After deploy, install the Traefik collection:
+#   docker exec -it crowdsec cscli collections install crowdsecurity/traefik
+
+source: docker
+container_name:
+  - traefik
+labels:
+  type: traefik

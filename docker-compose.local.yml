@@ -28,7 +28,7 @@ services:
     build:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
-    image: neuromancers_network_production_postgres
+    image: neuromancers_network_local_postgres
     container_name: neuromancers_network_local_postgres
     volumes:
       - neuromancers_network_local_postgres_data:/var/lib/postgresql/18/docker

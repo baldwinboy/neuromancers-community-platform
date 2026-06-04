@@ -15,3 +15,8 @@ services:
     ports:
       - '9000:9000'
     command: /start-docs
+    networks:
+      - neuromancers_network_local_docs_net
+
+networks:
+  neuromancers_network_local_docs_net:

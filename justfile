@@ -40,3 +40,45 @@ manage +args:
 # pytest: Run tests with pytest.
 pytest *args:
     @docker compose run --rm django pytest {{args}}
+
+# docs: Build and serve HTML documentation
+docs:
+    @rm -rf docs/_build
+    @docker compose -f docker-compose.docs.yml up --build -d --remove-orphans
+
+# Remove all the Python and Node.js cache files.
+clean-pyc:
+    find . -name '*.pyc' -exec rm -f {} +
+    find . -name '*.pyo' -exec rm -f {} +
+    find . -name '*~' -exec rm -f {} +
+
+# Install the dependencies.
+install: clean-pyc
+    uv sync --dev
+    npm ci
+
+# Lint the server code with uv.
+lint-server:
+    uv run ruff format --check .
+    uv run ruff check .
+    SKIP=ruff-check,ruff-format,lint:css,lint:format uv run prek run --all-files
+
+# Lint the client code with Prettier.
+lint-client:
+    npm run lint --loglevel silent
+
+# Run all linters.
+lint: lint-server lint-client
+
+# Format the server code with uv.
+format-server:
+    uv run ruff check . --fix
+    uv run ruff format .
+    SKIP=ruff-check,ruff-format,lint:css,lint:format uv run prek run --all-files
+
+# Format the client code with Prettier.
+format-client:
+    npm run format
+
+# Run all formatters.
+format: format-server format-client

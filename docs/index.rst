@@ -12,6 +12,7 @@ Welcome to NEUROMANCERS Network's documentation!
 
    howto
    users
+   infra/index
 
 
 

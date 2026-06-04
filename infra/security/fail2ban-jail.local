@@ -1,0 +1,18 @@
+# Fail2ban jail configuration for Neuromancers Network
+# Protects SSH and web endpoints from brute-force attacks.
+#
+# Deploy to /etc/fail2ban/jail.local on the Hetzner server.
+
+[DEFAULT]
+bantime  = 10800
+findtime = 600
+maxretry = 5
+destemail = tech+brute-force@neuromancers.org.uk
+action   = %(action_)s
+backend  = systemd
+
+[sshd]
+enabled  = true
+port     = ssh
+logpath  = %(sshd_log)s
+maxretry = 3

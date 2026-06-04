@@ -16,6 +16,7 @@ import sys
 
 import django
 
+
 if os.getenv("READTHEDOCS", default="False") == "True":
     sys.path.insert(0, os.path.abspath(".."))
     os.environ["DJANGO_READ_DOT_ENV_FILE"] = "True"
@@ -39,9 +40,20 @@ author = "NEUROMANCERS"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx_wagtail_theme",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "myst_parser",
 ]
+
+# A dictionary mapping the file extensions (suffixes) of source files
+# to their file types. Sphinx considers all files with suffixes
+# in source_suffix to be source files.
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".txt": "markdown",
+    ".md": "markdown",
+}
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ["_templates"]
@@ -56,7 +68,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
+html_theme = "sphinx_wagtail_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
