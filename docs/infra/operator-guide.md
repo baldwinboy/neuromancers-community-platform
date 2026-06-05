@@ -119,7 +119,7 @@ bws secret list \
 4. Decide and document the Coolify token-injection path for runtime containers.
 5. Add a preflight secret presence check against required Bitwarden keys before any deploy mutation.
 6. Implement container-side secret bootstrap in each production image or shared entrypoint.
-7. Replace non-routable defaults (`http://django:8000/health/`) with externally valid health endpoints for host-level smoke checks.
+7. Replace non-routable defaults (`http://django:8000/api/health/`) with externally valid health endpoints for host-level smoke checks.
 8. Verify container name assertions in smoke checks match Coolify runtime names (or use label-based checks).
 9. Pin Ansible collection versions in `infra/galaxy/requirements.yml` for reproducible deploys.
 10. Run one full staging dry run from CI and record evidence (workflow URL, task summary, smoke output) before production enablement.

@@ -1,0 +1,459 @@
+---
+- name: Host bootstrap and services
+  hosts: all
+  become: true
+  collections:
+    - community.general
+    - community.docker
+    - arillso.agent
+    - arillso.system
+
+  vars:
+    coolify_port: 8000
+    gatus_port: 8080
+    beszel_hub_port: 8090
+    prometheus_port: 9090
+    app_healthcheck_url: "http://django:8000/api/health"
+    coolify_healthcheck_url: "http://localhost:8000/api/v1/health"
+
+  tasks:
+    # ---------------------------------------------------------------------
+    # BASE PACKAGES
+    # ---------------------------------------------------------------------
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - curl
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - ufw
+          - unattended-upgrades
+          - fail2ban
+          - cron
+          - python3-pip
+          - jq
+          - unzip
+          - awscli
+        state: present
+
+    - name: Install Bitwarden Secrets Manager CLI on target host
+      ansible.builtin.shell: |
+        set -euo pipefail
+        latest_tag="$(curl -s https://api.github.com/repos/bitwarden/sdk-sm/releases/latest | jq -r '.tag_name')"
+        version="${latest_tag#*-v}"
+        asset_name="bws-x86_64-unknown-linux-gnu-${version}.zip"
+        download_url="https://github.com/bitwarden/sdk-sm/releases/download/bws-v${version}/${asset_name}"
+        tmp_dir="$(mktemp -d)"
+        trap 'rm -rf "${tmp_dir}"' EXIT
+        curl -L -o "${tmp_dir}/bws.zip" "${download_url}"
+        unzip -q -o "${tmp_dir}/bws.zip" -d "${tmp_dir}"
+        install -m 0755 "${tmp_dir}/bws" /usr/local/bin/bws
+      args:
+        executable: /bin/bash
+        creates: /usr/local/bin/bws
+
+    - name: Install Docker SDK for Python on target host
+      ansible.builtin.pip:
+        name: docker
+
+    # ---------------------------------------------------------------------
+    # TAILSCALE INSTALL AND JOIN
+    # ---------------------------------------------------------------------
+    - name: Install Tailscale package
+      ansible.builtin.shell: |
+        curl -fsSL https://tailscale.com/install.sh | sh
+      args:
+        creates: /usr/bin/tailscale
+
+    - name: Ensure tailscaled service is enabled and running
+      ansible.builtin.systemd:
+        name: tailscaled
+        state: started
+        enabled: true
+
+    - name: Check current Tailscale state
+      ansible.builtin.command: tailscale status --json
+      register: tailscale_status
+      changed_when: false
+      failed_when: false
+
+    - name: Join tailnet if not already connected
+      ansible.builtin.command: >-
+        tailscale up
+        --authkey={{ lookup('ansible.builtin.env', 'TAILSCALE_AUTH_KEY', default=undef()) }}
+        --accept-routes=false
+        --advertise-tags={{ lookup('ansible.builtin.env', 'TAILSCALE_TAG', default=undef()) }}
+        --ssh
+      when: tailscale_status.rc != 0
+
+    # ---------------------------------------------------------------------
+    # FIREWALL POLICY
+    # ---------------------------------------------------------------------
+    - name: UFW default deny incoming
+      community.general.ufw:
+        rule: default
+        direction: incoming
+        policy: deny
+
+    - name: UFW default allow outgoing
+      community.general.ufw:
+        rule: default
+        direction: outgoing
+        policy: allow
+
+    - name: Allow public application ports only
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "80"
+        - "443"
+
+    - name: Allow SSH and management ports over Tailscale only
+      community.general.ufw:
+        rule: allow
+        interface: tailscale0
+        direction: in
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "22"
+        - "{{ coolify_port }}"
+        - "{{ gatus_port }}"
+        - "{{ beszel_hub_port }}"
+        - "{{ prometheus_port }}"
+
+    - name: Enable UFW
+      community.general.ufw:
+        state: enabled
+      notify: reload ufw
+
+    # ---------------------------------------------------------------------
+    # COOLIFY INSTALL
+    # ---------------------------------------------------------------------
+    - name: Check whether Coolify is already installed
+      ansible.builtin.stat:
+        path: /data/coolify/source/.env
+      register: coolify_env
+
+    - name: Install Coolify if missing
+      ansible.builtin.shell: |
+        curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash
+      environment:
+        ROOT_USERNAME: "{{ lookup('ansible.builtin.env', 'COOLIFY_ADMIN_USERNAME', default=undef()) }}"
+        ROOT_USER_EMAIL: "{{ lookup('ansible.builtin.env', 'COOLIFY_ADMIN_EMAIL', default=undef()) }}"
+        ROOT_USER_PASSWORD: "{{ lookup('ansible.builtin.env', 'COOLIFY_ADMIN_PASSWORD', default=undef()) }}"
+      when: not coolify_env.stat.exists
+
+    - name: Ensure deploy SSH user is in docker group
+      ansible.builtin.user:
+        name: "{{ lookup('ansible.builtin.env', 'HETZNER_SSH_USER', default=undef()) }}"
+        groups: docker
+        append: true
+
+    - name: Wait for Coolify health endpoint
+      ansible.builtin.uri:
+        url: "{{ coolify_healthcheck_url }}"
+        status_code: 200
+      register: coolify_health
+      retries: 30
+      delay: 10
+      until: coolify_health.status == 200
+
+    - name: Ensure Docker service is enabled and running
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Ensure Docker Compose plugin is installed
+      ansible.builtin.apt:
+        name: docker-compose-plugin
+        state: present
+
+    # ---------------------------------------------------------------------
+    # RETAINED MONITORING AND SECURITY SERVICES (DEPLOY NOW)
+    # ---------------------------------------------------------------------
+    - name: Ensure CrowdSec apt repository script is present
+      ansible.builtin.get_url:
+        url: https://packagecloud.io/install/repositories/crowdsec/crowdsec/script.deb.sh
+        dest: /tmp/crowdsec-install.sh
+        mode: "0755"
+
+    - name: Configure CrowdSec apt repository
+      ansible.builtin.command: bash /tmp/crowdsec-install.sh
+      args:
+        creates: /etc/apt/sources.list.d/crowdsec_crowdsec.list
+
+    - name: Install CrowdSec and firewall bouncer
+      ansible.builtin.apt:
+        name:
+          - crowdsec
+          - crowdsec-firewall-bouncer-iptables
+        state: present
+        update_cache: true
+
+    - name: Deploy CrowdSec acquisition config
+      ansible.builtin.copy:
+        src: ../security/crowdsec-config.yml
+        dest: /etc/crowdsec/acquis.yaml
+        mode: "0644"
+      notify: restart crowdsec
+
+    - name: Install CrowdSec collections
+      ansible.builtin.command: cscli collections install crowdsecurity/linux crowdsecurity/traefik
+      register: crowdsec_collections
+      changed_when: "'already installed' not in (crowdsec_collections.stderr | default(''))"
+
+    - name: Ensure CrowdSec is enabled and running
+      ansible.builtin.systemd:
+        name: crowdsec
+        state: started
+        enabled: true
+
+    - name: Deploy Fail2Ban jail config
+      ansible.builtin.copy:
+        src: ../security/fail2ban-jail.local
+        dest: /etc/fail2ban/jail.local
+        mode: "0644"
+      notify: restart fail2ban
+
+    - name: Ensure Fail2Ban is enabled and running
+      ansible.builtin.systemd:
+        name: fail2ban
+        state: started
+        enabled: true
+
+    - name: Create runtime directories for monitoring and backups
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - /opt/gatus
+        - /opt/prometheus
+        - /opt/scripts
+        - /opt/backups
+        - /opt/beszel
+
+    - name: Deploy Gatus config (fixed source path)
+      ansible.builtin.copy:
+        src: ../monitoring/gatus-config.yml
+        dest: /opt/gatus/config.yml
+        mode: "0644"
+
+    - name: Deploy Gatus container
+      community.docker.docker_container:
+        name: gatus
+        image: twinproduction/gatus:latest
+        state: started
+        restart_policy: unless-stopped
+        recreate: false
+        network_mode: host
+        volumes:
+          - /opt/gatus/config.yml:/config/config.yaml:ro
+        env:
+          APP_HEALTHCHECK_URL: "{{ app_healthcheck_url }}"
+          GATUS_DISCORD_WEBHOOK_URL: "{{ lookup('ansible.builtin.env', 'GATUS_DISCORD_WEBHOOK_URL', default=undef()) }}"
+          COOLIFY_HEALTHCHECK_URL: "{{ coolify_healthcheck_url }}"
+
+    - name: Deploy Prometheus config
+      ansible.builtin.copy:
+        src: ../monitoring/prometheus.yml
+        dest: /opt/prometheus/prometheus.yml
+        mode: "0644"
+
+    - name: Deploy Prometheus container
+      community.docker.docker_container:
+        name: prometheus
+        image: prom/prometheus:latest
+        state: started
+        restart_policy: unless-stopped
+        recreate: false
+        network_mode: host
+        volumes:
+          - /opt/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+        command: ["--config.file=/etc/prometheus/prometheus.yml"]
+
+    - name: Deploy node exporter container
+      community.docker.docker_container:
+        name: node-exporter
+        image: quay.io/prometheus/node-exporter:latest
+        state: started
+        restart_policy: unless-stopped
+        recreate: false
+        network_mode: host
+        pid_mode: host
+        command:
+          - --path.rootfs=/host
+        volumes:
+          - /:/host:ro,rslave
+
+    - name: Deploy Beszel Hub container
+      community.docker.docker_container:
+        name: beszel-hub
+        image: henrygd/beszel:latest
+        state: started
+        restart_policy: unless-stopped
+        recreate: false
+        ports:
+          - "{{ beszel_hub_port }}:8090"
+
+    - name: Deploy Beszel Agent container
+      community.docker.docker_container:
+        name: beszel-agent
+        image: henrygd/beszel-agent:latest
+        state: started
+        restart_policy: unless-stopped
+        recreate: false
+        network_mode: host
+        pid_mode: host
+        privileged: true
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    - name: Install backup script
+      ansible.builtin.copy:
+        src: ../scripts/backup.sh
+        dest: /opt/scripts/backup.sh
+        mode: "0750"
+
+    - name: Install backup wrapper script
+      ansible.builtin.copy:
+        src: ../scripts/run-backup.sh
+        dest: /opt/scripts/run-backup.sh
+        mode: "0750"
+
+    - name: Install Django session cleanup script
+      ansible.builtin.copy:
+        src: ../scripts/clear-django-sessions.sh
+        dest: /opt/scripts/clear-django-sessions.sh
+        mode: "0750"
+
+    - name: Create backup BWS access token file
+      ansible.builtin.copy:
+        dest: /opt/backups/.bws_token
+        content: "{{ lookup('ansible.builtin.env', 'BWS_ACCESS_TOKEN', default=undef()) }}\n"
+        owner: root
+        group: root
+        mode: 0600
+
+
+    - name: Configure daily backup cron
+      ansible.builtin.cron:
+        name: neuromancers-daily-backup
+        user: root
+        minute: "0"
+        hour: "2"
+        job: "/opt/scripts/run-backup.sh"
+
+    - name: Configure Django session cleanup cron
+      ansible.builtin.cron:
+        name: neuromancers-django-clearsessions
+        user: root
+        minute: "15"
+        hour: "2"
+        job: "/opt/scripts/clear-django-sessions.sh"
+
+    # ---------------------------------------------------------------------
+    # VALIDATION
+    # ---------------------------------------------------------------------
+    - name: Validate Coolify health
+      ansible.builtin.uri:
+        url: "{{ coolify_healthcheck_url }}"
+        status_code: 200
+
+    - name: Validate required services are running
+      ansible.builtin.service_facts:
+
+    - name: Assert key services are active
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['tailscaled.service'].state == 'running'
+          - ansible_facts.services['fail2ban.service'].state == 'running'
+          - ansible_facts.services['crowdsec.service'].state == 'running'
+        fail_msg: "One or more required services are not running (tailscaled, fail2ban, crowdsec)."
+
+    - name: Validate UFW is active
+      ansible.builtin.command: ufw status
+      register: ufw_status
+      changed_when: false
+
+    - name: Assert UFW is active
+      ansible.builtin.assert:
+        that:
+          - "'Status: active' in ufw_status.stdout"
+        fail_msg: "UFW is not active."
+
+    - name: Validate retained containers are running
+      ansible.builtin.command: docker ps --format '{{.Names}}'
+      register: running_containers
+      changed_when: false
+
+    - name: Assert retained containers are running
+      ansible.builtin.assert:
+        that:
+          - "'gatus' in running_containers.stdout"
+          - "'prometheus' in running_containers.stdout"
+          - "'node-exporter' in running_containers.stdout"
+          - "'beszel-hub' in running_containers.stdout"
+          - "'beszel-agent' in running_containers.stdout"
+        fail_msg: "One or more retained containers are missing."
+
+    - name: Smoke - public health endpoint returns healthy DB and Redis
+      ansible.builtin.uri:
+        url: "{{ app_healthcheck_url }}"
+        return_content: true
+      register: public_health
+      tags:
+        - smoke
+
+    - name: Smoke - assert public health content is healthy
+      ansible.builtin.assert:
+        that:
+          - public_health.status == 200
+          - public_health.json.status == 'ok'
+          - public_health.json.database == 'ok'
+          - public_health.json.redis == 'ok'
+        fail_msg: "Public application health endpoint is not healthy."
+      tags:
+        - smoke
+
+    - name: Smoke - inspect running application containers
+      ansible.builtin.command: docker ps --format '{{.Image}} {{.Names}}'
+      register: app_containers
+      changed_when: false
+      tags:
+        - smoke
+
+    - name: Smoke - assert Celery worker and beat are present
+      ansible.builtin.assert:
+        that:
+          - app_containers.stdout is search('neuromancers_network_production_celeryworker')
+          - app_containers.stdout is search('neuromancers_network_production_celerybeat')
+          - app_containers.stdout is search('neuromancers_network_production_redis') or app_containers.stdout is search('redis:8.6')
+        fail_msg: "Celery worker, Celery beat, or Redis container is not present after deployment."
+      tags:
+        - smoke
+
+  handlers:
+    - name: reload ufw
+      community.general.ufw:
+        state: reloaded
+
+    - name: restart crowdsec
+      ansible.builtin.systemd:
+        name: crowdsec
+        state: restarted
+
+    - name: restart fail2ban
+      ansible.builtin.systemd:
+        name: fail2ban
+        state: restarted

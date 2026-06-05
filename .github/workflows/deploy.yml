@@ -2,13 +2,10 @@ name: Deploy Infrastructure
 
 on:
   workflow_run:
-    workflows:
-      - CI
+    workflows: [CI]
     types:
       - completed
-    branches:
-      - main
-      - staging
+    branches: [main, staging]
 
 concurrency:
   group: deploy-${{ github.event.workflow_run.head_branch }}
