@@ -7,7 +7,7 @@
 # the directory structure for Coolify.
 #
 # Usage (run as root on the fresh server):
-#   curl -fsSL https://raw.githubusercontent.com/neuromancers/neuromancers_network/main/iac/scripts/server-bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/neuromancers/neuromancers_network/main/infra/scripts/server-bootstrap.sh | bash
 # ----------------------------------------------------------------------------
 set -euo pipefail
 

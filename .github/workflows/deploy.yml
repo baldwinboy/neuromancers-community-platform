@@ -17,9 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    environment: ${{ github.event.workflow_run.head_branch == 'main' && 'production' || 'staging' }}
     env:
       DEPLOY_BRANCH: ${{ github.event.workflow_run.head_branch }}
       DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+      BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
     steps:
       - name: Checkout deployment revision
         uses: actions/checkout@v6
@@ -45,10 +47,14 @@ jobs:
           curl -L -o bws.zip "$DOWNLOAD_URL"
           unzip bws.zip -d /usr/local/bin
           rm bws.zip
+      - name: Validate BWS_ACCESS_TOKEN is set
+        run: |
+          if [[ -z "$BWS_ACCESS_TOKEN" ]]; then
+            echo "::error::BWS_ACCESS_TOKEN is not set in GitHub secrets"
+            exit 1
+          fi
       - id: inject-secrets
         name: Inject secrets from Bitwarden Secrets Manager
-        env:
-          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
         run: |
           REQUIRED_SECRETS=(
             "HETZNER_SSH_HOST"
@@ -82,7 +88,7 @@ jobs:
           missing=()
 
           for key in "${REQUIRED_SECRETS[@]}"; do
-            value="$(jq -r --arg k "$key" '.[] | select(.key==$k) | .value' <<< "$secrets_json" | head -n 1)"
+            value="$(jq -r --arg k "$key" '.[] | select(.key==$k) | .value' <<< "$secrets_json")"
             if [[ -z "$value" || "$value" == "null" ]]; then
               missing+=("$key")
               continue
@@ -90,7 +96,15 @@ jobs:
 
             # Only export values needed by later workflow steps.
             case "$key" in
-              HETZNER_SSH_PRIVATE_KEY|TS_OAUTH_CLIENT_ID|TS_OAUTH_CLIENT_SECRET|TAILSCALE_TAG)
+              HETZNER_SSH_PRIVATE_KEY)
+                echo "::add-mask::$value"
+                {
+                  echo "$key<<EOF"
+                  echo "$value"
+                  echo "EOF"
+                } >> "$GITHUB_OUTPUT"
+                ;;
+              TS_OAUTH_CLIENT_ID|TS_OAUTH_CLIENT_SECRET|TAILSCALE_TAG)
                 echo "::add-mask::$value"
                 echo "$key=$value" >> "$GITHUB_OUTPUT"
                 ;;
@@ -111,14 +125,13 @@ jobs:
         env:
           HETZNER_SSH_PRIVATE_KEY: ${{ steps.inject-secrets.outputs.HETZNER_SSH_PRIVATE_KEY }}
         run: |
-          echo "${HETZNER_SSH_PRIVATE_KEY}" > infra/inventory/ssh_key
+          printf '%s\n' "$HETZNER_SSH_PRIVATE_KEY" > infra/inventory/ssh_key
           chmod 600 infra/inventory/ssh_key
       - name: Install Ansible Galaxy requirements
         run: ansible-galaxy collection install -r infra/galaxy/requirements.yml --force
-
       - name: Play Ansible Playbook
         env:
           ANSIBLE_HOST_KEY_CHECKING: "false"
-          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
         run: |
-          bws run -- 'ansible-playbook infra/playbooks/site.yml --skip-tags smoke --inventory infra/inventory/hosts.yml --private-key infra/inventory/ssh_key'
+          bws run -- 'ansible-playbook infra/playbooks/site.yml --skip-tags smoke --inventory infra/inventory/hosts.yml --private-key infra/inventory/ssh_key' 2>&1 | \
+            sed -E 's/[a-zA-Z0-9._%+-]+@[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[REDACTED]/g; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[REDACTED]/g'
