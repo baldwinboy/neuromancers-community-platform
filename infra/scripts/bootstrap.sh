@@ -26,11 +26,17 @@ if ! id "$HETZNER_SSH_USER" &>/dev/null; then
     echo "[1/5] Creating deploy user: $HETZNER_SSH_USER"
     adduser --disabled-password --gecos "" "$HETZNER_SSH_USER"
     usermod -aG sudo "$HETZNER_SSH_USER"
+    echo "$HETZNER_SSH_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/99-"$HETZNER_SSH_USER"
+    chmod 440 /etc/sudoers.d/99-"$HETZNER_SSH_USER"
     mkdir -p "/home/$HETZNER_SSH_USER/.ssh"
     chmod 700 "/home/$HETZNER_SSH_USER/.ssh"
     chown "$HETZNER_SSH_USER:$HETZNER_SSH_USER" "/home/$HETZNER_SSH_USER/.ssh"
 else
     echo "[1/5] Deploy user already exists: $HETZNER_SSH_USER"
+    if [ ! -f /etc/sudoers.d/99-"$HETZNER_SSH_USER" ]; then
+        echo "$HETZNER_SSH_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/99-"$HETZNER_SSH_USER"
+        chmod 440 /etc/sudoers.d/99-"$HETZNER_SSH_USER"
+    fi
 fi
 
 # ── 2. Add SSH public key only if needed ─────────────────────────────
