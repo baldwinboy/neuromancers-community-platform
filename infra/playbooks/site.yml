@@ -71,7 +71,6 @@
           - python3-pip
           - jq
           - unzip
-          - awscli
         state: present
 
     - name: Install Bitwarden Secrets Manager CLI on target host
@@ -89,6 +88,10 @@
       args:
         executable: /bin/bash
         creates: /usr/local/bin/bws
+
+    - name: Install awscli via pip (unavailable as apt package on Ubuntu 24.04)
+      ansible.builtin.pip:
+        name: awscli
 
     - name: Install Docker SDK for Python on target host
       ansible.builtin.pip:
