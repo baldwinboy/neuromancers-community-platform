@@ -89,13 +89,20 @@
         executable: /bin/bash
         creates: /usr/local/bin/bws
 
-    - name: Install awscli via pip (unavailable as apt package on Ubuntu 24.04)
-      ansible.builtin.pip:
-        name: awscli
+    - name: Install pipx for isolated Python application installation
+      ansible.builtin.apt:
+        name: pipx
+        state: present
 
-    - name: Install Docker SDK for Python on target host
-      ansible.builtin.pip:
-        name: docker
+    - name: Install awscli via pipx (unavailable as apt package on Ubuntu 24.04)
+      ansible.builtin.command:
+        cmd: pipx install --global awscli
+        creates: /usr/local/bin/aws
+
+    - name: Install Docker SDK for Python via apt
+      ansible.builtin.apt:
+        name: python3-docker
+        state: present
 
     # ---------------------------------------------------------------------
     # TAILSCALE INSTALL AND JOIN
