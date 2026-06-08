@@ -1,4 +1,36 @@
 ---
+# ── Preliminary play: configure passwordless sudo if missing ─────────────
+#
+# The deploy user is created with --disabled-password and added to the
+# docker group by bootstrap.sh.  While it has no sudo password, it *can*
+# run docker without privileges, so we use a throwaway alpine container to
+# write the NOPASSWD sudoers drop-in when it is absent.
+#
+# Once this play succeeds, the main play below can safely use become: true.
+- name: Bootstrap passwordless sudo
+  hosts: all
+  gather_facts: false
+  become: false
+  tasks:
+    - name: Check whether passwordless sudo is already active
+      ansible.builtin.raw: sudo -n true 2>/dev/null
+      register: sudo_check
+      changed_when: false
+      ignore_errors: true
+
+    - name: Write NOPASSWD sudoers drop-in via Docker
+      ansible.builtin.raw: |
+        docker run --rm -v /:/host alpine sh -c '
+          echo "{{ ansible_user }} ALL=(ALL) NOPASSWD:ALL" > /host/etc/sudoers.d/99-{{ ansible_user }}
+        '
+      when: sudo_check.rc != 0
+
+    - name: Verify passwordless sudo now works
+      ansible.builtin.raw: sudo -n true 2>/dev/null
+      changed_when: false
+      when: sudo_check.rc != 0
+
+# ── Main play ────────────────────────────────────────────────────────────
 - name: Host bootstrap and services
   hosts: all
   become: true
