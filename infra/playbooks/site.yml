@@ -1,5 +1,5 @@
 ---
-# ── Preliminary play: configure passwordless sudo if missing ─────────────
+# Preliminary play: configure passwordless sudo if missing
 #
 # The deploy user is created with --disabled-password and added to the
 # docker group by bootstrap.sh.  While it has no sudo password, it *can*
@@ -30,7 +30,7 @@
       changed_when: false
       when: sudo_check.rc != 0
 
-# ── Main play ────────────────────────────────────────────────────────────
+# Main play
 - name: Host bootstrap and services
   hosts: all
   become: true
@@ -94,10 +94,27 @@
         name: pipx
         state: present
 
-    - name: Install awscli via pipx (unavailable as apt package on Ubuntu 24.04)
-      ansible.builtin.command:
-        cmd: pipx install --global awscli
-        creates: /usr/local/bin/aws
+    - name: Download AWS CLI installer
+      get_url:
+        url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+        dest: "/tmp/awscliv2.zip"
+
+    - name: Unzip AWS CLI installer
+      unarchive:
+        src: "/tmp/awscliv2.zip"
+        dest: "/tmp"
+        remote_src: yes
+
+    - name: Run AWS CLI installer
+      command: "/tmp/aws/install"
+
+    - name: Verify AWS CLI installation
+      command: "aws --version"
+      register: aws_cli_version
+
+    - name: Display AWS CLI version
+      debug:
+        msg: "{{ aws_cli_version.stdout }}"
 
     - name: Install Docker SDK for Python via apt
       ansible.builtin.apt:
