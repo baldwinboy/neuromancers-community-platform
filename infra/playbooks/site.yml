@@ -395,7 +395,7 @@
     - name: Create backup BWS access token file
       ansible.builtin.copy:
         dest: /opt/backups/.bws_token
-        content: "{{ lookup('ansible.builtin.env', 'BWS_ACCESS_TOKEN', default=undef()) }}\n"
+        content: "{{ bws_access_token | default(lookup('ansible.builtin.env', 'BWS_ACCESS_TOKEN', default='')) }}\n"
         owner: root
         group: root
         mode: 0600

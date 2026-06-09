@@ -133,5 +133,5 @@ jobs:
         env:
           ANSIBLE_HOST_KEY_CHECKING: "false"
         run: |
-          bws run -- 'ansible-playbook infra/playbooks/site.yml --skip-tags smoke --inventory infra/inventory/hosts.yml --private-key infra/inventory/ssh_key' 2>&1 | \
+          bws run -- 'ansible-playbook infra/playbooks/site.yml --skip-tags smoke --inventory infra/inventory/hosts.yml --private-key infra/inventory/ssh_key -e bws_access_token=${{ secrets.BWS_ACCESS_TOKEN }}' 2>&1 | \
             sed -E 's/[a-zA-Z0-9._%+-]+@[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[REDACTED]/g; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[REDACTED]/g'
