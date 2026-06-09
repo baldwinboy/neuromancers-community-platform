@@ -448,7 +448,7 @@
         fail_msg: "UFW is not active."
 
     - name: Validate retained containers are running
-      ansible.builtin.command: docker ps --format '{{.Names}}'
+      ansible.builtin.command: docker ps --format '{{ '{{' }}.Names{{ '}}' }}'
       register: running_containers
       changed_when: false
 
@@ -482,7 +482,7 @@
         - smoke
 
     - name: Smoke - inspect running application containers
-      ansible.builtin.command: docker ps --format '{{.Image}} {{.Names}}'
+      ansible.builtin.command: docker ps --format '{{ '{{' }}.Image{{ '}}' }} {{ '{{' }}.Names{{ '}}' }}'
       register: app_containers
       changed_when: false
       tags:
