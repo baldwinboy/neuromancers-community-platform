@@ -256,6 +256,100 @@
           chmod 600 /root/.ssh/authorized_keys
         fi
 
+    - name: Read Coolify localhost SSH private key
+      ansible.builtin.slurp:
+        src: /data/coolify/ssh/keys/id.root@host.docker.internal
+      register: coolify_ssh_key
+
+    - name: Check if Coolify API is enabled
+      ansible.builtin.uri:
+        url: http://localhost:{{ coolify_port }}/api/v1/health
+        method: GET
+      register: coolify_health
+
+    - name: Set Coolify API token
+      ansible.builtin.set_fact:
+        coolify_api_token: "{{ lookup('ansible.builtin.env', 'COOLIFY_ADMIN_TOKEN', default=undef()) }}"
+      when: coolify_health.status == 200
+
+    - name: Fetch existing Coolify keys
+      ansible.builtin.uri:
+        url: "http://localhost:{{ coolify_port }}/api/v1/security/keys"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        status_code: 200
+        return_content: true
+      register: coolify_keys
+      when: coolify_api_token is defined
+
+    - name: Register localhost SSH key with Coolify API if missing
+      ansible.builtin.uri:
+        url: "http://localhost:{{ coolify_port }}/api/v1/security/keys"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        body_format: json
+        body:
+          name: "root@host.docker.internal"
+          description: "Coolify localhost SSH key"
+          private_key: "{{ coolify_ssh_key.content | b64decode }}"
+        status_code: 201
+        return_content: true
+      register: coolify_key_created
+      when: coolify_keys.json | selectattr('name', 'equalto', 'root@host.docker.internal') | list | length == 0
+
+    - name: Resolve localhost key UUID
+      ansible.builtin.set_fact:
+        coolify_key_uuid: >-
+          {%- if coolify_key_created is defined and coolify_key_created.changed -%}
+          {{ coolify_key_created.json.uuid }}
+          {%- else -%}
+          {{ (coolify_keys.json | selectattr('name', 'equalto', 'root@host.docker.internal') | first).uuid }}
+          {%- endif -%}
+      when: coolify_api_token is defined
+
+    - name: Fetch Coolify servers
+      ansible.builtin.uri:
+        url: "http://localhost:{{ coolify_port }}/api/v1/servers"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        status_code: 200
+        return_content: true
+      register: coolify_servers
+      when: coolify_key_uuid is defined
+
+    - name: Find localhost server UUID
+      ansible.builtin.set_fact:
+        coolify_server_uuid: "{{ (coolify_servers.json | selectattr('ip', 'equalto', 'host.docker.internal') | first).uuid }}"
+      when: coolify_api_token is defined and coolify_servers.status == 200
+
+    - name: Assign localhost SSH key to localhost server
+      ansible.builtin.uri:
+        url: "http://localhost:{{ coolify_port }}/api/v1/servers/{{ coolify_server_uuid }}"
+        method: PATCH
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        body_format: json
+        body:
+          private_key_uuid: "{{ coolify_key_uuid }}"
+        status_code: 201
+        return_content: true
+      register: coolify_server_updated
+      when: coolify_server_uuid is defined
+
+    - name: Validate localhost server
+      ansible.builtin.uri:
+        url: "http://localhost:{{ coolify_port }}/api/v1/servers/{{ coolify_server_uuid }}/validate"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        status_code: 201
+        return_content: true
+        register: coolify_server_validation
+        when: coolify_server_uuid is defined
+
     - name: Ensure Docker service is enabled and running
       ansible.builtin.systemd:
         name: docker
