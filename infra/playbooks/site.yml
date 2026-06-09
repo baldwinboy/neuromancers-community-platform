@@ -89,11 +89,6 @@
         executable: /bin/bash
         creates: /usr/local/bin/bws
 
-    - name: Install pipx for isolated Python application installation
-      ansible.builtin.apt:
-        name: pipx
-        state: present
-
     - name: Download AWS CLI installer
       get_url:
         url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
@@ -107,10 +102,13 @@
 
     - name: Run AWS CLI installer
       command: "/tmp/aws/install"
+      args:
+        creates: /usr/local/bin/aws
 
     - name: Verify AWS CLI installation
       command: "aws --version"
       register: aws_cli_version
+      changed_when: false
 
     - name: Display AWS CLI version
       debug:
