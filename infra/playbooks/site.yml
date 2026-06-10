@@ -299,15 +299,18 @@
       register: coolify_key_created
       when: coolify_keys.json | selectattr('name', 'equalto', 'root@host.docker.internal') | list | length == 0
 
-    - name: Resolve localhost key UUID
+    - name: Resolve localhost key UUID from created key
       ansible.builtin.set_fact:
-        coolify_key_uuid: >-
-          {%- if coolify_key_created is defined and coolify_key_created.changed -%}
-          {{ coolify_key_created.json.uuid }}
-          {%- else -%}
-          {{ (coolify_keys.json | selectattr('name', 'equalto', 'root@host.docker.internal') | first).uuid }}
-          {%- endif -%}
-      when: coolify_api_token is defined
+        coolify_key_uuid: "{{ coolify_key_created.json.uuid }}"
+      when: coolify_key_created is defined and coolify_key_created.json.uuid is defined
+
+    - name: Resolve localhost key UUID from existing keys
+      ansible.builtin.set_fact:
+        coolify_key_uuid: "{{ (coolify_keys.json | selectattr('name', 'equalto', 'root@host.docker.internal') | first).uuid }}"
+      when:
+        - coolify_key_uuid is not defined
+        - coolify_keys is defined
+        - coolify_keys.json | selectattr('name', 'equalto', 'root@host.docker.internal') | list | length > 0
 
     - name: Fetch Coolify servers
       ansible.builtin.uri:
@@ -322,10 +325,17 @@
 
     - name: Find localhost server UUID
       ansible.builtin.set_fact:
-        coolify_server_uuid: "{{ (coolify_servers.json | selectattr('ip', 'equalto', 'host.docker.internal') | first).uuid }}"
+        coolify_server_uuid: "{{ (coolify_servers.json | selectattr('description', 'equalto', 'This is the server where Coolify is running on. Don''t delete this!') | first).uuid }}"
       when: coolify_api_token is defined and coolify_servers.status == 200
 
-    - name: Assign localhost SSH key to localhost server
+    - name: Get Docker bridge gateway IP for container-to-host connectivity
+      ansible.builtin.shell: |
+        docker network inspect bridge | jq -r '.[0].IPAM.Config[0].Gateway'
+      register: docker_gateway
+      changed_when: false
+      failed_when: false
+
+    - name: Assign localhost SSH key and correct IP to localhost server
       ansible.builtin.uri:
         url: "http://localhost:{{ coolify_port }}/api/v1/servers/{{ coolify_server_uuid }}"
         method: PATCH
@@ -334,10 +344,11 @@
         body_format: json
         body:
           private_key_uuid: "{{ coolify_key_uuid }}"
+          ip: "{{ docker_gateway.stdout }}"
         status_code: 201
         return_content: true
       register: coolify_server_updated
-      when: coolify_server_uuid is defined
+      when: coolify_server_uuid is defined and docker_gateway.rc == 0
 
     - name: Validate localhost server
       ansible.builtin.uri:
@@ -347,8 +358,8 @@
           Authorization: "Bearer {{ coolify_api_token }}"
         status_code: 201
         return_content: true
-        register: coolify_server_validation
-        when: coolify_server_uuid is defined
+      register: coolify_server_validation
+      when: coolify_server_uuid is defined and docker_gateway.rc == 0
 
     - name: Ensure Docker service is enabled and running
       ansible.builtin.systemd:
