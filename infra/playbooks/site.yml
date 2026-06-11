@@ -1,4 +1,68 @@
 ---
+# =============================================================================
+# Neuromancers Network — Ansible Playbook
+# =============================================================================
+# This playbook provisions a Hetzner VPS for the full Django + PostgreSQL +
+# Redis + Celery application stack deployed via Docker Compose.
+#
+# DEPLOYMENT MODEL
+# ----------------
+# Ansible owns host mutation (packages, firewall, security, monitoring).
+# Docker Compose owns the application lifecycle (Django, Postgres, Redis,
+# Celery worker/beat, Flower, Traefik reverse proxy).
+# Coolify is installed for optional UI-based management but is not required
+# for the application stack to function.
+#
+# SECRETS
+# -------
+# Runtime secrets are stored in Bitwarden Secrets Manager. The deploy
+# workflow (GitHub Actions) runs this playbook via `bws run --` which
+# injects all required secrets as environment variables (POSTGRES_*,
+# DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS, REDIS_URL, CELERY_FLOWER_*,
+# GATUS_DISCORD_WEBHOOK_URL, AWS_*, etc.).
+# Application containers resolve their own secrets at startup via the
+# BWS CLI bundled in the production Docker image (entrypoint re-exec).
+#
+# REQUIRED ENVIRONMENT VARIABLES (from Bitwarden)
+# ------------------------------------------------
+# Infrastructure:
+#   HETZNER_SSH_HOST, HETZNER_SSH_USER, HETZNER_SSH_PRIVATE_KEY,
+#   HETZNER_SSH_KNOWN_HOSTS, TAILSCALE_AUTH_KEY, TAILSCALE_TAG,
+#   TS_OAUTH_CLIENT_ID, TS_OAUTH_CLIENT_SECRET,
+#   COOLIFY_ADMIN_USERNAME, COOLIFY_ADMIN_EMAIL, COOLIFY_ADMIN_PASSWORD,
+#   AWS_ENDPOINT_URL_S3, AWS_S3_BUCKET_NAME, AWS_ACCESS_KEY_ID,
+#   AWS_SECRET_ACCESS_KEY, RETENTION_DAYS, GATUS_DISCORD_WEBHOOK_URL
+# Application runtime:
+#   POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST,
+#   POSTGRES_PORT, REDIS_URL, DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS,
+#   DJANGO_SETTINGS_MODULE, DJANGO_ADMIN_URL, CELERY_FLOWER_USER,
+#   CELERY_FLOWER_PASSWORD, WEB_CONCURRENCY, DJANGO_ACCOUNT_ALLOW_REGISTRATION
+#
+# SETUP STEPS (fresh server)
+# ---------------------------
+# 1. Provision a Hetzner Cloud VPS (Ubuntu 24.04 LTS).
+# 2. Run bootstrap.sh as root on the fresh server (creates deploy user,
+#    hardens SSH, installs Docker and Coolify).
+# 3. Set up GitHub environments (production/staging) with BWS_ACCESS_TOKEN.
+# 4. Ensure all required secrets exist in Bitwarden Secrets Manager.
+# 5. Push to main/staging branch — CI passes, then Deploy Infrastructure
+#    workflow runs this playbook automatically.
+# 6. The playbook provisions the server, deploys the application stack
+#    via Docker Compose, and configures monitoring/backups.
+# 7. Verify: https://neuromancers.org.uk/api/health returns OK.
+#
+# POST-DEPLOY
+# -----------
+# - Application containers restart automatically (unless-stopped policy).
+# - Backups run daily at 02:00 UTC (Postgres dump → S3-compatible bucket).
+# - Django session cleanup runs every 90 days.
+# - Gatus monitors app health and alerts via Discord webhook.
+# - CrowdSec + Fail2Ban provide intrusion detection.
+# - Prometheus + node-exporter collect metrics; Beszel Hub provides
+#   lightweight host monitoring dashboard.
+# - Coolify dashboard available over Tailscale for manual management.
+# =============================================================================
+
 # Preliminary play: configure passwordless sudo if missing
 #
 # The deploy user is created with --disabled-password and added to the
@@ -39,14 +103,18 @@
     - community.docker
     - arillso.agent
     - arillso.system
+    - ansible.posix
 
   vars:
     coolify_port: 8000
     gatus_port: 8080
     beszel_hub_port: 8090
     prometheus_port: 9090
-    app_healthcheck_url: "http://django:8000/api/health"
+    app_healthcheck_url: "http://django:5000/api/health"
     coolify_healthcheck_url: "http://localhost:8000/api/v1/health"
+    app_deploy_dir: /opt/neuromancers/app
+    compose_project_name: neuromancers
+    app_domain: neuromancers.org.uk
 
   tasks:
     # ---------------------------------------------------------------------
@@ -323,11 +391,6 @@
       register: coolify_servers
       when: coolify_key_uuid is defined
 
-    - name: Find localhost server UUID
-      ansible.builtin.set_fact:
-        coolify_server_uuid: "{{ (coolify_servers.json | selectattr('description', 'equalto', 'This is the server where Coolify is running on. Don''t delete this!') | first).uuid }}"
-      when: coolify_api_token is defined and coolify_servers.status == 200
-
     - name: Get Docker bridge gateway IP for container-to-host connectivity
       ansible.builtin.shell: |
         docker network inspect bridge | jq -r '.[0].IPAM.Config[0].Gateway'
@@ -335,7 +398,36 @@
       changed_when: false
       failed_when: false
 
-    - name: Assign localhost SSH key and correct IP to localhost server
+    - name: Find localhost server UUID by name
+      ansible.builtin.set_fact:
+        coolify_server_uuid: "{{ (coolify_servers.json | selectattr('name', 'equalto', 'localhost') | first | default({})).uuid | default('') }}"
+      when: coolify_servers is defined and coolify_servers.status == 200
+
+    - name: Create localhost server in Coolify if missing
+      ansible.builtin.uri:
+        url: "http://localhost:{{ coolify_port }}/api/v1/servers"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        body_format: json
+        body:
+          name: "localhost"
+          description: "This is the server where Coolify is running on. Don't delete this!"
+          ip: "{{ docker_gateway.stdout | default('host.docker.internal', true) }}"
+          port: 22
+          user: "root"
+          private_key_uuid: "{{ coolify_key_uuid }}"
+        status_code: 201
+        return_content: true
+      register: coolify_server_created
+      when: coolify_key_uuid is defined and (coolify_server_uuid | default('')) | length == 0
+
+    - name: Set server UUID from created server
+      ansible.builtin.set_fact:
+        coolify_server_uuid: "{{ coolify_server_created.json.uuid }}"
+      when: coolify_server_created is defined and coolify_server_created.json.uuid is defined
+
+    - name: Assign localhost SSH key and correct IP to existing localhost server
       ansible.builtin.uri:
         url: "http://localhost:{{ coolify_port }}/api/v1/servers/{{ coolify_server_uuid }}"
         method: PATCH
@@ -344,11 +436,11 @@
         body_format: json
         body:
           private_key_uuid: "{{ coolify_key_uuid }}"
-          ip: "{{ docker_gateway.stdout }}"
+          ip: "{{ docker_gateway.stdout | default('host.docker.internal', true) }}"
         status_code: 201
         return_content: true
       register: coolify_server_updated
-      when: coolify_server_uuid is defined and docker_gateway.rc == 0
+      when: (coolify_server_uuid | default('')) | length > 0 and coolify_server_created is not defined
 
     - name: Validate localhost server
       ansible.builtin.uri:
@@ -359,7 +451,7 @@
         status_code: 201
         return_content: true
       register: coolify_server_validation
-      when: coolify_server_uuid is defined and docker_gateway.rc == 0
+      when: (coolify_server_uuid | default('')) | length > 0
 
     - name: Ensure Docker service is enabled and running
       ansible.builtin.systemd:
@@ -371,6 +463,61 @@
       ansible.builtin.apt:
         name: docker-compose-plugin
         state: present
+
+    # ---------------------------------------------------------------------
+    # APPLICATION STACK (Django + Postgres + Redis + Celery + Traefik)
+    # ---------------------------------------------------------------------
+
+    - name: Create runtime directory for application stack
+      ansible.builtin.file:
+        path: "{{ app_deploy_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Create Docker volumes for application data
+      community.docker.docker_volume:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - production_postgres_data
+        - production_postgres_data_backups
+        - production_traefik
+        - production_redis_data
+
+    - name: Sync project source to server (excludes venv, node_modules, git)
+      ansible.posix.synchronize:
+        src: "{{ playbook_dir }}/../../"
+        dest: "{{ app_deploy_dir }}/"
+        rsync_opts:
+          - "--exclude=.venv/"
+          - "--exclude=node_modules/"
+          - "--exclude=.git/"
+          - "--exclude=.ruff_cache/"
+          - "--exclude=__pycache__/"
+          - "--exclude=*.pyc"
+          - "--exclude=*.pyo"
+          - "--exclude=.DS_Store"
+        delete: true
+
+    - name: Deploy application stack via Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_deploy_dir }}"
+        files:
+          - docker-compose.production.yml
+        project_name: "{{ compose_project_name }}"
+        state: present
+        recreate: auto
+
+    - name: Wait for application health endpoint
+      ansible.builtin.uri:
+        url: "http://localhost/api/health"
+        headers:
+          Host: "{{ app_domain }}"
+        status_code: 200
+      register: app_health
+      retries: 30
+      delay: 5
+      until: app_health.status == 200
 
     # ---------------------------------------------------------------------
     # RETAINED MONITORING AND SECURITY SERVICES (DEPLOY NOW)
@@ -454,7 +601,8 @@
         volumes:
           - /opt/gatus/config.yml:/config/config.yaml:ro
         env:
-          APP_HEALTHCHECK_URL: "{{ app_healthcheck_url }}"
+          APP_HEALTHCHECK_URL: "http://localhost/api/health"
+          GATUS_APP_HOST_HEADER: "{{ app_domain }}"
           GATUS_DISCORD_WEBHOOK_URL: "{{ lookup('ansible.builtin.env', 'GATUS_DISCORD_WEBHOOK_URL', default=undef()) }}"
           COOLIFY_HEALTHCHECK_URL: "{{ coolify_healthcheck_url }}"
 
@@ -603,7 +751,9 @@
 
     - name: Smoke - public health endpoint returns healthy DB and Redis
       ansible.builtin.uri:
-        url: "{{ app_healthcheck_url }}"
+        url: "http://localhost/api/health"
+        headers:
+          Host: "{{ app_domain }}"
         return_content: true
       register: public_health
       tags:
@@ -620,20 +770,25 @@
       tags:
         - smoke
 
-    - name: Smoke - inspect running application containers
-      ansible.builtin.command: docker ps --format '{{ '{{' }}.Image{{ '}}' }} {{ '{{' }}.Names{{ '}}' }}'
-      register: app_containers
+    - name: Smoke - list running compose services
+      ansible.builtin.command:
+        cmd: "docker compose -p {{ compose_project_name }} ps --services --filter status=running"
+        chdir: "{{ app_deploy_dir }}"
+      register: running_services
       changed_when: false
       tags:
         - smoke
 
-    - name: Smoke - assert Celery worker and beat are present
+    - name: Smoke - assert all application services are running
       ansible.builtin.assert:
         that:
-          - app_containers.stdout is search('neuromancers_network_production_celeryworker')
-          - app_containers.stdout is search('neuromancers_network_production_celerybeat')
-          - app_containers.stdout is search('neuromancers_network_production_redis') or app_containers.stdout is search('redis:8.6')
-        fail_msg: "Celery worker, Celery beat, or Redis container is not present after deployment."
+          - "'django' in running_services.stdout_lines"
+          - "'postgres' in running_services.stdout_lines"
+          - "'redis' in running_services.stdout_lines"
+          - "'celeryworker' in running_services.stdout_lines"
+          - "'celerybeat' in running_services.stdout_lines"
+          - "'traefik' in running_services.stdout_lines"
+        fail_msg: "One or more application services are not running."
       tags:
         - smoke
 

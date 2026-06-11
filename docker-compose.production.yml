@@ -20,6 +20,8 @@ services:
     env_file:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
+    environment:
+      BWS_ACCESS_TOKEN: "${BWS_ACCESS_TOKEN}"
     command: /start
 
   postgres:

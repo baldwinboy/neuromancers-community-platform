@@ -7,3 +7,5 @@ collections:
     source: https://galaxy.ansible.com
   - name: arillso.system
     source: https://galaxy.ansible.com
+  - name: ansible.posix
+    source: https://galaxy.ansible.com
