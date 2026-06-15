@@ -116,7 +116,7 @@ jobs:
             exit 1
           fi
       - name: Connect to tailnet
-        uses: tailscale/github-action@v4
+        uses: Pikachews/tailscale-action@main
         with:
           oauth-client-id: ${{ steps.inject-secrets.outputs.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ steps.inject-secrets.outputs.TS_OAUTH_CLIENT_SECRET }}
@@ -132,6 +132,15 @@ jobs:
       - name: Play Ansible Playbook
         env:
           ANSIBLE_HOST_KEY_CHECKING: "false"
+          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
         run: |
-          bws run -- 'ansible-playbook infra/playbooks/site.yml --skip-tags smoke --inventory infra/inventory/hosts.yml --private-key infra/inventory/ssh_key' 2>&1 | \
+          EXTRA="BWS_ACCESS_TOKEN=$BWS_ACCESS_TOKEN git_branch=$DEPLOY_BRANCH git_commit_sha=$DEPLOY_SHA git_repository=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+
+          if [[ "$DEPLOY_BRANCH" == "main" ]]; then
+            EXTRA="$EXTRA git_environment=production"
+          else
+            EXTRA="$EXTRA git_environment=staging"
+          fi
+
+          bws run -- "ansible-playbook infra/playbooks/site.yml --skip-tags smoke --inventory infra/inventory/hosts.yml --private-key infra/inventory/ssh_key --extra-vars \"$EXTRA\"" 2>&1 | \
             sed -E 's/[a-zA-Z0-9._%+-]+@[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[REDACTED]/g; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[REDACTED]/g'
