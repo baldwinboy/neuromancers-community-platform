@@ -132,6 +132,18 @@ jobs:
       - name: Play Ansible Playbook
         env:
           ANSIBLE_HOST_KEY_CHECKING: "false"
+          APP_DOMAIN: ${{ steps.app-domain.outputs.domain }}
         run: |
-          bws run -- 'ansible-playbook infra/playbooks/site.yml --skip-tags smoke --inventory infra/inventory/hosts.yml --private-key infra/inventory/ssh_key -e bws_access_token=${{ secrets.BWS_ACCESS_TOKEN }}' 2>&1 | \
+          EXTRA=""
+
+          # Inject environment variables into the playbook
+          if [[ -n "$BWS_ACCESS_TOKEN" ]]; then
+            EXTRA="$EXTRA -e bws_access_token=$BWS_ACCESS_TOKEN"
+          fi
+
+          if [[ "$DEPLOY_BRANCH" == "main" ]]; then
+            EXTRA="$EXTRA -e app_domain=network.neuromancers.org.uk"
+          fi
+
+          bws run -- "ansible-playbook infra/playbooks/site.yml --skip-tags smoke --inventory infra/inventory/hosts.yml --private-key infra/inventory/ssh_key $EXTRA" 2>&1 | \
             sed -E 's/[a-zA-Z0-9._%+-]+@[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[REDACTED]/g; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[REDACTED]/g'

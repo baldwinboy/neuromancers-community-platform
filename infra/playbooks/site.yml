@@ -2,65 +2,289 @@
 # =============================================================================
 # Neuromancers Network — Ansible Playbook
 # =============================================================================
-# This playbook provisions a Hetzner VPS for the full Django + PostgreSQL +
-# Redis + Celery application stack deployed via Docker Compose.
+# This playbook provisions a Hetzner Cloud VPS for the full application stack:
+#   Django + Gunicorn + PostgreSQL + Redis + Celery (worker + beat) + Flower +
+#   Traefik reverse proxy + monitoring (Gatus, Prometheus, Beszel, CrowdSec).
 #
 # DEPLOYMENT MODEL
 # ----------------
-# Ansible owns host mutation (packages, firewall, security, monitoring).
-# Docker Compose owns the application lifecycle (Django, Postgres, Redis,
-# Celery worker/beat, Flower, Traefik reverse proxy).
-# Coolify is installed for optional UI-based management but is not required
-# for the application stack to function.
+#   - Ansible owns host mutation (packages, firewall, Tailscale, CrowdSec).
+#   - Docker Compose owns the application lifecycle — the playbook runs
+#     `community.docker.docker_compose_v2` against
+#     docker-compose.production.yml (in the repo root) after syncing
+#     the repo to the server at {{ app_deploy_dir }}.
+#   - Coolify is installed on the host (by bootstrap.sh) for optional
+#     UI-based management but is NOT required for the stack to function.
+#   - Traefik terminates TLS via Let's Encrypt and reverse-proxies to
+#     Gunicorn (port 5000).  On staging, a self-signed TLS error is
+#     expected since LE cannot validate .ts.net domains.
+#   - Runtime secrets are injected into Django containers via the BWS
+#     entrypoint re-exec pattern (compose/production/django/entrypoint).
+#
+# ARCHITECTURE
+# ------------
+#   Internet → Hetzner VPS (UFW: ports 22, 80, 443, 5555, 8000, 8080, 9090)
+#     ├── Traefik (port 80 → 443 redirect, port 443 TLS, port 5555 for Flower)
+#     │     ├── https://<domain>/api/health → Django health check
+#     │     ├── https://<domain>/admin      → Django admin
+#     │     └── https://<domain>:5555        → Flower (basic auth)
+#     ├── Gatus (port 8080) — health dashboard + Discord alerts
+#     ├── Prometheus (port 9090) + node-exporter
+#     ├── Beszel Hub (port 8090) — lightweight host monitoring
+#     ├── Coolify (port 8000) — optional UI management, Tailscale-only
+#     ├── CrowdSec + Fail2Ban — intrusion detection
+#     └── Internal Docker network (unexposed):
+#           django:5000, postgres:5432, redis:6379, celeryworker, celerybeat
+#
+# ENVIRONMENTS
+# ------------
+#   production (main branch):
+#     - Domain: neuromancers.org.uk → Hetzner VPS IP (A record required)
+#     - TLS: Let's Encrypt via Traefik (HTTP-01 challenge on port 80)
+#     - app_domain set via -e flag from CI workflow
+#   staging (staging branch):
+#     - No public domain; server identified via Tailscale MagicDNS
+#     - app_domain auto-detected from `tailscale status --json .Self.DNSName`
+#     - TLS: Let's Encrypt will fail (.ts.net not publicly resolvable)
+#     - Access app via tailscale0 IP or Tailscale SSH tunnel
 #
 # SECRETS
 # -------
-# Runtime secrets are stored in Bitwarden Secrets Manager. The deploy
-# workflow (GitHub Actions) runs this playbook via `bws run --` which
-# injects all required secrets as environment variables (POSTGRES_*,
-# DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS, REDIS_URL, CELERY_FLOWER_*,
-# GATUS_DISCORD_WEBHOOK_URL, AWS_*, etc.).
-# Application containers resolve their own secrets at startup via the
-# BWS CLI bundled in the production Docker image (entrypoint re-exec).
+# All secrets are stored in Bitwarden Secrets Manager.  The GitHub
+# Actions workflow (infra/../deploy.yml) runs under `bws run --`,
+# injecting every required secret as an environment variable.
+# Application containers resolve their own runtime secrets at startup
+# via the BWS CLI bundled in the production Docker image; the entrypoint
+# re-execs under `bws run --` to populate POSTGRES_*, REDIS_URL,
+# DJANGO_SECRET_KEY, etc. before launching the process.
 #
-# REQUIRED ENVIRONMENT VARIABLES (from Bitwarden)
-# ------------------------------------------------
-# Infrastructure:
-#   HETZNER_SSH_HOST, HETZNER_SSH_USER, HETZNER_SSH_PRIVATE_KEY,
-#   HETZNER_SSH_KNOWN_HOSTS, TAILSCALE_AUTH_KEY, TAILSCALE_TAG,
-#   TS_OAUTH_CLIENT_ID, TS_OAUTH_CLIENT_SECRET,
-#   COOLIFY_ADMIN_USERNAME, COOLIFY_ADMIN_EMAIL, COOLIFY_ADMIN_PASSWORD,
-#   AWS_ENDPOINT_URL_S3, AWS_S3_BUCKET_NAME, AWS_ACCESS_KEY_ID,
-#   AWS_SECRET_ACCESS_KEY, RETENTION_DAYS, GATUS_DISCORD_WEBHOOK_URL
-# Application runtime:
-#   POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST,
-#   POSTGRES_PORT, REDIS_URL, DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS,
-#   DJANGO_SETTINGS_MODULE, DJANGO_ADMIN_URL, CELERY_FLOWER_USER,
-#   CELERY_FLOWER_PASSWORD, WEB_CONCURRENCY, DJANGO_ACCOUNT_ALLOW_REGISTRATION
-#
-# SETUP STEPS (fresh server)
+# REQUIRED BITWARDEN SECRETS
 # ---------------------------
-# 1. Provision a Hetzner Cloud VPS (Ubuntu 24.04 LTS).
-# 2. Run bootstrap.sh as root on the fresh server (creates deploy user,
-#    hardens SSH, installs Docker and Coolify).
-# 3. Set up GitHub environments (production/staging) with BWS_ACCESS_TOKEN.
-# 4. Ensure all required secrets exist in Bitwarden Secrets Manager.
-# 5. Push to main/staging branch — CI passes, then Deploy Infrastructure
-#    workflow runs this playbook automatically.
-# 6. The playbook provisions the server, deploys the application stack
-#    via Docker Compose, and configures monitoring/backups.
-# 7. Verify: https://neuromancers.org.uk/api/health returns OK.
+# Infrastructure (SSH / Tailscale / Coolify / monitoring):
+#   HETZNER_SSH_HOST      Hetzner VPS IPv4 address
+#   HETZNER_SSH_USER      Deploy user (default: deploy)
+#   HETZNER_SSH_PRIVATE_KEY  SSH private key (PEM)
+#   HETZNER_SSH_PUBLIC_KEY   SSH public key (for bootstrap.sh)
+#   TAILSCALE_AUTH_KEY    Pre-auth key for Tailscale
+#   TAILSCALE_TAG         Tailscale ACL tag (e.g. tag:neuromancers-staging)
+#   TS_OAUTH_CLIENT_ID    Tailscale OAuth client ID (for CI runner)
+#   TS_OAUTH_CLIENT_SECRET  Tailscale OAuth client secret
+#   COOLIFY_ADMIN_USERNAME  Coolify admin username
+#   COOLIFY_ADMIN_EMAIL     Coolify admin email
+#   COOLIFY_ADMIN_PASSWORD  Coolify admin password
+#   AWS_ENDPOINT_URL_S3   S3-compatible endpoint for backups
+#   AWS_S3_BUCKET_NAME    Backup bucket name
+#   AWS_ACCESS_KEY_ID     S3 access key
+#   AWS_SECRET_ACCESS_KEY S3 secret key
+#   RETENTION_DAYS        Backup retention (default: 30)
+#   GATUS_DISCORD_WEBHOOK_URL  Discord webhook for health alerts
 #
-# POST-DEPLOY
-# -----------
-# - Application containers restart automatically (unless-stopped policy).
-# - Backups run daily at 02:00 UTC (Postgres dump → S3-compatible bucket).
-# - Django session cleanup runs every 90 days.
-# - Gatus monitors app health and alerts via Discord webhook.
-# - CrowdSec + Fail2Ban provide intrusion detection.
-# - Prometheus + node-exporter collect metrics; Beszel Hub provides
-#   lightweight host monitoring dashboard.
-# - Coolify dashboard available over Tailscale for manual management.
+# Application runtime (injected into containers at startup):
+#   POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
+#   POSTGRES_HOST, POSTGRES_PORT
+#   REDIS_URL
+#   DJANGO_SECRET_KEY       Generate: python -c "from django.core.management.utils
+#                             import get_random_secret_key; print(get_random_secret_key())"
+#   DJANGO_ALLOWED_HOSTS    Comma-separated: .neuromancers.org.uk for production,
+#                             MagicDNS hostname (.ts.net) for staging
+#   DJANGO_SETTINGS_MODULE  e.g. config.settings.production
+#   DJANGO_ADMIN_URL        e.g. admin/ (keep secret to obscure admin login)
+#   DJANGO_ACCOUNT_ALLOW_REGISTRATION  true/false
+#   CELERY_FLOWER_USER      Basic-auth user for Flower dashboard
+#   CELERY_FLOWER_PASSWORD  Basic-auth password for Flower dashboard
+#   WEB_CONCURRENCY         Gunicorn worker count (default: 3-5 per CPU)
+#
+# SETUP STEPS (full walkthrough)
+# -------------------------------
+#
+#  1. Provision the Hetzner VPS
+#       Cloud Console → Create Server → Ubuntu 24.04 LTS, any plan.
+#       Note the IPv4 address — this is your HETZNER_SSH_HOST.
+#
+#  2. Run the bootstrap script on the fresh VPS
+#       SSH in as root, then:
+#         curl -fsSL https://raw.githubusercontent.com/neuromancers/neuromancers_network/\
+#         main/infra/scripts/bootstrap.sh | bash
+#       This creates the deploy user, hardens SSH, installs Docker, and
+#       sets up the Coolify directory structure.
+#
+#  3. Set up Tailscale
+#       Log out and SSH back as the deploy user to verify key access.
+#       In the Tailscale admin console:
+#         - Generate a reusable pre-auth key → save as TAILSCALE_AUTH_KEY
+#         - Create or reuse an OAuth client → save TS_OAUTH_CLIENT_ID/TS_OAUTH_CLIENT_SECRET
+#         - Create an ACL tag (e.g. tag:neuromancers-staging) → save as TAILSCALE_TAG
+#       Tailscale with MagicDNS must be enabled in the tailnet settings
+#       for staging hostname detection to work.
+#
+#  4. Set up Bitwarden Secrets Manager
+#       - Create a new project (e.g. "Neuromancers Platform")
+#       - Create all secrets listed under "Required Bitwarden Secrets" above
+#         with the exact KEY names matching your Bitwarden identifiers.
+#       - Generate a machine-to-machine access token for the project
+#         → this is your BWS_ACCESS_TOKEN.
+#
+#  5. Configure GitHub Environments
+#       Settings → Environments → Create two environments:
+#
+#       production:
+#         Required reviewers: (optional)
+#         Deployment branches: main
+#         Secrets:
+#           BWS_ACCESS_TOKEN  <from step 4>
+#
+#       staging:
+#         Deployment branches: staging
+#         Secrets:
+#           BWS_ACCESS_TOKEN  <same or separate Bitwarden token>
+#
+#  6. DNS setup
+#       Production: Create an A record neuromancers.org.uk → HETZNER_SSH_HOST
+#       Staging: No DNS needed — the playbook auto-detects the Tailscale
+#         MagicDNS hostname and sets app_domain dynamically.
+#
+#  7. Prepare Django env files (one-time, local)
+#       The docker-compose.production.yml references .envs/.production/.django
+#       and .envs/.production/.postgres.  These are gitignored; create them:
+#
+#         mkdir -p .envs/.production
+#         cat > .envs/.production/.django <<-'EOF'
+#         DJANGO_ALLOWED_HOSTS=.example.com
+#         DJANGO_SETTINGS_MODULE=config.settings.production
+#         DJANGO_SECRET_KEY=...
+#         DJANGO_ADMIN_URL=admin/
+#         DJANGO_ACCOUNT_ALLOW_REGISTRATION=False
+#         REDIS_URL=redis://redis:6379/0
+#         CELERY_FLOWER_USER=admin
+#         CELERY_FLOWER_PASSWORD=...
+#         WEB_CONCURRENCY=4
+#         EOF
+#         cat > .envs/.production/.postgres <<-'EOF'
+#         POSTGRES_DB=neuromancers
+#         POSTGRES_USER=neuromancers
+#         POSTGRES_PASSWORD=...
+#         POSTGRES_HOST=postgres
+#         POSTGRES_PORT=5432
+#         EOF
+#       These values ARE in Bitwarden; the local copies are only needed for
+#       local development or if running the playbook outside CI.  In CI,
+#       bws run injects them.
+#
+#  8. First deploy
+#       Push to main (production) or staging:
+#         git checkout staging
+#         git push origin staging
+#       This triggers CI (build + test) then the Deploy Infrastructure
+#       workflow, which runs this playbook under `bws run --`.
+#
+#       The playbook will:
+#         a) Apt-install system packages (curl, ufw, fail2ban, etc.)
+#         b) Install Docker + Docker Compose
+#         c) Install & connect Tailscale
+#         d) Detect MagicDNS hostname (staging) or use -e override (prod)
+#         e) Configure UFW firewall (ports 22, 80, 443, 5555, 8000, 8080, 9090)
+#         f) Install CrowdSec + Fail2Ban
+#         g) rsync the repo to /opt/neuromancers/app
+#         h) Deploy Docker Compose stack (postgres, redis, django, celery*,
+#            flower, traefik)
+#         i) Wait for health endpoint via docker compose exec (retry 30×5s)
+#         j) Deploy monitoring containers (Gatus, Prometheus, node-exporter,
+#            Beszel hub/agent) if not already running
+#
+# POST-DEPLOY — Access & Management
+# -----------------------------------
+#
+#   Django admin:
+#     Production: https://neuromancers.org.uk/<DJANGO_ADMIN_URL>/
+#     Staging:    via Tailscale — resolve the MagicDNS hostname in your
+#                 tailnet and add it to DJANGO_ALLOWED_HOSTS in Bitwarden
+#     Create a superuser:
+#       docker compose -p neuromancers exec django \
+#         python manage.py createsuperuser
+#
+#   Health check:
+#     curl -s https://neuromancers.org.uk/api/health
+#     Expected: {"status":"ok","database":"ok","redis":"ok"}
+#
+#   Flower (Celery task monitoring):
+#     https://neuromancers.org.uk:5555/
+#     Basic-auth: CELERY_FLOWER_USER / CELERY_FLOWER_PASSWORD
+#
+#   Gatus health dashboard:
+#     http://<server-ip>:8080/
+#     (or http://localhost:8080/ if on the host)
+#
+#   Prometheus:
+#     http://<server-ip>:9090/
+#
+#   Beszel Hub:
+#     http://<server-ip>:8090/
+#
+#   Coolify dashboard (Tailscale-only):
+#     http://<tailscale-ip>:8000/
+#
+# MANAGEMENT COMMANDS
+# --------------------
+#   Run any Django management command via docker compose exec:
+#     docker compose -p neuromancers exec django python manage.py <command>
+#
+#   Common commands:
+#     createsuperuser              Create initial admin user
+#     makemigrations               (dev only; prod uses pre-built image)
+#     migrate                      Apply pending migrations (runs auto on start)
+#     collectstatic                (runs auto on start)
+#     shell_plus                   Django extensions shell (if installed)
+#     dbshell                      Raw psql into Postgres
+#     clearsessions                Clean expired sessions (scheduled cron)
+#
+#   Postgres backup / restore:
+#     The awscli container handles S3 backups automatically.  Manual:
+#       docker compose -p neuromancers exec postgres \
+#         /usr/local/bin/maintenance/backup
+#     Restore from latest backup:
+#       docker compose -p neuromancers exec postgres \
+#         /usr/local/bin/maintenance/restore <backup-file>
+#
+#   Tailscale status / debug:
+#     tailscale status --json | jq .  # Show MagicDNS name, connected peers
+#     tailscale ping <peer>            # Verify tailnet connectivity
+#
+# MONITORING
+# ----------
+#   - Gatus checks the Django /api/health endpoint every 30s, sends
+#     Discord alert on failure.
+#   - CrowdSec watches Traefik logs; blocks offending IPs via iptables.
+#   - Fail2Ban monitors SSH auth logs.
+#   - Prometheus + node-exporter collect system metrics.
+#   - Beszel Hub shows CPU, RAM, disk, and network graphs.
+#   - Postgres backups run daily at 02:00 UTC via systemd timer.
+#   - Django session cleanup runs every 90 days.
+#
+# TROUBLESHOOTING
+# ---------------
+#   Playbook fails on "No first item, sequence was empty" at coolify_* tasks:
+#     Coolify server list is empty (first deploy or fresh install).
+#     The playbook handles this gracefully — the fix uses
+#     selectattr('name') | first | default({}) to guard against empty lists.
+#     It also POST-creates a localhost server entry when the list is empty.
+#
+#   Health check fails (docker compose exec timeout):
+#     Check if Postgres is reachable: docker compose -p neuromancers logs postgres
+#     If Postgres is healthy, check Django logs: docker compose -p neuromancers logs django
+#     Common cause: missing DJANGO_ALLOWED_HOSTS or wrong DATABASE_URL.
+#     Verify Bitwarden secrets are correct.
+#
+#   Gatus shows unhealthy on staging:
+#     Expected — Traefik's Host('neuromancers.org.uk') rule won't match the
+#     MagicDNS hostname.  Access Gatus directly via http://<server-ip>:8080/.
+#
+#   Traefik fails to get Let's Encrypt certificate:
+#     Verify DNS A record points to the correct Hetzner VPS IP.
+#     On staging this is expected (.ts.net domains are not publicly resolvable).
+#
+#   Cannot SSH after playbook:
+#     UFW blocks port 22 from non-tailnet IPs by default.  Verify your SSH
+#     client's IP is allowed, or connect via Tailscale SSH.
 # =============================================================================
 
 # Preliminary play: configure passwordless sudo if missing
@@ -114,7 +338,6 @@
     coolify_healthcheck_url: "http://localhost:8000/api/v1/health"
     app_deploy_dir: /opt/neuromancers/app
     compose_project_name: neuromancers
-    app_domain: neuromancers.org.uk
 
   tasks:
     # ---------------------------------------------------------------------
@@ -216,6 +439,28 @@
         --advertise-tags={{ lookup('ansible.builtin.env', 'TAILSCALE_TAG', default=undef()) }}
         --ssh
       when: tailscale_status.rc != 0
+
+    - name: Detect Tailscale MagicDNS hostname for app_domain
+      ansible.builtin.command: tailscale status --json
+      register: ts_magicdns
+      changed_when: false
+      failed_when: false
+      when: app_domain is not defined
+
+    - name: Set app_domain from MagicDNS when not explicitly provided
+      ansible.builtin.set_fact:
+        app_domain: "{{ (ts_magicdns.stdout | from_json).Self.DNSName | trim('.') }}"
+      when:
+        - app_domain is not defined
+        - ts_magicdns.rc == 0
+        - ts_magicdns.stdout | default('') | length > 0
+
+    - name: Fallback app_domain to ansible_host when MagicDNS unavailable
+      ansible.builtin.set_fact:
+        app_domain: "{{ ansible_host }}"
+      when:
+        - app_domain is not defined
+        - ansible_host is defined
 
     # ---------------------------------------------------------------------
     # FIREWALL POLICY
@@ -509,15 +754,25 @@
         recreate: auto
 
     - name: Wait for application health endpoint
-      ansible.builtin.uri:
-        url: "http://localhost/api/health"
-        headers:
-          Host: "{{ app_domain }}"
-        status_code: 200
-      register: app_health
-      retries: 30
-      delay: 5
-      until: app_health.status == 200
+      ansible.builtin.shell:
+        cmd: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            if docker compose -p {{ compose_project_name }} exec -T django python -c "
+          import urllib.request, json
+          resp = urllib.request.urlopen('http://localhost:5000/api/health', timeout=5)
+          data = json.loads(resp.read())
+          assert data['status'] == 'ok'
+          " 2>/dev/null; then
+              echo 'Health check passed'
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'Health check failed after 30 attempts' >&2
+          exit 1
+        chdir: "{{ app_deploy_dir }}"
+      changed_when: false
 
     # ---------------------------------------------------------------------
     # RETAINED MONITORING AND SECURITY SERVICES (DEPLOY NOW)
@@ -750,11 +1005,14 @@
         fail_msg: "One or more retained containers are missing."
 
     - name: Smoke - public health endpoint returns healthy DB and Redis
-      ansible.builtin.uri:
-        url: "http://localhost/api/health"
-        headers:
-          Host: "{{ app_domain }}"
-        return_content: true
+      ansible.builtin.shell:
+        cmd: |
+          docker compose -p {{ compose_project_name }} exec -T django python -c "
+            import urllib.request, json
+            resp = urllib.request.urlopen('http://localhost:5000/api/health', timeout=10)
+            print(resp.read().decode())
+          "
+        chdir: "{{ app_deploy_dir }}"
       register: public_health
       tags:
         - smoke
@@ -762,10 +1020,9 @@
     - name: Smoke - assert public health content is healthy
       ansible.builtin.assert:
         that:
-          - public_health.status == 200
-          - public_health.json.status == 'ok'
-          - public_health.json.database == 'ok'
-          - public_health.json.redis == 'ok'
+          - (public_health.stdout | from_json).status == 'ok'
+          - (public_health.stdout | from_json).database == 'ok'
+          - (public_health.stdout | from_json).redis == 'ok'
         fail_msg: "Public application health endpoint is not healthy."
       tags:
         - smoke
