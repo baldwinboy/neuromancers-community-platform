@@ -648,6 +648,17 @@
         coolify_server_uuid: "{{ (coolify_servers.json | selectattr('name', 'equalto', 'localhost') | first | default({})).uuid | default('') }}"
       when: coolify_servers is defined and coolify_servers.status == 200
 
+    - name: Get Tailscale IPv4
+      shell: tailscale ip -4
+      register: ts_ip
+      changed_when: false
+      failed_when: false
+      when: tailscale_status.rc == 0
+
+    - name: Set coolify_server_ip to Tailscale IP or fallback
+      set_fact:
+        coolify_server_ip: "{{ ts_ip.stdout | default(ansible_default_ipv4.address, true) }}"
+
     - name: Create localhost server in Coolify if missing
       ansible.builtin.uri:
         url: "http://localhost:{{ coolify_port }}/api/v1/servers"
@@ -658,7 +669,7 @@
         body:
           name: "localhost"
           description: "This is the server where Coolify is running on. Don't delete this!"
-          ip: "{{ docker_gateway.stdout | default('host.docker.internal', true) }}"
+          ip: "{{ coolify_server_ip }}"
           port: 22
           user: "root"
           private_key_uuid: "{{ coolify_key_uuid }}"

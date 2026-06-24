@@ -132,7 +132,6 @@ jobs:
       - name: Play Ansible Playbook
         env:
           ANSIBLE_HOST_KEY_CHECKING: "false"
-          APP_DOMAIN: ${{ steps.app-domain.outputs.domain }}
         run: |
           EXTRA=""
 
