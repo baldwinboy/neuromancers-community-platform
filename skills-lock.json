@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "ansible-expert": {
+      "source": "personamanagmentlayer/pcl",
+      "sourceType": "github",
+      "skillPath": "stdlib/devops/ansible-expert/SKILL.md",
+      "computedHash": "759e47e88c3a04f2645fac14e5f3f0c28e6e0322ad2e531d57d230ab18fac926"
+    }
+  }
+}

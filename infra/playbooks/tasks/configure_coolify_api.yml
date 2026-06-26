@@ -1,0 +1,182 @@
+# Configure Coolify API
+---
+# Check if Coolify API is enabled
+- name: Check if Coolify API is enabled
+  ansible.builtin.uri:
+    url: "{{ coolify_healthcheck_url }}"
+    method: GET
+  register: coolify_health
+
+- name: Set Coolify API token
+  ansible.builtin.set_fact:
+    coolify_api_token: "{{ coolify_admin_token | default(lookup('ansible.builtin.env', 'COOLIFY_ADMIN_TOKEN', default=undef())) }}"
+  when: coolify_health.status == 200
+  failed_when: coolify_api_token is undefined
+
+# Get the Coolify host server as JSON
+- name: List Coolify servers
+  ansible.builtin.uri:
+    url: "{{ coolify_api_url }}/servers"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ coolify_api_token }}"
+    status_code: 200
+    return_content: true
+  register: coolify_server_list
+
+- name: Get Coolify host server object
+  ansible.builtin.set_fact:
+    coolify_server: "{{ coolify_server_list.json | selectattr('is_coolify_host') | rejectattr('is_reachable') | first | default(undef()) }}"
+  when: coolify_server_list is defined
+
+# Configure SSH for Coolify
+- name: Install / Update openssh-server (Debian-based systems)
+  ansible.builtin.package:
+    name: openssh-server
+    state: latest
+  when: coolify_server is defined
+
+- name: Check SSH configuration syntax
+  command: sshd -t
+  register: sshd_config_check
+  ignore_errors: true
+  when: coolify_server is defined
+
+- name: Ensure SSH service is running
+  ansible.builtin.service:
+    name: ssh
+    state: started
+    enabled: yes
+  when: sshd_config_check.rc != 0
+
+- name: Add SSH key to authorized_keys
+  ansible.posix.authorized_key:
+    user: "{{ ansible_user }}"
+    state: present
+    key: "{{ ansible_ssh_public_key }}"
+  when: coolify_server is defined
+
+- name: Allow public key authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PubkeyAuthentication"
+    line: "PubkeyAuthentication yes"
+    state: present
+    backup: yes
+  when: coolify_server is defined
+
+- name: Prohibit root login with password
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin prohibit-password"
+    state: present
+    backup: yes
+  when: coolify_server is defined
+
+- name: Disable X11 forwarding
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?X11Forwarding"
+    line: "X11Forwarding no"
+    state: present
+  when: coolify_server is defined
+
+- name: Set idle timeout interval
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?ClientAliveInterval"
+    line: "ClientAliveInterval {{ ssh_alive_interval }}"
+    state: present
+  when: coolify_server is defined
+
+- name: Set maximum number of login attempts
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?MaxAuthTries"
+    line: "MaxAuthTries {{ ssh_max_auth_tries }}"
+    state: present
+  when: coolify_server is defined
+
+- name: Check SSH configuration syntax
+  command: sshd -t
+  register: sshd_config_check_before_restart
+  ignore_errors: true
+  when: coolify_server is defined
+
+- name: Restart SSH service to apply changes
+  ansible.builtin.service:
+    name: ssh
+    state: restarted
+  notify: restart ssh
+  when: sshd_config_check_before_restart.rc == 0
+
+# Create a new private key if host server is unreachable
+- name: Generate SSH key
+  community.crypto.openssh_keypair:
+    path: /data/coolify/ssh/keys/id.root@host.docker.internal
+    type: ed25519
+    owner: 9999
+    comment: root@host.docker.internal
+    regenerate: full_idempotence
+    force: true
+  register: coolify_ssh_key
+  when: coolify_server is defined
+
+- name: Authorize SSH public key for root login
+  ansible.posix.authorized_key:
+    user: "{{ ansible_user }}"
+    state: present
+    key: "{{ coolify_ssh_key.public_key }}"
+  when: coolify_ssh_key is defined
+
+- name: Get Coolify host private key content
+  ansible.builtin.slurp:
+    src: "{{ coolify_ssh_key.filename }}"
+  register: coolify_private_key
+  when: coolify_ssh_key is defined
+
+- name: Create Coolify host private key
+  ansible.builtin.uri:
+    url: "{{ coolify_api_url }}/security/keys"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ coolify_api_token }}"
+    body_format: json
+    body:
+      name: "{{ coolify_ssh_key.comment }}"
+      description: "Coolify localhost SSH key"
+      private_key: "{{ coolify_private_key.content | b64decode }}"
+    status_code: 201
+    return_content: true
+  register: coolify_key_created
+  when: coolify_ssh_key is defined
+
+- name: Update Coolify host server
+  ansible.builtin.uri:
+    url: "{{ coolify_api_url }}/servers/{{ coolify_server.uuid }}"
+    method: PATCH
+    headers:
+      Authorization: "Bearer {{ coolify_api_token }}"
+    body_format: json
+    body:
+      private_key_uuid: "{{ coolify_key_created.json.uuid }}"
+      instant_validate: true
+    status_code: 201
+  when: coolify_key_created is defined
+
+# Pass when Coolify server is reachable
+- name: Check if Coolify server is reachable
+  ansible.builtin.uri:
+    url: "{{ coolify_api_url }}/servers/{{ coolify_server.uuid }}"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ coolify_api_token }}"
+    status_code: 200
+    return_content: true
+  register: validated_coolify_server
+  when: coolify_server is defined
+  retries: 3
+  delay: 5
+  until: validated_coolify_server is defined and validated_coolify_server.json.settings.is_reachable
+  failed_when: validated_coolify_server is not defined or not validated_coolify_server.json.settings.is_reachable

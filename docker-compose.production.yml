@@ -5,8 +5,6 @@ volumes:
 
   production_redis_data: {}
 
-
-
 services:
   django: &django
     build:
@@ -34,6 +32,8 @@ services:
       - production_postgres_data_backups:/backups
     env_file:
       - ./.envs/.production/.postgres
+    environment:
+      BWS_ACCESS_TOKEN: "${BWS_ACCESS_TOKEN}"
 
   traefik:
     build:
@@ -45,16 +45,15 @@ services:
     volumes:
       - production_traefik:/etc/traefik/acme
     ports:
-      - '0.0.0.0:80:80'
-      - '0.0.0.0:443:443'
-      - '0.0.0.0:5555:5555'
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+      - "0.0.0.0:5555:5555"
 
   redis:
     image: docker.io/redis:7.2
 
     volumes:
       - production_redis_data:/data
-
 
   celeryworker:
     <<: *django

@@ -13,7 +13,7 @@ services:
       - ./config:/app/config:z
       - ./neuromancers_network:/app/neuromancers_network:z
     ports:
-      - '9000:9000'
+      - "9000:9000"
     command: /start-docs
     networks:
       - neuromancers_network_local_docs_net

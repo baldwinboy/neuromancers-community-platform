@@ -1,58 +1,41 @@
-name: Deploy Infrastructure
-
+name: Backup
 on:
-  workflow_run:
-    workflows: [CI]
-    types:
-      - completed
-    branches: [main, staging]
-
-concurrency:
-  group: deploy-${{ github.event.workflow_run.head_branch }}
-  cancel-in-progress: true
+  schedule:
+    - cron: "0 2 * * *"
 
 jobs:
-  deploy:
-    if: github.event.workflow_run.conclusion == 'success'
+  backup:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    environment: ${{ github.event.workflow_run.head_branch == 'main' && 'production' || 'staging' }}
+    strategy:
+      matrix:
+        include:
+          - environment: production
+            branch: main
+          - environment: staging
+            branch: staging
+    environment: ${{ matrix.environment }}
     env:
-      DEPLOY_BRANCH: ${{ github.event.workflow_run.head_branch }}
-      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
       BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
     steps:
-      - name: Checkout deployment revision
+      - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ matrix.branch }}
       - uses: actions/setup-python@v6
       - run: pip install ansible==13.6.*
       - name: Install latest Bitwarden Secrets Manager CLI
         run: |
-          # Fetch the latest release tag from GitHub API
           LATEST_TAG=$(curl -s https://api.github.com/repos/bitwarden/sdk-sm/releases/latest \
           | jq -r '.tag_name')
-
-          # Get only the version number ('xxx-v1.2.3' -> '1.2.3')
           VERSION=${LATEST_TAG#*-v}
-
-          # Construct the download URL for the Linux AMD64 binary
           TAG="bws-v${VERSION}"
           ASSET_NAME="bws-x86_64-unknown-linux-gnu-${VERSION}.zip"
           DOWNLOAD_URL="https://github.com/bitwarden/sdk-sm/releases/download/${TAG}/${ASSET_NAME}"
-
-          # Download and unzip the binary
           curl -L -o bws.zip "$DOWNLOAD_URL"
           unzip bws.zip -d /usr/local/bin
           rm bws.zip
-      - name: Validate BWS_ACCESS_TOKEN is set
-        run: |
-          if [[ -z "$BWS_ACCESS_TOKEN" ]]; then
-            echo "::error::BWS_ACCESS_TOKEN is not set in GitHub secrets"
-            exit 1
-          fi
       - id: inject-secrets
         name: Inject secrets from Bitwarden Secrets Manager
         run: |
@@ -64,24 +47,6 @@ jobs:
             "TS_OAUTH_CLIENT_SECRET"
             "TAILSCALE_TAG"
             "TAILSCALE_AUTH_KEY"
-            "COOLIFY_ADMIN_USERNAME"
-            "COOLIFY_ADMIN_EMAIL"
-            "COOLIFY_ADMIN_PASSWORD"
-            "GATUS_DISCORD_WEBHOOK_URL"
-            "AWS_ENDPOINT_URL_S3"
-            "AWS_S3_BUCKET_NAME"
-            "AWS_ACCESS_KEY_ID"
-            "AWS_SECRET_ACCESS_KEY"
-            "RETENTION_DAYS"
-            "POSTGRES_DB"
-            "POSTGRES_USER"
-            "POSTGRES_PASSWORD"
-            "POSTGRES_HOST"
-            "POSTGRES_PORT"
-            "REDIS_URL"
-            "DJANGO_SECRET_KEY"
-            "CELERY_FLOWER_USER"
-            "CELERY_FLOWER_PASSWORD"
           )
 
           secrets_json="$(bws secret list)"
@@ -94,21 +59,18 @@ jobs:
               continue
             fi
 
-            # Only export values needed by later workflow steps.
-            case "$key" in
-              HETZNER_SSH_PRIVATE_KEY)
-                echo "::add-mask::$value"
-                {
-                  echo "$key<<EOF"
-                  echo "$value"
-                  echo "EOF"
-                } >> "$GITHUB_OUTPUT"
-                ;;
-              TS_OAUTH_CLIENT_ID|TS_OAUTH_CLIENT_SECRET|TAILSCALE_TAG)
-                echo "::add-mask::$value"
-                echo "$key=$value" >> "$GITHUB_OUTPUT"
-                ;;
-            esac
+            if [[ "$key" == "HETZNER_SSH_PRIVATE_KEY" ]]; then
+              echo "::add-mask::$value"
+              {
+                echo "$key<<EOF"
+                echo "$value"
+                echo "EOF"
+              } >> "$GITHUB_OUTPUT"
+              continue
+            fi
+
+            echo "::add-mask::$value"
+            echo "$key=$value" >> "$GITHUB_OUTPUT"
           done
 
           if (( ${#missing[@]} > 0 )); then
@@ -133,13 +95,7 @@ jobs:
         env:
           ANSIBLE_HOST_KEY_CHECKING: "false"
         run: |
-          EXTRA="git_branch=$DEPLOY_BRANCH git_commit_sha=$DEPLOY_SHA git_repository=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          EXTRA="bws_access_token=$BWS_ACCESS_TOKEN git_environment=${{ matrix.environment }}"
 
-          if [[ "$DEPLOY_BRANCH" == "main" ]]; then
-            EXTRA="$EXTRA -e git_environment=production"
-          else
-            EXTRA="$EXTRA -e git_environment=staging"
-          fi
-
-          bws run -- "ansible-playbook infra/playbooks/site.yml --skip-tags smoke --inventory infra/inventory/hosts.yml --private-key infra/inventory/ssh_key $EXTRA" 2>&1 | \
+          bws run -- "ansible-playbook infra/playbooks/backup_application.yml --skip-tags smoke --inventory infra/inventory/hosts.yml --private-key infra/inventory/ssh_key $EXTRA" 2>&1 | \
             sed -E 's/[a-zA-Z0-9._%+-]+@[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[REDACTED]/g; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[REDACTED]/g'

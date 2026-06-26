@@ -7,12 +7,12 @@ env:
 
 on:
   pull_request:
-    branches: ['main', 'staging']
-    paths-ignore: ['docs/**']
+    branches: ["main", "staging"]
+    paths-ignore: ["docs/**"]
 
   push:
-    branches: ['main', 'staging']
-    paths-ignore: ['docs/**']
+    branches: ["main", "staging"]
+    paths-ignore: ["docs/**"]
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -28,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version-file: '.python-version'
+          python-version-file: ".python-version"
       # Consider using pre-commit.ci for open source project
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
@@ -49,7 +49,7 @@ jobs:
         with:
           push: false
           load: true
-          files: docker-compose.local.yml
+          files: docker-compose.production.yml
           targets: django
           set: |
             django.cache-from=type=gha,scope=django-cached-tests
@@ -68,14 +68,13 @@ jobs:
             docs.cache-to=type=gha,scope=cached-docs,mode=max
 
       - name: Check DB Migrations
-        run: docker compose -f docker-compose.local.yml run --rm django python manage.py makemigrations --check
+        run: docker compose -f docker-compose.production.yml -f docker-compose.ci.yml run --rm django python manage.py makemigrations --check
 
       - name: Run DB Migrations
-        run: docker compose -f docker-compose.local.yml run --rm django python manage.py migrate
-
+        run: docker compose -f docker-compose.production.yml -f docker-compose.ci.yml run --rm django python manage.py migrate
 
       - name: Tear down the Stack
-        run: docker compose -f docker-compose.local.yml down
+        run: docker compose -f docker-compose.production.yml -f docker-compose.ci.yml down
 
   docker:
     needs: [linter, pytest]
@@ -102,8 +101,10 @@ jobs:
         uses: docker/bake-action@v7
         with:
           push: true
-          files: docker-compose.local.yml
-          targets: django
+          files: docker-compose.production.yml
+          targets: django,postgres
           set: |
-            django.tags=ghcr.io/${{ github.repository_owner }}/neuromancers-network${{ github.ref_name == 'main' && '' || '-staging' }}:${{ github.sha }}
-            django.tags=ghcr.io/${{ github.repository_owner }}/neuromancers-network${{ github.ref_name == 'main' && '' || '-staging' }}:latest
+            django.tags=ghcr.io/${{ github.repository_owner }}/neuromancers-network:${{ github.sha }}
+            django.tags=ghcr.io/${{ github.repository_owner }}/neuromancers-network:${{ github.ref_name == 'main' && 'latest' || 'staging' }}
+            postgres.tags=ghcr.io/${{ github.repository_owner }}/neuromancers-network-postgres:${{ github.sha }}
+            postgres.tags=ghcr.io/${{ github.repository_owner }}/neuromancers-network-postgres:${{ github.ref_name == 'main' && 'latest' || 'staging' }}
