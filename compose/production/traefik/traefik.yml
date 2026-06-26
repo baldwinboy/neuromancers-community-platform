@@ -4,7 +4,7 @@ log:
 entryPoints:
   web:
     # http
-    address: ':80'
+    address: ":80"
     http:
       # https://doc.traefik.io/traefik/routing/entrypoints/#entrypoint
       redirections:
@@ -13,16 +13,16 @@ entryPoints:
 
   web-secure:
     # https
-    address: ':443'
+    address: ":443"
 
   flower:
-    address: ':5555'
+    address: ":5555"
 
 certificatesResolvers:
   letsencrypt:
     # https://doc.traefik.io/traefik/https/acme/#lets-encrypt
     acme:
-      email: 'hello@neuromancers.org.uk'
+      email: "hello@neuromancers.org.uk"
       storage: /etc/traefik/acme/acme.json
       # https://doc.traefik.io/traefik/https/acme/#httpchallenge
       httpChallenge:
@@ -31,7 +31,7 @@ certificatesResolvers:
 http:
   routers:
     web-secure-router:
-      rule: 'Host(`neuromancers.org.uk`)'
+      rule: "Host(`neuromancers.org.uk`)"
       entryPoints:
         - web-secure
       middlewares:
@@ -42,7 +42,7 @@ http:
         certResolver: letsencrypt
 
     flower-secure-router:
-      rule: 'Host(`neuromancers.org.uk`)'
+      rule: "Host(`neuromancers.org.uk`)"
       entryPoints:
         - flower
       service: flower
@@ -55,7 +55,7 @@ http:
       # https://doc.traefik.io/traefik/master/middlewares/http/headers/#hostsproxyheaders
       # https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
       headers:
-        hostsProxyHeaders: ['X-CSRFToken']
+        hostsProxyHeaders: ["X-CSRFToken"]
 
   services:
     django:

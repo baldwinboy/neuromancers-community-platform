@@ -1,0 +1,185 @@
+# Configure a Firewall
+---
+# Install UFW Docker script
+- name: Install UFW Docker script
+  ansible.builtin.shell: |
+    curl https://github.com/chaifeng/ufw-docker/raw/master/ufw-docker -o /usr/local/bin/ufw-docker
+    chmod +x /usr/local/bin/ufw-docker
+
+- name: Load UFW Docker script
+  ansible.builtin.shell: |
+    ufw-docker install
+
+# Set UFW rules
+- name: Set logging
+  community.general.ufw:
+    logging: "on"
+
+- name: Deny all incoming traffic
+  community.general.ufw:
+    default: deny
+    direction: incoming
+
+- name: Allow all outgoing traffic
+  community.general.ufw:
+    default: allow
+    direction: outgoing
+
+- name: Allow public application ports only
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "22" # SSH
+    - "80" # HTTP
+    - "443" # HTTPS
+    - "6001" # Real-time communications
+    - "6002" # Terminal access (Required for Coolify version 4.0.0-beta.336 and above)
+    - "{{ coolify_port }}"
+    - "{{ gatus_port }}"
+    - "{{ beszel_hub_port }}"
+    - "{{ host_prometheus_port }}"
+    - "{{ prometheus_port }}"
+    - "{{ crowdsec_port }}"
+
+- name: Allow traffic from Tailscale
+  community.general.ufw:
+    rule: allow
+    interface: tailscale0
+    direction: in
+
+# Allow local Docker network access
+- name: Get bridge network info
+  community.docker.docker_network_info:
+    name: bridge
+  register: bridge_network_info
+
+- name: Get Coolify network info
+  community.docker.docker_network_info:
+    name: coolify
+  register: coolify_network_info
+
+- name: Allow traffic from Coolify subnet to default Docker host
+  community.general.ufw:
+    rule: allow
+    direction: in
+    src: "{{ coolify_network_info.network.IPAM.Config[0].Subnet }}"
+    dest: "{{ bridge_network_info.network.IPAM.Config[0].Gateway }}"
+  when: bridge_network_info.exists and coolify_network_info.exists
+
+- name: Allow traffic from bridge subnet to default Docker host
+  community.general.ufw:
+    rule: allow
+    direction: in
+    src: "{{ bridge_network_info.network.IPAM.Config[0].Subnet }}"
+    dest: "{{ bridge_network_info.network.IPAM.Config[0].Gateway }}"
+  when: bridge_network_info.exists
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
+  notify: reload ufw
+
+- name: Deploy Fail2Ban jail config
+  ansible.builtin.copy:
+    src: ../security/fail2ban-jail.local
+    dest: /etc/fail2ban/jail.local
+    mode: "0644"
+  notify: restart fail2ban
+
+- name: Ensure Fail2Ban is enabled and running
+  ansible.builtin.systemd:
+    name: fail2ban
+    state: started
+    enabled: true
+
+- name: Configure CrowdSec port
+  lineinfile:
+    path: /etc/crowdsec/config.yaml
+    regexp: '^(\s+)listen_uri:\s127.0.0.1:'
+    line: '\1listen_uri: 127.0.0.1:{{ crowdsec_port }}'
+    backrefs: yes
+    state: present
+    backup: yes
+  become: true
+
+- name: Configure CrowdSec credentials port
+  lineinfile:
+    path: /etc/crowdsec/local_api_credentials.yaml
+    regexp: "^url: http://127.0.0.1:"
+    line: "url: http://127.0.0.1:{{ crowdsec_port }}"
+    state: present
+    backup: yes
+  notify: restart crowdsec
+
+- name: Fix CrowdSec config file permissions
+  ansible.builtin.file:
+    path: /etc/crowdsec
+    state: directory
+    mode: u=rwx,g=rx,o=rx
+    recurse: false
+  become: true
+
+- name: Fix CrowdSec config files and log file permissions
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: "0644"
+  loop:
+    - /etc/crowdsec/config.yaml
+    - /etc/crowdsec/local_api_credentials.yaml
+    - /etc/crowdsec/online_api_credentials.yaml
+    - /var/log/crowdsec.log
+
+- name: Ensure CrowdSec is enabled and running
+  ansible.builtin.systemd:
+    name: crowdsec
+    state: started
+    enabled: true
+  become: true
+
+- name: Attach DOCKER-USER chain to CrowdSec Firewall Remediation
+  lineinfile:
+    path: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+    regexp: '^#(\W*)DOCKER-USER'
+    line: '\1DOCKER-USER'
+    backrefs: yes
+    state: present
+    backup: yes
+  become: true
+
+- name: Disable ipv6 in CrowdSec Firewall Remediation
+  lineinfile:
+    path: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+    regexp: '^disable_ipv6:\sfalse'
+    line: "disable_ipv6: true"
+    state: present
+    backup: yes
+  notify: restart crowdsec-firewall-bouncer
+
+- name: Ensure CrowdSec Firewall Remediation is enabled and running
+  ansible.builtin.systemd:
+    name: crowdsec-firewall-bouncer
+    state: started
+    enabled: true
+  become: true
+
+- name: Allow CrowdSec to discover Docker containers
+  ansible.builtin.copy:
+    src: ../security/crowdsec-acquisition.yml
+    dest: /etc/crowdsec/acquis.d/docker.yaml
+    mode: "0644"
+  become: true
+
+- name: Install CrowdSec collections for Coolify
+  ansible.builtin.command: cscli collections install crowdsecurity/traefik crowdsecurity/caddy
+  register: crowdsec_collections
+  changed_when: "'already installed' not in (crowdsec_collections.stderr | default(''))"
+  notify: restart crowdsec
+
+- name: Ensure CrowdSec is enabled and running
+  ansible.builtin.systemd:
+    name: crowdsec
+    state: started
+    enabled: true
+  become: true

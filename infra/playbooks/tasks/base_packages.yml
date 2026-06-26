@@ -1,0 +1,30 @@
+# Update the system and install basic dependencies
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - git
+      - openssh-server
+      - fail2ban
+      - jq
+      - ufw
+      - unzip
+    state: present
+
+- name: Add CrowdSec package repository
+  ansible.builtin.shell: |
+    curl -s https://install.crowdsec.net | sudo sh
+
+- name: Install CrowdSec package
+  ansible.builtin.apt:
+    name:
+      - crowdsec
+      - crowdsec-firewall-bouncer-iptables
+    state: present
+    update_cache: true

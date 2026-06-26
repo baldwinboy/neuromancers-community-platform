@@ -111,15 +111,66 @@ bws secret list \
 6. Confirm deployment finishes successfully.
 7. Confirm smoke checks pass.
 
-## IaC completion checklist (audit: 2026-05-07)
+## Deployment Workflow
 
-1. Fix `Deploy Infrastructure` workflow structure in `.github/workflows/deploy.yml`.
-2. Wire all Ansible variables explicitly (inventory and playbook vars), rather than relying on implicit environment variable expansion.
-3. Remove `--tags deploy` or add explicit `deploy` tags to required tasks so converge actually runs.
-4. Decide and document the Coolify token-injection path for runtime containers.
-5. Add a preflight secret presence check against required Bitwarden keys before any deploy mutation.
-6. Implement container-side secret bootstrap in each production image or shared entrypoint.
-7. Replace non-routable defaults (`http://django:8000/api/health/`) with externally valid health endpoints for host-level smoke checks.
-8. Verify container name assertions in smoke checks match Coolify runtime names (or use label-based checks).
-9. Pin Ansible collection versions in `infra/galaxy/requirements.yml` for reproducible deploys.
-10. Run one full staging dry run from CI and record evidence (workflow URL, task summary, smoke output) before production enablement.
+The deployment pipeline is a hybrid of automated Ansible provisioning and
+manual Coolify platform configuration. The complete flow:
+
+### Step 1 — Ansible: Infrastructure Provisioning (automated)
+Playbook `setup_coolify.yml` installs and configures:
+- Coolify (PaaS dashboard)
+- Tailscale (private networking)
+- CrowdSec (WAF / IPS)
+- Fail2Ban with SSH hardening
+- UFW firewall rules
+- SSH key generation for Coolify host server
+
+### Step 2 — Developer: Enable Coolify API (manual)
+1. Log into Coolify dashboard over Tailscale
+2. Go to Settings → API → enable the API
+3. Copy the API token shown on-screen
+4. Store it in Bitwarden Secrets Manager as `COOLIFY_API_TOKEN`
+   (This step CANNOT be automated — Coolify requires interactive login)
+
+### Step 3 — Ansible: Server Reachability (automated)
+Playbook `configure_coolify_api.yml`:
+- Verifies Coolify API health
+- Generates an ed25519 SSH key for the Coolify host
+- Registers the key with Coolify via the API
+- Validates the host server is reachable from Coolify
+
+### Step 4 — Developer: Enable Traefik Access Logs for CrowdSec (manual)
+1. In Coolify, navigate to the Traefik proxy service
+2. Under the `command` field, append:
+```
+- '--accesslog=true'
+- '--accesslog.format=json'
+```
+3. Under `labels`, append:
+```
+- crowdsec.enable=true
+- crowdsec.labels.type=traefik
+```
+4. Under `ports`, remove port `8080`.
+
+(This CANNOT be automated initially, as the compose file will not be available until everything is valid)
+
+### Step 5 — Developer: Generate Deploy-Only API Token (manual)
+1. In Coolify, go to Settings → API → generate a new token
+2. Grant only the `deploy` permission
+3. Store in Bitwarden as `COOLIFY_DEPLOY_TOKEN`
+4. Set `COOLIFY_DEPLOY_TOKEN` in GitHub Environment secrets
+(Used by `deploy_application.yml` and GitHub Actions)
+
+### Summary Diagram
+[Ansible] → installs Coolify + Tailscale + CrowdSec + Fail2Ban
+ ↓
+[Manual] → enable Coolify API, copy token
+ ↓
+[Ansible] → SSH key generation, server reachability validation
+ ↓
+[Manual] → configure Traefik access logs for CrowdSec
+ ↓
+[Manual] → generate deploy-only API token for GitHub Actions
+ ↓
+[Ansible] → deploy_application.yml: project / env / app creation

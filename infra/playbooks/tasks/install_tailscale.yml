@@ -1,0 +1,28 @@
+# Install Tailscale
+---
+- name: Install Tailscale package
+  ansible.builtin.shell: |
+    curl -fsSL https://tailscale.com/install.sh | sh
+  args:
+    creates: /usr/bin/tailscale
+
+- name: Ensure tailscaled service is enabled and running
+  ansible.builtin.systemd:
+    name: tailscaled
+    state: started
+    enabled: true
+
+- name: Check current Tailscale state
+  ansible.builtin.command: tailscale status --json
+  register: tailscale_status
+  changed_when: false
+  failed_when: false
+
+- name: Join tailnet if not already connected
+  ansible.builtin.command: >-
+    tailscale up
+    --authkey={{ tailscale_auth_key }}
+    --accept-routes=false
+    --advertise-tags={{ tailscale_tag }}
+    --ssh
+  when: tailscale_status.rc != 0 and tailscale_auth_key is defined and tailscale_tag is defined

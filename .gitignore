@@ -276,3 +276,4 @@ neuromancers_network/media/
 .env
 .envs/*
 !.envs/.local/
+!.envs/.production/

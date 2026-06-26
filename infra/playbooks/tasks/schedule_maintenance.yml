@@ -1,0 +1,20 @@
+# Schedule maintenance scripts via cron
+---
+- name: Create scripts directory
+  ansible.builtin.file:
+    path: /opt/scripts
+    state: directory
+    mode: "0755"
+
+- name: Copy clear-django-sessions script
+  ansible.builtin.copy:
+    src: ../scripts/clear-django-sessions.sh
+    dest: /opt/scripts/clear-django-sessions.sh
+    mode: "0755"
+
+- name: Schedule clear-django-sessions cron job
+  ansible.builtin.cron:
+    name: "clear-django-sessions"
+    job: "/opt/scripts/clear-django-sessions.sh"
+    hour: "3"
+    minute: "0"

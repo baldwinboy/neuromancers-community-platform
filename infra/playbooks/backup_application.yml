@@ -1,0 +1,38 @@
+# Preliminary play: configure passwordless sudo if missing
+#
+# The deploy user is created with --disabled-password and added to the
+# docker group by bootstrap.sh.  While it has no sudo password, it *can*
+# run docker without privileges, so we use a throwaway alpine container to
+# write the NOPASSWD sudoers drop-in when it is absent.
+#
+# Once this play succeeds, the main play below can safely use become: true.
+- name: Bootstrap passwordless sudo
+  hosts: all
+  gather_facts: false
+  become: false
+  tasks:
+    - import_tasks: tasks/bootstrap_sudo.yml
+
+# Main play: Backup application
+- name: Backup application
+  hosts: all
+  become: true
+  collections:
+    - community.general
+    - community.crypto
+    - community.docker
+    - ansible.posix
+
+  tasks:
+    - import_tasks: tasks/base_packages.yml
+    - import_tasks: tasks/install_bitwarden.yml
+    - name: Copy backup script
+      ansible.builtin.copy:
+        src: ../scripts/backup.sh
+        dest: /opt/scripts/backup.sh
+
+    - name: Run backup script
+      ansible.builtin.shell: |
+        bws run -- /opt/scripts/backup.sh
+      environment:
+        BWS_ACCESS_TOKEN: "{{ bws_access_token }}"

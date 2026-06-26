@@ -10,4 +10,6 @@ titlesonly:
 operator-guide
 secrets-runbook
 coolify-env-mapping
+deployment-pipeline
+rollback-plan
 ```

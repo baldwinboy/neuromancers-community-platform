@@ -1,0 +1,50 @@
+services:
+  django:
+    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+    command: /start
+
+  postgres:
+    image: ghcr.io/baldwinboy/neuromancers-network-postgres:${DOCKER_TAG:-latest}
+    volumes:
+      - postgres-data:/var/lib/postgresql/18/docker
+      - postgres-backups:/backups
+    environment:
+      - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+
+  redis:
+    image: docker.io/redis:7.2
+    volumes:
+      - redis-data:/data
+
+  celeryworker:
+    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
+    depends_on: [postgres, redis]
+    environment:
+      - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+    command: /start-celeryworker
+
+  celerybeat:
+    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
+    depends_on: [postgres, redis]
+    environment:
+      - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+    command: /start-celerybeat
+
+  flower:
+    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
+    depends_on: [postgres, redis]
+    ports:
+      - "5555:5555"
+    environment:
+      - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+    command: /start-flower
+
+volumes:
+  postgres-data:
+  postgres-backups:
+  redis-data:
