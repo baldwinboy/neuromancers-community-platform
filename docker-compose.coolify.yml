@@ -17,7 +17,7 @@ services:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
 
   redis:
-    image: docker.io/redis:7.2
+    image: docker.io/redis:8.8
     volumes:
       - redis-data:/data
 

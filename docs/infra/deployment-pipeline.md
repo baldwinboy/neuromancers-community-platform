@@ -175,7 +175,7 @@ accessible). It manages the Docker Compose stack defined in
 |---------|-------|----------|
 | `django` | `neuromancers-network:${DOCKER_TAG}` | Gunicorn WSGI server on port 5000 |
 | `postgres` | `neuromancers-network-postgres:${DOCKER_TAG}` | PostgreSQL 18 |
-| `redis` | `docker.io/redis:7.2` | Message broker / cache |
+| `redis` | `docker.io/redis:8.8` | Message broker / cache |
 | `celeryworker` | `neuromancers-network:${DOCKER_TAG}` | Celery async task worker |
 | `celerybeat` | `neuromancers-network:${DOCKER_TAG}` | Celery periodic task scheduler |
 | `flower` | `neuromancers-network:${DOCKER_TAG}` | Celery monitoring dashboard |
