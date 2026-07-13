@@ -22,7 +22,7 @@
 
     - name: Set BWS access token
       ansible.builtin.set_fact:
-        bws_access_token: "{{ lookup('ansible.builtin.env', 'BWS_ACCESS_TOKEN', default=undef()) }}"
+        bws_access_token: "{{ BWS_ACCESS_TOKEN | default(lookup('env', 'BWS_ACCESS_TOKEN', default='')) }}"
       when: coolify_health.status == 200
 
     # Get the Coolify host server as JSON
