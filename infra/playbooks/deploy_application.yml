@@ -216,6 +216,7 @@
           key: "BWS_ACCESS_TOKEN"
           value: "{{ bws_access_token }}"
           is_literal: true
+          is_preview: false
         status_code: 201
       when:
         - coolify_application_uuid | default('') != ''
@@ -233,6 +234,7 @@
           key: "BWS_ACCESS_TOKEN"
           value: "{{ bws_access_token }}"
           is_literal: true
+          is_preview: false
         status_code: 201
       when:
         - coolify_application_uuid | default('') != ''
@@ -250,6 +252,7 @@
           key: "DOCKER_TAG"
           value: "{{ 'staging' if git_environment == 'staging' else 'latest' }}"
           is_literal: true
+          is_preview: false
         status_code: 201
       when:
         - coolify_application_uuid | default('') != ''
@@ -266,6 +269,7 @@
           key: "DOCKER_TAG"
           value: "{{ 'staging' if git_environment == 'staging' else 'latest' }}"
           is_literal: true
+          is_preview: false
         status_code: 201
       when:
         - coolify_application_uuid | default('') != ''
