@@ -12,5 +12,5 @@ api.add_router("/users/", "neuromancers_network.users.api.views.router")
 
 
 @api.get("/health", auth=None)
-def health(_):
+def health(request):
     return {"status": "ok"}
