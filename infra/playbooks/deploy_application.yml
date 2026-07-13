@@ -20,6 +20,11 @@
         coolify_api_token: "{{ coolify_admin_token | default(lookup('ansible.builtin.env', 'COOLIFY_ADMIN_TOKEN', default=undef())) }}"
       when: coolify_health.status == 200
 
+    - name: Set BWS access token
+      ansible.builtin.set_fact:
+        bws_access_token: "{{ lookup('ansible.builtin.env', 'BWS_ACCESS_TOKEN', default=undef()) }}"
+      when: coolify_health.status == 200
+
     # Get the Coolify host server as JSON
     - name: List Coolify servers
       ansible.builtin.uri:
@@ -209,12 +214,13 @@
         body_format: json
         body:
           key: "BWS_ACCESS_TOKEN"
-          value: "{{ lookup('ansible.builtin.env', 'BWS_ACCESS_TOKEN') }}"
+          value: "{{ bws_access_token }}"
           is_literal: true
         status_code: 201
       when:
         - coolify_application_uuid | default('') != ''
         - existing_bws_token | default('') == ''
+        - bws_access_token | default('') != ''
 
     - name: Update BWS_ACCESS_TOKEN env
       ansible.builtin.uri:
@@ -225,12 +231,13 @@
         body_format: json
         body:
           key: "BWS_ACCESS_TOKEN"
-          value: "{{ lookup('ansible.builtin.env', 'BWS_ACCESS_TOKEN') }}"
+          value: "{{ bws_access_token }}"
           is_literal: true
         status_code: 201
       when:
         - coolify_application_uuid | default('') != ''
         - existing_bws_token | default('') != ''
+        - bws_access_token | default('') != ''
 
     - name: Create DOCKER_TAG env
       ansible.builtin.uri:
@@ -263,12 +270,3 @@
       when:
         - coolify_application_uuid | default('') != ''
         - existing_docker_tag | default('') != ''
-
-    - name: Restart application on Coolify
-      ansible.builtin.uri:
-        url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/restart"
-        method: GET
-        headers:
-          Authorization: "Bearer {{ coolify_api_token }}"
-        status_code: 200
-      when: coolify_application_uuid | default('') != ''

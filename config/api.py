@@ -11,6 +11,6 @@ api = NinjaAPI(
 api.add_router("/users/", "neuromancers_network.users.api.views.router")
 
 
-@api.get("/health")
-def add(request):
+@api.get("/health", auth=None)
+def health(_):
     return {"status": "ok"}

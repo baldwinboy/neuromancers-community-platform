@@ -87,6 +87,9 @@ RUN chown django:django ${APP_HOME}
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
+# Expose Gunicorn port so Docker can access it
+EXPOSE 5000
+
 USER django
 
 RUN DATABASE_URL="" \

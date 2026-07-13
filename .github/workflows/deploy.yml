@@ -132,8 +132,9 @@ jobs:
       - name: Play Ansible Playbook
         env:
           ANSIBLE_HOST_KEY_CHECKING: "false"
+          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
         run: |
-          EXTRA="git_branch=$DEPLOY_BRANCH git_commit_sha=$DEPLOY_SHA git_repository=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          EXTRA="BWS_ACCESS_TOKEN=$BWS_ACCESS_TOKEN git_branch=$DEPLOY_BRANCH git_commit_sha=$DEPLOY_SHA git_repository=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
 
           if [[ "$DEPLOY_BRANCH" == "main" ]]; then
             EXTRA="$EXTRA git_environment=production"
