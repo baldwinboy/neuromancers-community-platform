@@ -2,11 +2,17 @@
 
 This file defines the runtime keys that application containers must resolve from Bitwarden at startup.
 
+## Important
+
+After first Coolify application creation, these keys must be **manually added** to the Coolify application via the UI. Ansible does not push them automatically — only `BWS_ACCESS_TOKEN` and `DOCKER_TAG` are pushed by Ansible.
+
+See [Operator Guide — First deployment](operator-guide.md#first-deployment) for the manual setup procedure.
+
 ## Coolify-provided variable
 
-- `BWS_ACCESS_TOKEN`
+- `BWS_ACCESS_TOKEN` (pushed by Ansible)
 
-## Canonical runtime keys
+## Canonical runtime keys (manually added to Coolify)
 
 - `DJANGO_ACCOUNT_ALLOW_REGISTRATION`
 - `DJANGO_ADMIN_URL`

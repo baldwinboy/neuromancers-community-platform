@@ -156,6 +156,7 @@
           git_branch: "{{ git_branch }}"
           build_pack: "dockercompose"
           ports_exposes: "5000"
+          ports_mappings: "80:5000"
           name: "neuromancers_network"
           description: "NEUROMANCERS Network"
           instant_deploy: false
@@ -227,7 +228,9 @@
         bws_secrets: "{{ (bws_secrets_raw.stdout | from_json) if bws_secrets_raw is defined and bws_secrets_raw.stdout is defined else [] }}"
       when: coolify_env_vars is defined
 
-    # Necessary secrets must be manually set in Coolify before running this step
+    # Refresh secrets: only update keys that already exist in Coolify.
+    # New secrets must be added manually by a developer via the Coolify UI.
+    # See docs/infra/operator-guide.md#first-deployment for the manual setup.
     - name: Filter Bitwarden secrets for Coolify
       ansible.builtin.set_fact:
         filtered_bws_secrets: "{{ bws_secrets | selectattr('key', 'in', coolify_env_vars | map(attribute='key')) | list }}"

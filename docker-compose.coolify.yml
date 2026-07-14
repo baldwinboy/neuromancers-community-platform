@@ -53,7 +53,18 @@ services:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
     command: /start-flower
 
+  prometheus:
+    image: docker.io/prom/prometheus:main-distroless
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - django
+
 volumes:
   postgres-data:
   postgres-backups:
   redis-data:
+  prometheus-data:

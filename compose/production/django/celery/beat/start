@@ -4,5 +4,20 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+# Wait for Django migrations to be applied before starting beat.
+# The DatabaseScheduler queries django_celery_beat tables immediately on
+# startup, so the schema must exist.
+until python -c "
+import psycopg, os, sys
+conn = psycopg.connect(os.environ['DATABASE_URL'])
+cur = conn.cursor()
+cur.execute(\"SELECT 1 FROM information_schema.tables WHERE table_name='django_migrations'\")
+sys.exit(0 if cur.fetchone() else 1)
+" 2>/dev/null; do
+    >&2 echo 'Waiting for Django migrations to be applied...'
+    sleep 2
+done
+
+>&2 echo 'Database is ready, starting celery beat'
 
 exec celery -A config.celery_app beat -l INFO

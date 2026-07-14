@@ -179,17 +179,20 @@ accessible). It manages the Docker Compose stack defined in
 | `celeryworker` | `neuromancers-network:${DOCKER_TAG}` | Celery async task worker |
 | `celerybeat` | `neuromancers-network:${DOCKER_TAG}` | Celery periodic task scheduler |
 | `flower` | `neuromancers-network:${DOCKER_TAG}` | Celery monitoring dashboard |
+| `prometheus` | `prom/prometheus:v2.53.0` | Metrics collection and healthchecks |
 
 ### Runtime secret resolution
 
-Each container receives only `BWS_ACCESS_TOKEN` from Coolify. The
-container entrypoint (`compose/production/django/entrypoint`) re-execs
-itself under `bws run --` to inject all other secrets (database
-credentials, Redis URL, Django secret key, etc.) as environment
-variables before starting the process.
+Ansible pushes only `BWS_ACCESS_TOKEN` and `DOCKER_TAG` to Coolify.
+All other runtime secrets must be **manually added** to the Coolify
+application by a developer after first creation.
 
-This means Coolify never stores individual application secrets — only
-the Bitwarden access token.
+See [Operator Guide — First deployment](operator-guide.md#first-deployment)
+for the manual setup procedure.
+
+On subsequent deploys, Ansible refreshes secrets that already exist
+in Coolify by matching keys from Bitwarden against the Coolify
+environment variables.
 
 ---
 
@@ -222,9 +225,16 @@ Bitwarden Secrets Manager
   ├── Infrastructure secrets (Tailscale, Hetzner SSH, Coolify API)
   ├── Runtime secrets (DB creds, Redis URL, Django secret key, etc.)
   │     │
-  │     ▼
-  ├── GitHub Actions CD (via bws secret list + jq)
-  └── Application containers (via bws run in entrypoint)
+  │     ├── GitHub Actions CD (via bws secret list + jq)
+  │     └── Developer manually adds to Coolify UI
+  │           │
+  │           ▼
+  │         Coolify application env vars
+  │           │
+  │           ▼
+  │         Application containers (receive secrets at startup)
+  │
+  └── BWS_ACCESS_TOKEN → pushed to Coolify by Ansible
 ```
 
 ---

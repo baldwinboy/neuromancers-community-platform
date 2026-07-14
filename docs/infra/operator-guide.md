@@ -7,15 +7,31 @@
 - GitHub Actions joins Tailscale before reaching Coolify.
 - Ansible owns host mutation.
 - Coolify owns application deployment for the compose-native stack.
-- Coolify should hold only the Bitwarden access token needed for runtime secret resolution.
-- Each application container should resolve its own runtime secrets from Bitwarden at startup via the BWS CLI.
+- Ansible pushes only `BWS_ACCESS_TOKEN` and `DOCKER_TAG` to Coolify.
+- Developers manually add all other secrets from Bitwarden to the Coolify application after first creation.
 
 ## Secret model
 
 - Source of truth for infrastructure and runtime secrets is Bitwarden Secrets Manager.
 - GitHub stores only `BWS_ACCESS_TOKEN` (the Bitwarden machine access token).
+- Ansible pushes `BWS_ACCESS_TOKEN` and `DOCKER_TAG` to Coolify during deployment.
+- All other secrets must be manually added to the Coolify application by a developer.
+- The filter for which secrets to push is NOT in Ansible — it is a manual developer action.
 - Workflows must read secrets with `bws secret list` and filter by `.key`.
 - There is no API in `bws` to fetch by key name directly. Use list + jq filtering.
+
+## First deployment
+
+After Ansible creates the Coolify application for the first time:
+
+1. Log into the Coolify dashboard over Tailscale.
+2. Navigate to the `neuromancers_network` application.
+3. Go to the **Environment variables** tab.
+4. Manually add all desired secrets from Bitwarden. These may be stub values initially.
+5. Only secrets present in Coolify will be refreshed on subsequent Ansible deploys.
+6. The application must be restarted after adding secrets (Coolify does this automatically on save).
+
+This step cannot be automated because the set of secrets each developer wants is a manual decision.
 
 ## GitHub environments
 
@@ -107,7 +123,7 @@ bws secret list \
 2. Wait for `CI` to pass.
 3. Confirm `Deploy Infrastructure` starts automatically.
 4. Confirm Ansible converge succeeds.
-5. Confirm the Coolify application has the Bitwarden token needed for runtime secret resolution.
+5. Confirm the Coolify application has the secrets needed for runtime (added manually after first deploy).
 6. Confirm deployment finishes successfully.
 7. Confirm smoke checks pass.
 

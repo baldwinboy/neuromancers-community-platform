@@ -5,8 +5,24 @@
 - All deployment and runtime secrets are stored in Bitwarden Secrets Manager.
 - GitHub stores only `BWS_ACCESS_TOKEN`.
 - Workflows fetch secret data from Bitwarden during execution.
-- Coolify should hold only `BWS_ACCESS_TOKEN` for runtime secret resolution.
-- Application containers should fetch their runtime secrets from Bitwarden at startup.
+- Ansible pushes only `BWS_ACCESS_TOKEN` and `DOCKER_TAG` to Coolify.
+- All other secrets must be manually added to the Coolify application by a developer.
+- Application containers receive secrets from Coolify environment variables at startup.
+
+## Initial Coolify secret setup
+
+After Ansible creates the Coolify application for the first time, a developer must manually add secrets:
+
+1. Log into the Coolify dashboard over Tailscale.
+2. Navigate to the `neuromancers_network` application.
+3. Go to the **Environment variables** tab.
+4. For each secret you want the application to use, add a new variable:
+   - **Key**: the Bitwarden key name (e.g. `DJANGO_SECRET_KEY`)
+   - **Value**: the actual value from Bitwarden (can be a stub initially)
+   - **Is Literal**: true (values are not template variables)
+5. Save the changes. Coolify will restart the affected containers.
+
+Only secrets present in Coolify will be refreshed on subsequent Ansible deploys. The Ansible playbook filters Bitwarden secrets against those already in Coolify — it does not push new keys.
 
 ## Bitwarden CLI constraints
 
