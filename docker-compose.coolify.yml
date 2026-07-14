@@ -57,11 +57,17 @@ services:
     image: docker.io/prom/prometheus:main-distroless
     volumes:
       - prometheus-data:/prometheus
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    configs:
+      - source: prometheus-config
+        target: /etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
     depends_on:
       - django
+
+configs:
+  prometheus-config:
+    file: ./prometheus.yml
 
 volumes:
   postgres-data:
