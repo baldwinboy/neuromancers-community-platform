@@ -274,3 +274,49 @@
       when:
         - coolify_application_uuid | default('') != ''
         - existing_docker_tag | default('') != ''
+
+    # ── Postgres & AWS secrets from Bitwarden ──────────────────────────────
+    # These are injected as plain-text env vars so the Postgres container
+    # (which has no entrypoint) receives them directly from Coolify.
+
+    - name: Resolve secrets from Bitwarden Secrets Manager
+      ansible.builtin.shell: bws secret list
+      environment:
+        BWS_ACCESS_TOKEN: "{{ bws_access_token }}"
+      register: bws_secrets_raw
+      when: bws_access_token | default('') != ''
+
+    - name: Parse BWS secrets
+      ansible.builtin.set_fact:
+        bws_secrets: "{{ (bws_secrets_raw.stdout | from_json) if bws_secrets_raw is defined and bws_secrets_raw.stdout is defined else [] }}"
+
+    - name: Extract secret values from BWS
+      ansible.builtin.set_fact:
+        bws_postgres_db: "{{ bws_secrets | selectattr('key', 'eq', 'POSTGRES_DB') | map(attribute='value') | first | default('neuromancers_network') }}"
+        bws_postgres_user: "{{ bws_secrets | selectattr('key', 'eq', 'POSTGRES_USER') | map(attribute='value') | first | default('') }}"
+        bws_postgres_password: "{{ bws_secrets | selectattr('key', 'eq', 'POSTGRES_PASSWORD') | map(attribute='value') | first | default('') }}"
+        bws_aws_access_key_id: "{{ bws_secrets | selectattr('key', 'eq', 'AWS_ACCESS_KEY_ID') | map(attribute='value') | first | default('') }}"
+        bws_aws_secret_access_key: "{{ bws_secrets | selectattr('key', 'eq', 'AWS_SECRET_ACCESS_KEY') | map(attribute='value') | first | default('') }}"
+        bws_aws_s3_bucket_name: "{{ bws_secrets | selectattr('key', 'eq', 'AWS_S3_BUCKET_NAME') | map(attribute='value') | first | default('neuromancers-backups') }}"
+        bws_aws_endpoint_url_s3: "{{ bws_secrets | selectattr('key', 'eq', 'AWS_ENDPOINT_URL_S3') | map(attribute='value') | first | default('') }}"
+        bws_retention_days: "{{ bws_secrets | selectattr('key', 'eq', 'RETENTION_DAYS') | map(attribute='value') | first | default('30') }}"
+      when: bws_secrets | default([]) | length > 0
+
+    - name: Set Postgres and AWS env vars in Coolify
+      ansible.builtin.include_tasks: tasks/set_coolify_env.yml
+      loop:
+        - { key: "POSTGRES_DB", value: "{{ bws_postgres_db }}" }
+        - { key: "POSTGRES_HOST", value: "postgres" }
+        - { key: "POSTGRES_PASSWORD", value: "{{ bws_postgres_password }}" }
+        - { key: "POSTGRES_PORT", value: "5432" }
+        - { key: "POSTGRES_USER", value: "{{ bws_postgres_user }}" }
+        - { key: "AWS_ACCESS_KEY_ID", value: "{{ bws_aws_access_key_id }}" }
+        - {
+            key: "AWS_SECRET_ACCESS_KEY",
+            value: "{{ bws_aws_secret_access_key }}",
+          }
+        - { key: "AWS_S3_BUCKET_NAME", value: "{{ bws_aws_s3_bucket_name }}" }
+        - { key: "AWS_ENDPOINT_URL_S3", value: "{{ bws_aws_endpoint_url_s3 }}" }
+        - { key: "RETENTION_DAYS", value: "{{ bws_retention_days }}" }
+      loop_control:
+        loop_var: env_item

@@ -6,7 +6,6 @@ services:
       - redis
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
-      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     command: /start
 
   postgres:
@@ -15,8 +14,16 @@ services:
       - postgres-data:/var/lib/postgresql/18/docker
       - postgres-backups:/backups
     environment:
-      - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
-      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      - AWS_ENDPOINT_URL_S3=${AWS_ENDPOINT_URL_S3}
+      - RETENTION_DAYS=${RETENTION_DAYS}
 
   redis:
     image: docker.io/redis:8.8
@@ -28,7 +35,6 @@ services:
     depends_on: [postgres, redis]
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
-      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     command: /start-celeryworker
 
   celerybeat:
@@ -36,7 +42,6 @@ services:
     depends_on: [postgres, redis]
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
-      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     command: /start-celerybeat
 
   flower:
@@ -46,7 +51,6 @@ services:
       - "5555:5555"
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
-      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     command: /start-flower
 
 volumes:

@@ -32,8 +32,6 @@ services:
       - production_postgres_data_backups:/backups
     env_file:
       - ./.envs/.production/.postgres
-    environment:
-      BWS_ACCESS_TOKEN: "${BWS_ACCESS_TOKEN}"
 
   traefik:
     build:

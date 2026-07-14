@@ -1,0 +1,50 @@
+---
+# Set a Coolify application environment variable (create or update).
+#
+# Parameters (via loop_var `env_item`):
+#   env_item.key   - The environment variable name
+#   env_item.value - The environment variable value
+#
+# Required context:
+#   coolify_api_url, coolify_api_token, coolify_application_uuid, coolify_env_vars
+
+- name: "Check if {{ env_item.key }} env exists in Coolify"
+  ansible.builtin.set_fact:
+    _existing_env_key: "{{ coolify_env_vars | selectattr('key', 'eq', env_item.key) | first | default('') }}"
+  when: coolify_env_vars is defined
+
+- name: "Create {{ env_item.key }} env in Coolify"
+  ansible.builtin.uri:
+    url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/envs"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ coolify_api_token }}"
+    body_format: json
+    body:
+      key: "{{ env_item.key }}"
+      value: "{{ env_item.value }}"
+      is_literal: true
+      is_preview: false
+    status_code: 201
+  when:
+    - coolify_application_uuid | default('') != ''
+    - _existing_env_key | default('') == ''
+    - env_item.value | default('') != ''
+
+- name: "Update {{ env_item.key }} env in Coolify"
+  ansible.builtin.uri:
+    url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/envs"
+    method: PATCH
+    headers:
+      Authorization: "Bearer {{ coolify_api_token }}"
+    body_format: json
+    body:
+      key: "{{ env_item.key }}"
+      value: "{{ env_item.value }}"
+      is_literal: true
+      is_preview: false
+    status_code: 201
+  when:
+    - coolify_application_uuid | default('') != ''
+    - _existing_env_key | default('') != ''
+    - env_item.value | default('') != ''
