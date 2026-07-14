@@ -17,12 +17,17 @@
 
     - name: Set Coolify API token
       ansible.builtin.set_fact:
-        coolify_api_token: "{{ coolify_admin_token | default(lookup('ansible.builtin.env', 'COOLIFY_ADMIN_TOKEN', default=undef())) }}"
+        coolify_api_token: "{{ coolify_admin_token | default(lookup('env', 'COOLIFY_ADMIN_TOKEN', default='')) }}"
       when: coolify_health.status == 200
 
     - name: Set BWS access token
       ansible.builtin.set_fact:
         bws_access_token: "{{ BWS_ACCESS_TOKEN | default(lookup('env', 'BWS_ACCESS_TOKEN', default='')) }}"
+      when: coolify_health.status == 200
+
+    - name: Set Docker tag
+      ansible.builtin.set_fact:
+        docker_tag: "{{ 'staging' if git_environment == 'staging' else 'latest' }}"
       when: coolify_health.status == 200
 
     # Get the Coolify host server as JSON
@@ -179,6 +184,7 @@
         coolify_application_uuid: "{{ created_coolify_application.json.uuid }}"
       when: (coolify_application | default('')) == ''
 
+    # Get existing env vars
     - name: List existing envs for application
       ansible.builtin.uri:
         url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/envs"
@@ -195,92 +201,22 @@
         coolify_env_vars: "{{ coolify_application_envs.json | default([]) }}"
       when: coolify_application_envs is defined and coolify_application_envs.status == 200
 
-    - name: Set existing BWS_ACCESS_TOKEN env
+    - name: Set Github secrets for Coolify
       ansible.builtin.set_fact:
-        existing_bws_token: "{{ coolify_env_vars | selectattr('key', 'eq', 'BWS_ACCESS_TOKEN') | first | default('') }}"
-      when: coolify_env_vars is defined
+        github_secrets:
+          - key: "BWS_ACCESS_TOKEN"
+            value: "{{ bws_access_token }}"
+            is_preview: false
+            is_literal: true
+          - key: "DOCKER_TAG"
+            value: "{{ docker_tag }}"
+            is_preview: false
+            is_literal: true
+      when: coolify_env_vars is defined and bws_access_token is defined and docker_tag is defined
 
-    - name: Set existing DOCKER_TAG env
-      ansible.builtin.set_fact:
-        existing_docker_tag: "{{ coolify_env_vars | selectattr('key', 'eq', 'DOCKER_TAG') | first | default('') }}"
-      when: coolify_env_vars is defined
-
-    - name: Create BWS_ACCESS_TOKEN env
-      ansible.builtin.uri:
-        url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/envs"
-        method: POST
-        headers:
-          Authorization: "Bearer {{ coolify_api_token }}"
-        body_format: json
-        body:
-          key: "BWS_ACCESS_TOKEN"
-          value: "{{ bws_access_token }}"
-          is_literal: true
-          is_preview: false
-        status_code: 201
-      when:
-        - coolify_application_uuid | default('') != ''
-        - existing_bws_token | default('') == ''
-        - bws_access_token | default('') != ''
-
-    - name: Update BWS_ACCESS_TOKEN env
-      ansible.builtin.uri:
-        url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/envs"
-        method: PATCH
-        headers:
-          Authorization: "Bearer {{ coolify_api_token }}"
-        body_format: json
-        body:
-          key: "BWS_ACCESS_TOKEN"
-          value: "{{ bws_access_token }}"
-          is_literal: true
-          is_preview: false
-        status_code: 201
-      when:
-        - coolify_application_uuid | default('') != ''
-        - existing_bws_token | default('') != ''
-        - bws_access_token | default('') != ''
-
-    - name: Create DOCKER_TAG env
-      ansible.builtin.uri:
-        url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/envs"
-        method: POST
-        headers:
-          Authorization: "Bearer {{ coolify_api_token }}"
-        body_format: json
-        body:
-          key: "DOCKER_TAG"
-          value: "{{ 'staging' if git_environment == 'staging' else 'latest' }}"
-          is_literal: true
-          is_preview: false
-        status_code: 201
-      when:
-        - coolify_application_uuid | default('') != ''
-        - existing_docker_tag | default('') == ''
-
-    - name: Update DOCKER_TAG env
-      ansible.builtin.uri:
-        url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/envs"
-        method: PATCH
-        headers:
-          Authorization: "Bearer {{ coolify_api_token }}"
-        body_format: json
-        body:
-          key: "DOCKER_TAG"
-          value: "{{ 'staging' if git_environment == 'staging' else 'latest' }}"
-          is_literal: true
-          is_preview: false
-        status_code: 201
-      when:
-        - coolify_application_uuid | default('') != ''
-        - existing_docker_tag | default('') != ''
-
-    # ── Postgres & AWS secrets from Bitwarden ──────────────────────────────
-    # These are injected as plain-text env vars so the Postgres container
-    # (which has no entrypoint) receives them directly from Coolify.
-
+    # Get secrets from Bitwarden
     - name: Resolve secrets from Bitwarden Secrets Manager
-      ansible.builtin.shell: bws secret list
+      ansible.builtin.shell: bws secret list | jq -r '[.[] | {key:.key,value:.value,is_preview:false,is_literal:true}]'
       environment:
         BWS_ACCESS_TOKEN: "{{ bws_access_token }}"
       register: bws_secrets_raw
@@ -289,34 +225,29 @@
     - name: Parse BWS secrets
       ansible.builtin.set_fact:
         bws_secrets: "{{ (bws_secrets_raw.stdout | from_json) if bws_secrets_raw is defined and bws_secrets_raw.stdout is defined else [] }}"
+      when: coolify_env_vars is defined
 
-    - name: Extract secret values from BWS
+    # Necessary secrets must be manually set in Coolify before running this step
+    - name: Filter Bitwarden secrets for Coolify
       ansible.builtin.set_fact:
-        bws_postgres_db: "{{ bws_secrets | selectattr('key', 'eq', 'POSTGRES_DB') | map(attribute='value') | first | default('neuromancers_network') }}"
-        bws_postgres_user: "{{ bws_secrets | selectattr('key', 'eq', 'POSTGRES_USER') | map(attribute='value') | first | default('') }}"
-        bws_postgres_password: "{{ bws_secrets | selectattr('key', 'eq', 'POSTGRES_PASSWORD') | map(attribute='value') | first | default('') }}"
-        bws_aws_access_key_id: "{{ bws_secrets | selectattr('key', 'eq', 'AWS_ACCESS_KEY_ID') | map(attribute='value') | first | default('') }}"
-        bws_aws_secret_access_key: "{{ bws_secrets | selectattr('key', 'eq', 'AWS_SECRET_ACCESS_KEY') | map(attribute='value') | first | default('') }}"
-        bws_aws_s3_bucket_name: "{{ bws_secrets | selectattr('key', 'eq', 'AWS_S3_BUCKET_NAME') | map(attribute='value') | first | default('neuromancers-backups') }}"
-        bws_aws_endpoint_url_s3: "{{ bws_secrets | selectattr('key', 'eq', 'AWS_ENDPOINT_URL_S3') | map(attribute='value') | first | default('') }}"
-        bws_retention_days: "{{ bws_secrets | selectattr('key', 'eq', 'RETENTION_DAYS') | map(attribute='value') | first | default('30') }}"
-      when: bws_secrets | default([]) | length > 0
+        filtered_bws_secrets: "{{ bws_secrets | selectattr('key', 'in', coolify_env_vars | map(attribute='key')) | list }}"
+      when: coolify_env_vars is defined and bws_secrets is defined
 
-    - name: Set Postgres and AWS env vars in Coolify
-      ansible.builtin.include_tasks: tasks/set_coolify_env.yml
-      loop:
-        - { key: "POSTGRES_DB", value: "{{ bws_postgres_db }}" }
-        - { key: "POSTGRES_HOST", value: "postgres" }
-        - { key: "POSTGRES_PASSWORD", value: "{{ bws_postgres_password }}" }
-        - { key: "POSTGRES_PORT", value: "5432" }
-        - { key: "POSTGRES_USER", value: "{{ bws_postgres_user }}" }
-        - { key: "AWS_ACCESS_KEY_ID", value: "{{ bws_aws_access_key_id }}" }
-        - {
-            key: "AWS_SECRET_ACCESS_KEY",
-            value: "{{ bws_aws_secret_access_key }}",
-          }
-        - { key: "AWS_S3_BUCKET_NAME", value: "{{ bws_aws_s3_bucket_name }}" }
-        - { key: "AWS_ENDPOINT_URL_S3", value: "{{ bws_aws_endpoint_url_s3 }}" }
-        - { key: "RETENTION_DAYS", value: "{{ bws_retention_days }}" }
-      loop_control:
-        loop_var: env_item
+    - name: Set list of env items
+      ansible.builtin.set_fact:
+        env_items: "{{ filtered_bws_secrets + github_secrets }}"
+      when: filtered_bws_secrets is defined and github_secrets is defined
+
+    - name: Update Coolify env vars
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/envs/bulk"
+        method: PATCH
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        body_format: json
+        body:
+          data: "{{ env_items }}"
+        status_code: 201
+      when:
+        - coolify_application_uuid | default('') != ''
+        - env_items | default([]) | length > 0
