@@ -67,7 +67,16 @@ services:
 
 configs:
   prometheus-config:
-    file: ./prometheus.yml
+    content: |
+      global:
+        scrape_interval: 15s
+        evaluation_interval: 15s
+
+      scrape_configs:
+        - job_name: django
+          static_configs:
+            - targets: ["django:5000"]
+          metrics_path: /metrics
 
 volumes:
   postgres-data:
