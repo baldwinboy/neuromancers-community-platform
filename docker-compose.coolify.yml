@@ -6,6 +6,7 @@ services:
       - redis
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     command: /start
 
   postgres:
@@ -15,6 +16,7 @@ services:
       - postgres-backups:/backups
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 
   redis:
     image: docker.io/redis:8.8
@@ -26,6 +28,7 @@ services:
     depends_on: [postgres, redis]
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     command: /start-celeryworker
 
   celerybeat:
@@ -33,6 +36,7 @@ services:
     depends_on: [postgres, redis]
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     command: /start-celerybeat
 
   flower:
@@ -42,6 +46,7 @@ services:
       - "5555:5555"
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     command: /start-flower
 
 volumes:

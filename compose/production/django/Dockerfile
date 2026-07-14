@@ -28,7 +28,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --locked --no-dev
 
-FROM ghcr.io/bitwarden/bws:2.0.0 AS bws-cli
+FROM ghcr.io/bitwarden/bws:2.1.0 AS bws-cli
 
 # Python 'run' stage
 FROM python:3.14-slim-bookworm AS python-run-stage
@@ -43,6 +43,8 @@ RUN addgroup --system django \
 
 # Install required system dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
+  # bitwarden dependencies
+  ca-certificates \
   # psycopg dependencies
   libpq-dev \
   # Translations dependencies

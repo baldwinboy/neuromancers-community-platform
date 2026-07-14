@@ -1,6 +1,9 @@
-FROM ghcr.io/bitwarden/bws:2.0.0 AS bws-cli
+FROM ghcr.io/bitwarden/bws:2.1.0 AS bws-cli
 
 FROM docker.io/postgres:18
+
+RUN apt-get update && apt-get install --no-install-recommends -y ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY ./compose/production/postgres/maintenance /usr/local/bin/maintenance
 RUN chmod +x /usr/local/bin/maintenance/*
