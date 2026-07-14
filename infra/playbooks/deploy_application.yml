@@ -251,3 +251,14 @@
       when:
         - coolify_application_uuid | default('') != ''
         - env_items | default([]) | length > 0
+
+    - name: Restart application
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/restart"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        status_code: 200
+      when:
+        - coolify_application_uuid | default('') != ''
+        - coolify_env_vars | default([]) | length > 0
