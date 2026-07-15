@@ -1,12 +1,28 @@
 services:
   django:
     image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
+    ports:
+      - "80:5000"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
     command: /start
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   postgres:
     image: ghcr.io/baldwinboy/neuromancers-network-postgres:${DOCKER_TAG:-latest}
@@ -24,29 +40,59 @@ services:
       - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
       - AWS_ENDPOINT_URL_S3=${AWS_ENDPOINT_URL_S3}
       - RETENTION_DAYS=${RETENTION_DAYS}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: docker.io/redis:8.8
     volumes:
       - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   celeryworker:
     image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
-    depends_on: [postgres, redis]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      django:
+        condition: service_healthy
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
     command: /start-celeryworker
 
   celerybeat:
     image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
-    depends_on: [postgres, redis]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      django:
+        condition: service_healthy
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
     command: /start-celerybeat
 
   flower:
     image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
-    depends_on: [postgres, redis]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      django:
+        condition: service_healthy
     ports:
       - "5555:5555"
     environment:
@@ -63,7 +109,8 @@ services:
     ports:
       - "9090:9090"
     depends_on:
-      - django
+      django:
+        condition: service_healthy
 
 configs:
   prometheus-config:
@@ -76,7 +123,7 @@ configs:
         - job_name: django
           static_configs:
             - targets: ["django:5000"]
-          metrics_path: /metrics
+          metrics_path: /monitoring/metrics
 
 volumes:
   postgres-data:

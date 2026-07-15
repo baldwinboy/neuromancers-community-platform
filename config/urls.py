@@ -20,6 +20,8 @@ urlpatterns = [
     # User management
     path("users/", include("neuromancers_network.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
+    # Monitoring
+    path("monitoring/", include("django_prometheus.urls")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files

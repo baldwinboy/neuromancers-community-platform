@@ -255,12 +255,15 @@
         - coolify_application_uuid | default('') != ''
         - env_items | default([]) | length > 0
 
-    - name: Restart application
+    - name: Redeploy application
       ansible.builtin.uri:
-        url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/restart"
-        method: GET
+        url: "{{ coolify_api_url }}/deploy"
+        method: POST
         headers:
           Authorization: "Bearer {{ coolify_api_token }}"
+        body_format: json
+        body:
+          uuid: "{{ coolify_application_uuid }}"
         status_code: 200
       when:
         - coolify_application_uuid | default('') != ''
