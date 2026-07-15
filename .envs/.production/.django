@@ -5,6 +5,7 @@ DJANGO_SETTINGS_MODULE=config.settings.production
 DJANGO_SECRET_KEY=0PCt2tLyTWH3mmQWD7vje0bsnBliD448eiDt74BQtPj3fj1tm4pmtFDZrF5pws4P
 DJANGO_ADMIN_URL=ifW06pkWrHozcNDnzF6UrhAf20ogHqXg/
 DJANGO_ALLOWED_HOSTS=.neuromancers.org.uk,django
+HETZNER_SSH_HOST=
 
 # Security
 # ------------------------------------------------------------------------------

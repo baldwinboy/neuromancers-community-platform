@@ -25,7 +25,7 @@ ALLOWED_HOSTS = [
     ),
 ]
 
-SERVER_HOST = env("HETZNER_SSH_HOST")
+SERVER_HOST = env("HETZNER_SSH_HOST", default=None)
 
 if SERVER_HOST:
     ALLOWED_HOSTS.append(SERVER_HOST)
