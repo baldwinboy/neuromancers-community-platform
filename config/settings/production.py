@@ -237,9 +237,10 @@ sentry_sdk.init(
 )
 
 # Prometheus
+# https://github.com/django-commons/django-prometheus/blob/master/documentation/exports.md
 # ------------------------------------------------------------------------------
-PROMETHEUS_METRICS_EXPORT_PORT = env.int("PROMETHEUS_METRICS_EXPORT_PORT", default=8001)
-PROMETHEUS_METRICS_EXPORT_ADDRESS = ""
+# PROMETHEUS_METRICS_EXPORT_PORT = env.int("PROMETHEUS_METRICS_EXPORT_PORT", default=8001)  # noqa: ERA001
+# PROMETHEUS_METRICS_EXPORT_ADDRESS = ""  # noqa: ERA001
 
 
 # Your stuff...

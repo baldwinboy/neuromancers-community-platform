@@ -92,6 +92,8 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 # Expose Gunicorn port so Docker can access it
 EXPOSE 5000
+# Expose Prometheus metrics port
+EXPOSE 8001
 
 USER django
 

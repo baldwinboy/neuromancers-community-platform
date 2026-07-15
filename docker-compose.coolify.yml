@@ -129,7 +129,7 @@ configs:
       scrape_configs:
         - job_name: django
           static_configs:
-            - targets: ["django:8001"]
+            - targets: ["django:5000"]
           metrics_path: /monitoring/metrics
         - job_name: 'coolify-sentinel'
           static_configs:

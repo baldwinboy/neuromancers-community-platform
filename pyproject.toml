@@ -33,6 +33,7 @@ dependencies = [
   "gunicorn==26.0.0",
   "hiredis==3.4.0",
   "pillow==12.3.0",
+  "prometheus-client>=0.25.0",
   "psycopg[c]==3.3.4",
   "python-slugify==8.0.4",
   "redis==7.4.0",
