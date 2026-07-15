@@ -38,8 +38,9 @@ ARG APP_HOME=/app
 WORKDIR ${APP_HOME}
 
 RUN addgroup --system django \
-  && adduser --system --ingroup django django
-
+  && adduser --system --ingroup django --home /home/django django \
+  && mkdir -p /home/django \
+  && chown django:django /home/django
 
 # Install required system dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \

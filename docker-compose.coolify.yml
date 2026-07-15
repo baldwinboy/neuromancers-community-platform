@@ -3,6 +3,7 @@ services:
     image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
     expose:
       - "5000"
+      - "8001"
     ports:
       - "8080:5000"
     depends_on:
@@ -19,7 +20,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')",
+          "from django.conf import settings; print(settings.ALLOWED_HOSTS)",
         ]
       interval: 30s
       timeout: 5s
@@ -95,6 +96,8 @@ services:
         condition: service_healthy
       django:
         condition: service_healthy
+      celeryworker:
+        condition: service_started
     ports:
       - "5555:5555"
     environment:
@@ -113,6 +116,8 @@ services:
     depends_on:
       django:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 configs:
   prometheus-config:
@@ -124,7 +129,7 @@ configs:
       scrape_configs:
         - job_name: django
           static_configs:
-            - targets: ["django:5000"]
+            - targets: ["django:8001"]
           metrics_path: /monitoring/metrics
         - job_name: 'coolify-sentinel'
           static_configs:

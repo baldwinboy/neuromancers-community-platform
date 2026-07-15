@@ -18,17 +18,22 @@ from .base import env
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = [
+DJANGO_ALLOWED_HOSTS = [
     *env.list(
         "DJANGO_ALLOWED_HOSTS",
-        default=["localhost", "127.0.0.1", "neuromancers.org.uk"],
+        default=["localhost", "django", "127.0.0.1", "neuromancers.org.uk"],
     ),
 ]
 
 SERVER_HOST = env("HETZNER_SSH_HOST", default=None)
 
-if SERVER_HOST:
-    ALLOWED_HOSTS.append(SERVER_HOST)
+if SERVER_HOST and SERVER_HOST not in DJANGO_ALLOWED_HOSTS:
+    DJANGO_ALLOWED_HOSTS = [
+        *DJANGO_ALLOWED_HOSTS,
+        SERVER_HOST,
+    ]
+
+ALLOWED_HOSTS = DJANGO_ALLOWED_HOSTS
 
 # DATABASES
 # ------------------------------------------------------------------------------
@@ -201,7 +206,7 @@ LOGGING = {
         # Errors logged by the SDK itself
         "sentry_sdk": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "django.security.DisallowedHost": {
-            "level": "ERROR",
+            "level": "WARNING",
             "handlers": ["console"],
             "propagate": False,
         },
@@ -216,6 +221,7 @@ SENTRY_LOG_LEVEL = env.int("DJANGO_SENTRY_LOG_LEVEL", logging.INFO)
 sentry_logging = LoggingIntegration(
     level=SENTRY_LOG_LEVEL,  # Capture info and above as breadcrumbs
     event_level=logging.ERROR,  # Send errors as events
+    ignored_loggers=["django.security.DisallowedHost"],
 )
 integrations = [
     sentry_logging,
@@ -229,6 +235,11 @@ sentry_sdk.init(
     environment=env("SENTRY_ENVIRONMENT", default="production"),
     traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.0),
 )
+
+# Prometheus
+# ------------------------------------------------------------------------------
+PROMETHEUS_METRICS_EXPORT_PORT = env.int("PROMETHEUS_METRICS_EXPORT_PORT", default=8001)
+PROMETHEUS_METRICS_EXPORT_ADDRESS = ""
 
 
 # Your stuff...
