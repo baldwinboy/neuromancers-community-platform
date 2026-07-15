@@ -3,6 +3,8 @@ services:
     image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
     expose:
       - "5000"
+    ports:
+      - "8080:5000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -124,6 +126,10 @@ configs:
           static_configs:
             - targets: ["django:5000"]
           metrics_path: /monitoring/metrics
+        - job_name: 'coolify-sentinel'
+          static_configs:
+            - targets: ['host.docker.internal:8888']
+          metrics_path: '/api/metrics'
 
 volumes:
   postgres-data:

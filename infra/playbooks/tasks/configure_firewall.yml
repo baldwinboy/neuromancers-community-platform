@@ -33,6 +33,7 @@
   loop:
     - "22" # SSH
     - "80" # HTTP
+    - "8080" # HTTP
     - "443" # HTTPS
     - "6001" # Real-time communications
     - "6002" # Terminal access (Required for Coolify version 4.0.0-beta.336 and above)
