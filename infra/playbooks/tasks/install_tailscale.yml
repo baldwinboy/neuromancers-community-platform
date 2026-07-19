@@ -135,6 +135,12 @@
     - src: /etc/tailscale/monitor-config-w.json
       dest: /etc/tailscale/monitor-config.json
 
+- name: Serve Coolify instance on tailnet
+  ansible.builtin.shell: |
+    tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --http=80 --yes localhost:{{ coolify_port }}
+    tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --https=443 --yes localhost:{{ coolify_port }}
+  become: true
+
 - name: Generate Tailscale certificates for Coolify
   ansible.builtin.shell: |
     tailscale cert --cert-file /certs/paas/cert.pem --key-file /certs/paas/key.pem {{ tailscale_paas_domain }}
@@ -149,10 +155,4 @@
     mode: "0644"
   args:
     creates: /etc/tailscale/cert-refreshed-at.txt
-  become: true
-
-- name: Serve Coolify instance on tailnet
-  ansible.builtin.shell: |
-    tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --http=80 localhost:{{ coolify_port }}
-    tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --https=443 localhost:{{ coolify_port }}
   become: true
