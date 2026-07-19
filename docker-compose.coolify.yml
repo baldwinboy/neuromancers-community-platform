@@ -44,8 +44,6 @@ services:
   django:
     image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
     network_mode: service:ts-django
-    expose:
-      - 5000
     depends_on:
       ts-django:
         condition: service_started
@@ -191,8 +189,6 @@ services:
     configs:
       - source: prometheus-config
         target: /etc/prometheus/prometheus.yml
-    expose:
-      - 9090
     depends_on:
       django:
         condition: service_healthy
