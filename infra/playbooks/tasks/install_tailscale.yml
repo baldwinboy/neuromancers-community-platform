@@ -24,11 +24,16 @@
   failed_when: false
   become: true
 
+- name: Set Tailscale stage name
+  ansible.builtin.set_fact:
+    tailscale_stage: "{{ 'staging' if git_environment == 'staging' else 'production' }}"
+
 - name: Join tailnet if not already connected
   ansible.builtin.command: >-
     tailscale up
     --authkey={{ tailscale_oauth_client_secret }}
     --advertise-tags={{ tailscale_tag }}
+    --hostname=neuromancers-network-{{ tailscale_stage }}
     --ssh
     --reset
   register: tailscale_join
@@ -55,10 +60,6 @@
 - name: Get MagicDNS hostname
   ansible.builtin.set_fact:
     tailscale_dns_hostname: "{{ tailscale_dns_config.CurrentTailnet.MagicDNSSuffix }}"
-
-- name: Set Tailscale stage name
-  ansible.builtin.set_fact:
-    tailscale_stage: "{{ 'staging' if git_environment == 'staging' else 'production' }}"
 
 - name: Set application and metrics domains
   ansible.builtin.set_fact:
@@ -148,11 +149,16 @@
     creates: /certs/paas/cert.pem
   become: true
 
+- name: Check if cert-refreshed-at file exists
+  ansible.builtin.stat:
+    path: /etc/tailscale/cert-refreshed-at.txt
+  register: cert_refreshed_at_stat
+  become: true
+
 - name: Write current date to file
   ansible.builtin.copy:
     content: "{{ ansible_date_time.epoch }}"
     dest: /etc/tailscale/cert-refreshed-at.txt
     mode: "0644"
-  args:
-    creates: /etc/tailscale/cert-refreshed-at.txt
+  when: not cert_refreshed_at_stat.stat.exists
   become: true
