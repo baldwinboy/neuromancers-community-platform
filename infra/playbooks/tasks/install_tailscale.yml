@@ -35,26 +35,30 @@
   when: tailscale_status.rc != 0 and tailscale_oauth_client_secret is defined and tailscale_tag is defined
   become: true
 
+- name: Check current Tailscale state
+  ansible.builtin.command: tailscale status
+  register: next_tailscale_status
+  changed_when: false
+  failed_when: false
+  become: true
+
 - name: Get the Tailscale DNS configuration
   ansible.builtin.command: tailscale dns status --json
   register: tailscale_dns_status
-  when: tailscale_join.rc == 0 or tailscale_status.rc == 0
+  failed_when: next_tailscale_status.rc != 0
   become: true
 
 - name: Parse the Tailscale DNS configuration
   ansible.builtin.set_fact:
     tailscale_dns_config: "{{ tailscale_dns_status.stdout | from_json }}"
-  when: tailscale_dns_status.rc == 0
 
 - name: Get MagicDNS hostname
   ansible.builtin.set_fact:
     tailscale_dns_hostname: "{{ tailscale_dns_config.CurrentTailnet.MagicDNSSuffix }}"
-  when: tailscale_dns_config is defined and tailscale_dns_config.CurrentTailnet is defined
 
 - name: Set Tailscale stage name
   ansible.builtin.set_fact:
     tailscale_stage: "{{ 'staging' if git_environment == 'staging' else 'production' }}"
-  when: tailscale_dns_hostname is defined
 
 - name: Set application and metrics domains
   ansible.builtin.set_fact:
@@ -62,7 +66,6 @@
     tailscale_metrics_domain: "{{ tailscale_stage }}-metrics.{{ tailscale_dns_hostname }}"
     tailscale_paas_domain: "{{ tailscale_stage }}-paas.{{ tailscale_dns_hostname }}"
     tailscale_monitor_domain: "{{ tailscale_stage }}-monitor.{{ tailscale_dns_hostname }}"
-  when: tailscale_stage is defined
 
 - name: Copy Tailscale serve configs
   ansible.builtin.copy:
