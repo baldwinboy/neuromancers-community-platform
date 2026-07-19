@@ -67,6 +67,19 @@
     tailscale_paas_domain: "{{ tailscale_stage }}-paas.{{ tailscale_dns_hostname }}"
     tailscale_monitor_domain: "{{ tailscale_stage }}-monitor.{{ tailscale_dns_hostname }}"
 
+- name: Ensure required directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  become: true
+  loop:
+    - /certs/paas/
+    - /certs/app
+    - /certs/metrics
+    - /certs/monitor
+    - /etc/tailscale
+
 - name: Copy Tailscale serve configs
   ansible.builtin.copy:
     src: ../../tailscale/{{ item }}.json
