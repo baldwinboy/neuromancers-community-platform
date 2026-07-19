@@ -1,4 +1,4 @@
-- name: Setup Coolify
+- name: Deploy Application
   hosts: all
   become: true
   collections:
@@ -213,6 +213,22 @@
             value: "{{ docker_tag }}"
             is_preview: false
             is_literal: true
+          - key: "TS_APP_DOMAIN"
+            value: "{{ tailscale_app_domain }}"
+            is_preview: false
+            is_literal: true
+          - key: "TS_METRICS_DOMAIN"
+            value: "{{ tailscale_metrics_domain }}"
+            is_preview: false
+            is_literal: true
+          - key: "TS_MONITOR_DOMAIN"
+            value: "{{ tailscale_monitor_domain }}"
+            is_preview: false
+            is_literal: true
+          - key: "TS_PAAS_DOMAIN"
+            value: "{{ tailscale_paas_domain }}"
+            is_preview: false
+            is_literal: true
       when: coolify_env_vars is defined and bws_access_token is defined and docker_tag is defined
 
     # Get secrets from Bitwarden
@@ -255,7 +271,8 @@
         - coolify_application_uuid | default('') != ''
         - env_items | default([]) | length > 0
 
-    - name: Redeploy application
+    # Deploy application
+    - name: Deploy application
       ansible.builtin.uri:
         url: "{{ coolify_api_url }}/deploy"
         method: POST
@@ -265,6 +282,39 @@
         body:
           uuid: "{{ coolify_application_uuid }}"
         status_code: 200
+        return_content: true
+      register: coolify_deploy_result
       when:
         - coolify_application_uuid | default('') != ''
         - coolify_env_vars | default([]) | length > 0
+
+    # Get deployment UUID
+    - name: Get deployment UUID
+      ansible.builtin.set_fact:
+        coolify_deployment_uuid: "{{ coolify_deploy_result.json.deployments[0].deployment_uuid | default('') }}"
+      when: coolify_deploy_result is defined and coolify_deploy_result.json.deployments | length > 0
+
+    - name: Wait for deployment to complete
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/deployments/{{ coolify_deployment_uuid }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        status_code: 200
+        return_content: true
+      register: coolify_deployment_result
+      retries: 7 # Retry 7 times
+      delay: 90 # Wait for 90 seconds before retrying
+      until: coolify_deployment_result.json.status in ['failed', 'finished', 'cancelled-by-user']
+      when: coolify_deployment_uuid | default('') != ''
+      failed_when: coolify_deployment_result.json.status == 'failed'
+      changed_when: coolify_deployment_result.json.status == 'finished'
+
+    # Lockdown Coolify
+    - name: Lockdown Coolify port
+      community.general.ufw:
+        rule: delete
+        port: "{{ coolify_port }}"
+        proto: tcp
+      when: coolify_application_uuid | default('') != ''
+      notify: reload ufw

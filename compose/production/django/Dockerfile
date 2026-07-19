@@ -58,7 +58,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 COPY --from=bws-cli /bin/bws /usr/local/bin/bws
 
-
 COPY --chown=django:django ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
@@ -86,14 +85,16 @@ COPY --from=python-build-stage --chown=django:django ${APP_HOME} ${APP_HOME}
 
 # make django owner of the WORKDIR directory as well.
 RUN chown django:django ${APP_HOME}
+# Create the logs directory
+RUN mkdir -p /var/log/django && chown django:django /var/log/django
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Expose Gunicorn port so Docker can access it
 EXPOSE 5000
-# Expose Prometheus metrics port
-EXPOSE 8001
+# Expose Prometheus metrics port range
+EXPOSE 8001-8050
 
 USER django
 

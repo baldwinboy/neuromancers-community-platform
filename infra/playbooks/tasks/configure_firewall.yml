@@ -25,6 +25,12 @@
     default: allow
     direction: outgoing
 
+- name: Allow localhost traffic
+  community.general.ufw:
+    rule: allow
+    src: 127.0.0.1
+    dest: 127.0.0.1
+
 - name: Allow public application ports only
   community.general.ufw:
     rule: allow
@@ -41,7 +47,6 @@
     - "{{ gatus_port }}"
     - "{{ beszel_hub_port }}"
     - "{{ host_prometheus_port }}"
-    - "{{ prometheus_port }}"
     - "{{ crowdsec_port }}"
 
 - name: Allow traffic from Tailscale
@@ -81,6 +86,21 @@
   community.general.ufw:
     state: enabled
   notify: reload ufw
+
+- name: Create Django log directory
+  ansible.builtin.file:
+    path: /var/log/django
+    state: directory
+    mode: "0777"
+  args:
+    creates: /var/log/django
+  become: true
+
+- name: Copy Fail2Ban django-disallowedhost filter
+  ansible.builtin.copy:
+    src: ../security/django-disallowedhost.conf
+    dest: /etc/fail2ban/filter.d/django-disallowedhost.conf
+    mode: "0644"
 
 - name: Deploy Fail2Ban jail config
   ansible.builtin.copy:

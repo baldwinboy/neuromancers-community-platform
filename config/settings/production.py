@@ -19,22 +19,25 @@ from .base import env
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
+SERVER_HOST = env("HETZNER_SSH_HOST", default=None)
+CUSTOM_DNS = env("CUSTOM_DNS", default="1.1.1.1")
+TS_APP_DOMAIN = env("TS_APP_DOMAIN", default=None)
+TS_METRICS_DOMAIN = env("TS_METRICS_DOMAIN", default=None)
+DYNAMIC_ALLOWED_HOSTS = [SERVER_HOST, CUSTOM_DNS, TS_APP_DOMAIN, TS_METRICS_DOMAIN]
 DJANGO_ALLOWED_HOSTS = [
     *env.list(
         "DJANGO_ALLOWED_HOSTS",
         default=["localhost", "django", "127.0.0.1", "neuromancers.org.uk"],
     ),
 ]
-
-SERVER_HOST = env("HETZNER_SSH_HOST", default=None)
-
-if SERVER_HOST and SERVER_HOST not in DJANGO_ALLOWED_HOSTS:
-    DJANGO_ALLOWED_HOSTS = [
-        *DJANGO_ALLOWED_HOSTS,
-        SERVER_HOST,
-    ]
-
-ALLOWED_HOSTS = DJANGO_ALLOWED_HOSTS
+ALLOWED_HOSTS = [
+    *DJANGO_ALLOWED_HOSTS,
+    *[
+        host
+        for host in DYNAMIC_ALLOWED_HOSTS
+        if host and host not in DJANGO_ALLOWED_HOSTS
+    ],
+]
 
 # DATABASES
 # ------------------------------------------------------------------------------
@@ -196,6 +199,15 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
+        "jail": {
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "verbose",
+            # 2 MB
+            "maxBytes": 2 * 1024 * 1024,
+            "filename": "/var/log/django/jail.log",
+            "backupCount": 5,
+        },
     },
     "root": {"level": "INFO", "handlers": ["console"]},
     "loggers": {
@@ -208,7 +220,7 @@ LOGGING = {
         "sentry_sdk": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "django.security.DisallowedHost": {
             "level": "WARNING",
-            "handlers": ["console"],
+            "handlers": ["jail"],
             "propagate": False,
         },
     },
@@ -239,9 +251,7 @@ sentry_sdk.init(
 # Prometheus
 # https://github.com/django-commons/django-prometheus/blob/master/documentation/exports.md
 # ------------------------------------------------------------------------------
-# PROMETHEUS_METRICS_EXPORT_PORT = env.int("PROMETHEUS_METRICS_EXPORT_PORT", default=8001)  # noqa: ERA001
-# PROMETHEUS_METRICS_EXPORT_ADDRESS = ""  # noqa: ERA001
-
+PROMETHEUS_METRICS_EXPORT_PORT_RANGE = range(8001, 8050)
 
 # Your stuff...
 # ------------------------------------------------------------------------------

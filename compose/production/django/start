@@ -27,4 +27,12 @@ if compress_enabled; then
   # NOTE this command will fail if django-compressor is disabled
   python /app/manage.py compress
 fi
-exec gunicorn config.wsgi --bind 0.0.0.0:5000 --chdir=/app
+
+exec gunicorn config.wsgi \
+--bind 0.0.0.0:5000 \
+--workers=${NUM_WORKERS:-4} \
+--threads=${NUM_THREADS:-2} \
+--chdir=/app \
+--log-level=info \
+--log-file=/var/log/django/gunicorn.log \
+--preload

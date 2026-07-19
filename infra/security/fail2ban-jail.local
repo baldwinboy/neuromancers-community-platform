@@ -16,3 +16,12 @@ enabled  = true
 port     = ssh
 logpath  = %(sshd_log)s
 maxretry = 3
+
+[django-disallowedhost]
+enabled  = true
+port     = http,https,8080
+filter   = django-disallowedhost
+logpath  = /var/log/django/jail.log
+maxretry = 3
+bantime  = 3600   # 1 hour
+findtime = 600

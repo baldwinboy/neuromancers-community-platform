@@ -1,0 +1,56 @@
+{
+  "Services": {
+    "__TS_SERVICE__": {
+      "TCP": {
+        "443": {
+          "HTTP": true
+        },
+        "80": {
+          "HTTP": true
+        }
+      },
+      "Web": {
+        "__TS_APP_DOMAIN__:443": {
+          "Handlers": {
+            "/": {
+              "Proxy": "http://localhost:__APP_PORT__"
+            }
+          }
+        },
+        "__TS_APP_DOMAIN__:80": {
+          "Handlers": {
+            "/": {
+              "Proxy": "http://localhost:__APP_PORT__"
+            }
+          }
+        }
+      }
+    },
+    "__TS_METRICS_SERVICE__": {
+      "TCP": {
+        "443": {
+          "HTTP": true
+        },
+        "80": {
+          "HTTP": true
+        }
+      },
+      "Web": {
+        "__TS_METRICS_DOMAIN__:443": {
+          "Handlers": {
+            "/": {
+              "Proxy": "http://localhost:__METRICS_PORT__"
+            }
+          }
+        },
+        "__TS_METRICS_DOMAIN__:80": {
+          "Handlers": {
+            "/": {
+              "Proxy": "http://localhost:__METRICS_PORT__"
+            }
+          }
+        }
+      }
+    }
+  }
+}

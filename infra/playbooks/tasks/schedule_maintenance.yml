@@ -18,3 +18,20 @@
     job: "/opt/scripts/clear-django-sessions.sh"
     hour: "3"
     minute: "0"
+
+- name: Copy refresh-tailscale-certs.sh script
+  ansible.builtin.copy:
+    src: ../scripts/refresh-tailscale-certs.sh
+    dest: /opt/scripts/refresh-tailscale-certs.sh
+    mode: "0755"
+
+- name: Schedule refresh-tailscale-certs cron job (monthly)
+  ansible.builtin.cron:
+    name: "refresh-tailscale-certs"
+    job: "/opt/scripts/refresh-tailscale-certs.sh"
+    month: "*/1"
+  env:
+    TS_APP_DOMAIN: "{{ tailscale_app_domain }}"
+    TS_METRICS_DOMAIN: "{{ tailscale_metrics_domain }}"
+    TS_MONITOR_DOMAIN: "{{ tailscale_monitor_domain }}"
+    TS_PAAS_DOMAIN: "{{ tailscale_paas_domain }}"

@@ -6,6 +6,11 @@
   args:
     creates: /usr/bin/tailscale
 
+- name: Update Tailscale package to latest
+  ansible.builtin.apt:
+    name: tailscale
+    state: latest
+
 - name: Ensure tailscaled service is enabled and running
   ansible.builtin.systemd:
     name: tailscaled
@@ -13,16 +18,125 @@
     enabled: true
 
 - name: Check current Tailscale state
-  ansible.builtin.command: tailscale status --json
+  ansible.builtin.command: tailscale status
   register: tailscale_status
   changed_when: false
   failed_when: false
+  become: true
 
 - name: Join tailnet if not already connected
   ansible.builtin.command: >-
     tailscale up
-    --authkey={{ tailscale_auth_key }}
-    --accept-routes=false
+    --authkey={{ tailscale_oauth_client_secret }}
     --advertise-tags={{ tailscale_tag }}
     --ssh
-  when: tailscale_status.rc != 0 and tailscale_auth_key is defined and tailscale_tag is defined
+    --reset
+  register: tailscale_join
+  when: tailscale_status.rc != 0 and tailscale_oauth_client_secret is defined and tailscale_tag is defined
+  become: true
+
+- name: Get the Tailscale DNS configuration
+  ansible.builtin.command: tailscale dns status --json
+  register: tailscale_dns_status
+  when: tailscale_join.rc == 0 or tailscale_status.rc == 0
+  become: true
+
+- name: Parse the Tailscale DNS configuration
+  ansible.builtin.set_fact:
+    tailscale_dns_config: "{{ tailscale_dns_status.stdout | from_json }}"
+  when: tailscale_dns_status.rc == 0
+
+- name: Get MagicDNS hostname
+  ansible.builtin.set_fact:
+    tailscale_dns_hostname: "{{ tailscale_dns_config.CurrentTailnet.MagicDNSSuffix }}"
+  when: tailscale_dns_config is defined and tailscale_dns_config.CurrentTailnet is defined
+
+- name: Set Tailscale stage name
+  ansible.builtin.set_fact:
+    tailscale_stage: "{{ 'staging' if git_environment == 'staging' else 'production' }}"
+  when: tailscale_dns_hostname is defined
+
+- name: Set application and metrics domains
+  ansible.builtin.set_fact:
+    tailscale_app_domain: "{{ tailscale_stage }}.{{ tailscale_dns_hostname }}"
+    tailscale_metrics_domain: "{{ tailscale_stage }}-metrics.{{ tailscale_dns_hostname }}"
+    tailscale_paas_domain: "{{ tailscale_stage }}-paas.{{ tailscale_dns_hostname }}"
+    tailscale_monitor_domain: "{{ tailscale_stage }}-monitor.{{ tailscale_dns_hostname }}"
+  when: tailscale_stage is defined
+
+- name: Copy Tailscale serve configs
+  ansible.builtin.copy:
+    src: ../tailscale/{{ item }}
+    dest: /etc/tailscale/{{ item }}-w.json
+    mode: "0644"
+  become: true
+  loop:
+    - app-config
+    - monitor-config
+
+- name: Replace app Tailscale serve config placeholders
+  ansible.builtin.replace:
+    path: /etc/tailscale/app-config-w.json
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  become: true
+  loop:
+    - { regexp: "__TS_SERVICE__", replace: "svc:{{ tailscale_stage }}" }
+    - { regexp: "__TS_APP_DOMAIN__", replace: "{{ tailscale_app_domain }}" }
+    - {
+        regexp: "__TS_METRICS_SERVICE__",
+        replace: "svc:{{ tailscale_stage }}-metrics",
+      }
+    - {
+        regexp: "__TS_METRICS_DOMAIN__",
+        replace: "{{ tailscale_metrics_domain }}",
+      }
+    - { regexp: "__APP_PORT__", replace: "{{ django_port }}" }
+    - { regexp: "__METRICS_PORT__", replace: "{{ django_prometheus_port }}" }
+
+- name: Replace monitor Tailscale serve config placeholders
+  ansible.builtin.replace:
+    path: /etc/tailscale/monitor-config-w.json
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  become: true
+  loop:
+    - {
+        regexp: "__TS_MONITOR_SERVICE__",
+        replace: "svc:{{ tailscale_stage }}-monitor",
+      }
+    - {
+        regexp: "__TS_MONITOR_DOMAIN__",
+        replace: "{{ tailscale_monitor_domain }}",
+      }
+    - { regexp: "__MONITOR_PORT__", replace: "{{ prometheus_port }}" }
+
+- name: Rename config files for update
+  ansible.builtin.include_tasks: rename_file.yml
+  loop:
+    - src: /etc/tailscale/app-config-w.json
+      dest: /etc/tailscale/app-config.json
+    - src: /etc/tailscale/monitor-config-w.json
+      dest: /etc/tailscale/monitor-config.json
+
+- name: Generate Tailscale certificates for Coolify
+  ansible.builtin.shell: |
+    tailscale cert --cert-file /certs/paas/cert.pem --key-file /certs/paas/key.pem {{ tailscale_paas_domain }}
+  args:
+    creates: /certs/paas/cert.pem
+  become: true
+
+- name: Write current date to file
+  ansible.builtin.copy:
+    content: "{{ ansible_date_time.epoch }}"
+    dest: /etc/tailscale/cert-refreshed-at.txt
+    mode: "0644"
+  args:
+    creates: /etc/tailscale/cert-refreshed-at.txt
+  become: true
+
+- name: Serve Coolify instance on tailnet
+  ansible.builtin.shell: |
+    tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --http=80 localhost:{{ coolify_port }}
+    tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --https=443 localhost:{{ coolify_port }}
+  become: true
