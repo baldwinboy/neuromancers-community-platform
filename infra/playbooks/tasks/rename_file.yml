@@ -9,8 +9,10 @@
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
     remote_src: true
+  become: true
 
 - name: Remove original
   ansible.builtin.file:
     path: "{{ item.src }}"
     state: absent
+  become: true

@@ -30,6 +30,7 @@
       ansible.builtin.copy:
         src: ../scripts/backup.sh
         dest: /opt/scripts/backup.sh
+        mode: "0755"
 
     - name: Run backup script
       ansible.builtin.shell: |

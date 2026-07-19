@@ -64,6 +64,7 @@
     state: present
     backup: yes
   when: coolify_server != ''
+  become: true
 
 - name: Prohibit root login with password
   lineinfile:
@@ -73,6 +74,7 @@
     state: present
     backup: yes
   when: coolify_server != ''
+  become: true
 
 - name: Disable X11 forwarding
   lineinfile:
@@ -89,6 +91,7 @@
     line: "ClientAliveInterval {{ ssh_alive_interval }}"
     state: present
   when: coolify_server != ''
+  become: true
 
 - name: Set maximum number of login attempts
   lineinfile:
@@ -97,6 +100,7 @@
     line: "MaxAuthTries {{ ssh_max_auth_tries }}"
     state: present
   when: coolify_server != ''
+  become: true
 
 - name: Check SSH configuration syntax
   command: sshd -t

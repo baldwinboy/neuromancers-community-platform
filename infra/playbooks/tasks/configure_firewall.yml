@@ -91,9 +91,7 @@
   ansible.builtin.file:
     path: /var/log/django
     state: directory
-    mode: "0777"
-  args:
-    creates: /var/log/django
+    mode: "0755"
   become: true
 
 - name: Copy Fail2Ban django-disallowedhost filter
@@ -101,12 +99,14 @@
     src: ../security/django-disallowedhost.conf
     dest: /etc/fail2ban/filter.d/django-disallowedhost.conf
     mode: "0644"
+  become: true
 
 - name: Deploy Fail2Ban jail config
   ansible.builtin.copy:
     src: ../security/fail2ban-jail.local
     dest: /etc/fail2ban/jail.local
     mode: "0644"
+  become: true
   notify: restart fail2ban
 
 - name: Ensure Fail2Ban is enabled and running
@@ -132,6 +132,7 @@
     line: "url: http://127.0.0.1:{{ crowdsec_port }}"
     state: present
     backup: yes
+  become: true
   notify: restart crowdsec
 
 - name: Fix CrowdSec config file permissions
@@ -151,12 +152,6 @@
     - /etc/crowdsec/local_api_credentials.yaml
     - /etc/crowdsec/online_api_credentials.yaml
     - /var/log/crowdsec.log
-
-- name: Ensure CrowdSec is enabled and running
-  ansible.builtin.systemd:
-    name: crowdsec
-    state: started
-    enabled: true
   become: true
 
 - name: Attach DOCKER-USER chain to CrowdSec Firewall Remediation
@@ -176,6 +171,7 @@
     line: "disable_ipv6: true"
     state: present
     backup: yes
+  become: true
   notify: restart crowdsec-firewall-bouncer
 
 - name: Ensure CrowdSec Firewall Remediation is enabled and running
