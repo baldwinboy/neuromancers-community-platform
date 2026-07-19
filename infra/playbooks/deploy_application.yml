@@ -307,8 +307,12 @@
       delay: 90 # Wait for 90 seconds before retrying
       until: coolify_deployment_result.json.status in ['failed', 'finished', 'cancelled-by-user']
       when: coolify_deployment_uuid | default('') != ''
-      failed_when: coolify_deployment_result.json.status == 'failed'
-      changed_when: coolify_deployment_result.json.status == 'finished'
+
+    # Exit if Coolify deployment failed
+    - name: Fail if Coolify deployment failed
+      ansible.builtin.fail:
+        msg: "Coolify deployment failed"
+      when: coolify_deployment_result.json.status == 'failed'
 
     # Lockdown Coolify
     - name: Lockdown Coolify port

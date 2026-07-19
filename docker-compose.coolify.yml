@@ -46,7 +46,6 @@ services:
     network_mode: service:ts-django
     expose:
       - 5000
-      - "8001-8050"
     depends_on:
       ts-django:
         condition: service_started
