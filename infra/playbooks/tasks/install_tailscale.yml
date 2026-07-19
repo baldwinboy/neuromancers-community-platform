@@ -69,7 +69,7 @@
 
 - name: Copy Tailscale serve configs
   ansible.builtin.copy:
-    src: ../../tailscale/{{ item }}
+    src: ../../tailscale/{{ item }}.json
     dest: /etc/tailscale/{{ item }}-w.json
     mode: "0644"
   become: true
