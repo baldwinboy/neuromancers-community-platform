@@ -9,6 +9,8 @@ services:
       - TS_HOSTNAME=django
       - TS_SERVE_CONFIG=/etc/tailscale/app-config.json
       - TS_STATE_DIR=/var/lib/tailscale
+      - TS_APP_DOMAIN=${TS_APP_DOMAIN}
+      - TS_METRICS_DOMAIN=${TS_METRICS_DOMAIN}
     volumes:
       - ts-django-mnt:/var/lib/tailscale
       - /certs/app:/certs/app
@@ -20,6 +22,14 @@ services:
       - net_admin
     restart: unless-stopped
     post_start:
+      - command:
+          [
+            "tailscale",
+            "serve",
+            "set-config",
+            "/etc/tailscale/app-config.json",
+            "--all",
+          ]
       - command:
           [
             "tailscale",
@@ -158,6 +168,7 @@ services:
       - TS_HOSTNAME=prometheus
       - TS_SERVE_CONFIG=/etc/tailscale/monitor-config.json
       - TS_STATE_DIR=/var/lib/tailscale
+      - TS_MONITOR_DOMAIN=${TS_MONITOR_DOMAIN}
     volumes:
       - ts-prometheus-mnt:/var/lib/tailscale
       - /certs/monitor:/certs/monitor
@@ -170,6 +181,14 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     post_start:
+      - command:
+          [
+            "tailscale",
+            "serve",
+            "set-config",
+            "/etc/tailscale/monitor-config.json",
+            "--all",
+          ]
       - command:
           [
             "tailscale",
