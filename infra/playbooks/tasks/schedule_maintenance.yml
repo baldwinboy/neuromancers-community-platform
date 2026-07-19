@@ -25,13 +25,23 @@
     dest: /opt/scripts/refresh-tailscale-certs.sh
     mode: "0755"
 
+- name: Set Tailscale environment variables in the crontab
+  ansible.builtin.cron:
+    name: "{{ item.name }}"
+    env: yes
+    job: "{{ item.job }}"
+  loop:
+    - name: "TS_APP_DOMAIN"
+      job: "{{ tailscale_app_domain }}"
+    - name: "TS_METRICS_DOMAIN"
+      job: "{{ tailscale_metrics_domain }}"
+    - name: "TS_MONITOR_DOMAIN"
+      job: "{{ tailscale_monitor_domain }}"
+    - name: "TS_PAAS_DOMAIN"
+      job: "{{ tailscale_paas_domain }}"
+
 - name: Schedule refresh-tailscale-certs cron job (monthly)
   ansible.builtin.cron:
     name: "refresh-tailscale-certs"
     job: "/opt/scripts/refresh-tailscale-certs.sh"
     month: "*/1"
-  env:
-    TS_APP_DOMAIN: "{{ tailscale_app_domain }}"
-    TS_METRICS_DOMAIN: "{{ tailscale_metrics_domain }}"
-    TS_MONITOR_DOMAIN: "{{ tailscale_monitor_domain }}"
-    TS_PAAS_DOMAIN: "{{ tailscale_paas_domain }}"
