@@ -26,7 +26,7 @@ services:
           [
             "sh",
             "-c",
-            "until tailscale status > /dev/null 2>&1; do sleep 2; done && tailscale cert --cert-file /certs/app/cert.pem --key-file /certs/app/key.pem ${TS_APP_DOMAIN} && tailscale cert --cert-file /certs/metrics/cert.pem --key-file /certs/metrics/key.pem ${TS_METRICS_DOMAIN}",
+            "until tailscale status > /dev/null 2>&1; do sleep 2; done && sleep 5 && until tailscale cert --cert-file /certs/app/cert.pem --key-file /certs/app/key.pem ${TS_APP_DOMAIN}; do echo 'Retrying app cert...'; sleep 10; done && until tailscale cert --cert-file /certs/metrics/cert.pem --key-file /certs/metrics/key.pem ${TS_METRICS_DOMAIN}; do echo 'Retrying metrics cert...'; sleep 10; done",
           ]
 
   django:
