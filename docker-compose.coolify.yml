@@ -24,31 +24,9 @@ services:
     post_start:
       - command:
           [
-            "tailscale",
-            "serve",
-            "set-config",
-            "/etc/tailscale/app-config.json",
-            "--all",
-          ]
-      - command:
-          [
-            "tailscale",
-            "cert",
-            "--cert-file",
-            "/certs/app/cert.pem",
-            "--key-file",
-            "/certs/app/key.pem",
-            "${TS_APP_DOMAIN}",
-          ]
-      - command:
-          [
-            "tailscale",
-            "cert",
-            "--cert-file",
-            "/certs/metrics/cert.pem",
-            "--key-file",
-            "/certs/metrics/key.pem",
-            "${TS_METRICS_DOMAIN}",
+            "sh",
+            "-c",
+            "until tailscale status > /dev/null 2>&1; do sleep 2; done && tailscale cert --cert-file /certs/app/cert.pem --key-file /certs/app/key.pem ${TS_APP_DOMAIN} && tailscale cert --cert-file /certs/metrics/cert.pem --key-file /certs/metrics/key.pem ${TS_METRICS_DOMAIN}",
           ]
 
   django:
@@ -183,21 +161,9 @@ services:
     post_start:
       - command:
           [
-            "tailscale",
-            "serve",
-            "set-config",
-            "/etc/tailscale/monitor-config.json",
-            "--all",
-          ]
-      - command:
-          [
-            "tailscale",
-            "cert",
-            "--cert-file",
-            "/certs/monitor/cert.pem",
-            "--key-file",
-            "/certs/monitor/key.pem",
-            "${TS_MONITOR_DOMAIN}",
+            "sh",
+            "-c",
+            "until tailscale status > /dev/null 2>&1; do sleep 2; done && tailscale cert --cert-file /certs/monitor/cert.pem --key-file /certs/monitor/key.pem ${TS_MONITOR_DOMAIN}",
           ]
 
   prometheus:
