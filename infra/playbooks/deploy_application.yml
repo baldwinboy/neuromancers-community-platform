@@ -317,8 +317,27 @@
     # Lockdown Coolify
     - name: Lockdown Coolify port
       community.general.ufw:
-        rule: delete
+        rule: allow
         port: "{{ coolify_port }}"
         proto: tcp
+        delete: true
+      when: coolify_application_uuid | default('') != ''
+      notify: reload ufw
+
+    - name: Lockdown Coolify real-time port
+      community.general.ufw:
+        rule: allow
+        port: "6001"
+        proto: tcp
+        delete: true
+      when: coolify_application_uuid | default('') != ''
+      notify: reload ufw
+
+    - name: Lockdown Coolify terminal port
+      community.general.ufw:
+        rule: allow
+        port: "6002"
+        proto: tcp
+        delete: true
       when: coolify_application_uuid | default('') != ''
       notify: reload ufw
