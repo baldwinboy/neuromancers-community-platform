@@ -37,8 +37,8 @@ ARG APP_HOME=/app
 
 WORKDIR ${APP_HOME}
 
-RUN addgroup --system --gid 1000 django \
-  && adduser --system --uid 1000 --ingroup django --home /home/django django \
+RUN addgroup --system --gid 10000 django \
+  && adduser --system --uid 10000 --ingroup django --home /home/django django \
   && mkdir -p /home/django \
   && chown django:django /home/django
 
