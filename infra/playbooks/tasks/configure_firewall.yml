@@ -87,11 +87,29 @@
     state: enabled
   notify: reload ufw
 
+- name: Create Django group
+  ansible.builtin.group:
+    name: django
+    gid: 1000
+    system: true
+  become: true
+
+- name: Create Django user
+  ansible.builtin.user:
+    name: django
+    uid: 1000
+    group: django
+    system: true
+    shell: /usr/sbin/nologin
+  become: true
+
 - name: Create Django log directory
   ansible.builtin.file:
     path: /var/log/django
     state: directory
-    mode: "0755"
+    owner: django
+    group: django
+    mode: "0775"
   become: true
 
 - name: Copy Fail2Ban django-disallowedhost filter
