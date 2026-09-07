@@ -14,6 +14,7 @@ from taggit.managers import TaggableManager
 from neuromancers_network.core.models.base import Timestamped
 
 from .choices import ApprovalPolicy
+from .choices import MeetingRequestStatus
 from .choices import MeetingStatus
 from .choices import MeetingType
 from .choices import PricingType
@@ -172,6 +173,26 @@ class Meeting(Timestamped):
 
     def __str__(self):
         return self.title
+
+    @property
+    def requires_approval(self) -> bool:
+        return self.approval_policy == ApprovalPolicy.APPROVAL_REQUIRED
+
+    @property
+    def requires_payment_before_join(self) -> bool:
+        return self.approval_policy == ApprovalPolicy.PAY_BEFORE_JOIN
+
+    @property
+    def allows_payment_after_join(self) -> bool:
+        return self.approval_policy == ApprovalPolicy.PAY_AFTER_JOIN
+
+    @property
+    def initial_request_status(self) -> str:
+        if self.requires_approval:
+            return MeetingRequestStatus.PENDING_APPROVAL
+        if self.requires_payment_before_join:
+            return MeetingRequestStatus.PENDING_PAYMENT
+        return MeetingRequestStatus.APPROVED
 
     @transition(
         field=status,

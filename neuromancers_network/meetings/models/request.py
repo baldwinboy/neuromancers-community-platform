@@ -5,6 +5,7 @@ from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django_fsm import GET_STATE
 from django_fsm import FSMField
 from django_fsm import transition
 
@@ -14,6 +15,12 @@ from .choices import MeetingRequestStatus
 from .meeting import MAX_DURATION_MINUTES
 from .meeting import MIN_DURATION_MINUTES
 from .meeting import Meeting
+
+
+def _approval_target(request, *_args, **_kwargs):
+    if request.meeting.requires_payment_before_join:
+        return MeetingRequestStatus.PENDING_PAYMENT
+    return MeetingRequestStatus.APPROVED
 
 
 class MeetingRequest(Timestamped):
@@ -101,10 +108,47 @@ class MeetingRequest(Timestamped):
     def __str__(self):
         return f"Request for {self.meeting} by {self.support_seeker}"
 
+    @property
+    def requires_approval(self) -> bool:
+        return self.meeting.requires_approval
+
+    @property
+    def requires_payment_before_join(self) -> bool:
+        return self.meeting.requires_payment_before_join
+
+    @property
+    def allows_join_before_payment(self) -> bool:
+        return (
+            self.status == MeetingRequestStatus.APPROVED
+            and not self.requires_payment_before_join
+        )
+
+    @property
+    def can_join(self) -> bool:
+        return (
+            self.status == MeetingRequestStatus.PAID or self.allows_join_before_payment
+        )
+
+    @property
+    def can_pay(self) -> bool:
+        return self.status in {
+            MeetingRequestStatus.PENDING_PAYMENT,
+            MeetingRequestStatus.APPROVED,
+        }
+
+    def start(self):
+        """Set the request status from the meeting's approval policy."""
+        self.__dict__["status"] = self.meeting.initial_request_status
+
+    def save(self, *args, **kwargs):
+        if self._state.adding and self.status == MeetingRequestStatus.PENDING_APPROVAL:
+            self.__dict__["status"] = self.meeting.initial_request_status
+        super().save(*args, **kwargs)
+
     @transition(
         field=status,
         source=MeetingRequestStatus.PENDING_APPROVAL,
-        target=MeetingRequestStatus.APPROVED,
+        target=GET_STATE(_approval_target),
     )
     def approve(self):
         pass
@@ -119,7 +163,7 @@ class MeetingRequest(Timestamped):
 
     @transition(
         field=status,
-        source=[MeetingRequestStatus.APPROVED, MeetingRequestStatus.PENDING_APPROVAL],
+        source=[MeetingRequestStatus.APPROVED, MeetingRequestStatus.PENDING_PAYMENT],
         target=MeetingRequestStatus.PAID,
     )
     def mark_paid(self):
@@ -139,6 +183,7 @@ class MeetingRequest(Timestamped):
             MeetingRequestStatus.PENDING_APPROVAL,
             MeetingRequestStatus.APPROVED,
             MeetingRequestStatus.PAID,
+            MeetingRequestStatus.PENDING_PAYMENT,
         ],
         target=MeetingRequestStatus.CANCELLED,
     )
