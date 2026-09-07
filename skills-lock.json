@@ -6,6 +6,18 @@
       "sourceType": "github",
       "skillPath": "stdlib/devops/ansible-expert/SKILL.md",
       "computedHash": "759e47e88c3a04f2645fac14e5f3f0c28e6e0322ad2e531d57d230ab18fac926"
+    },
+    "django-access-review": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/django-access-review/SKILL.md",
+      "computedHash": "f113820ea68a0a8d5b36b36a293da6caed8cb6f2d7115cfc12d63c448e1b7613"
+    },
+    "django-perf-review": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/django-perf-review/SKILL.md",
+      "computedHash": "8f30431b3c007e2dfe7fea44f3805e2dff0f633c078512d33f9b7ebb4c71c19b"
     }
   }
 }

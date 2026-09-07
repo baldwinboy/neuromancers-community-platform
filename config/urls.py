@@ -5,6 +5,9 @@ from django.urls import include
 from django.urls import path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
+from wagtail import urls as wagtail_urls
+from wagtail.admin import urls as wagtailadmin_urls
+from wagtail.documents import urls as wagtaildocs_urls
 
 from .api import api
 
@@ -22,6 +25,12 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # Monitoring
     path("monitoring/", include("django_prometheus.urls")),
+    # DJ Stripe — includes webhook endpoint at /stripe/webhook/<uuid>/
+    path("stripe/", include("djstripe.urls", namespace="djstripe")),
+    # Wagtail
+    path("cms/", include(wagtailadmin_urls)),
+    path("documents/", include(wagtaildocs_urls)),
+    path("pages/", include(wagtail_urls)),
     # Your stuff: custom urls includes go here
     # ...
     # Media files

@@ -1,5 +1,6 @@
 # ruff: noqa: E501
 import logging
+from urllib.parse import urlparse
 
 import sentry_sdk
 from sentry_sdk.integrations.celery import CeleryIntegration
@@ -253,5 +254,33 @@ sentry_sdk.init(
 # ------------------------------------------------------------------------------
 PROMETHEUS_METRICS_EXPORT_PORT_RANGE = range(8001, 8050)
 
-# Your stuff...
+# Django Smart Ratelimit
 # ------------------------------------------------------------------------------
+RATELIMIT_BACKEND = "django_smart_ratelimit.backends.RedisBackend"
+RATELIMIT_REDIS_URL = urlparse(REDIS_URL)
+RATELIMIT_REDIS = {
+    "host": RATELIMIT_REDIS_URL.hostname,
+    "port": RATELIMIT_REDIS_URL.port,
+    "db": int(RATELIMIT_REDIS_URL.path.lstrip("/") or 0),
+}
+
+RATELIMIT_MIDDLEWARE = {
+    "enabled": True,
+    "excluded_paths": ["/health/"],
+}
+
+# django-allauth
+# ------------------------------------------------------------------------------
+ACCOUNT_RATE_LIMITS = {
+    "change_password": "1/m/user",
+    "change_phone": "1/m/user",
+    "manage_email": "1/m/user",
+    "reset_password": "1/m/ip,1/m/key",
+    "reauthenticate": "1/m/user",
+    "reset_password_from_key": "1/m/ip",
+    "signup": "1/m/ip",
+    "login": "1/m/ip",
+    "login_failed": "1/m/ip,1/5m/key",
+    "confirm_email": "1/3m/key",
+}
+ACCOUNT_EMAIL_NOTIFICATIONS = True

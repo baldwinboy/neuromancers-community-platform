@@ -68,6 +68,7 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",  # Handy template tags
     "django.contrib.admin",
+    "django.contrib.postgres",
     "django.forms",
 ]
 THIRD_PARTY_APPS = [
@@ -80,16 +81,42 @@ THIRD_PARTY_APPS = [
     "django_celery_beat",
     "corsheaders",
     "django_prometheus",
+    "auditlog",
+    "django_fsm",
+    "djstripe",
+    "rules",
+]
+
+WAGTAIL_APPS = [
+    "wagtail.contrib.forms",
+    "wagtail.contrib.redirects",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail.admin",
+    "wagtail",
+    "modelcluster",
+    "taggit",
 ]
 
 LOCAL_APPS = [
+    "neuromancers_network.core",
     "neuromancers_network.users",
     # Your stuff: custom apps go here
+    "neuromancers_network.peers",
+    "neuromancers_network.meetings",
+    "neuromancers_network.payments",
+    "neuromancers_network.taxonomy",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = [
     *DJANGO_APPS,
     *THIRD_PARTY_APPS,
+    *WAGTAIL_APPS,
     *LOCAL_APPS,
 ]
 
@@ -102,6 +129,7 @@ MIGRATION_MODULES = {"sites": "neuromancers_network.contrib.sites.migrations"}
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
+    "rules.permissions.ObjectPermissionBackend",
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
@@ -149,6 +177,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
+    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
 # STATIC
@@ -311,11 +340,42 @@ CELERY_TASK_SEND_SENT_EVENT = True
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 # django-allauth
 # ------------------------------------------------------------------------------
+# Decoy field for spam detection
+# Requires a field not used on sign up
+ACCOUNT_SIGNUP_FORM_HONEYPOT_FIELD = "is_staff"
 ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
 # https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_LOGIN_METHODS = {"username"}
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
+ACCOUNT_LOGIN_BY_CODE_ENABLED = True
+ACCOUNT_LOGIN_BY_CODE_SUPPORTS_RESEND = True
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
+ACCOUNT_EMAIL_NOTIFICATIONS = True
+ACCOUNT_PRESERVE_USERNAME_CASING = False
+# blacklist.txt
+BLACKLIST_PATH = BASE_DIR / "blacklist.txt"
+BLACKLIST = set()
+if BLACKLIST_PATH.exists():
+    with BLACKLIST_PATH.open() as f:
+        for file_line in f:
+            line = file_line.strip()
+            if line:
+                BLACKLIST.add(line)
+ACCOUNT_USERNAME_BLACKLIST = list(BLACKLIST)
+ACCOUNT_CHANGE_EMAIL = True
+
+# Users can request email confirmation mails via the email management view, and, implicitly, when logging in with an unverified account. This rate limit prevents users from sending too many of these mails.
 # https://docs.allauth.org/en/latest/account/configuration.html
-ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+ACCOUNT_SIGNUP_FIELDS = [
+    "username*",
+    "name*",
+    "date_of_birth*",
+    "email*",
+    "email2*",
+    "password1*",
+    "password2*",
+    "accept_toc*",
+]
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 # https://docs.allauth.org/en/latest/account/configuration.html
@@ -333,6 +393,35 @@ SOCIALACCOUNT_FORMS = {
 # https://django-compressor.readthedocs.io/en/latest/quickstart/#installation
 INSTALLED_APPS += ["compressor"]
 STATICFILES_FINDERS += ["compressor.finders.CompressorFinder"]
+
+# dj-stripe
+# ------------------------------------------------------------------------------
+# https://dj-stripe.dev/dj-stripe/2.11/reference/settings/#djstripe_foreign_key_to_field
+DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
+
+# Wagtail
+# -----------------------------------------------------------------------------
+# https://docs.wagtail.org/en/stable/getting_started/integrating_into_django.html
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10_000
+WAGTAIL_SITE_NAME = "NEUROMANCERS Network"
+WAGTAILADMIN_BASE_URL = env(
+    "WAGTAILADMIN_BASE_URL",
+    default="https://network.neuromancers.org.uk",
+)
+WAGTAILDOCS_EXTENSIONS = [
+    "csv",
+    "docx",
+    "key",
+    "odt",
+    "pdf",
+    "pptx",
+    "rtf",
+    "txt",
+    "xlsx",
+    "zip",
+]
+WAGTAILIMAGES_RENDITION_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+WAGTAILADMIN_LOGIN_URL = WAGTAILADMIN_BASE_URL + "/login/"
 
 # Your stuff...
 # ------------------------------------------------------------------------------
