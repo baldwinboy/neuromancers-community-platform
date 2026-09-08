@@ -111,6 +111,7 @@ LOCAL_APPS = [
     "neuromancers_network.meetings",
     "neuromancers_network.payments",
     "neuromancers_network.taxonomy",
+    "neuromancers_network.notifications",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = [

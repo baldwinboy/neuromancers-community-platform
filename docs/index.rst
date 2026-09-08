@@ -11,6 +11,7 @@ Welcome to NEUROMANCERS Network's documentation!
    :caption: Contents:
 
    howto
+   notifications
    users
    infra/index
 
