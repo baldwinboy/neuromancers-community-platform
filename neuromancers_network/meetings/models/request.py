@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import stripe
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -15,6 +16,7 @@ from djstripe.models import Session as StripeSession
 from neuromancers_network.core.models.base import Timestamped
 
 from .choices import MeetingRequestStatus
+from .choices import MeetingType
 from .meeting import MAX_DURATION_MINUTES
 from .meeting import MIN_DURATION_MINUTES
 from .meeting import Meeting
@@ -116,6 +118,12 @@ class MeetingRequest(Timestamped):
     def __str__(self):
         return f"Request for {self.meeting} by {self.support_seeker}"
 
+    def save(self, *args, **kwargs):
+        validate = kwargs.pop("validate", True)
+        if validate:
+            self.full_clean()
+        super().save(*args, **kwargs)
+
     @property
     def requires_approval(self) -> bool:
         return self.meeting.requires_approval
@@ -150,6 +158,26 @@ class MeetingRequest(Timestamped):
     def start(self):
         """Set the request status from the meeting's approval policy."""
         self.__dict__["status"] = self.meeting.initial_request_status
+
+    def clean(self):
+        super().clean()
+        errors = {}
+
+        if (
+            self.meeting
+            and self.meeting.meeting_type == MeetingType.ONE_ON_ONE
+            and self.requested_start_time
+            and self.meeting.created_at
+        ):
+            min_start_time = self.meeting.created_at + timedelta(minutes=10)
+            if self.requested_start_time < min_start_time:
+                errors["requested_start_time"] = _(
+                    "Requested start time must be at least 10 minutes after "
+                    "the meeting's creation time.",
+                )
+
+        if errors:
+            raise ValidationError(errors)
 
     @transition(
         field=status,
@@ -241,7 +269,7 @@ class MeetingRequest(Timestamped):
         StripeSession.sync_from_stripe_data(session, api_key=stripe_settings.secret_key)
         self.stripe_checkout_session_id = session.id
         self.__dict__["status"] = MeetingRequestStatus.PENDING_PAYMENT
-        self.save()
+        self.save(validate=False)
         return session.url
 
     def sync_payment_from_checkout(
@@ -258,7 +286,7 @@ class MeetingRequest(Timestamped):
             self.price_paid = Decimal(amount_total) / Decimal(100)
         if self.status != MeetingRequestStatus.PAID:
             self.mark_paid()
-        self.save()
+        self.save(validate=False)
 
     def request_refund(self, reason: str):
         """Create a refund request for this meeting request."""

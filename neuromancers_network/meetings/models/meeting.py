@@ -22,6 +22,7 @@ from .choices import PricingType
 MIN_DURATION_MINUTES = 5
 MAX_DURATION_MINUTES = 120
 MAX_GROUP_CAPACITY = 200
+GROUP_MINIMUM_START_AHEAD_MINUTES = 30
 ROOM_WINDOW_EXPIRED_MINUTES = 20
 FORCE_REGENERATE_GRACE_MINUTES = 10
 
@@ -178,6 +179,12 @@ class Meeting(Timestamped):
     def __str__(self):
         return self.title
 
+    def save(self, *args, **kwargs):
+        validate = kwargs.pop("validate", True)
+        if validate:
+            self.full_clean()
+        super().save(*args, **kwargs)
+
     @property
     def requires_approval(self) -> bool:
         return self.approval_policy == ApprovalPolicy.APPROVAL_REQUIRED
@@ -233,8 +240,12 @@ class Meeting(Timestamped):
                 errors["scheduled_at"] = _("Group meetings must have a start time.")
             if not self.duration_minutes:
                 errors["duration_minutes"] = _("Group meetings must have a duration.")
-            if not self.meeting_link:
-                errors["meeting_link"] = _("Group meetings must have a meeting link.")
+            if self.scheduled_at and self.scheduled_at < timezone.now() + timedelta(
+                minutes=GROUP_MINIMUM_START_AHEAD_MINUTES,
+            ):
+                errors["scheduled_at"] = _(
+                    "Group meetings must start at least 30 minutes in the future.",
+                )
 
         if self.meeting_type == MeetingType.ONE_ON_ONE and self.recurrence_rule_id:
             errors["recurrence_rule"] = _(
@@ -314,7 +325,7 @@ class Meeting(Timestamped):
         result = whereby_meetings(data=data)
         self.meeting_link = result.room_url
         self.whereby_meeting_id = result.meeting_id
-        self.save(update_fields=["meeting_link", "whereby_meeting_id"])
+        self.save(validate=False, update_fields=["meeting_link", "whereby_meeting_id"])
 
     @property
     def is_fully_booked(self):

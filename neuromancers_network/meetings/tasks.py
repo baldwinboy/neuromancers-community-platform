@@ -29,6 +29,26 @@ def populate_pending_meeting_links():
 
 
 @shared_task
+def populate_pending_group_meeting_links():
+    """Populate missing Whereby links for soon-starting group meetings."""
+    from .models import Meeting  # noqa: PLC0415
+    from .models import MeetingType  # noqa: PLC0415
+
+    now = timezone.now()
+    threshold = now + timedelta(minutes=10)
+
+    meetings = Meeting.objects.filter(
+        meeting_link="",
+        meeting_type=MeetingType.GROUP,
+        scheduled_at__gte=now,
+        scheduled_at__lte=threshold,
+    )
+
+    for meeting in meetings:
+        meeting.populate_meeting_link()
+
+
+@shared_task
 def generate_recurring_group_meetings():
     """
     Look for group meetings with a recurrence_rule whose scheduled_at

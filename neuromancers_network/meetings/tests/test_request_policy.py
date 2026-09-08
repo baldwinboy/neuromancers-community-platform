@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 import pytest
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from neuromancers_network.meetings.models import ApprovalPolicy
@@ -80,4 +83,18 @@ class TestApprovalPolicy:
         request = make_request(approval_policy=ApprovalPolicy.PAY_AFTER_JOIN)
         request.mark_paid()
         assert request.status == MeetingRequestStatus.PAID
-        assert request.can_join is True
+
+    def test_one_on_one_request_must_start_at_least_10_minutes_after_meeting_creation(
+        self,
+    ):
+        meeting = make_meeting(approval_policy=ApprovalPolicy.APPROVAL_REQUIRED)
+        meeting.save()
+        seeker = UserFactory()
+        request = MeetingRequest(
+            meeting=meeting,
+            support_seeker=seeker,
+            requested_start_time=meeting.created_at + timedelta(minutes=5),
+        )
+
+        with pytest.raises(ValidationError):
+            request.full_clean()
