@@ -46,3 +46,6 @@ class PeerProfile(Timestamped):
     class Meta:
         verbose_name = "Peer profile"
         verbose_name_plural = "Peer profiles"
+        indexes = [
+            models.Index(fields=["is_approved"], name="peers_peerprofile_approved_idx"),
+        ]

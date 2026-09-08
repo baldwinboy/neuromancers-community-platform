@@ -43,7 +43,6 @@ class MeetingRequest(Timestamped):
         _("Status"),
         default=MeetingRequestStatus.PENDING_APPROVAL,
         choices=MeetingRequestStatus.choices,
-        protected=True,
     )
     price_paid = models.DecimalField(
         _("Price paid"),

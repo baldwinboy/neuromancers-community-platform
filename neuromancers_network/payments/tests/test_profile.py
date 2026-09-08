@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from djstripe.enums import SubscriptionStatus
 
+from neuromancers_network.core.models import StripeSettings
 from neuromancers_network.payments.models.profile import StripeConnectOnboardingLink
 from neuromancers_network.users.tests.factories import AccountFactory
 from neuromancers_network.users.tests.factories import PaymentProfileFactory
@@ -55,6 +56,7 @@ class TestHasActiveSubscription:
 
 class TestStripeConnectOnboardingLink:
     def test_creates_account_link(self):
+        StripeSettings.objects.create(secret_key="sk_test_123")  # noqa: S106
         payment_profile = PaymentProfileFactory(
             stripe_connect_account_id=AccountFactory(id="acct_123"),
         )

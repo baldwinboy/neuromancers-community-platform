@@ -77,7 +77,10 @@ class TestAccountUpdatedSignal:
             handle_account_updated,
         )
 
-        handle_account_updated(sender=None, event=event)
+        with patch(
+            "neuromancers_network.payments.signals.StripeAccount.sync_from_stripe_data",
+        ):
+            handle_account_updated(sender=None, event=event)
 
         payment_profile.refresh_from_db()
         assert payment_profile.kyc_completed is False

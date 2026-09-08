@@ -139,7 +139,6 @@ class Meeting(Timestamped):
         _("Status"),
         default=MeetingStatus.DRAFT,
         choices=MeetingStatus.choices,
-        protected=True,
     )
 
     # Scheduling — required for group meetings, optional for 1:1
@@ -173,6 +172,12 @@ class Meeting(Timestamped):
                 fields=["peer", "title"],
                 condition=models.Q(status=MeetingStatus.PUBLISHED),
                 name="%(app_label)s_%(class)s_unique_published_title_per_peer",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["status", "scheduled_at"],
+                name="meeting_status_sched_idx",
             ),
         ]
 

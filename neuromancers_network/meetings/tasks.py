@@ -109,11 +109,11 @@ def generate_recurring_group_meetings():
             currency=meeting.currency,
             approval_policy=meeting.approval_policy,
             max_participants=meeting.max_participants,
-            languages=meeting.languages.all(),
             recurrence_rule=rule,
             scheduled_at=next_scheduled,
             duration_minutes=meeting.duration_minutes,
             status=MeetingStatus.PUBLISHED,
         )
+        new_meeting.languages.set(meeting.languages.all())
         new_meeting.populate_meeting_link()
         rule.advance_meeting(meeting)

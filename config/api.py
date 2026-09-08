@@ -9,6 +9,8 @@ api = NinjaAPI(
 )
 
 api.add_router("/users/", "neuromancers_network.users.api.views.router")
+api.add_router("/peers/", "neuromancers_network.peers.api.router")
+api.add_router("/meetings/", "neuromancers_network.meetings.api.router")
 
 
 @api.get("/health", auth=None)

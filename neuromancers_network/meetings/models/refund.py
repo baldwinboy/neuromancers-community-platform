@@ -23,7 +23,6 @@ class RefundRequest(Timestamped):
         max_length=20,
         choices=RefundStatus.choices,
         default=RefundStatus.PENDING,
-        protected=True,
     )
     stripe_refund_id = models.CharField(
         _("Stripe refund ID"),

@@ -28,11 +28,13 @@ class PaymentProfile(Timestamped):
     stripe_customer_id = models.OneToOneField(
         "djstripe.Customer",
         on_delete=models.CASCADE,
+        to_field="id",
         related_name="payment_profile",
     )
     stripe_connect_account_id = models.OneToOneField(
         "djstripe.Account",
         on_delete=models.CASCADE,
+        to_field="id",
         related_name="payment_profile",
     )
     kyc_completed = models.BooleanField(_("KYC completed"), default=False)

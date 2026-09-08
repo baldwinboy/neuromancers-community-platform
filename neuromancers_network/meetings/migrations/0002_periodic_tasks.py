@@ -7,7 +7,7 @@ def create_periodic_tasks(apps, schema_editor):
 
     interval, _created = IntervalSchedule.objects.get_or_create(
         every=5,
-        period=IntervalSchedule.MINUTES,
+        period="minutes",
     )
 
     tasks = [
@@ -41,7 +41,7 @@ def delete_periodic_tasks(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("meetings", "0002_refund_fields"),
+        ("meetings", "0001_initial"),
         ("django_celery_beat", "0001_initial"),
     ]
 
