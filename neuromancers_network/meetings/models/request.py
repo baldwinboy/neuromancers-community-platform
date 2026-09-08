@@ -260,6 +260,19 @@ class MeetingRequest(Timestamped):
             self.mark_paid()
         self.save()
 
+    def request_refund(self, reason: str):
+        """Create a refund request for this meeting request."""
+        from neuromancers_network.meetings.models import RefundRequest  # noqa: PLC0415
+
+        refund_request, _created = RefundRequest.objects.get_or_create(
+            meeting_request=self,
+            defaults={"reason": reason},
+        )
+        refund_request.reason = reason
+        refund_request.request_refund()
+        refund_request.save()
+        return refund_request
+
     def populate_meeting_link(self):
         """
         Create a Whereby room and populate meeting_link + whereby_meeting_id.

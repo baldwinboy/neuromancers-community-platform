@@ -4,6 +4,7 @@ from .choices import MeetingRequestStatus
 from .choices import MeetingStatus
 from .choices import MeetingType
 from .choices import PricingType
+from .choices import RefundStatus
 from .meeting import Meeting
 from .recurrence import RecurrenceRule
 from .refund import RefundRequest
@@ -21,5 +22,6 @@ __all__ = [
     "PricingType",
     "RecurrenceRule",
     "RefundRequest",
+    "RefundStatus",
     "Review",
 ]

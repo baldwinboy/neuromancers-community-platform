@@ -115,6 +115,10 @@ class Meeting(Timestamped):
         max_length=20,
         choices=ApprovalPolicy.choices,
     )
+    refund_requires_approval = models.BooleanField(
+        _("Refund requires approval"),
+        default=True,
+    )
     max_participants = models.PositiveIntegerField(
         _("Max participants"),
         null=True,
