@@ -1,5 +1,7 @@
 from datetime import timedelta
+from decimal import Decimal
 
+import stripe
 from django.conf import settings
 from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
@@ -8,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from django_fsm import GET_STATE
 from django_fsm import FSMField
 from django_fsm import transition
+from djstripe.models import Session as StripeSession
 
 from neuromancers_network.core.models.base import Timestamped
 
@@ -57,6 +60,11 @@ class MeetingRequest(Timestamped):
     )
     stripe_payment_intent_id = models.CharField(
         _("Stripe payment intent ID"),
+        max_length=255,
+        blank=True,
+    )
+    stripe_checkout_session_id = models.CharField(
+        _("Stripe checkout session ID"),
         max_length=255,
         blank=True,
     )
@@ -118,16 +126,19 @@ class MeetingRequest(Timestamped):
 
     @property
     def allows_join_before_payment(self) -> bool:
-        return (
-            self.status == MeetingRequestStatus.APPROVED
-            and not self.requires_payment_before_join
-        )
+        return self.meeting.allows_payment_after_join and self.status in {
+            MeetingRequestStatus.APPROVED,
+            MeetingRequestStatus.PENDING_PAYMENT,
+        }
 
     @property
     def can_join(self) -> bool:
-        return (
-            self.status == MeetingRequestStatus.PAID or self.allows_join_before_payment
-        )
+        if self.status in {
+            MeetingRequestStatus.PAID,
+            MeetingRequestStatus.APPROVED,
+        }:
+            return True
+        return self.allows_join_before_payment
 
     @property
     def can_pay(self) -> bool:
@@ -139,11 +150,6 @@ class MeetingRequest(Timestamped):
     def start(self):
         """Set the request status from the meeting's approval policy."""
         self.__dict__["status"] = self.meeting.initial_request_status
-
-    def save(self, *args, **kwargs):
-        if self._state.adding and self.status == MeetingRequestStatus.PENDING_APPROVAL:
-            self.__dict__["status"] = self.meeting.initial_request_status
-        super().save(*args, **kwargs)
 
     @transition(
         field=status,
@@ -189,6 +195,70 @@ class MeetingRequest(Timestamped):
     )
     def cancel(self):
         pass
+
+    def create_checkout_session(self, request):
+        """Create a Stripe-hosted Checkout Session for this booking."""
+        from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
+
+        stripe_settings = StripeSettings.load(request)
+        if not stripe_settings.secret_key:
+            message = "Stripe secret key is not configured"
+            raise ValueError(message)
+
+        if self.status not in {
+            MeetingRequestStatus.APPROVED,
+            MeetingRequestStatus.PENDING_PAYMENT,
+        }:
+            message = "Request is not ready for payment"
+            raise ValueError(message)
+
+        success_url = request.build_absolute_uri("/pay/success/")
+        cancel_url = request.build_absolute_uri("/pay/cancelled/")
+        amount = self.meeting.price
+        if amount is None:
+            message = "Meeting price is required for checkout"
+            raise ValueError(message)
+
+        stripe.api_key = stripe_settings.secret_key
+        session = stripe.checkout.Session.create(
+            mode="payment",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": "gbp",
+                        "product_data": {"name": self.meeting.title},
+                        "unit_amount": int(amount * 100),
+                    },
+                    "quantity": 1,
+                },
+            ],
+            metadata={
+                "meeting_request_id": str(self.pk),
+            },
+        )
+        StripeSession.sync_from_stripe_data(session, api_key=stripe_settings.secret_key)
+        self.stripe_checkout_session_id = session.id
+        self.__dict__["status"] = MeetingRequestStatus.PENDING_PAYMENT
+        self.save()
+        return session.url
+
+    def sync_payment_from_checkout(
+        self,
+        session_id: str,
+        payment_intent_id: str | None,
+        amount_total: int | None,
+    ) -> None:
+        """Synchronize local payment fields after checkout completion."""
+        self.stripe_checkout_session_id = session_id
+        if payment_intent_id:
+            self.stripe_payment_intent_id = payment_intent_id
+        if amount_total is not None:
+            self.price_paid = Decimal(amount_total) / Decimal(100)
+        if self.status != MeetingRequestStatus.PAID:
+            self.mark_paid()
+        self.save()
 
     def populate_meeting_link(self):
         """

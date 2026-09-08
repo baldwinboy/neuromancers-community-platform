@@ -10,3 +10,4 @@ class MeetingsConfig(AppConfig):
         """
         Override this method in subclasses to run code when Django starts.
         """
+        from . import signals  # noqa: F401, PLC0415
