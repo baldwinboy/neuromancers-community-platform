@@ -75,6 +75,13 @@ class TestIsPeer:
         user = make_peer(kyc_completed=False)
         assert user.is_peer is False
 
+    def test_subscription_and_approval_without_kyc_is_not_peer(self):
+        user = make_peer(
+            kyc_completed=False,
+            subscription_status=SubscriptionStatus.active,
+        )
+        assert user.is_peer is False
+
     def test_inactive_subscription_blocks_peer_status(self):
         user = make_peer(subscription_status=SubscriptionStatus.canceled)
         assert user.is_peer is False
