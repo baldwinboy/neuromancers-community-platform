@@ -31,3 +31,29 @@ class Review(Timestamped):
     )
     comment = models.TextField(_("Comment"), blank=True)
     is_published = models.BooleanField(_("Published"), default=True)
+
+    @property
+    def display_title(self) -> str:
+        return f"Review of {self.peer.display_name}"
+
+    @property
+    def is_live(self) -> bool:
+        return bool(self.is_published)
+
+    def get_absolute_url(self) -> str:
+        from django.contrib.contenttypes.models import ContentType  # noqa: PLC0415
+
+        from neuromancers_network.core.models.pages import (  # noqa: PLC0415
+            ReviewDetailPage,
+        )
+
+        page = ReviewDetailPage.objects.filter(
+            source_content_type=ContentType.objects.get_for_model(type(self)),
+            source_object_id=self.pk,
+            live=True,
+        ).first()
+        if page is not None:
+            url = page.get_url()
+            if url:
+                return url
+        return f"/reviews/{self.pk}/"

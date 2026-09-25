@@ -183,6 +183,18 @@ class RoomsRoomNameThemeRoomKnockPageBackgroundApplicationJson(pydantic.BaseMode
     theme: str
 
 
+class RoomsRoomNameThemeLogoMultipartFormData(pydantic.BaseModel):
+    image: bytes
+
+
+class RoomsRoomNameThemeRoomBackgroundMultipartFormData(pydantic.BaseModel):
+    image: bytes
+
+
+class RoomsRoomNameThemeRoomKnockPageBackgroundMultipartFormData(pydantic.BaseModel):
+    image: bytes
+
+
 class InsightsRooms200Response(pydantic.BaseModel):
     cursor: str
     results: list[dict[str, typing.Any]]

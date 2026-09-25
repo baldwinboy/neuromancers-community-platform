@@ -41,6 +41,14 @@ manage +args:
 pytest *args:
     @docker compose run --rm django pytest {{args}}
 
+# makemessages: Extract translatable strings into locale catalogs.
+makemessages *args:
+    @docker compose run --rm django python ./manage.py makemessages {{args}}
+
+# compilemessages: Compile locale catalogs into .mo files.
+compilemessages *args:
+    @docker compose run --rm django python ./manage.py compilemessages {{args}}
+
 # docs: Build and serve HTML documentation
 docs:
     @rm -rf docs/_build

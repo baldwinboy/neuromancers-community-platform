@@ -1,40 +1,16 @@
 from allauth.account.forms import SignupForm
-from allauth.socialaccount.forms import SignupForm as SocialSignupForm
-from django.contrib.auth import forms as admin_forms
-from django.utils.translation import gettext_lazy as _
 
-from .models import User
-
-
-class UserAdminChangeForm(admin_forms.UserChangeForm):
-    class Meta(admin_forms.UserChangeForm.Meta):
-        model = User
-
-
-class UserAdminCreationForm(admin_forms.AdminUserCreationForm):
-    """
-    Form for User Creation in the Admin Area.
-    To change user signup, see UserSignupForm and UserSocialSignupForm.
-    """
-
-    class Meta(admin_forms.UserCreationForm.Meta):
-        model = User
-        error_messages = {
-            "username": {"unique": _("This username has already been taken.")},
-        }
+from neuromancers_network.users.validators import validate_username_not_blocked
 
 
 class UserSignupForm(SignupForm):
     """
-    Form that will be rendered on a user sign up section/screen.
-    Default fields will be added automatically.
-    Check UserSocialSignupForm for accounts created from social.
+    Form rendered on the user sign up screen.
+
+    Default fields are added automatically from ``ACCOUNT_SIGNUP_FIELDS``.
     """
 
-
-class UserSocialSignupForm(SocialSignupForm):
-    """
-    Renders the form when user has signed up using social accounts.
-    Default fields will be added automatically.
-    See UserSignupForm otherwise.
-    """
+    def clean_username(self) -> str:
+        username = super().clean_username()
+        validate_username_not_blocked(username)
+        return username

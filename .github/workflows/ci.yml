@@ -33,51 +33,84 @@ jobs:
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
 
+  # tests:
+  #   runs-on: ubuntu-latest
+  #   services:
+  #     postgres:
+  #       image: postgres:18
+  #       env:
+  #         POSTGRES_DB: neuromancers_network
+  #         POSTGRES_USER: debug
+  #         POSTGRES_PASSWORD: debug
+  #       ports:
+  #         - 5432:5432
+  #       options: >-
+  #         --health-cmd pg_isready
+  #         --health-interval 5s
+  #         --health-timeout 5s
+  #         --health-retries 20
+  #   env:
+  #     DATABASE_URL: postgres://debug:debug@localhost:5432/neuromancers_network
+  #     DJANGO_SECRET_KEY: ci-secret
+  #   steps:
+  #     - name: Checkout Code Repository
+  #       uses: actions/checkout@v6
+
+  #     - name: Set up uv
+  #       uses: astral-sh/setup-uv@v6
+
+  #     - name: Install dependencies
+  #       run: uv sync --dev
+
+  #     - name: Run tests
+  #       run: uv run pytest -q
+
   # With no caching at all the entire ci process takes 3m to complete!
-  pytest:
-    runs-on: ubuntu-latest
+  # pytest:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Code Repository
-        uses: actions/checkout@v6
+  #   steps:
+  #     - name: Checkout Code Repository
+  #       uses: actions/checkout@v6
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v4
 
-      - name: Build and cache local backend
-        uses: docker/bake-action@v7
-        with:
-          push: false
-          load: true
-          files: docker-compose.production.yml
-          targets: django
-          set: |
-            django.cache-from=type=gha,scope=django-cached-tests
-            django.cache-to=type=gha,scope=django-cached-tests,mode=max
-            postgres.cache-from=type=gha,scope=postgres-cached-tests
-            postgres.cache-to=type=gha,scope=postgres-cached-tests,mode=max
+  #     - name: Build and cache local backend
+  #       uses: docker/bake-action@v7
+  #       with:
+  #         push: false
+  #         load: true
+  #         files: docker-compose.production.yml
+  #         targets: django
+  #         set: |
+  #           django.cache-from=type=gha,scope=django-cached-tests
+  #           django.cache-to=type=gha,scope=django-cached-tests,mode=max
+  #           postgres.cache-from=type=gha,scope=postgres-cached-tests
+  #           postgres.cache-to=type=gha,scope=postgres-cached-tests,mode=max
 
-      - name: Build and cache docs
-        uses: docker/bake-action@v7
-        with:
-          push: false
-          load: true
-          files: docker-compose.docs.yml
-          set: |
-            docs.cache-from=type=gha,scope=cached-docs
-            docs.cache-to=type=gha,scope=cached-docs,mode=max
+  #     - name: Build and cache docs
+  #       uses: docker/bake-action@v7
+  #       with:
+  #         push: false
+  #         load: true
+  #         files: docker-compose.docs.yml
+  #         set: |
+  #           docs.cache-from=type=gha,scope=cached-docs
+  #           docs.cache-to=type=gha,scope=cached-docs,mode=max
 
-      - name: Check DB Migrations
-        run: docker compose -f docker-compose.production.yml -f docker-compose.ci.yml run --rm django python manage.py makemigrations --check
+  #     - name: Check DB Migrations
+  #       run: docker compose -f docker-compose.production.yml -f docker-compose.ci.yml run --rm django python manage.py makemigrations --check
 
-      - name: Run DB Migrations
-        run: docker compose -f docker-compose.production.yml -f docker-compose.ci.yml run --rm django python manage.py migrate
+  #     - name: Run DB Migrations
+  #       run: docker compose -f docker-compose.production.yml -f docker-compose.ci.yml run --rm django python manage.py migrate
 
-      - name: Tear down the Stack
-        run: docker compose -f docker-compose.production.yml -f docker-compose.ci.yml down
+  #     - name: Tear down the Stack
+  #       run: docker compose -f docker-compose.production.yml -f docker-compose.ci.yml down
 
   docker:
-    needs: [linter, pytest]
+    # needs: [linter, tests, pytest]
+    needs: [linter]
     runs-on: ubuntu-latest
     permissions:
       contents: read

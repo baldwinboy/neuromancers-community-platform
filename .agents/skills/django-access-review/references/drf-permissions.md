@@ -29,9 +29,7 @@ Request → permission_classes.has_permission() → View method → get_object()
 
 ```python
 # settings.py
-REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [...]
-}
+REST_FRAMEWORK = {"DEFAULT_PERMISSION_CLASSES": [...]}
 ```
 
 This applies to ALL views unless overridden.
@@ -72,7 +70,7 @@ Serializers control what fields are readable/writable:
 
 ```python
 class Meta:
-    fields = '__all__'  # What's included?
+    fields = "__all__"  # What's included?
     read_only_fields = [...]  # What can't be set?
 ```
 

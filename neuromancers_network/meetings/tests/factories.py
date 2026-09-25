@@ -5,14 +5,28 @@ from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingStatus
 from neuromancers_network.meetings.models import MeetingType
 from neuromancers_network.meetings.models import PricingType
+from neuromancers_network.taxonomy.models import AllowedTag
+from neuromancers_network.taxonomy.tests.factories import ensure_tag
 
 
-def create_meeting(
+def resolve_tags(tags) -> list[AllowedTag]:
+    """Resolve tag names or ``AllowedTag`` instances into tag instances."""
+    resolved = []
+    for tag in tags:
+        if isinstance(tag, AllowedTag):
+            resolved.append(tag)
+        else:
+            resolved.append(ensure_tag(tag))
+    return resolved
+
+
+def create_meeting(  # noqa: PLR0913
     peer,
     *,
     title="Meeting",
     languages=(),
     tags=(),
+    countries=(),
     status=MeetingStatus.PUBLISHED,
 ) -> Meeting:
     """
@@ -35,5 +49,6 @@ def create_meeting(
     )
     meeting.save(validate=False)
     meeting.languages.set(languages)
-    meeting.tags.add(*tags)
+    meeting.countries.set(countries)
+    meeting.tags.add(*resolve_tags(tags))
     return meeting

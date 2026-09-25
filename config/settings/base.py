@@ -1,10 +1,12 @@
-# ruff: noqa: ERA001, E501
+# ruff: noqa: E501
 """Base settings to build other settings files upon."""
 
 import ssl
 from pathlib import Path
 
 import environ
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # neuromancers_network/
@@ -26,14 +28,19 @@ DEBUG = env.bool("DJANGO_DEBUG", False)
 # In Windows, this must be set to your system time zone.
 TIME_ZONE = "UTC"
 # https://docs.djangoproject.com/en/dev/ref/settings/#language-code
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "en-GB"
 # https://docs.djangoproject.com/en/dev/ref/settings/#languages
-# from django.utils.translation import gettext_lazy as _
-# LANGUAGES = [
-#     ('en', _('English')),
-#     ('fr-fr', _('French')),
-#     ('pt-br', _('Portuguese')),
-# ]
+# Code-level supported superset. The admin curates the offered subset at runtime
+# via LocalizationSettings; Wagtail reads this list at startup, so any language
+# the admin may enable must be present here.
+LANGUAGES = [
+    ("en", _("English")),
+    ("fr", _("French")),
+    ("de", _("German")),
+    ("es", _("Spanish")),
+    ("pt", _("Portuguese")),
+]
+WAGTAIL_CONTENT_LANGUAGES = LANGUAGES
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
 SITE_ID = 1
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-i18n
@@ -74,10 +81,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
-    "allauth",
-    "allauth.account",
-    "allauth.mfa",
-    "allauth.socialaccount",
+    "colorfield",
     "django_celery_beat",
     "corsheaders",
     "django_prometheus",
@@ -87,9 +91,17 @@ THIRD_PARTY_APPS = [
     "rules",
 ]
 
+ALLAUTH_APPS = [
+    "allauth",
+    "allauth.account",
+]
+
 WAGTAIL_APPS = [
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
+    "wagtail.contrib.settings",
+    "wagtail.contrib.simple_translation",
+    "wagtail.contrib.table_block",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -101,6 +113,19 @@ WAGTAIL_APPS = [
     "wagtail",
     "modelcluster",
     "taggit",
+    "draftail_text_utils",
+]
+
+# wagtail_daisIE must initialise before allauth and the project apps.
+DAISIE_APPS = [
+    "wagtail_daisIE",
+    "wagtail_daisIE.assets",
+    "wagtail_daisIE.menus",
+    "wagtail_daisIE.feeds",
+    "wagtail_daisIE.errors",
+    "wagtail_daisIE.notifications",
+    "wagtail_daisIE.allauth_ui",
+    "wagtail_daisIE.allauth_emails",
 ]
 
 LOCAL_APPS = [
@@ -111,13 +136,15 @@ LOCAL_APPS = [
     "neuromancers_network.meetings",
     "neuromancers_network.payments",
     "neuromancers_network.taxonomy",
-    "neuromancers_network.notifications",
+    "neuromancers_network.inbox",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = [
     *DJANGO_APPS,
     *THIRD_PARTY_APPS,
     *WAGTAIL_APPS,
+    *DAISIE_APPS,
+    *ALLAUTH_APPS,
     *LOCAL_APPS,
 ]
 
@@ -137,7 +164,7 @@ AUTHENTICATION_BACKENDS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "users:redirect"
+LOGIN_REDIRECT_URL = "/dashboard/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = "account_login"
 
@@ -171,6 +198,7 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
+    "neuromancers_network.core.middleware.LocalizationMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -180,6 +208,8 @@ MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusAfterMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
+# Admin-authored arbitrary CSS.
+MIDDLEWARE.append("wagtail_daisIE.middleware.ArbitraryCSSMiddleware")
 
 # STATIC
 # ------------------------------------------------------------------------------
@@ -224,7 +254,10 @@ TEMPLATES = [
                 "django.template.context_processors.static",
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
+                "wagtail.contrib.settings.context_processors.settings",
                 "neuromancers_network.users.context_processors.allauth_settings",
+                "neuromancers_network.core.context_processors.localization",
+                "neuromancers_network.core.context_processors.daisie_themes",
             ],
         },
     },
@@ -256,22 +289,22 @@ X_FRAME_OPTIONS = "DENY"
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
 EMAIL_BACKEND = env(
     "DJANGO_EMAIL_BACKEND",
-    default="django.core.mail.backends.smtp.EmailBackend",
+    default="neuromancers_network.core.mailer.WagtailEmailBackend",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-timeout
 EMAIL_TIMEOUT = 5
+# https://docs.djangoproject.com/en/dev/ref/settings/#default-from-email
+DEFAULT_FROM_EMAIL = env(
+    "DJANGO_DEFAULT_FROM_EMAIL",
+    default="NEUROMANCERS Network <noreply@neuromancers.org.uk>",
+)
 
 # ADMIN
 # ------------------------------------------------------------------------------
-# Django Admin URL.
-ADMIN_URL = "admin/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
-ADMINS = ['"NEUROMANCERS" <hello@neuromancers.org.uk>']
+ADMINS = ["hello@neuromancers.org.uk"]
 # https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
-# https://cookiecutter-django.readthedocs.io/en/latest/settings.html#other-environment-settings
-# Force the `admin` sign in process to go through the `django-allauth` workflow
-DJANGO_ADMIN_FORCE_ALLAUTH = env.bool("DJANGO_ADMIN_FORCE_ALLAUTH", default=False)
 
 # LOGGING
 # ------------------------------------------------------------------------------
@@ -353,16 +386,8 @@ ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
 ACCOUNT_EMAIL_NOTIFICATIONS = True
 ACCOUNT_PRESERVE_USERNAME_CASING = False
-# blacklist.txt
-BLACKLIST_PATH = BASE_DIR / "blacklist.txt"
-BLACKLIST = set()
-if BLACKLIST_PATH.exists():
-    with BLACKLIST_PATH.open() as f:
-        for file_line in f:
-            line = file_line.strip()
-            if line:
-                BLACKLIST.add(line)
-ACCOUNT_USERNAME_BLACKLIST = list(BLACKLIST)
+# Username badlist is admin-managed (ModerationSettings); keep this empty.
+ACCOUNT_USERNAME_BLACKLIST: list[str] = []
 ACCOUNT_CHANGE_EMAIL = True
 
 # Users can request email confirmation mails via the email management view, and, implicitly, when logging in with an unverified account. This rate limit prevents users from sending too many of these mails.
@@ -383,12 +408,6 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_ADAPTER = "neuromancers_network.users.adapters.AccountAdapter"
 # https://docs.allauth.org/en/latest/account/forms.html
 ACCOUNT_FORMS = {"signup": "neuromancers_network.users.forms.UserSignupForm"}
-# https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_ADAPTER = "neuromancers_network.users.adapters.SocialAccountAdapter"
-# https://docs.allauth.org/en/latest/socialaccount/configuration.html
-SOCIALACCOUNT_FORMS = {
-    "signup": "neuromancers_network.users.forms.UserSocialSignupForm",
-}
 # django-compressor
 # ------------------------------------------------------------------------------
 # https://django-compressor.readthedocs.io/en/latest/quickstart/#installation
@@ -421,8 +440,347 @@ WAGTAILDOCS_EXTENSIONS = [
     "xlsx",
     "zip",
 ]
-WAGTAILIMAGES_RENDITION_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-WAGTAILADMIN_LOGIN_URL = WAGTAILADMIN_BASE_URL + "/login/"
+WAGTAILADMIN_LOGIN_URL = reverse_lazy("account_login")
+# Content i18n is toggled at runtime from LocalizationSettings.enabled (0.11);
+# Wagtail reads this flag at startup, so it is set here and the middleware syncs
+# the active locale per request.
+WAGTAIL_I18N_ENABLED = True
+WAGTAILSEARCH_BACKENDS = {
+    "default": {"BACKEND": "wagtail.search.backends.database"},
+}
+# Wagtail will not be able to create pages with the following routes
+WAGTAIL_RESERVED_ROUTES = [
+    "2fa",
+    "3rdparty",
+    ".well-known",
+    "admin",
+    "accounts",
+    "api",
+    "clients",
+    "cms",
+    "confirm-email",
+    "daisie",
+    "device",
+    "documents",
+    "email",
+    "health",
+    "identity",
+    "idp",
+    "inactive",
+    "login",
+    "logout",
+    "media",
+    "monitoring",
+    "oauth",
+    "oidc",
+    "password",
+    "phone",
+    "reauthenticate",
+    "revoke",
+    "static",
+    "stripe",
+    "signup",
+    "social",
+    "sessions",
+    "token",
+    "userinfo",
+]
 
-# Your stuff...
+# Wagtail daisIE
 # ------------------------------------------------------------------------------
+# https://pypi.org/project/wagtail-daisie/
+# Render allauth pages (login/signup/etc.) with the DaisyUI theme overrides.
+WAGTAIL_DAISIE_ALLAUTH_UI = True
+# Chrome used to render allauth pages (read by wagtail_daisIE >= 2.0.0).
+WAGTAIL_DAISIE_ALLAUTH_BASE_TEMPLATE = "base.html"
+WAGTAIL_DAISIE_HEADER_MENU = "Main navigation"
+WAGTAIL_DAISIE_FOOTER_MENU = "Footer"
+# Context models authors may bind into content (block fields, feeds, pages).
+WAGTAIL_DAISIE_CONTEXT_MODELS = {
+    "user": {
+        "label": _("User"),
+        "model": "users.User",
+        "source": "request.user",
+    },
+    "meeting": {
+        "label": _("Meeting"),
+        "model": "meetings.Meeting",
+        "source": "url",
+        "lookup_field": "pk",
+        "queryset": "neuromancers_network.meetings.selectors.published_meetings",
+        "select_related": ["peer"],
+    },
+    "peer_profile": {
+        "label": _("Care provider"),
+        "model": "peers.PeerProfile",
+        "source": "url",
+        "lookup_field": "pk",
+        "queryset": "neuromancers_network.peers.selectors.approved_peers",
+        "select_related": ["user"],
+    },
+    "review": {
+        "label": _("Review"),
+        "model": "meetings.Review",
+        "source": "url",
+        "lookup_field": "pk",
+        "queryset": "neuromancers_network.meetings.selectors.published_reviews",
+    },
+    "user_profile": {
+        "label": _("Member profile"),
+        "model": "users.UserProfile",
+        "source": "url",
+        "lookup_field": "user_id",
+    },
+    "booking": {
+        "label": _("Booking"),
+        "model": "meetings.Booking",
+        "source": "url",
+        "lookup_field": "pk",
+        "queryset": "neuromancers_network.meetings.selectors.user_bookings",
+        "select_related": ["meeting"],
+    },
+    "peer_application": {
+        "label": _("Peer application"),
+        "model": "peers.PeerApplication",
+        "source": "url",
+        "lookup_field": "user_id",
+    },
+    "refund_request": {
+        "label": _("Refund request"),
+        "model": "meetings.RefundRequest",
+        "source": "url",
+        "lookup_field": "pk",
+    },
+    "notification_preference": {
+        "label": _("Notification preferences"),
+        "model": "inbox.NotificationPreference",
+        "source": "neuromancers_network.inbox.selectors.user_notification_preference",
+    },
+}
+# Business notifications are delivered through the internal inbox event bus and
+# rendered by admin-authored daisIE EmailTemplates.
+WAGTAIL_DAISIE_NOTIFICATION_FROM_EMAIL = DEFAULT_FROM_EMAIL
+# One bridge per inbox event type. `template` matches an EmailTemplate by name
+# or template_key (admin-authored); the shared builders resolve the payload and
+# the opted-in recipients.
+_NOTIFICATION_EVENT_KEYS = [
+    "account_created",
+    "account_deleted",
+    "account_degraded",
+    "peer_published_meeting",
+    "peer_approved",
+    "peer_application_approved",
+    "peer_application_rejected",
+    "booking_requested",
+    "booking_approved",
+    "booking_rejected",
+    "booking_paid",
+    "booking_completed",
+    "booking_cancelled",
+    "refund_requested",
+    "refund_approved",
+    "refund_rejected",
+    "refund_refunded",
+    "review_created",
+    "subscription_created",
+    "subscription_cancelled",
+    "payment_succeeded",
+    "payment_failed",
+    "payment_reminder_due",
+    "meeting_upcoming",
+    "meeting_cancelled",
+    "session_reminder_1d",
+    "session_reminder_1h",
+]
+WAGTAIL_DAISIE_NOTIFICATION_BRIDGES = {
+    key: {
+        "label": key.replace("_", " ").title(),
+        "template": key,
+        "context": "neuromancers_network.inbox.bridges.context_from_payload",
+        "recipients": "neuromancers_network.inbox.bridges.recipients_from_payload",
+    }
+    for key in _NOTIFICATION_EVENT_KEYS
+}
+# Labels must be JSON-serialisable: daisIE injects this dict into the admin via
+# json.dumps() (wagtail_daisIE/wagtail_hooks.py). Do not use gettext_lazy here.
+WAGTAIL_DAISIE_AUDIENCE_RULES = {
+    "authenticated": {
+        "label": "Signed-in members",
+        "rule": "neuromancers_network.core.audience.is_authenticated",
+    },
+    "peer": {
+        "label": "Care providers",
+        "rule": "neuromancers_network.core.audience.is_peer",
+    },
+    "verified_peer": {
+        "label": "Verified care providers",
+        "rule": "neuromancers_network.core.audience.is_verified_peer",
+    },
+    "moderator": {
+        "label": "Moderators",
+        "rule": "neuromancers_network.core.audience.is_moderator",
+    },
+    "meeting_host": {
+        "label": "Meeting host",
+        "rule": "neuromancers_network.core.audience.is_meeting_host",
+    },
+    "meeting_seeker": {
+        "label": "Meeting seeker",
+        "rule": "neuromancers_network.core.audience.is_meeting_seeker",
+    },
+    "meeting_participant": {
+        "label": "Meeting participant",
+        "rule": "neuromancers_network.core.audience.is_meeting_participant",
+    },
+    "own_profile": {
+        "label": "Own profile",
+        "rule": "neuromancers_network.core.audience.is_own_profile",
+    },
+    "own_profile_or_moderator": {
+        "label": "Own profile or moderator",
+        "rule": "neuromancers_network.core.audience.is_own_profile_or_moderator",
+    },
+    "bookmark_owner": {
+        "label": "Bookmark owner",
+        "rule": "neuromancers_network.core.audience.is_bookmark_owner",
+    },
+}
+WAGTAIL_DAISIE_FORM_FIELD_TYPES = {
+    "document": {
+        "label": _("Document upload"),
+        "field": "django.forms.FileField",
+        "widget": "django.forms.ClearableFileInput",
+        "css": "file-input w-full",
+        "is_upload": True,
+        "handler": "neuromancers_network.core.uploads.store_document",
+    },
+}
+WAGTAIL_DAISIE_FORM_UPLOAD_HANDLER = "neuromancers_network.core.uploads.store_document"
+WAGTAIL_DAISIE_APPROVAL_WORKFLOWS = {
+    "peer_application": {
+        "label": "Peer application",
+        "model": "peers.PeerApplication",
+        "approval_field": "is_approved",
+        "handler": "neuromancers_network.peers.workflows.approve_peer_application",
+    },
+}
+WAGTAIL_DAISIE_ACTIONS = {
+    "meetings.create": {
+        "label": _("Create meeting"),
+        "handler": "neuromancers_network.meetings.actions.meetings_create",
+    },
+    "meetings.restore_default_terms": {
+        "label": _("Restore default terms"),
+        "handler": "neuromancers_network.meetings.actions.meetings_restore_default_terms",
+    },
+    "bookings.checkout": {
+        "label": _("Book and pay"),
+        "handler": "neuromancers_network.meetings.actions.bookings_checkout",
+    },
+    "bookings.request": {
+        "label": _("Request booking"),
+        "handler": "neuromancers_network.meetings.actions.bookings_request",
+    },
+    "bookings.request_refund": {
+        "label": _("Request refund"),
+        "handler": "neuromancers_network.meetings.actions.bookings_request_refund",
+    },
+    "peers.apply": {
+        "label": _("Apply to be a care provider"),
+        "handler": "neuromancers_network.peers.actions.peers_apply",
+    },
+    "peer.connect_stripe": {
+        "label": _("Connect Stripe"),
+        "handler": "neuromancers_network.peers.actions.peer_connect_stripe",
+    },
+    "peer.subscribe": {
+        "label": _("Subscribe as a care provider"),
+        "handler": "neuromancers_network.peers.actions.peer_subscribe",
+    },
+    "peer.open_stripe_dashboard": {
+        "label": _("Open Stripe dashboard"),
+        "handler": "neuromancers_network.peers.actions.peer_open_stripe_dashboard",
+    },
+    "profile.edit": {
+        "label": _("Edit profile"),
+        "handler": "neuromancers_network.users.actions.profile_edit",
+    },
+    "profile.save_access_needs": {
+        "label": _("Save access needs"),
+        "handler": "neuromancers_network.users.actions.profile_save_access_needs",
+    },
+    "profile.save_visibility": {
+        "label": _("Save visibility"),
+        "handler": "neuromancers_network.users.actions.profile_save_visibility",
+    },
+    "profile.save_notification_preferences": {
+        "label": _("Save notification preferences"),
+        "handler": "neuromancers_network.users.actions.profile_save_notification_preferences",
+    },
+}
+WAGTAIL_DAISIE_DETAIL_PAGES = {
+    "meeting": {
+        "label": "Meeting",
+        "model": "meetings.Meeting",
+        "page_type": "neuromancers_network.core.models.pages.MeetingDetailPage",
+        "parent": "neuromancers_network.core.models.pages.MeetingIndexPage",
+        "template_page": "neuromancers_network.core.models.pages.MeetingIndexPage",
+        "lookup_field": "pk",
+        "publish_field": "is_live",
+        "title_source": "title",
+        "slug_source": "title",
+        "on_delete": "unlink",
+    },
+    "peer_profile": {
+        "label": "Care provider",
+        "model": "peers.PeerProfile",
+        "page_type": "neuromancers_network.core.models.pages.PeerProfileDetailPage",
+        "parent": "neuromancers_network.core.models.pages.PeerIndexPage",
+        "template_page": "neuromancers_network.core.models.pages.PeerIndexPage",
+        "lookup_field": "pk",
+        "publish_field": "is_live",
+        "title_source": "display_title",
+        "slug_source": "username",
+        "on_delete": "unlink",
+    },
+    "review": {
+        "label": "Review",
+        "model": "meetings.Review",
+        "page_type": "neuromancers_network.core.models.pages.ReviewDetailPage",
+        "parent": "neuromancers_network.core.models.pages.ReviewIndexPage",
+        "template_page": "neuromancers_network.core.models.pages.ReviewIndexPage",
+        "lookup_field": "pk",
+        "publish_field": "is_live",
+        "title_source": "display_title",
+        "slug_source": "pk",
+        "on_delete": "unlink",
+    },
+    "user_profile": {
+        "label": "Member profile",
+        "model": "users.User",
+        "page_type": "neuromancers_network.core.models.pages.UserProfilePage",
+        "parent": "neuromancers_network.core.models.pages.ProfileIndexPage",
+        "template_page": "neuromancers_network.core.models.pages.ProfileIndexPage",
+        "lookup_field": "username",
+        "publish_field": "",
+        "title_source": "display_name",
+        "slug_source": "username",
+        "on_delete": "unlink",
+    },
+}
+# https://pypi.org/project/draftail-text-utils/
+# Drive the Draftail editor's colour palette and font pickers from the default
+# DaisyUI theme. COLORS uses a CALLABLE (daisIE exposes get_draftail_color_palette);
+# FONT_FAMILIES/FONT_URLS use a MODULE because draftail_text_utils reads module-level
+# list attributes, so core.draftail_palette lazily re-exports the daisIE font helpers.
+DRAFTAIL_TEXT_UTILS = {
+    "COLORS": {
+        "CALLABLE": "wagtail_daisIE.utils.get_draftail_color_palette",
+    },
+    "FONT_FAMILIES": {
+        "MODULE": "neuromancers_network.core.draftail_palette",
+    },
+    "FONT_URLS": {
+        "MODULE": "neuromancers_network.core.draftail_palette",
+    },
+}

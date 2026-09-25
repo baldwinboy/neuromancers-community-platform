@@ -69,6 +69,20 @@ class MeetingRequest(Timestamped):
         max_length=255,
         blank=True,
     )
+    booking = models.ForeignKey(
+        "meetings.Booking",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="sessions",
+    )
+    access_needs = models.TextField(_("Access needs"), blank=True)
+    terms_accepted = models.BooleanField(_("Terms accepted"), default=False)
+    terms_accepted_at = models.DateTimeField(
+        _("Terms accepted at"),
+        null=True,
+        blank=True,
+    )
 
     # Seeker-requested scheduling — only for 1:1 meetings
     requested_start_time = models.DateTimeField(
@@ -109,8 +123,8 @@ class MeetingRequest(Timestamped):
         ordering = ["-created_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=["meeting", "support_seeker"],
-                name="%(app_label)s_%(class)s_unique_meeting_per_seeker",
+                fields=["booking", "requested_start_time"],
+                name="%(app_label)s_%(class)s_unique_session_per_booking",
             ),
         ]
 
@@ -242,9 +256,29 @@ class MeetingRequest(Timestamped):
         success_url = request.build_absolute_uri("/pay/success/")
         cancel_url = request.build_absolute_uri("/pay/cancelled/")
         amount = self.meeting.price
+        if self.requested_duration_minutes:
+            tier_price = self.meeting.price_for(self.requested_duration_minutes)
+            if tier_price is not None:
+                amount = tier_price
         if amount is None:
             message = "Meeting price is required for checkout"
             raise ValueError(message)
+
+        currency = self.meeting.currency.lower()
+        amount_minor = int(amount * 100)
+        fee_percent = stripe_settings.application_fee or 0
+        peer_profile = getattr(self.meeting.peer, "payment_profile", None)
+        destination = (
+            peer_profile.stripe_connect_account_id_id
+            if peer_profile is not None
+            else None
+        )
+        payment_intent_data = None
+        if destination:
+            payment_intent_data = {
+                "application_fee_amount": round(amount_minor * fee_percent / 100),
+                "transfer_data": {"destination": destination},
+            }
 
         stripe.api_key = stripe_settings.secret_key
         session = stripe.checkout.Session.create(
@@ -254,13 +288,14 @@ class MeetingRequest(Timestamped):
             line_items=[
                 {
                     "price_data": {
-                        "currency": "gbp",
+                        "currency": currency,
                         "product_data": {"name": self.meeting.title},
-                        "unit_amount": int(amount * 100),
+                        "unit_amount": amount_minor,
                     },
                     "quantity": 1,
                 },
             ],
+            payment_intent_data=payment_intent_data,
             metadata={
                 "meeting_request_id": str(self.pk),
             },
@@ -306,6 +341,8 @@ class MeetingRequest(Timestamped):
         Called by Celery task close to meeting time, or manually.
         Only applicable to 1:1 meetings.
         """
+        from neuromancers_network.core.apis import configure_whereby  # noqa: PLC0415
+        from neuromancers_network.core.apis import whereby_room_prefix  # noqa: PLC0415
         from whereby.client import meetings as whereby_meetings  # noqa: PLC0415
         from whereby.schemas import MeetingsApplicationJson  # noqa: PLC0415
 
@@ -314,10 +351,12 @@ class MeetingRequest(Timestamped):
         if not start or not duration or self.meeting_link:
             return
 
+        configure_whereby()
         end_date = start + timedelta(minutes=duration)
-        data = MeetingsApplicationJson(
+        data = MeetingsApplicationJson(  # type: ignore[call-arg]
             end_date=end_date.isoformat(),
             start_date=start.isoformat(),
+            room_name_prefix=whereby_room_prefix(),
         )
         result = whereby_meetings(data=data)
         self.meeting_link = result.room_url

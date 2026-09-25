@@ -4,6 +4,9 @@ from django.test import Client
 from neuromancers_network.meetings.tests.factories import create_meeting
 from neuromancers_network.peers.search import search_peers
 from neuromancers_network.taxonomy.models import Language
+from neuromancers_network.taxonomy.tests.factories import AllowedTagFactory
+from neuromancers_network.taxonomy.tests.factories import CountryFactory
+from neuromancers_network.taxonomy.tests.factories import ensure_tag
 from neuromancers_network.users.tests.factories import PeerProfileFactory
 
 pytestmark = pytest.mark.django_db
@@ -30,7 +33,7 @@ class TestSearchPeers:
 
     def test_by_own_tag(self):
         peer = PeerProfileFactory(is_approved=True)
-        peer.tags.add("anxiety")
+        peer.tags.add(ensure_tag("anxiety"))
         PeerProfileFactory(is_approved=True)
 
         assert list(search_peers(tags=["anxiety"])) == [peer]
@@ -57,13 +60,13 @@ class TestSearchPeers:
         create_meeting(peer=profile_language_meeting_tag.user, tags=["anxiety"])
 
         meeting_language_profile_tag = PeerProfileFactory(is_approved=True)
-        meeting_language_profile_tag.tags.add("anxiety")
+        meeting_language_profile_tag.tags.add(ensure_tag("anxiety"))
         create_meeting(peer=meeting_language_profile_tag.user, languages=[en])
 
         create_meeting(peer=PeerProfileFactory(is_approved=True).user, languages=[en])
         profile_spanish = PeerProfileFactory(is_approved=True)
         profile_spanish.languages.add(es)
-        profile_spanish.tags.add("anxiety")
+        profile_spanish.tags.add(ensure_tag("anxiety"))
 
         results = search_peers(languages=[en], tags=["anxiety"])
         assert set(results) == {
@@ -99,6 +102,28 @@ class TestSearchPeers:
         create_meeting(peer=peer.user, title="Two", languages=[en])
 
         assert list(search_peers(languages=[en])) == [peer]
+
+    def test_inactive_tag_is_excluded(self):
+        peer = PeerProfileFactory(is_approved=True)
+        peer.tags.add(AllowedTagFactory(name="retired", is_active=False))
+
+        assert list(search_peers(tags=["retired"])) == []
+
+    def test_by_country(self):
+        country = CountryFactory()
+        peer = PeerProfileFactory(is_approved=True)
+        peer.countries.add(country)
+        PeerProfileFactory(is_approved=True)
+
+        assert list(search_peers(countries=[country])) == [peer]
+
+    def test_found_via_meeting_country(self):
+        country = CountryFactory()
+        peer = PeerProfileFactory(is_approved=True)
+        create_meeting(peer=peer.user, title="Local", countries=[country])
+        PeerProfileFactory(is_approved=True)
+
+        assert list(search_peers(countries=[country])) == [peer]
 
 
 class TestSearchPeersAPI:

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% load wagtailcore_tags %}
+
+{% block title %}
+  {% if page.seo_title %}
+    {{ page.seo_title }}
+  {% else %}
+    {{ page.title }}
+  {% endif %}
+{% endblock title %}
+{% block content %}
+  {% for block in page.body %}
+    {% include_block block %}
+  {% endfor %}
+{% endblock content %}

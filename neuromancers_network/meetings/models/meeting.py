@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField
 from django_fsm import transition
 from taggit.managers import TaggableManager
+from wagtail.search import index
 
 from neuromancers_network.core.models.base import Timestamped
 
@@ -18,6 +19,7 @@ from .choices import MeetingRequestStatus
 from .choices import MeetingStatus
 from .choices import MeetingType
 from .choices import PricingType
+from .tag import MeetingTag
 
 MIN_DURATION_MINUTES = 5
 MAX_DURATION_MINUTES = 120
@@ -53,7 +55,7 @@ def _is_valid_meeting_link(url):
     return any(host == d or host.endswith("." + d) for d in VALID_MEETING_LINK_DOMAINS)
 
 
-class Meeting(Timestamped):
+class Meeting(index.Indexed, Timestamped):  # type: ignore[django-manager-missing]
     peer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -134,7 +136,17 @@ class Meeting(Timestamped):
         blank=True,
         related_name="meetings",
     )
-    tags = TaggableManager(blank=True)
+    countries = models.ManyToManyField(
+        "taxonomy.Country",
+        blank=True,
+        related_name="meetings",
+        verbose_name=_("Countries"),
+    )
+    tags = TaggableManager(
+        blank=True,
+        through=MeetingTag,
+        to="taxonomy.AllowedTag",
+    )
     status = FSMField(
         _("Status"),
         default=MeetingStatus.DRAFT,
@@ -164,6 +176,21 @@ class Meeting(Timestamped):
             "Recurrence rule for group meetings. Not applicable to 1:1 meetings.",
         ),
     )
+
+    search_fields = [
+        index.SearchField("title"),
+        index.SearchField("description"),
+        index.RelatedFields("peer", [index.SearchField("name")]),
+        index.FilterField("status"),
+        index.FilterField("meeting_type"),
+        index.FilterField("pricing_type"),
+        index.RelatedFields("countries", [index.FilterField("code")]),
+        index.RelatedFields("languages", [index.FilterField("code")]),
+        index.RelatedFields(
+            "tags",
+            [index.FilterField("is_active"), index.FilterField("slug")],
+        ),
+    ]
 
     class Meta:
         ordering = ["-scheduled_at"]
@@ -210,6 +237,28 @@ class Meeting(Timestamped):
             return MeetingRequestStatus.PENDING_PAYMENT
         return MeetingRequestStatus.APPROVED
 
+    @property
+    def is_live(self) -> bool:
+        return self.status == MeetingStatus.PUBLISHED
+
+    def get_absolute_url(self) -> str:
+        from django.contrib.contenttypes.models import ContentType  # noqa: PLC0415
+
+        from neuromancers_network.core.models.pages import (  # noqa: PLC0415
+            MeetingDetailPage,
+        )
+
+        page = MeetingDetailPage.objects.filter(
+            source_content_type=ContentType.objects.get_for_model(type(self)),
+            source_object_id=self.pk,
+            live=True,
+        ).first()
+        if page is not None:
+            url = page.get_url()
+            if url:
+                return url
+        return f"/meetings/{self.pk}/"
+
     @transition(
         field=status,
         source=MeetingStatus.DRAFT,
@@ -238,7 +287,7 @@ class Meeting(Timestamped):
         super().clean()
         from django.core.exceptions import ValidationError  # noqa: PLC0415
 
-        errors = {}
+        errors: dict[str, object] = {}
 
         if self.meeting_type == MeetingType.GROUP:
             if not self.scheduled_at:
@@ -300,6 +349,8 @@ class Meeting(Timestamped):
           more than 10 minutes in the past, or a valid meeting-link URL
           already exists.
         """
+        from neuromancers_network.core.apis import configure_whereby  # noqa: PLC0415
+        from neuromancers_network.core.apis import whereby_room_prefix  # noqa: PLC0415
         from whereby.client import meetings as whereby_meetings  # noqa: PLC0415
         from whereby.schemas import MeetingsApplicationJson  # noqa: PLC0415
 
@@ -322,10 +373,12 @@ class Meeting(Timestamped):
         if not force and _is_valid_meeting_link(self.meeting_link):
             return
 
+        configure_whereby()
         end_date = self.scheduled_at + timedelta(minutes=self.duration_minutes)
-        data = MeetingsApplicationJson(
+        data = MeetingsApplicationJson(  # type: ignore[call-arg]
             end_date=end_date.isoformat(),
             start_date=self.scheduled_at.isoformat(),
+            room_name_prefix=whereby_room_prefix(),
         )
         result = whereby_meetings(data=data)
         self.meeting_link = result.room_url
@@ -342,3 +395,27 @@ class Meeting(Timestamped):
         if self.meeting_type != MeetingType.GROUP or self.max_participants is None:
             return None
         return max(0, self.max_participants - self.requests.count())
+
+    def price_options_for(self, duration):
+        """Return the price options configured for *duration* minutes."""
+        from .pricing import MeetingPriceOption  # noqa: PLC0415
+        from .pricing import MeetingPriceTier  # noqa: PLC0415
+
+        tier = MeetingPriceTier.objects.filter(
+            meeting=self,
+            duration_minutes=duration,
+        ).first()
+        if tier is None:
+            return MeetingPriceOption.objects.none()
+        return tier.options.all()
+
+    def price_for(self, duration, option_id=None):
+        """Return the price for *duration* minutes, or ``None`` if unknown."""
+        options = self.price_options_for(duration)
+        if option_id is not None:
+            option = options.filter(pk=option_id).first()
+            return option.amount if option is not None else None
+        option = options.filter(is_default=True).first() or options.first()
+        if option is not None:
+            return option.amount
+        return self.price

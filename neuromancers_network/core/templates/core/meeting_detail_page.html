@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% load wagtailcore_tags %}
+
+{% block title %}
+  {% if page.seo_title %}
+    {{ page.seo_title }}
+  {% else %}
+    {{ page.title }}
+  {% endif %}
+{% endblock title %}
+{% block content %}
+  <article class="mx-auto max-w-3xl py-8">
+    <h1 class="text-4xl font-bold">{{ meeting.title|default:page.title }}</h1>
+    {% if meeting.description %}<p class="mt-4 text-lg text-base-content/80">{{ meeting.description }}</p>{% endif %}
+    {% if meeting.scheduled_at %}<p class="mt-2 text-sm text-base-content/70">{{ meeting.scheduled_at }}</p>{% endif %}
+    {% for block in page.body %}
+      {% include_block block %}
+    {% endfor %}
+  </article>
+{% endblock content %}

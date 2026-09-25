@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% load i18n wagtailcore_tags %}
+
+{% block title %}
+  {% if page.seo_title %}
+    {{ page.seo_title }}
+  {% else %}
+    {{ page.title }}
+  {% endif %}
+{% endblock title %}
+{% block content %}
+  <section class="mx-auto max-w-4xl py-8">
+    <h1 class="text-4xl font-bold">{{ page.title }}</h1>
+    <form method="get" action="{{ page.url }}" class="mt-6 flex gap-2">
+      <input type="search"
+             name="query"
+             value="{{ query }}"
+             class="input input-bordered w-full"
+             placeholder="{% trans 'Search meetings and care providers' %}" />
+      <button type="submit" class="btn btn-primary">{% trans "Search" %}</button>
+    </form>
+    {% if search_results %}
+      <ul class="mt-8 space-y-4">
+        {% for result in search_results %}
+          <li>
+            <a class="link link-primary text-lg"
+               href="{{ result.get_absolute_url }}">{{ result }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% elif query %}
+      <p class="mt-8 text-base-content/70">{% trans "No results found." %}</p>
+    {% endif %}
+  </section>
+{% endblock content %}

@@ -36,6 +36,8 @@ class PaymentProfile(Timestamped):
         on_delete=models.CASCADE,
         to_field="id",
         related_name="payment_profile",
+        null=True,
+        blank=True,
     )
     kyc_completed = models.BooleanField(_("KYC completed"), default=False)
 
@@ -57,16 +59,18 @@ class PaymentProfile(Timestamped):
         return_url: str,
     ) -> StripeConnectOnboardingLink:
         from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
+        from neuromancers_network.payments.services import (  # noqa: PLC0415
+            ensure_stripe_account,
+        )
 
         stripe_settings = StripeSettings.load()
         if not stripe_settings.secret_key:
             error_message = "Stripe secret key is not configured"
             raise ValueError(error_message)
 
-        account_id = self.stripe_connect_account_id_id
-        if not account_id:
-            error_message = "Payment profile has no connected Stripe account"
-            raise ValueError(error_message)
+        ensure_stripe_account(self.user)
+        self.refresh_from_db()
+        account_id = self.stripe_connect_account_id_id  # type: ignore[attr-defined]
 
         stripe.api_key = stripe_settings.secret_key
         link = stripe.AccountLink.create(
@@ -76,6 +80,23 @@ class PaymentProfile(Timestamped):
             type="account_onboarding",
         )
         return StripeConnectOnboardingLink(account_id=str(account_id), url=link.url)
+
+    def create_express_dashboard_link(self) -> str:
+        from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
+
+        stripe_settings = StripeSettings.load()
+        if not stripe_settings.secret_key:
+            error_message = "Stripe secret key is not configured"
+            raise ValueError(error_message)
+
+        account_id = self.stripe_connect_account_id_id  # type: ignore[attr-defined]
+        if not account_id:
+            error_message = "Payment profile has no connected Stripe account"
+            raise ValueError(error_message)
+
+        stripe.api_key = stripe_settings.secret_key
+        link = stripe.Account.create_login_link(account_id)
+        return link.url
 
     def sync_kyc_completed_from_stripe_account(
         self,

@@ -6,6 +6,7 @@ set -o nounset
 
 
 python /app/manage.py migrate --noinput
+python /app/manage.py ensure_superuser
 python /app/manage.py collectstatic --noinput
 
 compress_enabled() {

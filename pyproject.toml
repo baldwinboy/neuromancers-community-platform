@@ -14,32 +14,35 @@ classifiers = [
 ]
 dependencies = [
   "argon2-cffi==25.1.0",
+  "babel>=2.18.0",
   "celery==5.6.3",
   "clientele[core]>=2.2.2",
   "crispy-bootstrap5==2026.3",
   "dj-stripe>=2.11.0",
-  "django==6.0.6",
-  "django-allauth[mfa]==65.18.0",
+  "django>=6.0,<6.1",
+  "django-allauth==65.19.4",
   "django-anymail==15.0",
   "django-auditlog>=3.4.1",
   "django-celery-beat==2.9.0",
-  "django-colorfield>=0.14.0",
+  "django-colorfield==0.14.0",
   "django-compressor==4.6.0",
   "django-cors-headers==4.9.0",
   "django-crispy-forms==2.6",
   "django-environ==0.14.0",
+  "django-filter==26.1",
   "django-fsm-2>=4.2.4",
   "django-model-utils==5.0.0",
-  "django-ninja==1.6.2",
+  "django-ninja==1.7.0",
   "django-prometheus==2.5.0",
   "django-redis==6.0.0",
   "django-smart-ratelimit[redis]>=4.12.1",
   "django-storages[s3]==1.14.6",
-  "django-taggit>=6.1.0",
-  "draftail-text-utils>=0.3.0",
+  "django-taggit==6.1.0",
+  "draftail-text-utils==0.3.1",
   "flower==2.0.1",
   "gunicorn==26.0.0",
   "hiredis==3.4.0",
+  "icalendar>=6.1.0",
   "pillow==12.3.0",
   "prometheus-client>=0.25.0",
   "psycopg[c]==3.3.4",
@@ -47,31 +50,31 @@ dependencies = [
   "redis==7.4.0",
   "rules>=3.5",
   "sentry-sdk==2.64.0",
-  "wagtail>=7.4.2",
-  "wagtail-daisie[allauth,blocks]>=1.1.0",
+  "wagtail==8.0",
+  "wagtail-daisie[allauth,allauth_emails,blocks,notifications]==2.1.0",
   "whitenoise==6.12.0",
 ]
 
 [dependency-groups]
 dev = [
   "clientele[cli]>=2.2.2",
-  "coverage==7.14.3",
+  "coverage==7.16.1",
   "django-coverage-plugin==3.2.2",
   "django-debug-toolbar==6.3.0",
   "django-extensions==4.1",
-  "django-stubs[compatible-mypy]==6.0.6",
+  "django-stubs[compatible-mypy]==6.1.1",
   "djlint==1.40.0",
   "factory-boy==3.3.3",
   "ipdb==0.13.13",
   "mypy==2.1.0",
   "myst-parser>=5.1.0",
   "pre-commit==4.6.0",
-  "prek>=0.4.5",
+  "prek==0.5.3",
   "psycopg[c]==3.3.4",
   "pytest==9.1.1",
   "pytest-django==4.12.0",
   "pytest-sugar==1.1.1",
-  "ruff==0.15.20",
+  "ruff==0.16.8",
   "sphinx==9.1.0",
   "sphinx-autobuild==2025.8.25",
   "sphinx-wagtail-theme>=6.5.0",
@@ -179,10 +182,14 @@ warn_unused_configs = true
 overrides = [
   # Django migrations should not produce any errors:
   { module = "*.migrations.*", ignore_errors = true },
+  # Test modules use untyped factory-boy factories; not worth annotating.
+  { module = [ "*.tests.*", "tests.*" ], ignore_errors = true },
+  # Vendored, code-generated API clients (clientele): duplicate definitions.
+  { module = [ "getpronto.*", "whereby.*" ], ignore_errors = true },
 ]
 
 [tool.django-stubs]
-django_settings_module = "config.settings.test"
+django_settings_module = "config.settings.typecheck"
 
 [tool.pytest]
 # ==== pytest ====

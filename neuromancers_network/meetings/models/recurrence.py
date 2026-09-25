@@ -94,7 +94,7 @@ class RecurrenceRule(Timestamped):
             RecurrenceFrequency.BIWEEKLY: self._next_biweekly,
             RecurrenceFrequency.MONTHLY: self._next_monthly,
         }
-        return dispatch[self.frequency](current_dt)
+        return dispatch[RecurrenceFrequency(self.frequency)](current_dt)
 
     def advance_meeting(self, meeting):
         if meeting.scheduled_at is None:

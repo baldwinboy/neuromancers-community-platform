@@ -5,6 +5,8 @@ from neuromancers_network.meetings.models import MeetingStatus
 from neuromancers_network.meetings.search import search_meetings
 from neuromancers_network.meetings.tests.factories import create_meeting
 from neuromancers_network.taxonomy.models import Language
+from neuromancers_network.taxonomy.tests.factories import AllowedTagFactory
+from neuromancers_network.taxonomy.tests.factories import CountryFactory
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -94,6 +96,24 @@ class TestSearchMeetings:
 
         results = search_meetings(languages=[en, de])
         assert list(results) == [meeting]
+
+    def test_inactive_tag_is_excluded(self):
+        retired = AllowedTagFactory(name="retired", is_active=False)
+        create_meeting(peer=UserFactory(), title="Old", tags=[retired])
+
+        assert list(search_meetings(tags=["retired"])) == []
+
+    def test_by_country(self):
+        country = CountryFactory()
+        matching = create_meeting(
+            peer=UserFactory(),
+            title="Local",
+            countries=[country],
+        )
+        create_meeting(peer=UserFactory(), title="Elsewhere")
+
+        results = search_meetings(countries=[country])
+        assert list(results) == [matching]
 
 
 class TestSearchMeetingsAPI:

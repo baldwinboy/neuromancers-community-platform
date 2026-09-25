@@ -13,6 +13,7 @@ class TenantManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(tenant=get_current_tenant())
 
+
 class Document(models.Model):
     objects = TenantManager()  # All queries auto-scoped
     unscoped = models.Manager()  # Escape hatch for admin
@@ -27,6 +28,7 @@ Some projects set context that managers use:
 ```python
 # Middleware might set thread-local tenant
 _thread_locals.tenant = request.user.tenant
+
 
 # Manager reads it
 def get_queryset(self):
@@ -49,10 +51,10 @@ Document.objects.get(pk=pk, owner=request.user)
 
 ```python
 # Unscoped - returns everything matching
-Document.objects.filter(status='active')
+Document.objects.filter(status="active")
 
 # Scoped - only user's documents
-Document.objects.filter(status='active', owner=request.user)
+Document.objects.filter(status="active", owner=request.user)
 ```
 
 ### Related Objects

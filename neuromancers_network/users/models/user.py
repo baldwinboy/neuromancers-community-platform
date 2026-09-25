@@ -1,14 +1,14 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField
 from django_fsm import transition
+from wagtail.search import index
 
 from .choices import StaffState
 
 
-class User(AbstractUser):
+class User(index.Indexed, AbstractUser):
     """
     Minimal user model for account management.
     All users have support seeker capabilities by default.
@@ -34,15 +34,18 @@ class User(AbstractUser):
     )
 
     @property
-    def is_staff(self) -> bool:  # type: ignore[override]
+    def is_staff(self) -> bool:
         return self.staff_state == StaffState.ACTIVE
 
     @is_staff.setter
     def is_staff(self, value: bool) -> None:
-        if value:
-            self.staff_state = StaffState.ACTIVE
-        else:
-            self.staff_state = StaffState.INACTIVE
+        # ``staff_state`` is a protected FSM field. Write through ``__dict__``
+        # exactly as django-fsm does in its own transitions, so the standard
+        # Django ``create_user``/``create_superuser`` paths (and factories)
+        # work without raising a protected-field error.
+        self.__dict__["staff_state"] = (
+            StaffState.ACTIVE if value else StaffState.INACTIVE
+        )
 
     @transition(field=staff_state, source=StaffState.INACTIVE, target=StaffState.ACTIVE)
     def activate_staff(self):
@@ -64,23 +67,45 @@ class User(AbstractUser):
     def reinstate_staff(self):
         pass
 
+    @property
+    def display_name(self) -> str:
+        return self.name or self.username
+
     def get_absolute_url(self) -> str:
-        return reverse("users:detail", kwargs={"username": self.username})
+        from django.contrib.contenttypes.models import ContentType  # noqa: PLC0415
+
+        from neuromancers_network.core.models import pages  # noqa: PLC0415
+
+        page = pages.UserProfilePage.objects.filter(
+            source_content_type=ContentType.objects.get_for_model(type(self)),
+            source_object_id=self.pk,
+            live=True,
+        ).first()
+        if page is not None:
+            url = page.get_url()
+            if url:
+                return url
+        return f"/u/{self.username}/"
+
+    search_fields = [
+        index.SearchField("name"),
+        index.SearchField("username"),
+    ]
 
     class Meta:
         pass
 
     @property
+    def is_moderator(self) -> bool:
+        return bool(self.is_staff or self.is_superuser)
+
+    @property
     def is_peer(self) -> bool:
-        peer_profile = getattr(self, "peer_profile", None)
-        payment_profile = getattr(self, "payment_profile", None)
-        return (
-            peer_profile is not None
-            and peer_profile.is_approved
-            and payment_profile is not None
-            and payment_profile.has_active_subscription
-            and payment_profile.kyc_completed
+        from neuromancers_network.peers.services import (  # noqa: PLC0415
+            is_eligible_peer,
         )
+
+        return is_eligible_peer(self)
 
     @property
     def is_verified_peer(self) -> bool:

@@ -13,6 +13,7 @@ class Language(Timestamped):
         default=0,
         help_text=_("Languages with higher sort order are displayed first."),
     )
+    is_active = models.BooleanField(_("Active"), default=True)
 
     class Meta:
         verbose_name = _("Language")

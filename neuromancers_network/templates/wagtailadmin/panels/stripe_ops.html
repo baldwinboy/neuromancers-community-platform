@@ -1,0 +1,11 @@
+{% load i18n %}
+
+<div class="w-panel w-panel--stripe-ops">
+  <h2 class="w-panel__heading">{% trans "Stripe operations" %}</h2>
+  <div class="w-panel__content">
+    <p>
+      <a class="button button-secondary" href="{% url 'stripe_sync' %}">{% trans "Sync Stripe models" %}</a>
+      <a class="button button-secondary" href="{% url 'stripe_webhook' %}">{% trans "Create webhook endpoint" %}</a>
+    </p>
+  </div>
+</div>

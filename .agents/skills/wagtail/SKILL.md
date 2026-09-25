@@ -1448,16 +1448,13 @@ Within the `models.py` of one of your apps, create a model that extends `wagtail
 ```python
 from django.db import models
 from modelcluster.fields import ParentalKey
-from wagtail.admin.panels import (
-    FieldPanel, FieldRowPanel,
-    InlinePanel, MultiFieldPanel
-)
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel
 from wagtail.fields import RichTextField
 from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 
 
 class FormField(AbstractFormField):
-    page = ParentalKey('FormPage', on_delete=models.CASCADE, related_name='form_fields')
+    page = ParentalKey("FormPage", on_delete=models.CASCADE, related_name="form_fields")
 
 
 class FormPage(AbstractEmailForm):
@@ -1465,16 +1462,21 @@ class FormPage(AbstractEmailForm):
     thank_you_text = RichTextField(blank=True)
 
     content_panels = AbstractEmailForm.content_panels + [
-        FieldPanel('intro'),
-        InlinePanel('form_fields'),
-        FieldPanel('thank_you_text'),
-        MultiFieldPanel([
-            FieldRowPanel([
-                FieldPanel('from_address', classname="col6"),
-                FieldPanel('to_address', classname="col6"),
-            ]),
-            FieldPanel('subject'),
-        ], "Email"),
+        FieldPanel("intro"),
+        InlinePanel("form_fields"),
+        FieldPanel("thank_you_text"),
+        MultiFieldPanel(
+            [
+                FieldRowPanel(
+                    [
+                        FieldPanel("from_address", classname="col6"),
+                        FieldPanel("to_address", classname="col6"),
+                    ]
+                ),
+                FieldPanel("subject"),
+            ],
+            "Email",
+        ),
     ]
 ```
 
@@ -1517,12 +1519,13 @@ When submitted, this form will use both HTML5 client-side validation and Django 
 ```python
 from wagtail.contrib.forms.panels import FormSubmissionsPanel
 
+
 class FormPage(AbstractEmailForm):
     # ...
 
     content_panels = AbstractEmailForm.content_panels + [
         FormSubmissionsPanel(),
-        FieldPanel('intro'),
+        FieldPanel("intro"),
         # ...
     ]
 ```
@@ -2063,10 +2066,12 @@ The explorer interface now offers the ability to copy pages, with or without sub
 * Hooks can now be defined using decorator syntax:
 
 ```python
-@hooks.register('construct_main_menu')
+@hooks.register("construct_main_menu")
 def construct_main_menu(request, menu_items):
     menu_items.append(
-        MenuItem('Kittens!', '/kittens/', classnames='icon icon-folder-inverse', order=1000)
+        MenuItem(
+            "Kittens!", "/kittens/", classnames="icon icon-folder-inverse", order=1000
+        )
     )
 ```
 
@@ -2092,13 +2097,13 @@ If you created a Wagtail project before the release of Wagtail 0.3, it is likely
 ```python
 # TODO: some way of getting wagtailimages to register itself within wagtailadmin so that we
 # don't have to define it separately here
-url(r'^admin/images/', include(wagtailimages_urls)),
-url(r'^admin/embeds/', include(wagtailembeds_urls)),
-url(r'^admin/documents/', include(wagtaildocs_admin_urls)),
-url(r'^admin/snippets/', include(wagtailsnippets_urls)),
-url(r'^admin/search/', include(wagtailsearch_admin_urls)),
-url(r'^admin/users/', include(wagtailusers_urls)),
-url(r'^admin/redirects/', include(wagtailredirects_urls)),
+(url(r"^admin/images/", include(wagtailimages_urls)),)
+(url(r"^admin/embeds/", include(wagtailembeds_urls)),)
+(url(r"^admin/documents/", include(wagtaildocs_admin_urls)),)
+(url(r"^admin/snippets/", include(wagtailsnippets_urls)),)
+(url(r"^admin/search/", include(wagtailsearch_admin_urls)),)
+(url(r"^admin/users/", include(wagtailusers_urls)),)
+(url(r"^admin/redirects/", include(wagtailredirects_urls)),)
 ```
 
 These entries (and the corresponding `from wagtail.wagtail* import ...` lines) need to be removed from `urls.py`. (The entry for `/admin/` should be left in, however.)
@@ -2235,7 +2240,7 @@ Moderators and administrators now can lock a page, preventing further edits from
 The Sites administration interface is contained within a new app, `wagtailsites`. To enable this on an existing Wagtail project, add the line:
 
 ```python
-'wagtail.wagtailsites',
+("wagtail.wagtailsites",)
 ```
 
 to the `INSTALLED_APPS` list in your project’s settings file.
@@ -2521,17 +2526,34 @@ import wagtail.wagtailimages.utils.validators
 and the `validators` attribute of the ‘file’ field - that is, the line:
 
 ```python
-('file', models.ImageField(upload_to=wagtail.wagtailimages.models.get_upload_to,
-    width_field='width', height_field='height',
-    validators=[wagtail.wagtailimages.utils.validators.validate_image_format],
-    verbose_name='File')),
+(
+    (
+        "file",
+        models.ImageField(
+            upload_to=wagtail.wagtailimages.models.get_upload_to,
+            width_field="width",
+            height_field="height",
+            validators=[wagtail.wagtailimages.utils.validators.validate_image_format],
+            verbose_name="File",
+        ),
+    ),
+)
 ```
 
 should become:
 
 ```python
-('file', models.ImageField(upload_to=wagtail.wagtailimages.models.get_upload_to,
-    width_field='width', height_field='height', verbose_name='File')),
+(
+    (
+        "file",
+        models.ImageField(
+            upload_to=wagtail.wagtailimages.models.get_upload_to,
+            width_field="width",
+            height_field="height",
+            verbose_name="File",
+        ),
+    ),
+)
 ```
 
 
@@ -2670,13 +2692,13 @@ WAGTAIL_ENABLE_UPDATE_CHECK = False
 In previous versions of Wagtail, inline child blocks on a page or snippet were defined using a declaration like:
 
 ```python
-InlinePanel(HomePage, 'carousel_items', label="Carousel items")
+InlinePanel(HomePage, "carousel_items", label="Carousel items")
 ```
 
 It is no longer necessary to pass the base model as a parameter, so this declaration should be changed to:
 
 ```python
-InlinePanel('carousel_items', label="Carousel items")
+InlinePanel("carousel_items", label="Carousel items")
 ```
 
 The old format is now deprecated; all existing `InlinePanel` declarations should be updated to the new format.
@@ -2818,11 +2840,12 @@ Previously, the forms for creating and editing images followed Django’s defaul
 ```python
 from wagtail.wagtailimages.models import AbstractImage, Image
 
+
 class MyImage(AbstractImage):
     photographer = models.CharField(max_length=255)
     has_legal_approval = models.BooleanField()
 
-    admin_form_fields = Image.admin_form_fields + ['photographer']
+    admin_form_fields = Image.admin_form_fields + ["photographer"]
 ```
 
 ### `construct_wagtail_edit_bird` hook has been renamed
@@ -3443,8 +3466,8 @@ This release introduces a new `draft_title` field on page models, so that page t
 ```python
 def get_admin_display_title(self):
     return "%(title)s (%(lang)s)" % {
-        'title': super(TranslatablePage, self).get_admin_display_title(),
-        'lang': self.language_code,
+        "title": super(TranslatablePage, self).get_admin_display_title(),
+        "lang": self.language_code,
     }
 ```
 
@@ -3714,7 +3737,7 @@ If your project includes queries that rely on the old (exclusive) behavior, this
 The `Image.search` and `Document.search` methods have been deprecated in favor of the new QuerySet-based search mechanism - see [Searching Images, Documents and custom models](../topics/search/searching.md#wagtailsearch-images-documents-custom-models). Code using the old `search` methods should be updated to search on QuerySets instead; for example:
 
 ```python
-Image.search("Hello", filters={'uploaded_by_user': user})
+Image.search("Hello", filters={"uploaded_by_user": user})
 ```
 
 can be rewritten as:
@@ -3848,13 +3871,13 @@ Due to a change in the way template tags are imported in Django 1.9, it has been
 TEMPLATES = [
     # ...
     {
-        'BACKEND': 'django.template.backends.jinja2.Jinja2',
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'extensions': [
-                'wagtail.core.jinja2tags.core',
-                'wagtail.wagtailadmin.jinja2tags.userbar',
-                'wagtail.wagtailimages.jinja2tags.images',
+        "BACKEND": "django.template.backends.jinja2.Jinja2",
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "extensions": [
+                "wagtail.core.jinja2tags.core",
+                "wagtail.wagtailadmin.jinja2tags.userbar",
+                "wagtail.wagtailimages.jinja2tags.images",
             ],
         },
     }
@@ -4091,7 +4114,7 @@ As Wagtail no longer installs django-compressor automatically as a dependency, y
 In previous releases, field validation on Page models was only applied at the form level, meaning that creating pages directly at the model level would bypass validation. For example, if `NewsPage` is a Page model with a required `body` field, then code such as:
 
 ```python
-news_page = NewsPage(title="Hello", slug='hello')
+news_page = NewsPage(title="Hello", slug="hello")
 parent_page = NewsIndex.objects.get()
 parent_page.add_child(instance=news_page)
 ```
@@ -4267,9 +4290,7 @@ For example, the following `Page` model:
 class MyPage(Page):
     ...
 
-    search_fields = Page.search_fields + (
-        indexed.SearchField('body'),
-    )
+    search_fields = Page.search_fields + (indexed.SearchField("body"),)
 ```
 
 Should be changed to:
@@ -4279,7 +4300,7 @@ class MyPage(Page):
     ...
 
     search_fields = Page.search_fields + [
-        indexed.SearchField('body'),
+        indexed.SearchField("body"),
     ]
 ```
 
@@ -4291,9 +4312,9 @@ Previously, if you used the Elasticsearch backend, configured with the URLS prop
 
 ```python
 WAGTAILSEARCH_BACKENDS = {
-    'default': {
-        'BACKEND': 'wagtail.wagtailsearch.backends.elasticsearch',
-        'URLS': ['https://example.com/'],
+    "default": {
+        "BACKEND": "wagtail.wagtailsearch.backends.elasticsearch",
+        "URLS": ["https://example.com/"],
     }
 }
 ```
@@ -4495,13 +4516,13 @@ import wagtail.wagtailsearch.index
 and the line:
 
 ```python
-bases=(models.Model, wagtail.wagtailadmin.taggable.TagSearchable),
+bases = ((models.Model, wagtail.wagtailadmin.taggable.TagSearchable),)
 ```
 
 should be updated to:
 
 ```python
-bases=(models.Model, wagtail.wagtailsearch.index.Indexed),
+bases = ((models.Model, wagtail.wagtailsearch.index.Indexed),)
 ```
 
 ### `render` and `render_basic` methods on StreamField blocks now accept a `context` keyword argument
@@ -4510,24 +4531,18 @@ The `render` and `render_basic` methods on `wagtail.wagtailcore.blocks.Block` ha
 
 ```python
 class MyBlock(Block):
+    def render(self, value): ...
 
-    def render(self, value):
-        ...
-
-    def render_basic(self, value):
-        ...
+    def render_basic(self, value): ...
 ```
 
 should now become:
 
 ```python
 class MyBlock(Block):
+    def render(self, value, context=None): ...
 
-    def render(self, value, context=None):
-        ...
-
-    def render_basic(self, value, context=None):
-        ...
+    def render_basic(self, value, context=None): ...
 ```
 
 
@@ -4606,7 +4621,7 @@ On projects created under previous releases of Wagtail, the `home/migrations/000
 
 ```python
 dependencies = [
-    ('wagtailcore', '__latest__'),
+    ("wagtailcore", "__latest__"),
 ]
 ```
 
@@ -4614,7 +4629,7 @@ This may produce `InconsistentMigrationHistory` errors under Django 1.10 when up
 
 ```python
 dependencies = [
-    ('wagtailcore', '0029_unicode_slugfield_dj19'),
+    ("wagtailcore", "0029_unicode_slugfield_dj19"),
 ]
 ```
 
@@ -4633,7 +4648,7 @@ The data model for image renditions will be changed in Wagtail 1.8 to eliminate 
 
   and, for the `operations` list:
   ```python
-  forward, reverse = get_fill_filter_spec_migrations('myapp', 'CustomRendition')
+  forward, reverse = get_fill_filter_spec_migrations("myapp", "CustomRendition")
   operations = [
       migrations.RunPython(forward, reverse),
   ]
@@ -4778,17 +4793,13 @@ If your project is using a custom image model (see [Custom image models](../adva
 update the `unique_together` option on the corresponding Rendition model when upgrading to Wagtail 1.8. Change the line:
 
 ```python
-unique_together = (
-    ('image', 'filter', 'focal_point_key'),
-)
+unique_together = (("image", "filter", "focal_point_key"),)
 ```
 
 to:
 
 ```python
-unique_together = (
-    ('image', 'filter_spec', 'focal_point_key'),
-)
+unique_together = (("image", "filter_spec", "focal_point_key"),)
 ```
 
 You will then be able to run `manage.py makemigrations` and `manage.py migrate` as normal.
@@ -4814,22 +4825,23 @@ from django.db import migrations
 
 def add_bulk_delete_permission(apps, schema_editor):
     """Find all groups with add/edit page permissions, and assign them bulk_delete permission"""
-    GroupPagePermission = apps.get_model('wagtailcore', 'GroupPagePermission')
-    for group_id, page_id in GroupPagePermission.objects.filter(
-        permission_type__in=['add', 'edit']
-    ).values_list('group', 'page').distinct():
+    GroupPagePermission = apps.get_model("wagtailcore", "GroupPagePermission")
+    for group_id, page_id in (
+        GroupPagePermission.objects.filter(permission_type__in=["add", "edit"])
+        .values_list("group", "page")
+        .distinct()
+    ):
         GroupPagePermission.objects.create(
-            group_id=group_id, page_id=page_id, permission_type='bulk_delete'
+            group_id=group_id, page_id=page_id, permission_type="bulk_delete"
         )
 
 
 def remove_bulk_delete_permission(apps, schema_editor):
-    GroupPagePermission = apps.get_model('wagtailcore', 'GroupPagePermission')
-    GroupPagePermission.objects.filter(permission_type='bulk_delete').delete()
+    GroupPagePermission = apps.get_model("wagtailcore", "GroupPagePermission")
+    GroupPagePermission.objects.filter(permission_type="bulk_delete").delete()
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         # keep the original dependencies line
     ]
@@ -4845,11 +4857,11 @@ The `wagtail.contrib.wagtailfrontendcache.backends.CloudflareBackend` module has
 
 ```python
 WAGTAILFRONTENDCACHE = {
-    'cloudflare': {
-        'BACKEND': 'wagtail.contrib.wagtailfrontendcache.backends.CloudflareBackend',
-        'EMAIL': 'your-cloudflare-email-address@example.com',
-        'TOKEN': 'your cloudflare api token',
-        'ZONEID': 'your cloudflare domain zone id',
+    "cloudflare": {
+        "BACKEND": "wagtail.contrib.wagtailfrontendcache.backends.CloudflareBackend",
+        "EMAIL": "your-cloudflare-email-address@example.com",
+        "TOKEN": "your cloudflare api token",
+        "ZONEID": "your cloudflare domain zone id",
     },
 }
 ```
@@ -4866,9 +4878,9 @@ For example, the following configuration changes the connection class that the E
 from elasticsearch import RequestsHttpConnection
 
 WAGTAILSEARCH_BACKENDS = {
-    'default': {
-        'BACKEND': 'wagtail.wagtailsearch.backends.elasticsearch',
-        'connection_class': RequestsHttpConnection,
+    "default": {
+        "BACKEND": "wagtail.wagtailsearch.backends.elasticsearch",
+        "connection_class": RequestsHttpConnection,
     }
 }
 ```
@@ -4879,11 +4891,11 @@ As `connection_class` needs to be passed through to the Elasticsearch [connector
 from elasticsearch import RequestsHttpConnection
 
 WAGTAILSEARCH_BACKENDS = {
-    'default': {
-        'BACKEND': 'wagtail.wagtailsearch.backends.elasticsearch',
-        'OPTIONS': {
-            'connection_class': RequestsHttpConnection,
-        }
+    "default": {
+        "BACKEND": "wagtail.wagtailsearch.backends.elasticsearch",
+        "OPTIONS": {
+            "connection_class": RequestsHttpConnection,
+        },
     }
 }
 ```
@@ -4974,7 +4986,6 @@ In most cases, the method will be calling `get_context` on the superclass, and c
 
 ```python
 class MyBlock(Block):
-
     def get_context(self, value):
         context = super(MyBlock, self).get_context(value)
         ...
@@ -4985,7 +4996,6 @@ becomes:
 
 ```python
 class MyBlock(Block):
-
     def get_context(self, value, parent_context=None):
         context = super(MyBlock, self).get_context(value, parent_context=parent_context)
         ...
@@ -5208,9 +5218,7 @@ The Draftail rich text editor has a substantially different API from Hallo.js, i
 
 ```python
 WAGTAILADMIN_RICH_TEXT_EDITORS = {
-    'default': {
-        'WIDGET': 'wagtail.admin.rich_text.HalloRichTextArea'
-    }
+    "default": {"WIDGET": "wagtail.admin.rich_text.HalloRichTextArea"}
 }
 ```
 
@@ -5219,10 +5227,14 @@ WAGTAILADMIN_RICH_TEXT_EDITORS = {
 The `assertCanCreate` test method (see [Testing your Wagtail site](../advanced_topics/testing.md)) requires data to be passed in the same format that the page edit form would submit. The Draftail rich text editor posts this data in a non-HTML format, and so any existing `assertCanCreate` tests involving rich text fields will fail when Draftail is in use:
 
 ```python
-self.assertCanCreate(root_page, ContentPage, {
-    'title': 'About us',
-    'body': '<p>Lorem ipsum dolor sit amet</p>',  # will not work
-})
+self.assertCanCreate(
+    root_page,
+    ContentPage,
+    {
+        "title": "About us",
+        "body": "<p>Lorem ipsum dolor sit amet</p>",  # will not work
+    },
+)
 ```
 
 Wagtail now provides a set of helper functions for constructing form data: see [Form data helpers](../advanced_topics/testing.md#form-data-test-helpers). The above assertion can now be rewritten as:
@@ -5230,10 +5242,14 @@ Wagtail now provides a set of helper functions for constructing form data: see [
 ```python
 from wagtail.tests.utils.form_data import rich_text
 
-self.assertCanCreate(root_page, ContentPage, {
-    'title': 'About us',
-    'body': rich_text('<p>Lorem ipsum dolor sit amet</p>'),
-})
+self.assertCanCreate(
+    root_page,
+    ContentPage,
+    {
+        "title": "About us",
+        "body": rich_text("<p>Lorem ipsum dolor sit amet</p>"),
+    },
+)
 ```
 
 ### Removed support for Elasticsearch 1.x
@@ -5262,10 +5278,11 @@ The `construct_whitelister_element_rules` hook, used to specify additional HTML 
 from wagtail.core import hooks
 from wagtail.core.whitelist import allow_without_attributes
 
-@hooks.register('construct_whitelister_element_rules')
+
+@hooks.register("construct_whitelister_element_rules")
 def whitelist_blockquote():
     return {
-        'blockquote': allow_without_attributes,
+        "blockquote": allow_without_attributes,
     }
 ```
 
@@ -5276,16 +5293,21 @@ from wagtail.admin.rich_text.converters.editor_html import WhitelistRule
 from wagtail.core import hooks
 from wagtail.core.whitelist import allow_without_attributes
 
-@hooks.register('register_rich_text_features')
+
+@hooks.register("register_rich_text_features")
 def blockquote_feature(features):
 
     # register a feature 'blockquote' which whitelists the <blockquote> element
-    features.register_converter_rule('editorhtml', 'blockquote', [
-        WhitelistRule('blockquote', allow_without_attributes),
-    ])
+    features.register_converter_rule(
+        "editorhtml",
+        "blockquote",
+        [
+            WhitelistRule("blockquote", allow_without_attributes),
+        ],
+    )
 
     # add 'blockquote' to the default feature set
-    features.default_features.append('blockquote')
+    features.default_features.append("blockquote")
 ```
 
 Please note that the new Draftail rich text editor uses a different mechanism to process rich text content, and does not apply whitelist rules; they only take effect when the Hallo.js editor is in use.
@@ -5673,21 +5695,17 @@ For forms created through the Wagtail admin interface, no action is required, as
 Functions registered through the hooks `register_page_listing_buttons` and `register_page_listing_more_buttons` now accept an additional keyword argument `next_url`. A hook function currently written as:
 
 ```python
-@hooks.register('register_page_listing_buttons')
+@hooks.register("register_page_listing_buttons")
 def page_listing_more_buttons(page, page_perms, is_parent=False):
-    yield wagtailadmin_widgets.Button(
-        'My button', '/goes/to/a/url/', priority=60
-    )
+    yield wagtailadmin_widgets.Button("My button", "/goes/to/a/url/", priority=60)
 ```
 
 should now become:
 
 ```python
-@hooks.register('register_page_listing_buttons')
+@hooks.register("register_page_listing_buttons")
 def page_listing_more_buttons(page, page_perms, is_parent=False, next_url=None):
-    yield wagtailadmin_widgets.Button(
-        'My button', '/goes/to/a/url/', priority=60
-    )
+    yield wagtailadmin_widgets.Button("My button", "/goes/to/a/url/", priority=60)
 ```
 
 The `next_url` argument specifies a URL to redirect back to after the action is complete, and can be passed as a query parameter to the linked URL, if the view supports it.
@@ -5764,14 +5782,14 @@ The migration that creates the initial site homepage needs to be updated to ensu
 ```python
 # ...
 
-class Migration(migrations.Migration):
 
+class Migration(migrations.Migration):
     run_before = [
-        ('wagtailcore', '0053_locale_model'),  # added for Wagtail 2.11 compatibility
+        ("wagtailcore", "0053_locale_model"),  # added for Wagtail 2.11 compatibility
     ]
 
     dependencies = [
-        ('home', '0001_initial'),
+        ("home", "0001_initial"),
     ]
 
     operations = [
@@ -5989,14 +6007,14 @@ The migration that creates the initial site homepage needs to be updated to ensu
 ```python
 # ...
 
-class Migration(migrations.Migration):
 
+class Migration(migrations.Migration):
     run_before = [
-        ('wagtailcore', '0053_locale_model'),  # added for Wagtail 2.11 compatibility
+        ("wagtailcore", "0053_locale_model"),  # added for Wagtail 2.11 compatibility
     ]
 
     dependencies = [
-        ('home', '0001_initial'),
+        ("home", "0001_initial"),
     ]
 
     operations = [
@@ -6032,6 +6050,7 @@ However, if your project creates new collections programmatically after migratio
 * *Alternatively*, after creating the collections, run the Python code:
   ```python
   from wagtail.core.models import Collection
+
   Collection.fix_tree(fix_paths=True)
   ```
 
@@ -6314,7 +6333,7 @@ unable to upgrade to Wagtail 2.13 or above, can now “opt in” to the Wagtail 
 line to their project settings:
 
 ```python
-WAGTAIL_COMMENTS_RELATION_NAME = 'wagtail_admin_comments'
+WAGTAIL_COMMENTS_RELATION_NAME = "wagtail_admin_comments"
 ```
 
 This will allow third-party commenting apps to work in Wagtail 2.13.5 alongside Wagtail’s admin commenting functionality.
@@ -6326,7 +6345,7 @@ can find out the relation name as follows:
 try:
     from wagtail.core.models import COMMENTS_RELATION_NAME
 except ImportError:
-    COMMENTS_RELATION_NAME = 'comments'
+    COMMENTS_RELATION_NAME = "comments"
 ```
 
 
@@ -6446,17 +6465,16 @@ Setting menu items now use SVG icons by default. For sites reusing built-in Wagt
 ```python
 # With register_setting,
 # Before:
-@register_setting(icon='custom-cog')
+@register_setting(icon="custom-cog")
 # After:
-@register_setting(icon='', classnames='icon icon-custom-cog')
-
+@register_setting(icon="", classnames="icon icon-custom-cog")
 # Or with register_settings_menu_item,
-@hooks.register('register_settings_menu_item')
+@hooks.register("register_settings_menu_item")
 def register_frank_menu_item():
     # Before:
-    return SettingMenuItem(CustomSetting, icon='custom-cog')
+    return SettingMenuItem(CustomSetting, icon="custom-cog")
     # After:
-    return SettingMenuItem(CustomSetting, icon='', classnames='icon icon-custom-cog')
+    return SettingMenuItem(CustomSetting, icon="", classnames="icon icon-custom-cog")
 ```
 
 ### `CommentPanel`
@@ -6528,7 +6546,7 @@ unable to upgrade to Wagtail 2.13 or above, can now “opt in” to the Wagtail 
 line to their project settings:
 
 ```python
-WAGTAIL_COMMENTS_RELATION_NAME = 'wagtail_admin_comments'
+WAGTAIL_COMMENTS_RELATION_NAME = "wagtail_admin_comments"
 ```
 
 This will allow third-party commenting apps to work in Wagtail 2.14.2 alongside Wagtail’s admin commenting functionality.
@@ -6540,7 +6558,7 @@ can find out the relation name as follows:
 try:
     from wagtail.core.models import COMMENTS_RELATION_NAME
 except ImportError:
-    COMMENTS_RELATION_NAME = 'comments'
+    COMMENTS_RELATION_NAME = "comments"
 ```
 
 
@@ -6899,8 +6917,8 @@ It will be made the default backend in Wagtail 3.0. To enable the new backend, e
 
 ```python
 WAGTAILSEARCH_BACKENDS = {
-    'default': {
-        'BACKEND': 'wagtail.search.backends.database',
+    "default": {
+        "BACKEND": "wagtail.search.backends.database",
     }
 }
 ```
@@ -6914,9 +6932,9 @@ If you have used the PostgreSQL-specific `SEARCH_CONFIG`, this will continue to 
 
 ```python
 WAGTAILSEARCH_BACKENDS = {
-    'default': {
-        'BACKEND': 'wagtail.search.backends.database',
-        'SEARCH_CONFIG': 'english',
+    "default": {
+        "BACKEND": "wagtail.search.backends.database",
+        "SEARCH_CONFIG": "english",
     }
 }
 ```
@@ -6954,14 +6972,18 @@ When defining new action types for [audit logging](../extending/audit_log.md#aud
 from django.utils.translation import gettext_lazy as _
 from wagtail.core import hooks
 
-@hooks.register('register_log_actions')
+
+@hooks.register("register_log_actions")
 def additional_log_actions(actions):
 
     def greeting_message(data):
-        return _('Hello %(audience)s') % {
-            'audience': data['audience'],
+        return _("Hello %(audience)s") % {
+            "audience": data["audience"],
         }
-    actions.register_action('wagtail_package.greet_audience', _('Greet audience'), greeting_message)
+
+    actions.register_action(
+        "wagtail_package.greet_audience", _("Greet audience"), greeting_message
+    )
 ```
 
 should now be rewritten as:
@@ -6971,16 +6993,17 @@ from django.utils.translation import gettext_lazy as _
 from wagtail.core import hooks
 from wagtail.core.log_actions import LogFormatter
 
-@hooks.register('register_log_actions')
+
+@hooks.register("register_log_actions")
 def additional_log_actions(actions):
 
-    @actions.register_action('wagtail_package.greet_audience')
+    @actions.register_action("wagtail_package.greet_audience")
     class GreetingActionFormatter(LogFormatter):
-        label = _('Greet audience')
+        label = _("Greet audience")
 
         def format_message(self, log_entry):
-            return _('Hello %(audience)s') % {
-                'audience': log_entry.data['audience'],
+            return _("Hello %(audience)s") % {
+                "audience": log_entry.data["audience"],
             }
 ```
 
@@ -7022,7 +7045,7 @@ can find out the relation name as follows:
 try:
     from wagtail.core.models import COMMENTS_RELATION_NAME
 except ImportError:
-    COMMENTS_RELATION_NAME = 'comments'
+    COMMENTS_RELATION_NAME = "comments"
 ```
 
 ### Bulk action views not covered by existing hooks
@@ -7203,13 +7226,13 @@ Python 3.6 is no longer supported as of this release; please upgrade to Python 3
 The data type returned as the value of a ListBlock is now a custom class, `ListValue`, rather than a Python `list` object. This change allows it to provide a `bound_blocks` property that exposes the list items as [`BoundBlock` objects](../advanced_topics/boundblocks_and_values.md) rather than plain values. `ListValue` objects are mutable sequences that behave similarly to lists, and so all code that iterates over them, accesses individual elements, or manipulates them should continue to work. However, code that specifically expects a `list` object (e.g. using `isinstance` or testing for equality against a list) may need to be updated. For example, a unit test that tests the value of a `ListBlock` as follows:
 
 ```python
-    self.assertEqual(page.body[0].value, ['hello', 'goodbye'])
+self.assertEqual(page.body[0].value, ["hello", "goodbye"])
 ```
 
 should be rewritten as:
 
 ```python
-    self.assertEqual(list(page.body[0].value), ['hello', 'goodbye'])
+self.assertEqual(list(page.body[0].value), ["hello", "goodbye"])
 ```
 
 ### Change to `set` method on tag fields
@@ -7476,13 +7499,24 @@ Django 1.11 is no longer supported in this release; please upgrade your project 
 Projects with a custom image model (see [Custom image models](../advanced_topics/images/custom_image_model.md#custom-image-model)) created on Wagtail 1.7 or earlier are likely to have one or more migrations that refer to the (now-deleted) `wagtailimages.Filter` model. In Wagtail 2.4, the migrations that defined this model have been squashed, which may result in the error `ValueError: Related model 'wagtailimages.Filter' cannot be resolved` when bringing up a new instance of the database. To rectify this, check your project’s migrations for `ForeignKey` references to `wagtailimages.Filter`, and change them to `IntegerField` definitions. For example, the line:
 
 ```python
-('filter', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='+', to='wagtailimages.Filter')),
+(
+    (
+        "filter",
+        models.ForeignKey(
+            blank=True,
+            null=True,
+            on_delete=django.db.models.deletion.CASCADE,
+            related_name="+",
+            to="wagtailimages.Filter",
+        ),
+    ),
+)
 ```
 
 should become:
 
 ```python
-('filter', models.IntegerField(blank=True, null=True)),
+(("filter", models.IntegerField(blank=True, null=True)),)
 ```
 
 
@@ -7621,7 +7655,7 @@ should be replaced with:
 from django.core.paginator import Paginator
 
 paginator = Paginator(object_list, per_page=25)
-page = paginator.get_page(request.GET.get('p'))
+page = paginator.get_page(request.GET.get("p"))
 ```
 
 Additionally, the `is_ajax` flag on the template `wagtailadmin/shared/pagination_nav.html` has been deprecated in favour of a new template `wagtailadmin/shared/ajax_pagination_nav.html`:
@@ -8134,10 +8168,10 @@ from wagtail.api.v2.router import WagtailAPIRouter
 from wagtail.images.api.v2.endpoints import ImagesAPIEndpoint
 from wagtail.documents.api.v2.endpoints import DocumentsAPIEndpoint
 
-api_router = WagtailAPIRouter('wagtailapi')
-api_router.register_endpoint('pages', PagesAPIEndpoint)
-api_router.register_endpoint('images', ImagesAPIEndpoint)
-api_router.register_endpoint('documents', DocumentsAPIEndpoint)
+api_router = WagtailAPIRouter("wagtailapi")
+api_router.register_endpoint("pages", PagesAPIEndpoint)
+api_router.register_endpoint("images", ImagesAPIEndpoint)
+api_router.register_endpoint("documents", DocumentsAPIEndpoint)
 ```
 
 New code:
@@ -8148,10 +8182,10 @@ from wagtail.api.v2.router import WagtailAPIRouter
 from wagtail.images.api.v2.views import ImagesAPIViewSet
 from wagtail.documents.api.v2.views import DocumentsAPIViewSet
 
-api_router = WagtailAPIRouter('wagtailapi')
-api_router.register_endpoint('pages', PagesAPIViewSet)
-api_router.register_endpoint('images', ImagesAPIViewSet)
-api_router.register_endpoint('documents', DocumentsAPIViewSet)
+api_router = WagtailAPIRouter("wagtailapi")
+api_router.register_endpoint("pages", PagesAPIViewSet)
+api_router.register_endpoint("images", ImagesAPIViewSet)
+api_router.register_endpoint("documents", DocumentsAPIViewSet)
 ```
 
 ### `wagtail.documents.models.get_document_model` has moved
@@ -8310,12 +8344,15 @@ For example:
 ```python
 # old version
 
+
 def get_menu_items(request):
     return request.site.root_page.get_children().live()
+
 
 # new version
 
 from wagtail.core.models import Site
+
 
 def get_menu_items(request):
     return Site.find_for_request(request).root_page.get_children().live()
@@ -8452,7 +8489,6 @@ With every Wagtail Page you are able to add a helpful description text, similar 
 
 ```python
 class LandingPage(Page):
-
     page_description = "Use this page for converting users"
 ```
 
@@ -8647,12 +8683,12 @@ If you have models that are subclasses of `BaseLogEntry` in your project, be car
 ```python
 operations = [
     migrations.RemoveField(
-        model_name='mycustomlogentry',
-        name='data_json',
+        model_name="mycustomlogentry",
+        name="data_json",
     ),
     migrations.AddField(
-        model_name='mycustomlogentry',
-        name='data',
+        model_name="mycustomlogentry",
+        name="data",
         field=models.JSONField(blank=True, default=dict),
     ),
 ]
@@ -8685,8 +8721,9 @@ Example change
 def process_form_submission(self, form):
     self.get_submission_class().objects.create(
         # form_data=json.dumps(form.cleaned_data, cls=DjangoJSONEncoder),
-        form_data=form.cleaned_data, # new
-        page=self, user=form.user
+        form_data=form.cleaned_data,  # new
+        page=self,
+        user=form.user,
     )
 ```
 
@@ -9204,6 +9241,7 @@ The `wagtail.contrib.settings.models.BaseSetting` model has been replaced by two
 ```python
 from wagtail.contrib.settings.models import BaseSetting, register_setting
 
+
 @register_setting
 class SiteSpecificSocialMediaSettings(BaseSetting):
     facebook = models.URLField()
@@ -9213,6 +9251,7 @@ should become
 
 ```python
 from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
+
 
 @register_setting
 class SiteSpecificSocialMediaSettings(BaseSiteSetting):
@@ -9996,7 +10035,7 @@ Like other userbar items, the new accessibility checker is configurable with the
 from wagtail.admin.userbar import AccessibilityItem
 
 
-@hooks.register('construct_wagtail_userbar')
+@hooks.register("construct_wagtail_userbar")
 def remove_userbar_accessibility_checks(request, items):
     items[:] = [item for item in items if not isinstance(item, AccessibilityItem)]
 ```
@@ -10484,6 +10523,7 @@ If using a custom edit handler or set of panels for page models, the correct wid
 from wagtail.admin.widgets.slug import SlugInput
 # ... other imports
 
+
 class MyPage(Page):
     promote_panels = [
         FieldPanel("slug", widget=SlugInput),
@@ -10795,12 +10835,13 @@ As of Wagtail 5.1.2, the fallback behavior has been restored. Nevertheless, it i
 from wagtail.search import index
 # ... other imports
 
+
 @register_snippet
 class MySnippet(index.Indexed, models.Model):
-     search_fields = [
-         index.SearchField("name"),
-         index.AutocompleteField("name"),
-     ]
+    search_fields = [
+        index.SearchField("name"),
+        index.AutocompleteField("name"),
+    ]
 ```
 
 
@@ -11026,12 +11067,13 @@ As of Wagtail 5.1.2, the fallback behavior has been restored. Nevertheless, it i
 from wagtail.search import index
 # ... other imports
 
+
 @register_snippet
 class MySnippet(index.Indexed, models.Model):
-     search_fields = [
-         index.SearchField("name"),
-         index.AutocompleteField("name"),
-     ]
+    search_fields = [
+        index.SearchField("name"),
+        index.AutocompleteField("name"),
+    ]
 ```
 
 ### `GroupPagePermission` now uses Django’s `Permission` model
@@ -11086,7 +11128,9 @@ from wagtail.models import GroupPagePermission
 permission = GroupPagePermission(
     group=group,
     page=page,
-    permission=Permission.objects.get(content_type__app_label="wagtailcore", codename="change_page"),
+    permission=Permission.objects.get(
+        content_type__app_label="wagtailcore", codename="change_page"
+    ),
 )
 permission.save()
 ```
@@ -11848,15 +11892,16 @@ from django.urls import reverse
 from wagtail import hooks
 from wagtail.admin.menu import MenuItem
 
-@hooks.register('register_admin_menu_item')
+
+@hooks.register("register_admin_menu_item")
 def register_frank_menu_item():
-  return MenuItem(
-    'Frank',
-    reverse('frank'),
-    icon_name='folder-inverse',
-    order=10000,
-    classname="highlight-menu" # not classnames=...
-  )
+    return MenuItem(
+        "Frank",
+        reverse("frank"),
+        icon_name="folder-inverse",
+        order=10000,
+        classname="highlight-menu",  # not classnames=...
+    )
 ```
 
 ### Edit and delete URLs in `ModelViewSet` changed to allow non-integer primary keys
@@ -12109,16 +12154,19 @@ from wagtail.images.formats import Format, register_image_format
 
 
 class CustomImageFormat(Format):
-
     def image_to_html(self, image, alt_text, extra_attributes=None):
         # contrived example - pull out the class and render on outside element
-        classname = self.classname # not self.classnames
-        self.classname = "" # not self.classnames
+        classname = self.classname  # not self.classnames
+        self.classname = ""  # not self.classnames
         inner_html = super().image_to_html(image, alt_text, extra_attributes)
-        return format_html("<custom-image class='{}'>{}</custom-image>", classname, inner_html)
+        return format_html(
+            "<custom-image class='{}'>{}</custom-image>", classname, inner_html
+        )
 
 
-custom_format = CustomImageFormat('custom_example', 'Custom example', 'example-image object-fit', 'width-750')
+custom_format = CustomImageFormat(
+    "custom_example", "Custom example", "example-image object-fit", "width-750"
+)
 
 register_image_format(custom_format)
 ```
@@ -12149,12 +12197,11 @@ The `get_template` method on StreamField blocks now accepts a `value` argument i
 
 ```python
 # Old
-def get_template(self, context=None):
-    ...
+def get_template(self, context=None): ...
+
 
 # New
-def get_template(self, value=None, context=None):
-    ...
+def get_template(self, value=None, context=None): ...
 ```
 
 
@@ -12596,12 +12643,13 @@ This can be disabled by setting `copy_view_enabled = False`, for example.
 ```python
 class PersonViewSet(SnippetViewSet):
     model = Person
-    #...
+    # ...
     copy_view_enabled = False
+
 
 class PersonViewSet(ModelViewSet):
     model = Person
-    #...
+    # ...
     copy_view_enabled = False
 ```
 
@@ -12627,6 +12675,7 @@ Previously, the widget had to be explicitly added.
 from wagtail.admin.widgets.slug import SlugInput
 # ... other imports
 
+
 class MyPage(Page):
     promote_panels = [
         FieldPanel("slug", widget=SlugInput),
@@ -12638,6 +12687,7 @@ Keeping the widget as above is fine, but will no longer be required. The JavaScr
 
 ```python
 # ... imports
+
 
 class MyPage(Page):
     promote_panels = [
@@ -12652,9 +12702,10 @@ If you do not want this for some reason, you will now need to declare a differen
 from django.forms.widgets import TextInput
 # ... other imports
 
+
 class MyPage(Page):
     promote_panels = [
-        FieldPanel("slug", widget=TextInput), # use a plain text field
+        FieldPanel("slug", widget=TextInput),  # use a plain text field
         # ... other panels
     ]
 ```
@@ -12747,11 +12798,11 @@ from django.forms import Media, widgets
 class CustomRichTextArea(widgets.Textarea):
     def build_attrs(self, *args, **kwargs):
         attrs = super().build_attrs(*args, **kwargs)
-        attrs['data-controller'] = 'custom-editor'
+        attrs["data-controller"] = "custom-editor"
 
     @property
     def media(self):
-        return Media(js=["vendor/custom-editor.js","js/custom-editor-controller.js"])
+        return Media(js=["vendor/custom-editor.js", "js/custom-editor-controller.js"])
 ```
 
 ```javascript
@@ -13042,13 +13093,13 @@ The undocumented `user_listing_buttons` template tag has been deprecated and wil
 The undocumented `wagtailusers_groups:users` URL pattern has been deprecated and will be removed in a future release. If you are using `reverse` with this URL pattern name, you should update your code to use the `wagtailusers_users:index` URL pattern name and the group ID as the `group` query parameter. For example:
 
 ```python
-reverse('wagtailusers_groups:users', args=[group.id])
+reverse("wagtailusers_groups:users", args=[group.id])
 ```
 
 should be updated to:
 
 ```python
-reverse('wagtailusers_users:index') + f'?group={group.id}'
+reverse("wagtailusers_users:index") + f"?group={group.id}"
 ```
 
 The corresponding `wagtailusers_groups:users_results` URL pattern has been removed as part of this change.
@@ -13080,6 +13131,7 @@ It’s recommended that usage of this global is removed in any customizations or
 ```python
 # .../wagtail_hooks.py
 
+
 @hooks.register("insert_editor_js")
 def editor_js():
     return format_html(
@@ -13101,6 +13153,7 @@ Remove the `insert_editor_js` hook usage and instead pass the data needed via th
 
 from django.urls import reverse_lazy
 
+
 @hooks.register("register_rich_text_features")
 def register_my_custom_feature(features):
     # features.register_link_type...
@@ -13121,7 +13174,6 @@ def register_my_custom_feature(features):
             js=["..."],
         ),
     )
-
 ```
 
 #### Overriding existing `chooserUrls` values
@@ -13136,9 +13188,12 @@ from django.urls import reverse_lazy
 
 from wagtail import hooks
 
+
 @hooks.register("register_rich_text_features")
 def override_embed_feature_url(features):
-    features.plugins_by_editor["draftail"]["embed"].data["chooserUrls"]["embedsChooser"] = reverse_lazy("my_embeds:chooser")
+    features.plugins_by_editor["draftail"]["embed"].data["chooserUrls"][
+        "embedsChooser"
+    ] = reverse_lazy("my_embeds:chooser")
 ```
 
 ### Deprecation of `window.initBlockWidget` to initialize a StreamField block
@@ -13196,6 +13251,7 @@ If this was required for slug field behavior, it’s recommended that the `SlugI
 ```python
 from wagtail.admin.widgets.slug import SlugInput
 # ... other imports
+
 
 class MyPage(Page):
     promote_panels = [
@@ -13426,11 +13482,11 @@ Previous versions allowed passing a dict for `DISTRIBUTION_ID` within the `WAGTA
 
 ```python
 WAGTAILFRONTENDCACHE = {
-    'cloudfront': {
-        'BACKEND': 'wagtail.contrib.frontend_cache.backends.CloudfrontBackend',
-        'DISTRIBUTION_ID': {
-            'www.wagtail.org': 'your-distribution-id',
-            'www.madewithwagtail.org': 'other-distribution-id',
+    "cloudfront": {
+        "BACKEND": "wagtail.contrib.frontend_cache.backends.CloudfrontBackend",
+        "DISTRIBUTION_ID": {
+            "www.wagtail.org": "your-distribution-id",
+            "www.madewithwagtail.org": "other-distribution-id",
         },
     },
 }
@@ -13440,15 +13496,15 @@ should now be rewritten as:
 
 ```python
 WAGTAILFRONTENDCACHE = {
-    'mainsite': {
-        'BACKEND': 'wagtail.contrib.frontend_cache.backends.CloudfrontBackend',
-        'DISTRIBUTION_ID': 'your-distribution-id',
-        'HOSTNAMES': ['www.wagtail.org'],
+    "mainsite": {
+        "BACKEND": "wagtail.contrib.frontend_cache.backends.CloudfrontBackend",
+        "DISTRIBUTION_ID": "your-distribution-id",
+        "HOSTNAMES": ["www.wagtail.org"],
     },
-    'madewithwagtail': {
-        'BACKEND': 'wagtail.contrib.frontend_cache.backends.CloudfrontBackend',
-        'DISTRIBUTION_ID': 'other-distribution-id',
-        'HOSTNAMES': ['www.madewithwagtail.org'],
+    "madewithwagtail": {
+        "BACKEND": "wagtail.contrib.frontend_cache.backends.CloudfrontBackend",
+        "DISTRIBUTION_ID": "other-distribution-id",
+        "HOSTNAMES": ["www.madewithwagtail.org"],
     },
 }
 ```
@@ -13477,6 +13533,7 @@ Alternatively, if you wish to register the “view” permission without enablin
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 
+
 class FooViewSet(SnippetViewSet):
     def get_permissions_to_register(self):
         content_type = ContentType.objects.get_for_model(self.model)
@@ -13495,19 +13552,25 @@ Given the following custom user model:
 
 ```py
 class User(AbstractUser):
-    country = models.CharField(verbose_name='country', max_length=255)
-    status = models.ForeignKey(MembershipStatus, on_delete=models.SET_NULL, null=True, default=1)
+    country = models.CharField(verbose_name="country", max_length=255)
+    status = models.ForeignKey(
+        MembershipStatus, on_delete=models.SET_NULL, null=True, default=1
+    )
 ```
 
 The following custom forms:
 
 ```py
 class CustomUserEditForm(UserEditForm):
-    status = forms.ModelChoiceField(queryset=MembershipStatus.objects, required=True, label=_("Status"))
+    status = forms.ModelChoiceField(
+        queryset=MembershipStatus.objects, required=True, label=_("Status")
+    )
 
 
 class CustomUserCreationForm(UserCreationForm):
-    status = forms.ModelChoiceField(queryset=MembershipStatus.objects, required=True, label=_("Status"))
+    status = forms.ModelChoiceField(
+        queryset=MembershipStatus.objects, required=True, label=_("Status")
+    )
 ```
 
 And the following settings:
@@ -13524,7 +13587,9 @@ Change the custom forms to the following:
 
 ```py
 class CustomUserEditForm(UserEditForm):
-    status = forms.ModelChoiceField(queryset=MembershipStatus.objects, required=True, label=_("Status"))
+    status = forms.ModelChoiceField(
+        queryset=MembershipStatus.objects, required=True, label=_("Status")
+    )
 
     # Use ModelForm's automatic form fields generation for the model's `country` field,
     # but use an explicit custom form field for `status`.
@@ -13532,8 +13597,11 @@ class CustomUserEditForm(UserEditForm):
     class Meta(UserEditForm.Meta):
         fields = UserEditForm.Meta.fields | {"country", "status"}
 
+
 class CustomUserCreationForm(UserCreationForm):
-    status = forms.ModelChoiceField(queryset=MembershipStatus.objects, required=True, label=_("Status"))
+    status = forms.ModelChoiceField(
+        queryset=MembershipStatus.objects, required=True, label=_("Status")
+    )
 
     # Use ModelForm's automatic form fields generation for the model's `country` field,
     # but use an explicit custom form field for `status`.
@@ -14275,7 +14343,7 @@ Plain strings can now be used in panel definitions as a substitute for `FieldPan
 class MyPage(Page):
     body = RichTextField()
     content_panels = [
-        'body',
+        "body",
     ]
 ```
 
@@ -14493,7 +14561,7 @@ In previous releases, implementations of the [`construct_wagtail_userbar`](../re
 **Old**
 
 ```python
-@hooks.register('construct_wagtail_userbar')
+@hooks.register("construct_wagtail_userbar")
 def construct_wagtail_userbar(request, items):
     pass
 ```
@@ -14501,7 +14569,7 @@ def construct_wagtail_userbar(request, items):
 **New**
 
 ```python
-@hooks.register('construct_wagtail_userbar')
+@hooks.register("construct_wagtail_userbar")
 def construct_wagtail_userbar(request, items, page):
     pass
 ```
@@ -14950,9 +15018,7 @@ To strictly enforce requiredness on a field, including when saving as draft, you
 or
 
 ```python
-    content_panels = Page.content_panels + [
-        FieldPanel("subtitle", required_on_save=True)
-    ]
+content_panels = Page.content_panels + [FieldPanel("subtitle", required_on_save=True)]
 ```
 
 This option is enabled as standard for the `title` field of page models. It is also recommended to use this option for any fields that are used in the `__str__` representation of snippet models, so that these models always have a meaningful representation within listing views.
@@ -16485,21 +16551,22 @@ class CustomContentCheckerItem(ContentCheckerItem):
                 "id": "p-as-heading",
                 "options": {
                     "margins": [
-                        { "weight": 150 },
+                        {"weight": 150},
                     ],
                     "passLength": 1,
-                    "failLength": 0.5
+                    "failLength": 0.5,
                 },
             },
         )
         return checks
 
 
-@hooks.register('construct_wagtail_userbar')
+@hooks.register("construct_wagtail_userbar")
 def replace_userbar_content_checker(request, items, page):
     items[:] = [
         CustomContentCheckerItem(in_editor=item.in_editor)
-        if isinstance(item, ContentCheckerItem) else item
+        if isinstance(item, ContentCheckerItem)
+        else item
         for item in items
     ]
 ```
@@ -16625,11 +16692,12 @@ class CustomContentCheckerItem(ContentCheckerItem):
             return self.axe_run_only
 
 
-@hooks.register('construct_wagtail_userbar')
+@hooks.register("construct_wagtail_userbar")
 def replace_userbar_content_checker(request, items, page):
     items[:] = [
         CustomContentCheckerItem(in_editor=item.in_editor)
-        if isinstance(item, ContentCheckerItem) else item
+        if isinstance(item, ContentCheckerItem)
+        else item
         for item in items
     ]
 ```
@@ -16865,12 +16933,13 @@ You can now run searches and view results. However, the search currently only re
 # Add to the existing imports:
 from wagtail.search import index
 
+
 class BlogPage(Page):
     # Keep the existing parent_page_types, fields, methods and content_panels definitions, and add:
 
     search_fields = Page.search_fields + [
-        index.SearchField('intro'),
-        index.SearchField('body'),
+        index.SearchField("intro"),
+        index.SearchField("body"),
     ]
 ```
 
@@ -16915,15 +16984,14 @@ What follows is a settings reference which skips many boilerplate Django setting
 
 ```python
 MIDDLEWARE = [
-  'django.contrib.sessions.middleware.SessionMiddleware',
-  'django.middleware.common.CommonMiddleware',
-  'django.middleware.csrf.CsrfViewMiddleware',
-  'django.contrib.auth.middleware.AuthenticationMiddleware',
-  'django.contrib.messages.middleware.MessageMiddleware',
-  'django.middleware.clickjacking.XFrameOptionsMiddleware',
-  'django.middleware.security.SecurityMiddleware',
-
-  'wagtail.contrib.redirects.middleware.RedirectMiddleware',
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 ```
 
@@ -16937,30 +17005,26 @@ Wagtail provides a simple interface for adding arbitrary redirects to your site 
 
 ```python
 INSTALLED_APPS = [
-
-  'myapp',  # your own app
-
-  'wagtail.contrib.forms',
-  'wagtail.contrib.redirects',
-  'wagtail.embeds',
-  'wagtail.sites',
-  'wagtail.users',
-  'wagtail.snippets',
-  'wagtail.documents',
-  'wagtail.images',
-  'wagtail.search',
-  'wagtail.admin',
-  'wagtail',
-
-  'taggit',
-  'modelcluster',
-
-  'django.contrib.admin',
-  'django.contrib.auth',
-  'django.contrib.contenttypes',
-  'django.contrib.sessions',
-  'django.contrib.messages',
-  'django.contrib.staticfiles',
+    "myapp",  # your own app
+    "wagtail.contrib.forms",
+    "wagtail.contrib.redirects",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail.admin",
+    "wagtail",
+    "taggit",
+    "modelcluster",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
 ]
 ```
 
@@ -17033,17 +17097,14 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 urlpatterns = [
-    path('django-admin/', admin.site.urls),
-
-    path('admin/', include(wagtailadmin_urls)),
-    path('documents/', include(wagtaildocs_urls)),
-
+    path("django-admin/", admin.site.urls),
+    path("admin/", include(wagtailadmin_urls)),
+    path("documents/", include(wagtaildocs_urls)),
     # Optional URL for including your own vanilla Django urls/views
-    re_path(r'', include('myapp.urls')),
-
+    re_path(r"", include("myapp.urls")),
     # For anything not caught by a more specific rule above, hand over to
     # Wagtail's serving mechanism
-    re_path(r'', include(wagtail_urls)),
+    re_path(r"", include(wagtail_urls)),
 ]
 ```
 
@@ -17075,84 +17136,80 @@ DEBUG = True
 # Application definition
 
 INSTALLED_APPS = [
-    'myapp',
-
-    'wagtail.contrib.forms',
-    'wagtail.contrib.redirects',
-    'wagtail.embeds',
-    'wagtail.sites',
-    'wagtail.users',
-    'wagtail.snippets',
-    'wagtail.documents',
-    'wagtail.images',
-    'wagtail.search',
-    'wagtail.admin',
-    'wagtail',
-
-    'taggit',
-    'modelcluster',
-
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "myapp",
+    "wagtail.contrib.forms",
+    "wagtail.contrib.redirects",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail.admin",
+    "wagtail",
+    "taggit",
+    "modelcluster",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
 ]
 
 
 MIDDLEWARE = [
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-
-    'wagtail.contrib.redirects.middleware.RedirectMiddleware',
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
-ROOT_URLCONF = 'myproject.urls'
+ROOT_URLCONF = "myproject.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            PROJECT_DIR / 'templates',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [
+            PROJECT_DIR / "templates",
         ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'myproject.wsgi.application'
+WSGI_APPLICATION = "myproject.wsgi.application"
 
 # Database
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'myprojectdb',
-        'USER': 'postgres',
-        'PASSWORD': '',
-        'HOST': '',  # Set to empty string for localhost.
-        'PORT': '',  # Set to empty string for default.
-        'CONN_MAX_AGE': 600,  # number of seconds database connections should persist for
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "myprojectdb",
+        "USER": "postgres",
+        "PASSWORD": "",
+        "HOST": "",  # Set to empty string for localhost.
+        "PORT": "",  # Set to empty string for default.
+        "CONN_MAX_AGE": 600,  # number of seconds database connections should persist for
     }
 }
 
 # Internationalization
 
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
@@ -17161,19 +17218,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 
 STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 
 STATICFILES_DIRS = [
-    PROJECT_DIR / 'static',
+    PROJECT_DIR / "static",
 ]
 
-STATIC_ROOT = BASE_DIR / 'static'
-STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / "static"
+STATIC_URL = "/static/"
 
-MEDIA_ROOT = BASE_DIR / 'media'
-MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
 
 
 ADMINS = [
@@ -17183,17 +17240,17 @@ MANAGERS = ADMINS
 
 # Default to dummy email backend. Configure dev/production/local backend
 # as per https://docs.djangoproject.com/en/stable/topics/email/#email-backends
-EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 ALLOWED_HOSTS = []
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'change-me'
+SECRET_KEY = "change-me"
 
-EMAIL_SUBJECT_PREFIX = '[Wagtail] '
+EMAIL_SUBJECT_PREFIX = "[Wagtail] "
 
-INTERNAL_IPS = ('127.0.0.1', '10.0.2.2')
+INTERNAL_IPS = ("127.0.0.1", "10.0.2.2")
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -17201,27 +17258,23 @@ INTERNAL_IPS = ('127.0.0.1', '10.0.2.2')
 # See https://docs.djangoproject.com/en/stable/topics/logging for
 # more details on how to customize your logging configuration.
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
+    "handlers": {
+        "mail_admins": {
+            "level": "ERROR",
+            "filters": ["require_debug_false"],
+            "class": "django.utils.log.AdminEmailHandler",
         }
     },
-    'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        }
-    },
-    'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
+    "loggers": {
+        "django.request": {
+            "handlers": ["mail_admins"],
+            "level": "ERROR",
+            "propagate": True,
         },
-    }
+    },
 }
 
 
@@ -17229,15 +17282,15 @@ LOGGING = {
 
 # This is the human-readable name of your Wagtail install
 # which welcomes users upon login to the Wagtail admin.
-WAGTAIL_SITE_NAME = 'My Project'
+WAGTAIL_SITE_NAME = "My Project"
 
 # Replace the search backend
-#WAGTAILSEARCH_BACKENDS = {
+# WAGTAILSEARCH_BACKENDS = {
 #  'default': {
 #    'BACKEND': 'wagtail.search.backends.elasticsearch8',
 #    'INDEX': 'myapp'
 #  }
-#}
+# }
 
 # Wagtail email notifications from address
 # WAGTAILADMIN_NOTIFICATION_FROM_EMAIL = 'wagtail@myhost.io'
@@ -17249,7 +17302,18 @@ WAGTAIL_SITE_NAME = 'My Project'
 # This can be omitted to allow all files, but note that this may present a security risk
 # if untrusted users are allowed to upload files -
 # see https://docs.wagtail.org/en/stable/advanced_topics/deploying.html#user-uploaded-files
-WAGTAILDOCS_EXTENSIONS = ['csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'txt', 'xlsx', 'zip']
+WAGTAILDOCS_EXTENSIONS = [
+    "csv",
+    "docx",
+    "key",
+    "odt",
+    "pdf",
+    "pptx",
+    "rtf",
+    "txt",
+    "xlsx",
+    "zip",
+]
 
 # Reverse the default case-sensitive handling of tags
 TAGGIT_CASE_INSENSITIVE = True
@@ -17271,24 +17335,29 @@ from wagtail.documents import urls as wagtaildocs_urls
 
 
 urlpatterns = [
-    path('django-admin/', admin.site.urls),
-
-    path('admin/', include(wagtailadmin_urls)),
-    path('documents/', include(wagtaildocs_urls)),
-
+    path("django-admin/", admin.site.urls),
+    path("admin/", include(wagtailadmin_urls)),
+    path("documents/", include(wagtaildocs_urls)),
     # For anything not caught by a more specific rule above, hand over to
     # Wagtail's serving mechanism
-    re_path(r'', include(wagtail_urls)),
+    re_path(r"", include(wagtail_urls)),
 ]
 
 
 if settings.DEBUG:
     from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
-    urlpatterns += staticfiles_urlpatterns() # tell gunicorn where static files are in dev mode
-    urlpatterns += static(settings.MEDIA_URL + 'images/', document_root=settings.MEDIA_ROOT / 'images')
+    urlpatterns += (
+        staticfiles_urlpatterns()
+    )  # tell gunicorn where static files are in dev mode
+    urlpatterns += static(
+        settings.MEDIA_URL + "images/", document_root=settings.MEDIA_ROOT / "images"
+    )
     urlpatterns += [
-        path('favicon.ico', RedirectView.as_view(url=settings.STATIC_URL + 'myapp/images/favicon.ico'))
+        path(
+            "favicon.ico",
+            RedirectView.as_view(url=settings.STATIC_URL + "myapp/images/favicon.ico"),
+        )
     ]
 ```
 
@@ -17338,7 +17407,6 @@ class CustomModelReport(ReportView):
 
     def get_queryset(self):
         return MySnippetModel.objects.all()
-
 ```
 
 ### Other attributes
@@ -17407,7 +17475,7 @@ and specific type of any pages. For our example, we might want to know when the 
 The `list_export` attribute also supports dotted paths to access nested attributes. For example, this will export the `name` attribute of the related `author` object:
 
 ```python
-list_export = ['author.name']
+list_export = ["author.name"]
 ```
 
 ### export_headings
@@ -17448,6 +17516,7 @@ We will register this view using the `unpublished_changes_report` name for the U
 ```python
 # <project>/views.py
 from wagtail.admin.views.reports import PageReportView
+
 
 class UnpublishedChangesReportView(PageReportView):
     index_url_name = "unpublished_changes_report"
@@ -17504,16 +17573,31 @@ from wagtail import hooks
 
 from .views import UnpublishedChangesReportView
 
-@hooks.register('register_reports_menu_item')
-def register_unpublished_changes_report_menu_item():
-    return AdminOnlyMenuItem("Pages with unpublished changes", reverse('unpublished_changes_report'), icon_name=UnpublishedChangesReportView.header_icon, order=700)
 
-@hooks.register('register_admin_urls')
+@hooks.register("register_reports_menu_item")
+def register_unpublished_changes_report_menu_item():
+    return AdminOnlyMenuItem(
+        "Pages with unpublished changes",
+        reverse("unpublished_changes_report"),
+        icon_name=UnpublishedChangesReportView.header_icon,
+        order=700,
+    )
+
+
+@hooks.register("register_admin_urls")
 def register_unpublished_changes_report_url():
     return [
-        path('reports/unpublished-changes/', UnpublishedChangesReportView.as_view(), name='unpublished_changes_report'),
+        path(
+            "reports/unpublished-changes/",
+            UnpublishedChangesReportView.as_view(),
+            name="unpublished_changes_report",
+        ),
         # Add a results-only view to add support for AJAX-based filtering
-        path('reports/unpublished-changes/results/', UnpublishedChangesReportView.as_view(results_only=True), name='unpublished_changes_report_results'),
+        path(
+            "reports/unpublished-changes/results/",
+            UnpublishedChangesReportView.as_view(results_only=True),
+            name="unpublished_changes_report_results",
+        ),
     ]
 ```
 
@@ -17524,12 +17608,11 @@ Here, we use the `AdminOnlyMenuItem` class to ensure our report icon is only sho
 Even with the menu item hidden, it would still be possible for any user to visit the report’s URL directly, and so it is necessary to set up a permission restriction on the report view itself. This can be done by adding a `dispatch` method to the existing `UnpublishedChangesReportView` view:
 
 ```python
-
-    # add the below dispatch method to the existing UnpublishedChangesReportView view
-    def dispatch(self, request, *args, **kwargs):
-        if not self.request.user.is_superuser:
-            return permission_denied(request)
-        return super().dispatch(request, *args, **kwargs)
+# add the below dispatch method to the existing UnpublishedChangesReportView view
+def dispatch(self, request, *args, **kwargs):
+    if not self.request.user.is_superuser:
+        return permission_denied(request)
+    return super().dispatch(request, *args, **kwargs)
 ```
 
 ### The full code
@@ -17541,15 +17624,18 @@ from wagtail.admin.auth import permission_denied
 from wagtail.admin.views.reports import PageReportView
 from wagtail.models import Page
 
+
 class UnpublishedChangesReportView(PageReportView):
     index_url_name = "unpublished_changes_report"
     index_results_url_name = "unpublished_changes_report_results"
-    header_icon = 'doc-empty-inverse'
-    results_template_name = 'reports/unpublished_changes_report_results.html'
+    header_icon = "doc-empty-inverse"
+    results_template_name = "reports/unpublished_changes_report_results.html"
     page_title = "Pages with unpublished changes"
 
-    list_export = PageReportView.list_export + ['last_published_at']
-    export_headings = dict(last_published_at='Last Published', **PageReportView.export_headings)
+    list_export = PageReportView.list_export + ["last_published_at"]
+    export_headings = dict(
+        last_published_at="Last Published", **PageReportView.export_headings
+    )
 
     def get_queryset(self):
         return Page.objects.filter(has_unpublished_changes=True)
@@ -17570,15 +17656,30 @@ from wagtail import hooks
 
 from .views import UnpublishedChangesReportView
 
-@hooks.register('register_reports_menu_item')
-def register_unpublished_changes_report_menu_item():
-    return AdminOnlyMenuItem("Pages with unpublished changes", reverse('unpublished_changes_report'), icon_name=UnpublishedChangesReportView.header_icon, order=700)
 
-@hooks.register('register_admin_urls')
+@hooks.register("register_reports_menu_item")
+def register_unpublished_changes_report_menu_item():
+    return AdminOnlyMenuItem(
+        "Pages with unpublished changes",
+        reverse("unpublished_changes_report"),
+        icon_name=UnpublishedChangesReportView.header_icon,
+        order=700,
+    )
+
+
+@hooks.register("register_admin_urls")
 def register_unpublished_changes_report_url():
     return [
-        path('reports/unpublished-changes/', UnpublishedChangesReportView.as_view(), name='unpublished_changes_report'),
-        path('reports/unpublished-changes/results/', UnpublishedChangesReportView.as_view(results_only=True), name='unpublished_changes_report_results'),
+        path(
+            "reports/unpublished-changes/",
+            UnpublishedChangesReportView.as_view(),
+            name="unpublished_changes_report",
+        ),
+        path(
+            "reports/unpublished-changes/results/",
+            UnpublishedChangesReportView.as_view(results_only=True),
+            name="unpublished_changes_report_results",
+        ),
     ]
 ```
 
@@ -17624,12 +17725,9 @@ You need to create a `templates/wagtailadmin/` folder within one of your apps - 
 ```python
 INSTALLED_APPS = (
     # ...
-
-    'dashboard',
-
-    'wagtail',
-    'wagtail.admin',
-
+    "dashboard",
+    "wagtail",
+    "wagtail.admin",
     # ...
 )
 ```
@@ -17711,7 +17809,7 @@ To render a user avatar other than the one sourced from the `UserProfile` model 
 For example, you might have an avatar on a `Profile` model in your own application that is keyed to the `auth.User` model in the familiar pattern. In that case, you could register your hook as the in following example, and the Wagtail admin avatar will be replaced with your own `Profile` avatar accordingly.
 
 ```python
-@hooks.register('get_avatar_url')
+@hooks.register("get_avatar_url")
 def get_profile_avatar(user, size):
     return user.profile.avatar
 ```
@@ -17955,10 +18053,10 @@ from wagtail import hooks
 from .views import index
 
 
-@hooks.register('register_admin_urls')
+@hooks.register("register_admin_urls")
 def register_calendar_url():
     return [
-        path('calendar/', index, name='calendar'),
+        path("calendar/", index, name="calendar"),
     ]
 ```
 
@@ -17980,14 +18078,19 @@ import calendar
 from django.shortcuts import render
 from django.utils import timezone
 
+
 def index(request):
     current_year = timezone.now().year
     calendar_html = calendar.HTMLCalendar().formatyear(current_year)
 
-    return render(request, 'wagtailcalendar/index.html', {
-        'current_year': current_year,
-        'calendar_html': calendar_html,
-    })
+    return render(
+        request,
+        "wagtailcalendar/index.html",
+        {
+            "current_year": current_year,
+            "calendar_html": calendar_html,
+        },
+    )
 ```
 
 Now create a `templates/wagtailcalendar/` folder within the `wagtailcalendar` app, containing `index.html` and `calendar.css` as follows:
@@ -18043,16 +18146,16 @@ from wagtail import hooks
 from .views import index
 
 
-@hooks.register('register_admin_urls')
+@hooks.register("register_admin_urls")
 def register_calendar_url():
     return [
-        path('calendar/', index, name='calendar'),
+        path("calendar/", index, name="calendar"),
     ]
 
 
-@hooks.register('register_admin_menu_item')
+@hooks.register("register_admin_menu_item")
 def register_calendar_menu_item():
-    return MenuItem('Calendar', reverse('calendar'), icon_name='date')
+    return MenuItem("Calendar", reverse("calendar"), icon_name="date")
 ```
 
 A ‘Calendar’ item will now appear in the menu.
@@ -18073,20 +18176,29 @@ def index(request):
     current_year = timezone.now().year
     calendar_html = calendar.HTMLCalendar().formatyear(current_year)
 
-    return render(request, 'wagtailcalendar/index.html', {
-        'current_year': current_year,
-        'calendar_html': calendar_html,
-    })
+    return render(
+        request,
+        "wagtailcalendar/index.html",
+        {
+            "current_year": current_year,
+            "calendar_html": calendar_html,
+        },
+    )
+
 
 def month(request):
     current_year = timezone.now().year
     current_month = timezone.now().month
     calendar_html = calendar.HTMLCalendar().formatmonth(current_year, current_month)
 
-    return render(request, 'wagtailcalendar/index.html', {
-        'current_year': current_year,
-        'calendar_html': calendar_html,
-    })
+    return render(
+        request,
+        "wagtailcalendar/index.html",
+        {
+            "current_year": current_year,
+            "calendar_html": calendar_html,
+        },
+    )
 ```
 
 We also need to update `wagtail_hooks.py` to register our URL in the admin interface:
@@ -18098,11 +18210,11 @@ from wagtail import hooks
 from .views import index, month
 
 
-@hooks.register('register_admin_urls')
+@hooks.register("register_admin_urls")
 def register_calendar_url():
     return [
-        path('calendar/', index, name='calendar'),
-        path('calendar/month/', month, name='calendar-month'),
+        path("calendar/", index, name="calendar"),
+        path("calendar/month/", month, name="calendar-month"),
     ]
 ```
 
@@ -18122,22 +18234,24 @@ from wagtail import hooks
 from .views import index, month
 
 
-@hooks.register('register_admin_urls')
+@hooks.register("register_admin_urls")
 def register_calendar_url():
     return [
-        path('calendar/', index, name='calendar'),
-        path('calendar/month/', month, name='calendar-month'),
+        path("calendar/", index, name="calendar"),
+        path("calendar/month/", month, name="calendar-month"),
     ]
 
 
-@hooks.register('register_admin_menu_item')
+@hooks.register("register_admin_menu_item")
 def register_calendar_menu_item():
-    submenu = Menu(items=[
-        MenuItem('Calendar', reverse('calendar'), icon_name='date'),
-        MenuItem('Current month', reverse('calendar-month'), icon_name='date'),
-    ])
+    submenu = Menu(
+        items=[
+            MenuItem("Calendar", reverse("calendar"), icon_name="date"),
+            MenuItem("Current month", reverse("calendar-month"), icon_name="date"),
+        ]
+    )
 
-    return SubmenuMenuItem('Calendar', submenu, icon_name='date')
+    return SubmenuMenuItem("Calendar", submenu, icon_name="date")
 ```
 
 The ‘Calendar’ item will now appear as a group of menu items. When expanded, the ‘Calendar’ item will now show our two custom menu items.
@@ -18157,6 +18271,7 @@ from wagtail.admin.viewsets.base import ViewSet
 
 ...
 
+
 class CalendarViewSet(ViewSet):
     add_to_admin_menu = True
     menu_label = "Calendar"
@@ -18171,11 +18286,10 @@ class CalendarViewSet(ViewSet):
             # and reverse-resolved with the name `calendar:index`.
             # This first URL will be used for the menu item, but it can be
             # customized by overriding the `menu_url` property.
-            path('', index, name='index'),
-
+            path("", index, name="index"),
             # This can be accessed at `/admin/calendar/month/`
             # and reverse-resolved with the name `calendar:month`.
-            path('month/', month, name='month'),
+            path("month/", month, name="month"),
         ]
 ```
 
@@ -18183,6 +18297,7 @@ Then, remove the `register_admin_urls` and `register_admin_menu_item` hooks in `
 
 ```python
 from .views import CalendarViewSet
+
 
 @hooks.register("register_admin_viewset")
 def register_viewset():
@@ -18204,6 +18319,7 @@ from wagtail.admin.viewsets.base import ViewSetGroup
 
 ...
 
+
 class AgendaViewSetGroup(ViewSetGroup):
     menu_label = "Agenda"
     menu_icon = "table"
@@ -18215,6 +18331,7 @@ Then, remove `add_to_admin_menu` from the viewsets and update the `register_admi
 
 ```python
 from .views import AgendaViewSetGroup
+
 
 @hooks.register("register_admin_viewset")
 def register_viewset():
@@ -18256,6 +18373,7 @@ def register_viewset():
     # The viewset needs to be registered on its own, as it is not part of
     # AgendaViewSetGroup.items. However, it will be added to the Agenda menu group.
     return TimelineViewSet()
+
 
 @hooks.register("register_agenda_submenu")
 def register_calendar_menu_item():
@@ -18403,9 +18521,8 @@ the default URL from Wagtail, or it will try to find `/amp` as a page:
 
 urlpatterns += [
     # Add this line just before the default ``include(wagtail_urls)`` line
-    path('amp/', include(wagtail_urls)),
-
-    path('', include(wagtail_urls)),
+    path("amp/", include(wagtail_urls)),
+    path("", include(wagtail_urls)),
 ]
 ```
 
@@ -18454,6 +18571,7 @@ from asgiref.local import Local
 
 _amp_mode_active = Local()
 
+
 @contextmanager
 def activate_amp_mode():
     """
@@ -18465,11 +18583,12 @@ def activate_amp_mode():
     finally:
         del _amp_mode_active.value
 
+
 def amp_mode_active():
     """
     Returns True if AMP mode is currently active
     """
-    return hasattr(_amp_mode_active, 'value')
+    return hasattr(_amp_mode_active, "value")
 ```
 
 This module defines two functions:
@@ -18488,6 +18607,7 @@ from django.template.response import SimpleTemplateResponse
 from wagtail.views import serve as wagtail_serve
 
 from .amp_utils import activate_amp_mode
+
 
 def serve(request, path):
     with activate_amp_mode():
@@ -18510,9 +18630,7 @@ from wagtail.urls import serve_pattern
 
 from . import amp_views
 
-urlpatterns = [
-    re_path(serve_pattern, amp_views.serve, name='wagtail_amp_serve')
-]
+urlpatterns = [re_path(serve_pattern, amp_views.serve, name="wagtail_amp_serve")]
 ```
 
 Finally, we need to update the project’s main `urls.py` to use this new URLs
@@ -18525,9 +18643,8 @@ from myapp import amp_urls as wagtail_amp_urls
 
 urlpatterns += [
     # Change this line to point at your amp_urls instead of Wagtail's urls
-    path('amp/', include(wagtail_amp_urls)),
-
-    re_path(r'', include(wagtail_urls)),
+    path("amp/", include(wagtail_amp_urls)),
+    re_path(r"", include(wagtail_urls)),
 ]
 ```
 
@@ -18547,9 +18664,10 @@ following:
 
 from .amp_utils import amp_mode_active
 
+
 def amp(request):
     return {
-        'amp_mode_active': amp_mode_active(),
+        "amp_mode_active": amp_mode_active(),
     }
 ```
 
@@ -18599,13 +18717,13 @@ import os.path
 
 ...
 
-class PageAMPTemplateMixin:
 
+class PageAMPTemplateMixin:
     @property
     def amp_template(self):
         # Get the default template name and insert `_amp` before the extension
         name, ext = os.path.splitext(self.template)
-        return name + '_amp' + ext
+        return name + "_amp" + ext
 
     def get_template(self, request):
         if amp_mode_active():
@@ -18621,8 +18739,8 @@ Now add this mixin to any page model, for example:
 
 from .amp_utils import PageAMPTemplateMixin
 
-class MyPageModel(PageAMPTemplateMixin, Page):
-    ...
+
+class MyPageModel(PageAMPTemplateMixin, Page): ...
 ```
 
 When AMP mode is active, the template at `app_label/mypagemodel_amp.html`
@@ -18636,8 +18754,9 @@ If you have a different naming convention, you can override the
 
 from .amp_utils import PageAMPTemplateMixin
 
+
 class MyPageModel(PageAMPTemplateMixin, Page):
-    amp_template = 'my_custom_amp_template.html'
+    amp_template = "my_custom_amp_template.html"
 ```
 
 ## Overriding the `{% image %}` tag to output `<amp-img>` tags
@@ -18661,15 +18780,16 @@ from wagtail.images.models import AbstractRendition
 
 ...
 
+
 class CustomRendition(AbstractRendition):
     def img_tag(self, extra_attributes):
         attrs = self.attrs_dict.copy()
         attrs.update(extra_attributes)
 
         if amp_mode_active():
-            return mark_safe('<amp-img{}>'.format(flatatt(attrs)))
+            return mark_safe("<amp-img{}>".format(flatatt(attrs)))
         else:
-            return mark_safe('<img{}>'.format(flatatt(attrs)))
+            return mark_safe("<img{}>".format(flatatt(attrs)))
 
     ...
 ```
@@ -18684,6 +18804,7 @@ from django.utils.safestring import mark_safe
 
 from wagtail.images.models import Rendition
 
+
 def img_tag(rendition, extra_attributes={}):
     """
     Replacement implementation for Rendition.img_tag
@@ -18694,9 +18815,10 @@ def img_tag(rendition, extra_attributes={}):
     attrs.update(extra_attributes)
 
     if amp_mode_active():
-        return mark_safe('<amp-img{}>'.format(flatatt(attrs)))
+        return mark_safe("<amp-img{}>".format(flatatt(attrs)))
     else:
-        return mark_safe('<img{}>'.format(flatatt(attrs)))
+        return mark_safe("<img{}>".format(flatatt(attrs)))
+
 
 Rendition.img_tag = img_tag
 ```
@@ -18782,23 +18904,20 @@ Adds an entry to the audit log.
 When adding logging, you need to log the action or actions that happen to the object. For example, if the user creates and publishes a page, there should be a “create” entry and a “publish” entry. Or, if the user copies a published page and chooses to keep it published, there should be a “copy” and a “publish” entry for the new page.
 
 ```python
+# mypackage/views.py
+from wagtail.log_actions import log
 
-    # mypackage/views.py
-    from wagtail.log_actions import log
 
-    def copy_for_translation(page):
-        # ...
-        page.copy(log_action='mypackage.copy_for_translation')
+def copy_for_translation(page):
+    # ...
+    page.copy(log_action="mypackage.copy_for_translation")
 
-    def my_method(request, page):
-        # ..
-        # Manually log an action
-        data = {
-            'make': {'it': 'so'}
-        }
-        log(
-            instance=page, action='mypackage.custom_action', data=data
-        )
+
+def my_method(request, page):
+    # ..
+    # Manually log an action
+    data = {"make": {"it": "so"}}
+    log(instance=page, action="mypackage.custom_action", data=data)
 ```
 
 ## Log actions provided by Wagtail
@@ -18848,11 +18967,11 @@ such as import scripts:
 ```python
 from wagtail.log_actions import LogContext
 
-with LogContext(user=User.objects.get(username='admin')):
+with LogContext(user=User.objects.get(username="admin")):
     # ...
-    log(page, 'wagtail.edit')
+    log(page, "wagtail.edit")
     # ...
-    log(page, 'wagtail.publish')
+    log(page, "wagtail.publish")
 ```
 
 All `log` calls within the block will then be attributed to the specified user, and assigned a common UUID. A log context is created automatically for views within the Wagtail admin.
@@ -18874,7 +18993,8 @@ model, and registering that model with the log registry’s `register_model` met
 from myapp.models import Sprocket, SprocketLogEntry
 # here SprocketLogEntry is a subclass of BaseLogEntry
 
-@hooks.register('register_log_actions')
+
+@hooks.register("register_log_actions")
 def sprocket_log_model(actions):
     actions.register_model(Sprocket, SprocketLogEntry)
 ```
@@ -18892,8 +19012,8 @@ You can configure which backend to use with the `WAGTAILSEARCH_BACKENDS` setting
 
 ```python
 WAGTAILSEARCH_BACKENDS = {
-    'default': {
-        'BACKEND': 'wagtail.search.backends.database',
+    "default": {
+        "BACKEND": "wagtail.search.backends.database",
     }
 }
 ```
@@ -18911,9 +19031,9 @@ The `AUTO_UPDATE` setting allows you to disable this on a per-index basis:
 
 ```python
 WAGTAILSEARCH_BACKENDS = {
-    'default': {
-        'BACKEND': ...,
-        'AUTO_UPDATE': False,
+    "default": {
+        "BACKEND": ...,
+        "AUTO_UPDATE": False,
     }
 }
 ```
@@ -18971,13 +19091,13 @@ The backend is configured in settings:
 
 ```python
 WAGTAILSEARCH_BACKENDS = {
-    'default': {
-        'BACKEND': 'wagtail.search.backends.elasticsearch9',
-        'URLS': ['https://localhost:9200'],
-        'INDEX_PREFIX': '',
-        'TIMEOUT': 5,
-        'OPTIONS': {},
-        'INDEX_SETTINGS': {},
+    "default": {
+        "BACKEND": "wagtail.search.backends.elasticsearch9",
+        "URLS": ["https://localhost:9200"],
+        "INDEX_PREFIX": "",
+        "TIMEOUT": 5,
+        "OPTIONS": {},
+        "INDEX_SETTINGS": {},
     }
 }
 ```
@@ -19094,13 +19214,13 @@ The backend is configured in settings:
 
 ```python
 WAGTAILSEARCH_BACKENDS = {
-    'default': {
-        'BACKEND': 'wagtail.search.backends.opensearch3',
-        'URLS': ['https://localhost:9200'],
-        'INDEX_PREFIX': 'wagtail_',
-        'TIMEOUT': 5,
-        'OPTIONS': {},
-        'INDEX_SETTINGS': {},
+    "default": {
+        "BACKEND": "wagtail.search.backends.opensearch3",
+        "URLS": ["https://localhost:9200"],
+        "INDEX_PREFIX": "wagtail_",
+        "TIMEOUT": 5,
+        "OPTIONS": {},
+        "INDEX_SETTINGS": {},
     }
 }
 ```
@@ -19134,19 +19254,21 @@ from elasticsearch import RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
 
 WAGTAILSEARCH_BACKENDS = {
-    'default': {
-        'BACKEND': 'wagtail.search.backends.opensearch3',
-        'INDEX_PREFIX': 'wagtail_',
-        'TIMEOUT': 5,
-        'HOSTS': [{
-            'host': 'YOURCLUSTER.REGION.es.amazonaws.com',
-            'port': 443,
-            'use_ssl': True,
-            'verify_certs': True,
-            'http_auth': AWS4Auth('ACCESS_KEY', 'SECRET_KEY', 'REGION', 'es'),
-        }],
-        'OPTIONS': {
-            'connection_class': RequestsHttpConnection,
+    "default": {
+        "BACKEND": "wagtail.search.backends.opensearch3",
+        "INDEX_PREFIX": "wagtail_",
+        "TIMEOUT": 5,
+        "HOSTS": [
+            {
+                "host": "YOURCLUSTER.REGION.es.amazonaws.com",
+                "port": 443,
+                "use_ssl": True,
+                "verify_certs": True,
+                "http_auth": AWS4Auth("ACCESS_KEY", "SECRET_KEY", "REGION", "es"),
+            }
+        ],
+        "OPTIONS": {
+            "connection_class": RequestsHttpConnection,
         },
     }
 }
@@ -19177,14 +19299,17 @@ A model field for representing long-form content as a sequence of content blocks
   * **collapsed** – When true, all blocks are initially collapsed.
 
 ```python
-body = StreamField([
-    ('heading', blocks.CharBlock(form_classname="title")),
-    ('paragraph', blocks.RichTextBlock()),
-    ('image', ImageBlock()),
-], block_counts={
-    'heading': {'min_num': 1},
-    'image': {'max_num': 5},
-})
+body = StreamField(
+    [
+        ("heading", blocks.CharBlock(form_classname="title")),
+        ("paragraph", blocks.RichTextBlock()),
+        ("image", ImageBlock()),
+    ],
+    block_counts={
+        "heading": {"min_num": 1},
+        "image": {"max_num": 5},
+    },
+)
 ```
 
 ## Block options and methods
@@ -19421,9 +19546,9 @@ Bases: [`FieldBlock`](#wagtail.blocks.FieldBlock)
 A single-line text input that validates a string against a regular expression. The regular expression used for validation must be supplied as the first argument, or as the keyword argument `regex`.
 
 ```python
-blocks.RegexBlock(regex=r'^[0-9]{3}$', error_messages={
-    'invalid': "Not a valid library card number."
-})
+blocks.RegexBlock(
+    regex=r"^[0-9]{3}$", error_messages={"invalid": "Not a valid library card number."}
+)
 ```
 
 The following keyword arguments are accepted in addition to the standard ones:
@@ -19578,10 +19703,13 @@ A dropdown select box for choosing one item from a list of choices. The followin
 `ChoiceBlock` can also be subclassed to produce a reusable block with the same list of choices everywhere it is used. For example, a block definition such as:
 
 ```python
-blocks.ChoiceBlock(choices=[
-    ('tea', 'Tea'),
-    ('coffee', 'Coffee'),
-], icon='cup')
+blocks.ChoiceBlock(
+    choices=[
+        ("tea", "Tea"),
+        ("coffee", "Coffee"),
+    ],
+    icon="cup",
+)
 ```
 
 Could be rewritten as a subclass of ChoiceBlock:
@@ -19589,12 +19717,12 @@ Could be rewritten as a subclass of ChoiceBlock:
 ```python
 class DrinksChoiceBlock(blocks.ChoiceBlock):
     choices = [
-        ('tea', 'Tea'),
-        ('coffee', 'Coffee'),
+        ("tea", "Tea"),
+        ("coffee", "Coffee"),
     ]
 
     class Meta:
-        icon = 'cup'
+        icon = "cup"
 ```
 
 `StreamField` definitions can then refer to `DrinksChoiceBlock()` in place of the full `ChoiceBlock` definition. Note that this only works when `choices` is a fixed list, not a callable.
@@ -19703,9 +19831,10 @@ A block which doesn’t have any fields, thus passes no particular values to its
 
 ```python
 blocks.StaticBlock(
-    admin_text='Latest posts: no configuration needed.',
+    admin_text="Latest posts: no configuration needed.",
     # or admin_text=mark_safe('<b>Latest posts</b>: no configuration needed.'),
-    template='latest_posts.html')
+    template="latest_posts.html",
+)
 ```
 
 `StaticBlock` can also be subclassed to produce a reusable block with the same configuration everywhere it is used:
@@ -19713,13 +19842,13 @@ blocks.StaticBlock(
 ```python
 class LatestPostsStaticBlock(blocks.StaticBlock):
     class Meta:
-        icon = 'user'
-        label = 'Latest posts'
-        admin_text = '{label}: configured elsewhere'.format(label=label)
-        template = 'latest_posts.html'
+        icon = "user"
+        label = "Latest posts"
+        admin_text = "{label}: configured elsewhere".format(label=label)
+        template = "latest_posts.html"
         form_attrs = {
-            'data-controller': 'magic',
-            'data-action': 'click->magic#abracadabra',
+            "data-controller": "magic",
+            "data-action": "click->magic#abracadabra",
         }
 ```
 
@@ -19730,15 +19859,23 @@ Bases: `BaseStructBlock`
 A block consisting of a fixed group of sub-blocks to be displayed together. Takes a list of `(name, block_definition)` tuples as its first argument:
 
 ```python
-body = StreamField([
-    # ...
-    ('person', blocks.StructBlock([
-        ('first_name', blocks.CharBlock()),
-        ('surname', blocks.CharBlock()),
-        ('photo', ImageBlock(required=False)),
-        ('biography', blocks.RichTextBlock()),
-    ], icon='user')),
-])
+body = StreamField(
+    [
+        # ...
+        (
+            "person",
+            blocks.StructBlock(
+                [
+                    ("first_name", blocks.CharBlock()),
+                    ("surname", blocks.CharBlock()),
+                    ("photo", ImageBlock(required=False)),
+                    ("biography", blocks.RichTextBlock()),
+                ],
+                icon="user",
+            ),
+        ),
+    ]
+)
 ```
 
 Alternatively, StructBlock can be subclassed to specify a reusable set of sub-blocks:
@@ -19751,7 +19888,7 @@ class PersonBlock(blocks.StructBlock):
     biography = blocks.RichTextBlock()
 
     class Meta:
-        icon = 'user'
+        icon = "user"
 ```
 
 The `Meta` class supports the properties `default`, `label`, `icon` and `template`, which have the same meanings as when they are passed to the block’s constructor.
@@ -19759,12 +19896,14 @@ The `Meta` class supports the properties `default`, `label`, `icon` and `templat
 This defines `PersonBlock()` as a block type for use in StreamField definitions:
 
 ```python
-body = StreamField([
-    ('heading', blocks.CharBlock(form_classname="title")),
-    ('paragraph', blocks.RichTextBlock()),
-    ('image', ImageBlock()),
-    ('person', PersonBlock()),
-])
+body = StreamField(
+    [
+        ("heading", blocks.CharBlock(form_classname="title")),
+        ("paragraph", blocks.RichTextBlock()),
+        ("image", ImageBlock()),
+        ("person", PersonBlock()),
+    ]
+)
 ```
 
 The following additional options are available as either keyword arguments or Meta class attributes:
@@ -19791,22 +19930,33 @@ Bases: [`Block`](#wagtail.blocks.Block)
 A block consisting of many sub-blocks, all of the same type. The editor can add an unlimited number of sub-blocks, and re-order and delete them. Takes the definition of the sub-block as its first argument:
 
 ```python
-body = StreamField([
-    # ...
-    ('ingredients_list', blocks.ListBlock(blocks.CharBlock(label="Ingredient"))),
-])
+body = StreamField(
+    [
+        # ...
+        ("ingredients_list", blocks.ListBlock(blocks.CharBlock(label="Ingredient"))),
+    ]
+)
 ```
 
 Any block type is valid as the sub-block type, including structural types:
 
 ```python
-body = StreamField([
-    # ...
-    ('ingredients_list', blocks.ListBlock(blocks.StructBlock([
-        ('ingredient', blocks.CharBlock()),
-        ('amount', blocks.CharBlock(required=False)),
-    ]))),
-])
+body = StreamField(
+    [
+        # ...
+        (
+            "ingredients_list",
+            blocks.ListBlock(
+                blocks.StructBlock(
+                    [
+                        ("ingredient", blocks.CharBlock()),
+                        ("amount", blocks.CharBlock(required=False)),
+                    ]
+                )
+            ),
+        ),
+    ]
+)
 ```
 
 The following additional options are available as either keyword arguments or Meta class attributes:
@@ -19826,20 +19976,30 @@ Bases: `BaseStreamBlock`
 A block consisting of a sequence of sub-blocks of different types, which can be mixed and reordered at will. Used as the overall mechanism of the StreamField itself, but can also be nested or used within other structural block types. Takes a list of `(name, block_definition)` tuples as its first argument:
 
 ```python
-body = StreamField([
-    # ...
-    ('carousel', blocks.StreamBlock(
-        [
-            ('image', ImageBlock()),
-            ('quotation', blocks.StructBlock([
-                ('text', blocks.TextBlock()),
-                ('author', blocks.CharBlock()),
-            ])),
-            ('video', EmbedBlock()),
-        ],
-        icon='cogs'
-    )),
-])
+body = StreamField(
+    [
+        # ...
+        (
+            "carousel",
+            blocks.StreamBlock(
+                [
+                    ("image", ImageBlock()),
+                    (
+                        "quotation",
+                        blocks.StructBlock(
+                            [
+                                ("text", blocks.TextBlock()),
+                                ("author", blocks.CharBlock()),
+                            ]
+                        ),
+                    ),
+                    ("video", EmbedBlock()),
+                ],
+                icon="cogs",
+            ),
+        ),
+    ]
+)
 ```
 
 As with StructBlock, the list of sub-blocks can also be provided as a subclass of StreamBlock:
@@ -19847,14 +20007,16 @@ As with StructBlock, the list of sub-blocks can also be provided as a subclass o
 ```python
 class CarouselBlock(blocks.StreamBlock):
     image = ImageBlock()
-    quotation = blocks.StructBlock([
-        ('text', blocks.TextBlock()),
-        ('author', blocks.CharBlock()),
-    ])
+    quotation = blocks.StructBlock(
+        [
+            ("text", blocks.TextBlock()),
+            ("author", blocks.CharBlock()),
+        ]
+    )
     video = EmbedBlock()
 
     class Meta:
-        icon='cogs'
+        icon = "cogs"
 ```
 
 Since `StreamField` accepts an instance of `StreamBlock` as a parameter, in place of a list of block types, this makes it possible to re-use a common set of block types without repeating definitions:
@@ -19862,7 +20024,7 @@ Since `StreamField` accepts an instance of `StreamBlock` as a parameter, in plac
 ```python
 class HomePage(Page):
     carousel = StreamField(
-        CarouselBlock(max_num=10, block_counts={'video': {'max_num': 2}}),
+        CarouselBlock(max_num=10, block_counts={"video": {"max_num": 2}}),
     )
 ```
 
@@ -19879,13 +20041,21 @@ class HomePage(Page):
   * **form_attrs** – A dictionary of additional attributes to set on the root element of this block as displayed in the editing interface.
 
 ```python
-body = StreamField([
-    # ...
-    ('event_promotions', blocks.StreamBlock([
-        ('hashtag', blocks.CharBlock()),
-        ('post_date', blocks.DateBlock()),
-    ], form_classname='event-promotions')),
-])
+body = StreamField(
+    [
+        # ...
+        (
+            "event_promotions",
+            blocks.StreamBlock(
+                [
+                    ("hashtag", blocks.CharBlock()),
+                    ("post_date", blocks.DateBlock()),
+                ],
+                form_classname="event-promotions",
+            ),
+        ),
+    ]
+)
 ```
 
 ```python
@@ -19894,7 +20064,7 @@ class EventPromotionsBlock(blocks.StreamBlock):
     post_date = blocks.DateBlock()
 
     class Meta:
-        form_classname = 'event-promotions'
+        form_classname = "event-promotions"
 ```
 
 ## Supporting components
@@ -19954,7 +20124,7 @@ All StreamField block types accept a `template` parameter to determine how they 
 ```python
 class HeadingBlock(blocks.CharBlock):
     class Meta:
-        template = 'blocks/heading.html'
+        template = "blocks/heading.html"
 ```
 
 where `blocks/heading.html` consists of:
@@ -19967,11 +20137,13 @@ This gives us a block that behaves as an ordinary text field, but wraps its outp
 
 ```python
 class BlogPage(Page):
-    body = StreamField([
-        # ...
-        ('heading', HeadingBlock()),
-        # ...
-    ])
+    body = StreamField(
+        [
+            # ...
+            ("heading", HeadingBlock()),
+            # ...
+        ]
+    )
 ```
 
 ```html+django
@@ -19999,7 +20171,7 @@ class EventBlock(blocks.StructBlock):
     # ...
 
     class Meta:
-        template = 'blocks/event.html'
+        template = "blocks/event.html"
 ```
 
 In `blocks/event.html`:
@@ -20041,11 +20213,14 @@ This limitation does not apply to StructBlock and StreamBlock values as children
 class EventBlock(blocks.StructBlock):
     heading = HeadingBlock()
     description = blocks.TextBlock()
-    guest_speaker = blocks.StructBlock([
-        ('first_name', blocks.CharBlock()),
-        ('surname', blocks.CharBlock()),
-        ('photo', ImageChooserBlock()),
-    ], template='blocks/speaker.html')
+    guest_speaker = blocks.StructBlock(
+        [
+            ("first_name", blocks.CharBlock()),
+            ("surname", blocks.CharBlock()),
+            ("photo", ImageChooserBlock()),
+        ],
+        template="blocks/speaker.html",
+    )
 ```
 
 then `{% include_block value.guest_speaker %}` within the EventBlock’s template will pick up the template rendering from `blocks/speaker.html` as intended.
@@ -20101,7 +20276,6 @@ from wagtail.images.formats import Format, register_image_format
 
 
 class CaptionedImageFormat(Format):
-
     def image_to_html(self, image, alt_text, extra_attributes=None):
 
         default_html = super().image_to_html(image, alt_text, extra_attributes)
@@ -20110,7 +20284,9 @@ class CaptionedImageFormat(Format):
 
 
 register_image_format(
-    CaptionedImageFormat('captioned_fullwidth', 'Full width captioned', 'bodytext-image', 'width-750')
+    CaptionedImageFormat(
+        "captioned_fullwidth", "Full width captioned", "bodytext-image", "width-750"
+    )
 )
 ```
 
@@ -20608,9 +20784,11 @@ from rest_framework.renderers import JSONRenderer
 
 # ...
 
+
 class CustomPagesAPIViewSet(PagesAPIViewSet):
     renderer_classes = [JSONRenderer]
     name = "pages"
+
 
 api_router.register_endpoint("pages", CustomPagesAPIViewSet)
 ```
@@ -20621,6 +20799,7 @@ Or changing the desired model to use for page results.
 from rest_framework.renderers import JSONRenderer
 
 # ...
+
 
 class PostPagesAPIViewSet(PagesAPIViewSet):
     model = models.BlogPage
@@ -20640,6 +20819,7 @@ class CustomFieldsAPIViewSet(PagesAPIViewSet):
     nested_default_fields = PagesAPIViewSet.nested_default_fields + ["seo_title"]
     name = "pages"
 
+
 api_router.register_endpoint("pages", CustomFieldsAPIViewSet)
 ```
 
@@ -20658,15 +20838,15 @@ from wagtail.images.api.v2.views import ImagesAPIViewSet
 from wagtail.documents.api.v2.views import DocumentsAPIViewSet
 
 # Create the router. "wagtailapi" is the URL namespace
-api_router = WagtailAPIRouter('wagtailapi')
+api_router = WagtailAPIRouter("wagtailapi")
 
 # Add the three endpoints using the "register_endpoint" method.
 # The first parameter is the name of the endpoint (such as pages, images). This
 # is used in the URL of the endpoint
 # The second parameter is the endpoint class that handles the requests
-api_router.register_endpoint('pages', PagesAPIViewSet)
-api_router.register_endpoint('images', ImagesAPIViewSet)
-api_router.register_endpoint('documents', DocumentsAPIViewSet)
+api_router.register_endpoint("pages", PagesAPIViewSet)
+api_router.register_endpoint("images", ImagesAPIViewSet)
+api_router.register_endpoint("documents", DocumentsAPIViewSet)
 ```
 
 Next, register the URLs so Django can route requests into the API:
@@ -20744,10 +20924,11 @@ If you have a FormBuilder page called `FormPage` this is an example of how you w
 ```python
 from wagtail.api import APIField
 
+
 class FormPage(AbstractEmailForm):
-    #...
+    # ...
     api_fields = [
-        APIField('form_fields'),
+        APIField("form_fields"),
     ]
 ```
 
@@ -20760,13 +20941,14 @@ JSON format. You can override the serializer for any field using the
 ```python
 from rest_framework.fields import DateField
 
+
 class BlogPage(Page):
     ...
 
     api_fields = [
         # Change the format of the published_date field to "Thursday 06 April 2017"
-        APIField('published_date', serializer=DateField(format='%A %d %B %Y')),
-        ...
+        APIField("published_date", serializer=DateField(format="%A %d %B %Y")),
+        ...,
     ]
 ```
 
@@ -20776,16 +20958,19 @@ to add API fields that have a different field name or no underlying field at all
 ```python
 from rest_framework.fields import DateField
 
+
 class BlogPage(Page):
     ...
 
     api_fields = [
         # Date in ISO8601 format (the default)
-        APIField('published_date'),
-
+        APIField("published_date"),
         # A separate published_date_display field with a different format
-        APIField('published_date_display', serializer=DateField(format='%A %d %B %Y', source='published_date')),
-        ...
+        APIField(
+            "published_date_display",
+            serializer=DateField(format="%A %d %B %Y", source="published_date"),
+        ),
+        ...,
     ]
 ```
 
@@ -20818,7 +21003,7 @@ class RichTextSerializer(CharField):
 We can then change our `api_fields` definition so `body` uses this new serializer:
 
 ```python
-APIField('body', serializer=RichTextSerializer()),
+(APIField("body", serializer=RichTextSerializer()),)
 ```
 
 <a id="api-v2-images"></a>
@@ -20836,16 +21021,19 @@ For example:
 from wagtail.api import APIField
 from wagtail.images.api.fields import ImageRenditionField
 
+
 class BlogPage(Page):
     ...
 
     api_fields = [
         # Adds information about the source image (eg, title) into the API
-        APIField('feed_image'),
-
+        APIField("feed_image"),
         # Adds a URL to a rendered thumbnail of the image to the API
-        APIField('feed_image_thumbnail', serializer=ImageRenditionField('fill-100x100', source='feed_image')),
-        ...
+        APIField(
+            "feed_image_thumbnail",
+            serializer=ImageRenditionField("fill-100x100", source="feed_image"),
+        ),
+        ...,
     ]
 ```
 
@@ -20890,16 +21078,19 @@ Common examples include:
 
 ```python
 # Square crop and fill
-APIField('thumbnail', serializer=ImageRenditionField('fill-300x300', source='image'))
+APIField("thumbnail", serializer=ImageRenditionField("fill-300x300", source="image"))
 
 # Maintain aspect ratio with maximum dimensions
-APIField('preview', serializer=ImageRenditionField('max-800x600', source='image'))
+APIField("preview", serializer=ImageRenditionField("max-800x600", source="image"))
 
 # Exact dimensions without cropping
-APIField('banner', serializer=ImageRenditionField('width-1200', source='image'))
+APIField("banner", serializer=ImageRenditionField("width-1200", source="image"))
 
 # Chained operations (multiple filters combined)
-APIField('compressed_thumb', serializer=ImageRenditionField('fill-200x200|jpegquality-60', source='image'))
+APIField(
+    "compressed_thumb",
+    serializer=ImageRenditionField("fill-200x200|jpegquality-60", source="image"),
+)
 ```
 
 The generated rendition URLs will be included in the API response, allowing clients to directly access optimized versions of images without additional processing.
@@ -20914,6 +21105,7 @@ To protect the access to your API, you can implement an [authentication](https:/
 from rest_framework.permissions import IsAuthenticated
 
 # ...
+
 
 class CustomPagesAPIViewSet(PagesAPIViewSet):
     name = "pages"
@@ -21135,7 +21327,7 @@ from wagtail.snippets.models import register_snippet
 
 # ... keep the definition of NavigationSettings and FooterText. Add FormField and FormPage:
 class FormField(AbstractFormField):
-    page = ParentalKey('FormPage', on_delete=models.CASCADE, related_name='form_fields')
+    page = ParentalKey("FormPage", on_delete=models.CASCADE, related_name="form_fields")
 
 
 class FormPage(AbstractEmailForm):
@@ -21144,16 +21336,21 @@ class FormPage(AbstractEmailForm):
 
     content_panels = AbstractEmailForm.content_panels + [
         FormSubmissionsPanel(),
-        FieldPanel('intro'),
-        InlinePanel('form_fields'),
-        FieldPanel('thank_you_text'),
-        MultiFieldPanel([
-            FieldRowPanel([
-                FieldPanel('from_address'),
-                FieldPanel('to_address'),
-            ]),
-            FieldPanel('subject'),
-        ], "Email"),
+        FieldPanel("intro"),
+        InlinePanel("form_fields"),
+        FieldPanel("thank_you_text"),
+        MultiFieldPanel(
+            [
+                FieldRowPanel(
+                    [
+                        FieldPanel("from_address"),
+                        FieldPanel("to_address"),
+                    ]
+                ),
+                FieldPanel("subject"),
+            ],
+            "Email",
+        ),
     ]
 ```
 
@@ -21276,6 +21473,7 @@ from wagtail.contrib.settings.models import (
     register_setting,
 )
 
+
 @register_setting
 class NavigationSettings(BaseGenericSetting):
     linkedin_url = models.URLField(verbose_name="LinkedIn URL", blank=True)
@@ -21324,7 +21522,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-
                 # Add this to register the _settings_ context processor:
                 "wagtail.contrib.settings.context_processors.settings",
             ],
@@ -21403,7 +21600,6 @@ from django.db import models
 from wagtail.admin.panels import (
     FieldPanel,
     MultiFieldPanel,
-
     # import PublishingPanel:
     PublishingPanel,
 )
@@ -21427,6 +21623,7 @@ from wagtail.contrib.settings.models import (
 # import register_snippet:
 from wagtail.snippets.models import register_snippet
 
+
 # ...keep the definition of the NavigationSettings model and add the FooterText model:
 @register_snippet
 class FooterText(
@@ -21436,7 +21633,6 @@ class FooterText(
     TranslatableMixin,
     models.Model,
 ):
-
     body = RichTextField()
 
     panels = [
@@ -21673,6 +21869,7 @@ class CaptionedImageBlock(StructBlock):
     image = ImageBlock(required=True)
     caption = CharBlock(required=False)
     attribution = CharBlock(required=False)
+
     class Meta:
         icon = "image"
         template = "base/blocks/captioned_image_block.html"
@@ -21695,6 +21892,7 @@ class HeadingBlock(StructBlock):
         blank=True,
         required=False,
     )
+
     class Meta:
         icon = "title"
         template = "base/blocks/heading_block.html"
@@ -21760,6 +21958,7 @@ Now create a `portfolio/blocks.py` file and import the block you intend to use a
 
 ```python
 from base.blocks import BaseStreamBlock
+
 
 class PortfolioStreamBlock(BaseStreamBlock):
     pass
@@ -21832,6 +22031,7 @@ from wagtail.images.blocks import ImageBlock
 
 from base.blocks import BaseStreamBlock
 
+
 # add CardBlock:
 class CardBlock(StructBlock):
     heading = CharBlock()
@@ -21842,6 +22042,7 @@ class CardBlock(StructBlock):
         icon = "form"
         template = "portfolio/blocks/card_block.html"
 
+
 # add FeaturedPostsBlock:
 class FeaturedPostsBlock(StructBlock):
     heading = CharBlock()
@@ -21851,6 +22052,7 @@ class FeaturedPostsBlock(StructBlock):
     class Meta:
         icon = "folder-open-inverse"
         template = "portfolio/blocks/featured_posts_block.html"
+
 
 class PortfolioStreamBlock(BaseStreamBlock):
     # delete the pass statement
@@ -21987,8 +22189,8 @@ Here is an example of how to add a new form that operates on the user model:
 from django import forms
 from django.contrib.auth import get_user_model
 
-class CustomSettingsForm(forms.ModelForm):
 
+class CustomSettingsForm(forms.ModelForm):
     class Meta:
         model = get_user_model()
         fields = [...]
@@ -22001,13 +22203,14 @@ from wagtail.admin.views.account import BaseSettingsPanel
 from wagtail import hooks
 from .forms import CustomSettingsForm
 
-@hooks.register('register_account_settings_panel')
+
+@hooks.register("register_account_settings_panel")
 class CustomSettingsPanel(BaseSettingsPanel):
-    name = 'custom'
+    name = "custom"
     title = "My custom settings"
     order = 500
     form_class = CustomSettingsForm
-    form_object = 'user'
+    form_object = "user"
 ```
 
 The attributes are as follows:
@@ -22030,8 +22233,8 @@ To add a panel that alters data on the user’s `wagtail.users.models.UserProfil
 from django import forms
 from wagtail.users.models import UserProfile
 
-class CustomProfileSettingsForm(forms.ModelForm):
 
+class CustomProfileSettingsForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = [...]
@@ -22044,13 +22247,14 @@ from wagtail.admin.views.account import BaseSettingsPanel
 from wagtail import hooks
 from .forms import CustomProfileSettingsForm
 
-@hooks.register('register_account_settings_panel')
+
+@hooks.register("register_account_settings_panel")
 class CustomSettingsPanel(BaseSettingsPanel):
-    name = 'custom'
+    name = "custom"
     title = "My custom settings"
     order = 500
     form_class = CustomProfileSettingsForm
-    form_object = 'profile'
+    form_object = "profile"
 ```
 
 ## Creating new tabs
@@ -22064,11 +22268,12 @@ from wagtail.admin.views.account import BaseSettingsPanel, SettingsTab
 from wagtail import hooks
 from .forms import CustomSettingsForm
 
-custom_tab = SettingsTab('custom', "Custom settings", order=300)
+custom_tab = SettingsTab("custom", "Custom settings", order=300)
 
-@hooks.register('register_account_settings_panel')
+
+@hooks.register("register_account_settings_panel")
 class CustomSettingsPanel(BaseSettingsPanel):
-    name = 'custom'
+    name = "custom"
     title = "My custom settings"
     tab = custom_tab
     order = 100
@@ -22092,13 +22297,14 @@ from wagtail.admin.views.account import BaseSettingsPanel
 from wagtail import hooks
 from .forms import CustomSettingsForm
 
-@hooks.register('register_account_settings_panel')
+
+@hooks.register("register_account_settings_panel")
 class CustomSettingsPanel(BaseSettingsPanel):
-    name = 'custom'
+    name = "custom"
     title = "My custom settings"
     order = 500
     form_class = CustomSettingsForm
-    template_name = 'myapp/admin/custom_settings.html'
+    template_name = "myapp/admin/custom_settings.html"
 ```
 
 ```html+django
@@ -22130,7 +22336,7 @@ from wagtail.admin.views.bulk_action import BulkAction
 from wagtail import hooks
 
 
-@hooks.register('register_bulk_action')
+@hooks.register("register_bulk_action")
 class CustomDeleteBulkAction(BulkAction):
     display_name = _("Delete")
     aria_label = _("Delete selected objects")
@@ -22142,7 +22348,10 @@ class CustomDeleteBulkAction(BulkAction):
     def execute_action(cls, objects, **kwargs):
         for obj in objects:
             do_something(obj)
-        return num_parent_objects, num_child_objects  # return the count of updated objects
+        return (
+            num_parent_objects,
+            num_child_objects,
+        )  # return the count of updated objects
 ```
 
 The attributes are as follows:
@@ -22221,7 +22430,7 @@ The `execute_action` classmethod is the only method that must be overridden for 
 @classmethod
 def execute_action(cls, objects, **kwargs):
     # the kwargs here is the output of the get_execution_context method
-    user = kwargs.get('user', None)
+    user = kwargs.get("user", None)
     num_parent_objects, num_child_objects = 0, 0
     # you could run the action per object or run them in bulk using django's bulk update and delete methods
     for obj in objects:
@@ -22236,7 +22445,7 @@ The `get_execution_context` method can be overridden to provide context to the `
 
 ```python
 def get_execution_context(self):
-    return { 'user': self.request.user }
+    return {"user": self.request.user}
 ```
 
 The `get_context_data` method can be overridden to pass additional context to the confirmation template.
@@ -22244,7 +22453,7 @@ The `get_context_data` method can be overridden to pass additional context to th
 ```python
 def get_context_data(self, **kwargs):
     context = super().get_context_data(**kwargs)
-    context['new_key'] = some_value
+    context["new_key"] = some_value
     return context
 ```
 
@@ -22252,14 +22461,18 @@ The `check_perm` method can be overridden to check if an object has some permiss
 
 ```python
 def check_perm(self, obj):
-    return obj.has_perm('some_perm')  # returns True or False
+    return obj.has_perm("some_perm")  # returns True or False
 ```
 
 The success message shown on the admin can be customized by overriding the `get_success_message` method.
 
 ```python
 def get_success_message(self, num_parent_objects, num_child_objects):
-    return _("{} objects, including {} child objects have been updated".format(num_parent_objects, num_child_objects))
+    return _(
+        "{} objects, including {} child objects have been updated".format(
+            num_parent_objects, num_child_objects
+        )
+    )
 ```
 
 ## Adding bulk actions to the page explorer
@@ -22273,9 +22486,8 @@ from wagtail.admin.views.pages.bulk_actions.page_bulk_action import PageBulkActi
 from wagtail import hooks
 
 
-@hooks.register('register_bulk_action')
-class CustomPageBulkAction(PageBulkAction):
-    ...
+@hooks.register("register_bulk_action")
+class CustomPageBulkAction(PageBulkAction): ...
 ```
 
 ## Adding bulk actions to the Images listing
@@ -22289,9 +22501,8 @@ from wagtail.images.views.bulk_actions.image_bulk_action import ImageBulkAction
 from wagtail import hooks
 
 
-@hooks.register('register_bulk_action')
-class CustomImageBulkAction(ImageBulkAction):
-    ...
+@hooks.register("register_bulk_action")
+class CustomImageBulkAction(ImageBulkAction): ...
 ```
 
 ## Adding bulk actions to the documents listing
@@ -22305,9 +22516,8 @@ from wagtail.documents.views.bulk_actions.document_bulk_action import DocumentBu
 from wagtail import hooks
 
 
-@hooks.register('register_bulk_action')
-class CustomDocumentBulkAction(DocumentBulkAction):
-    ...
+@hooks.register("register_bulk_action")
+class CustomDocumentBulkAction(DocumentBulkAction): ...
 ```
 
 ## Adding bulk actions to the user listing
@@ -22321,9 +22531,8 @@ from wagtail.users.views.bulk_actions.user_bulk_action import UserBulkAction
 from wagtail import hooks
 
 
-@hooks.register('register_bulk_action')
-class CustomUserBulkAction(UserBulkAction):
-    ...
+@hooks.register("register_bulk_action")
+class CustomUserBulkAction(UserBulkAction): ...
 ```
 
 <a id="wagtailsnippets-custom-bulk-actions"></a>
@@ -22352,7 +22561,7 @@ from wagtail.snippets.bulk_actions.snippet_bulk_action import SnippetBulkAction
 from wagtail import hooks
 
 
-@hooks.register('register_bulk_action')
+@hooks.register("register_bulk_action")
 class CustomSnippetBulkAction(SnippetBulkAction):
     models = [SnippetA, SnippetB]
     # ...
@@ -22381,17 +22590,14 @@ from django.db import models
 
 from wagtail.documents.models import Document, AbstractDocument
 
+
 class CustomDocument(AbstractDocument):
     # Custom field example:
-    source = models.CharField(
-        max_length=255,
-        blank=True,
-        null=True
-    )
+    source = models.CharField(max_length=255, blank=True, null=True)
 
     admin_form_fields = Document.admin_form_fields + (
         # Add all custom fields names to make them appear in the form:
-        'source',
+        "source",
     )
 ```
 
@@ -22400,7 +22606,7 @@ Then in your settings module:
 ```python
 # Ensure that you replace app_label with the app you placed your custom
 # model in.
-WAGTAILDOCS_DOCUMENT_MODEL = 'app_label.CustomDocument'
+WAGTAILDOCS_DOCUMENT_MODEL = "app_label.CustomDocument"
 ```
 
 #### NOTE
@@ -22439,7 +22645,7 @@ Here’s an example:
 
 ```python
 # settings.py
-WAGTAILDOCS_DOCUMENT_FORM_BASE = 'myapp.forms.CustomDocumentForm'
+WAGTAILDOCS_DOCUMENT_FORM_BASE = "myapp.forms.CustomDocumentForm"
 ```
 
 ```python
@@ -22447,6 +22653,7 @@ WAGTAILDOCS_DOCUMENT_FORM_BASE = 'myapp.forms.CustomDocumentForm'
 from django import forms
 
 from wagtail.documents.forms import BaseDocumentForm
+
 
 class CustomDocumentForm(BaseDocumentForm):
     terms_and_conditions = forms.BooleanField(
@@ -22551,9 +22758,12 @@ class CustomImage(AbstractImage):
     # To add a caption field:
     # caption = models.CharField(max_length=255, blank=True)
 
-    admin_form_fields = Image.admin_form_fields + (
-        # Then add the field names here to make them appear in the form:
-        # 'caption',
+    admin_form_fields = (
+        Image.admin_form_fields
+        + (
+            # Then add the field names here to make them appear in the form:
+            # 'caption',
+        )
     )
 
     @property
@@ -22562,11 +22772,14 @@ class CustomImage(AbstractImage):
         # Do not use image title which is typically derived from file name.
         return getattr(self, "description", None)
 
+
 class CustomRendition(AbstractRendition):
-    image = models.ForeignKey(CustomImage, on_delete=models.CASCADE, related_name='renditions')
+    image = models.ForeignKey(
+        CustomImage, on_delete=models.CASCADE, related_name="renditions"
+    )
 
     class Meta:
-       constraints = [
+        constraints = [
             models.UniqueConstraint(
                 fields=("image", "filter_spec", "focal_point_key"),
                 name="unique_rendition",
@@ -22577,7 +22790,7 @@ class CustomRendition(AbstractRendition):
 Then set the `WAGTAILIMAGES_IMAGE_MODEL` setting to point to it:
 
 ```python
-WAGTAILIMAGES_IMAGE_MODEL = 'images.CustomImage'
+WAGTAILIMAGES_IMAGE_MODEL = "images.CustomImage"
 ```
 
 ## Migrating from the builtin image model
@@ -22661,6 +22874,8 @@ class CustomPageViewSet(PageViewSet):
 
 
 custom_page_viewset = CustomPageViewSet()
+
+
 @hooks.register("register_admin_viewset")
 def register_custom_page_viewset():
     return custom_page_viewset
@@ -22714,6 +22929,8 @@ class BlogPageViewSet(PageViewSet):
 
 
 blog_page_viewset = BlogPageViewSet()
+
+
 @hooks.register("register_admin_viewset")
 def register_blog_page_viewset():
     return blog_page_viewset
@@ -22749,6 +22966,8 @@ class BlogPageListingViewSet(PageListingViewSet):
 
 
 blog_page_listing_viewset = BlogPageListingViewSet("blog_pages")
+
+
 @hooks.register("register_admin_viewset")
 def register_blog_page_listing_viewset():
     return blog_page_listing_viewset
@@ -22762,6 +22981,7 @@ from wagtail.admin.ui.tables import Column
 from wagtail.admin.viewsets.pages import PageListingViewSet
 
 from myapp.models import BlogPage
+
 
 class BlogPageListingViewSet(PageListingViewSet):
     # ...
@@ -22837,9 +23057,11 @@ from wagtail.models import Task
 
 
 class UserApprovalTask(Task):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=False
+    )
 
-    admin_form_fields = Task.admin_form_fields + ['user']
+    admin_form_fields = Task.admin_form_fields + ["user"]
 ```
 
 Any fields that shouldn’t be edited after task creation - for example, anything that would fundamentally change the meaning of the task in any history logs - can be added to `admin_form_readonly_on_edit_fields`. For example:
@@ -22853,13 +23075,17 @@ from wagtail.models import Task
 
 
 class UserApprovalTask(Task):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=False
+    )
 
-    admin_form_fields = Task.admin_form_fields + ['user']
+    admin_form_fields = Task.admin_form_fields + ["user"]
 
     # prevent editing of `user` after the task is created
     # by default, this attribute contains the 'name' field to prevent tasks from being renamed
-    admin_form_readonly_on_edit_fields = Task.admin_form_readonly_on_edit_fields + ['user']
+    admin_form_readonly_on_edit_fields = Task.admin_form_readonly_on_edit_fields + [
+        "user"
+    ]
 ```
 
 Wagtail will choose a default form widget to use based on the field type. But you can override the form widget using the `admin_form_widgets` attribute:
@@ -22875,12 +23101,14 @@ from .widgets import CustomUserChooserWidget
 
 
 class UserApprovalTask(Task):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=False
+    )
 
-    admin_form_fields = Task.admin_form_fields + ['user']
+    admin_form_fields = Task.admin_form_fields + ["user"]
 
     admin_form_widgets = {
-        'user': CustomUserChooserWidget,
+        "user": CustomUserChooserWidget,
     }
 ```
 
@@ -22915,9 +23143,11 @@ class UserApprovalTaskState(TaskState):
 
 
 class UserApprovalTask(Task):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=False
+    )
 
-    admin_form_fields = Task.admin_form_fields + ['user']
+    admin_form_fields = Task.admin_form_fields + ["user"]
 
     task_state_class = UserApprovalTaskState
 ```
@@ -22979,9 +23209,9 @@ For example:
 def get_actions(self, obj, user):
     if user == self.user:
         return [
-            ('approve', "Approve", False),
-            ('reject', "Reject", False),
-            ('cancel', "Cancel", False),
+            ("approve", "Approve", False),
+            ("reject", "Reject", False),
+            ("cancel", "Cancel", False),
         ]
     else:
         return []
@@ -23003,7 +23233,7 @@ For example, let’s say we wanted to add an additional option: canceling the en
 
 ```python
 def on_action(self, task_state, user, action_name):
-    if action_name == 'cancel':
+    if action_name == "cancel":
         return task_state.workflow_state.cancel(user=user)
     else:
         return super().on_action(task_state, user, workflow_state)
@@ -23019,7 +23249,9 @@ For example:
 def get_task_states_user_can_moderate(self, user, **kwargs):
     if user == self.user:
         # get all task states linked to the (base class of) current task
-        return TaskState.objects.filter(status=TaskState.STATUS_IN_PROGRESS, task=self.task_ptr)
+        return TaskState.objects.filter(
+            status=TaskState.STATUS_IN_PROGRESS, task=self.task_ptr
+        )
     else:
         return TaskState.objects.none()
 ```
@@ -23061,15 +23293,21 @@ class BaseUserApprovalTaskStateEmailNotifier(EmailNotificationMixin, Notifier):
         super().__init__((UserApprovalTaskState, TaskState))
 
     def can_handle(self, instance, **kwargs):
-        if super().can_handle(instance, **kwargs) and isinstance(instance.task.specific, UserApprovalTask):
+        if super().can_handle(instance, **kwargs) and isinstance(
+            instance.task.specific, UserApprovalTask
+        ):
             # Don't send notifications if a Task has been canceled and then resumed - when object was updated to a new revision
-            return not TaskState.objects.filter(workflow_state=instance.workflow_state, task=instance.task, status=TaskState.STATUS_CANCELLED).exists()
+            return not TaskState.objects.filter(
+                workflow_state=instance.workflow_state,
+                task=instance.task,
+                status=TaskState.STATUS_CANCELLED,
+            ).exists()
         return False
 
     def get_context(self, task_state, **kwargs):
         context = super().get_context(task_state, **kwargs)
-        context['object'] = task_state.workflow_state.content_object
-        context['task'] = task_state.task.specific
+        context["object"] = task_state.workflow_state.content_object
+        context["task"] = task_state.task.specific
         return context
 
     def get_recipient_users(self, task_state, **kwargs):
@@ -23082,10 +23320,12 @@ class BaseUserApprovalTaskStateEmailNotifier(EmailNotificationMixin, Notifier):
         return recipients
 
 
-class UserApprovalTaskStateSubmissionEmailNotifier(BaseUserApprovalTaskStateEmailNotifier):
+class UserApprovalTaskStateSubmissionEmailNotifier(
+    BaseUserApprovalTaskStateEmailNotifier
+):
     """A notifier to send updates for UserApprovalTask submission events"""
 
-    notification = 'submitted'
+    notification = "submitted"
 ```
 
 Similarly, you could define notifier subclasses for approval and rejection notifications.
@@ -23101,8 +23341,12 @@ from .mail import UserApprovalTaskStateSubmissionEmailNotifier
 
 task_submission_email_notifier = UserApprovalTaskStateSubmissionEmailNotifier()
 
+
 def register_signal_handlers():
-    task_submitted.connect(user_approval_task_submission_email_notifier, dispatch_uid='user_approval_task_submitted_email_notification')
+    task_submitted.connect(
+        user_approval_task_submission_email_notifier,
+        dispatch_uid="user_approval_task_submitted_email_notification",
+    )
 ```
 
 `register_signal_handlers()` should then be run on loading the app: for example, by adding it to the `ready()` method in your `AppConfig`.
@@ -23113,12 +23357,13 @@ from django.apps import AppConfig
 
 
 class MyAppConfig(AppConfig):
-    name = 'myappname'
-    label = 'myapplabel'
-    verbose_name = 'My verbose app name'
+    name = "myappname"
+    label = "myapplabel"
+    verbose_name = "My verbose app name"
 
     def ready(self):
         from .signal_handlers import register_signal_handlers
+
         register_signal_handlers()
 ```
 
@@ -23140,9 +23385,12 @@ The custom user model must at minimum inherit from [`AbstractBaseUser`](https://
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+
 class User(AbstractUser):
-    country = models.CharField(verbose_name='country', max_length=255)
-    status = models.ForeignKey(MembershipStatus, on_delete=models.SET_NULL, null=True, default=1)
+    country = models.CharField(verbose_name="country", max_length=255)
+    status = models.ForeignKey(
+        MembershipStatus, on_delete=models.SET_NULL, null=True, default=1
+    )
 ```
 
 Add the app containing your user model to `INSTALLED_APPS` - it must be above the `'wagtail.users'` line,
@@ -23150,7 +23398,7 @@ in order to override Wagtail’s built-in templates - and set [`AUTH_USER_MODEL`
 your model. In this example the app is called `myapp` and the model is `User`.
 
 ```python
-AUTH_USER_MODEL = 'myapp.User'
+AUTH_USER_MODEL = "myapp.User"
 ```
 
 ## Creating custom user forms
@@ -23169,7 +23417,9 @@ from myapp.models import MembershipStatus
 
 
 class CustomUserEditForm(UserEditForm):
-    status = forms.ModelChoiceField(queryset=MembershipStatus.objects, required=True, label=_("Status"))
+    status = forms.ModelChoiceField(
+        queryset=MembershipStatus.objects, required=True, label=_("Status")
+    )
 
     # Use ModelForm's automatic form fields generation for the model's `country` field,
     # but use an explicit custom form field for `status`.
@@ -23178,7 +23428,9 @@ class CustomUserEditForm(UserEditForm):
 
 
 class CustomUserCreationForm(UserCreationForm):
-    status = forms.ModelChoiceField(queryset=MembershipStatus.objects, required=True, label=_("Status"))
+    status = forms.ModelChoiceField(
+        queryset=MembershipStatus.objects, required=True, label=_("Status")
+    )
 
     # Use ModelForm's automatic form fields generation for the model's `country` field,
     # but use an explicit custom form field for `status`.
@@ -23299,16 +23551,15 @@ You can do this as shown below.
 
 ```python
 from modelcluster.fields import ParentalKey
-from wagtail.admin.panels import (
-    FieldPanel, FieldRowPanel,
-    InlinePanel, MultiFieldPanel
-)
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel
 from wagtail.fields import RichTextField
 from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 
 
 class FormField(AbstractFormField):
-    page = ParentalKey('FormPage', on_delete=models.CASCADE, related_name='custom_form_fields')
+    page = ParentalKey(
+        "FormPage", on_delete=models.CASCADE, related_name="custom_form_fields"
+    )
 
 
 class FormPage(AbstractEmailForm):
@@ -23316,16 +23567,21 @@ class FormPage(AbstractEmailForm):
     thank_you_text = RichTextField(blank=True)
 
     content_panels = AbstractEmailForm.content_panels + [
-        FieldPanel('intro'),
-        InlinePanel('custom_form_fields'),
-        FieldPanel('thank_you_text'),
-        MultiFieldPanel([
-            FieldRowPanel([
-                FieldPanel('from_address', classname="col6"),
-                FieldPanel('to_address', classname="col6"),
-            ]),
-            FieldPanel('subject'),
-        ], "Email"),
+        FieldPanel("intro"),
+        InlinePanel("custom_form_fields"),
+        FieldPanel("thank_you_text"),
+        MultiFieldPanel(
+            [
+                FieldRowPanel(
+                    [
+                        FieldPanel("from_address", classname="col6"),
+                        FieldPanel("to_address", classname="col6"),
+                    ]
+                ),
+                FieldPanel("subject"),
+            ],
+            "Email",
+        ),
     ]
 
     def get_form_fields(self):
@@ -23348,16 +23604,17 @@ import json
 from django.conf import settings
 from django.db import models
 from modelcluster.fields import ParentalKey
-from wagtail.admin.panels import (
-    FieldPanel, FieldRowPanel,
-    InlinePanel, MultiFieldPanel
-)
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel
 from wagtail.fields import RichTextField
-from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField, AbstractFormSubmission
+from wagtail.contrib.forms.models import (
+    AbstractEmailForm,
+    AbstractFormField,
+    AbstractFormSubmission,
+)
 
 
 class FormField(AbstractFormField):
-    page = ParentalKey('FormPage', on_delete=models.CASCADE, related_name='form_fields')
+    page = ParentalKey("FormPage", on_delete=models.CASCADE, related_name="form_fields")
 
 
 class FormPage(AbstractEmailForm):
@@ -23365,16 +23622,21 @@ class FormPage(AbstractEmailForm):
     thank_you_text = RichTextField(blank=True)
 
     content_panels = AbstractEmailForm.content_panels + [
-        FieldPanel('intro'),
-        InlinePanel('form_fields'),
-        FieldPanel('thank_you_text'),
-        MultiFieldPanel([
-            FieldRowPanel([
-                FieldPanel('from_address', classname="col6"),
-                FieldPanel('to_address', classname="col6"),
-            ]),
-            FieldPanel('subject'),
-        ], "Email"),
+        FieldPanel("intro"),
+        InlinePanel("form_fields"),
+        FieldPanel("thank_you_text"),
+        MultiFieldPanel(
+            [
+                FieldRowPanel(
+                    [
+                        FieldPanel("from_address", classname="col6"),
+                        FieldPanel("to_address", classname="col6"),
+                    ]
+                ),
+                FieldPanel("subject"),
+            ],
+            "Email",
+        ),
     ]
 
     def get_submission_class(self):
@@ -23382,8 +23644,7 @@ class FormPage(AbstractEmailForm):
 
     def process_form_submission(self, form):
         return self.get_submission_class().objects.create(
-            form_data=form.cleaned_data,
-            page=self, user=form.user
+            form_data=form.cleaned_data, page=self, user=form.user
         )
 
 
@@ -23407,16 +23668,17 @@ import json
 from django.conf import settings
 from django.db import models
 from modelcluster.fields import ParentalKey
-from wagtail.admin.panels import (
-    FieldPanel, FieldRowPanel,
-    InlinePanel, MultiFieldPanel
-)
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel
 from wagtail.fields import RichTextField
-from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField, AbstractFormSubmission
+from wagtail.contrib.forms.models import (
+    AbstractEmailForm,
+    AbstractFormField,
+    AbstractFormSubmission,
+)
 
 
 class FormField(AbstractFormField):
-    page = ParentalKey('FormPage', on_delete=models.CASCADE, related_name='form_fields')
+    page = ParentalKey("FormPage", on_delete=models.CASCADE, related_name="form_fields")
 
 
 class FormPage(AbstractEmailForm):
@@ -23424,21 +23686,26 @@ class FormPage(AbstractEmailForm):
     thank_you_text = RichTextField(blank=True)
 
     content_panels = AbstractEmailForm.content_panels + [
-        FieldPanel('intro'),
-        InlinePanel('form_fields'),
-        FieldPanel('thank_you_text'),
-        MultiFieldPanel([
-            FieldRowPanel([
-                FieldPanel('from_address', classname="col6"),
-                FieldPanel('to_address', classname="col6"),
-            ]),
-            FieldPanel('subject'),
-        ], "Email"),
+        FieldPanel("intro"),
+        InlinePanel("form_fields"),
+        FieldPanel("thank_you_text"),
+        MultiFieldPanel(
+            [
+                FieldRowPanel(
+                    [
+                        FieldPanel("from_address", classname="col6"),
+                        FieldPanel("to_address", classname="col6"),
+                    ]
+                ),
+                FieldPanel("subject"),
+            ],
+            "Email",
+        ),
     ]
 
     def get_data_fields(self):
         data_fields = [
-            ('username', 'Username'),
+            ("username", "Username"),
         ]
         data_fields += super().get_data_fields()
 
@@ -23449,8 +23716,7 @@ class FormPage(AbstractEmailForm):
 
     def process_form_submission(self, form):
         return self.get_submission_class().objects.create(
-            form_data=form.cleaned_data,
-            page=self, user=form.user
+            form_data=form.cleaned_data, page=self, user=form.user
         )
 
 
@@ -23459,9 +23725,11 @@ class CustomFormSubmission(AbstractFormSubmission):
 
     def get_data(self):
         form_data = super().get_data()
-        form_data.update({
-            'username': self.user.username,
-        })
+        form_data.update(
+            {
+                "username": self.user.username,
+            }
+        )
 
         return form_data
 ```
@@ -23573,16 +23841,13 @@ The following example shows how to create a multi-step form.
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render
 from modelcluster.fields import ParentalKey
-from wagtail.admin.panels import (
-    FieldPanel, FieldRowPanel,
-    InlinePanel, MultiFieldPanel
-)
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel
 from wagtail.fields import RichTextField
 from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 
 
 class FormField(AbstractFormField):
-    page = ParentalKey('FormPage', on_delete=models.CASCADE, related_name='form_fields')
+    page = ParentalKey("FormPage", on_delete=models.CASCADE, related_name="form_fields")
 
 
 class FormPage(AbstractEmailForm):
@@ -23590,16 +23855,21 @@ class FormPage(AbstractEmailForm):
     thank_you_text = RichTextField(blank=True)
 
     content_panels = AbstractEmailForm.content_panels + [
-        FieldPanel('intro'),
-        InlinePanel('form_fields'),
-        FieldPanel('thank_you_text'),
-        MultiFieldPanel([
-            FieldRowPanel([
-                FieldPanel('from_address', classname="col6"),
-                FieldPanel('to_address', classname="col6"),
-            ]),
-            FieldPanel('subject'),
-        ], "Email"),
+        FieldPanel("intro"),
+        InlinePanel("form_fields"),
+        FieldPanel("thank_you_text"),
+        MultiFieldPanel(
+            [
+                FieldRowPanel(
+                    [
+                        FieldPanel("from_address", classname="col6"),
+                        FieldPanel("to_address", classname="col6"),
+                    ]
+                ),
+                FieldPanel("subject"),
+            ],
+            "Email",
+        ),
     ]
 
     def get_form_class_for_step(self, step):
@@ -23613,9 +23883,9 @@ class FormPage(AbstractEmailForm):
         When the last step is submitted correctly, saves the whole form into a DB.
         """
 
-        session_key_data = 'form_data-%s' % self.pk
+        session_key_data = "form_data-%s" % self.pk
         is_last_step = False
-        step_number = request.GET.get('p', 1)
+        step_number = request.GET.get("p", 1)
 
         paginator = Paginator(self.get_form_fields(), per_page=1)
         try:
@@ -23626,11 +23896,13 @@ class FormPage(AbstractEmailForm):
             step = paginator.page(paginator.num_pages)
             is_last_step = True
 
-        if request.method == 'POST':
+        if request.method == "POST":
             # The first step will be submitted with step_number == 2,
             # so we need to get a form from the previous step
             # Edge case - submission of the last step
-            prev_step = step if is_last_step else paginator.page(step.previous_page_number())
+            prev_step = (
+                step if is_last_step else paginator.page(step.previous_page_number())
+            )
 
             # Create a form only for submitted step
             prev_form_class = self.get_form_class_for_step(prev_step)
@@ -23648,8 +23920,7 @@ class FormPage(AbstractEmailForm):
                 else:
                     # If there is no next step, create form for all fields
                     form = self.get_form(
-                        request.session[session_key_data],
-                        page=self, user=request.user
+                        request.session[session_key_data], page=self, user=request.user
                     )
 
                     if form.is_valid():
@@ -23659,7 +23930,9 @@ class FormPage(AbstractEmailForm):
                         form_submission = self.process_form_submission(form)
                         del request.session[session_key_data]
                         # render the landing page
-                        return self.render_landing_page(request, form_submission, *args, **kwargs)
+                        return self.render_landing_page(
+                            request, form_submission, *args, **kwargs
+                        )
             else:
                 # If data for step is invalid
                 # we will need to display form again with errors,
@@ -23672,13 +23945,9 @@ class FormPage(AbstractEmailForm):
             form = form_class(page=self, user=request.user)
 
         context = self.get_context(request)
-        context['form'] = form
-        context['fields_step'] = step
-        return render(
-            request,
-            self.template,
-            context
-        )
+        context["form"] = form
+        context["fields_step"] = step
+        return render(request, self.template, context)
 ```
 
 Your template for this form page should look like this:
@@ -23715,16 +23984,13 @@ First, you need to collect results as shown below:
 
 ```python
 from modelcluster.fields import ParentalKey
-from wagtail.admin.panels import (
-    FieldPanel, FieldRowPanel,
-    InlinePanel, MultiFieldPanel
-)
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel
 from wagtail.fields import RichTextField
 from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 
 
 class FormField(AbstractFormField):
-    page = ParentalKey('FormPage', on_delete=models.CASCADE, related_name='form_fields')
+    page = ParentalKey("FormPage", on_delete=models.CASCADE, related_name="form_fields")
 
 
 class FormPage(AbstractEmailForm):
@@ -23732,16 +23998,21 @@ class FormPage(AbstractEmailForm):
     thank_you_text = RichTextField(blank=True)
 
     content_panels = AbstractEmailForm.content_panels + [
-        FieldPanel('intro'),
-        InlinePanel('form_fields'),
-        FieldPanel('thank_you_text'),
-        MultiFieldPanel([
-            FieldRowPanel([
-                FieldPanel('from_address', classname="col6"),
-                FieldPanel('to_address', classname="col6"),
-            ]),
-            FieldPanel('subject'),
-        ], "Email"),
+        FieldPanel("intro"),
+        InlinePanel("form_fields"),
+        FieldPanel("thank_you_text"),
+        MultiFieldPanel(
+            [
+                FieldRowPanel(
+                    [
+                        FieldPanel("from_address", classname="col6"),
+                        FieldPanel("to_address", classname="col6"),
+                    ]
+                ),
+                FieldPanel("subject"),
+            ],
+            "Email",
+        ),
     ]
 
     def get_context(self, request, *args, **kwargs):
@@ -23753,8 +24024,7 @@ class FormPage(AbstractEmailForm):
         results = dict()
         # Get information about form fields
         data_fields = [
-            (field.clean_name, field.label)
-            for field in self.get_form_fields()
+            (field.clean_name, field.label) for field in self.get_form_fields()
         ]
 
         # Get all submissions for current page
@@ -23773,15 +24043,17 @@ class FormPage(AbstractEmailForm):
 
                 if type(answer) is list:
                     # Answer is a list if the field type is 'Checkboxes'
-                    answer = u', '.join(answer)
+                    answer = ", ".join(answer)
 
                 question_stats = results.get(label, {})
                 question_stats[answer] = question_stats.get(answer, 0) + 1
                 results[label] = question_stats
 
-        context.update({
-            'results': results,
-        })
+        context.update(
+            {
+                "results": results,
+            }
+        )
         return context
 ```
 
@@ -23833,16 +24105,16 @@ from django.shortcuts import redirect
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel
 from wagtail.contrib.forms.models import AbstractEmailForm
 
-class FormPage(AbstractEmailForm):
 
+class FormPage(AbstractEmailForm):
     # intro, thank_you_text, ...
 
     thank_you_page = models.ForeignKey(
-        'wagtailcore.Page',
+        "wagtailcore.Page",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='+',
+        related_name="+",
     )
 
     def render_landing_page(self, request, form_submission=None, *args, **kwargs):
@@ -23851,23 +24123,28 @@ class FormPage(AbstractEmailForm):
             # if a form_submission instance is available, append the id to URL
             # when previewing landing page, there will not be a form_submission instance
             if form_submission:
-                url += '?id=%s' % form_submission.id
+                url += "?id=%s" % form_submission.id
             return redirect(url, permanent=False)
         # if no thank_you_page is set, render default landing page
         return super().render_landing_page(request, form_submission, *args, **kwargs)
 
     content_panels = AbstractEmailForm.content_panels + [
-        FieldPanel('intro'),
-        InlinePanel('form_fields'),
-        FieldPanel('thank_you_text'),
-        FieldPanel('thank_you_page'),
-        MultiFieldPanel([
-            FieldRowPanel([
-                FieldPanel('from_address', classname='col6'),
-                FieldPanel('to_address', classname='col6'),
-            ]),
-            FieldPanel('subject'),
-        ], 'Email'),
+        FieldPanel("intro"),
+        InlinePanel("form_fields"),
+        FieldPanel("thank_you_text"),
+        FieldPanel("thank_you_page"),
+        MultiFieldPanel(
+            [
+                FieldRowPanel(
+                    [
+                        FieldPanel("from_address", classname="col6"),
+                        FieldPanel("to_address", classname="col6"),
+                    ]
+                ),
+                FieldPanel("subject"),
+            ],
+            "Email",
+        ),
     ]
 ```
 
@@ -23888,18 +24165,22 @@ from wagtail.contrib.forms.views import SubmissionsListView
 
 class CustomSubmissionsListView(SubmissionsListView):
     paginate_by = 50  # show more submissions per page, default is 20
-    default_ordering = ('submit_time',)  # order submissions by oldest first, normally newest first
-    ordering_csv = ('-submit_time',)  # order csv export by newest first, normally oldest first
+    default_ordering = (
+        "submit_time",
+    )  # order submissions by oldest first, normally newest first
+    ordering_csv = (
+        "-submit_time",
+    )  # order csv export by newest first, normally oldest first
 
     # override the method to generate csv filename
     def get_csv_filename(self):
-        """ Returns the filename for CSV file with page slug at start"""
+        """Returns the filename for CSV file with page slug at start"""
         filename = super().get_csv_filename()
-        return self.form_page.slug + '-' + filename
+        return self.form_page.slug + "-" + filename
 
 
 class FormField(AbstractFormField):
-    page = ParentalKey('FormPage', related_name='form_fields')
+    page = ParentalKey("FormPage", related_name="form_fields")
 
 
 class FormPage(AbstractEmailForm):
@@ -23927,7 +24208,8 @@ Define your custom widget, in this example we will override the email type with 
 from django import forms
 from django.utils.translation import gettext as _
 
-#... other imports
+# ... other imports
+
 
 class CustomEmailInputWidget(forms.EmailInput):
     """
@@ -23943,7 +24225,7 @@ class CustomEmailInputWidget(forms.EmailInput):
             "autocorrect": "off",
             "placeholder": _("email@example.com"),
             "spellcheck": "false",
-            **attrs, # let supplied attrs override the new defaults
+            **attrs,  # let supplied attrs override the new defaults
         }
 
         super().__init__(attrs=attrs)
@@ -24008,21 +24290,24 @@ from django.db import models
 from modelcluster.fields import ParentalKey
 from wagtail.contrib.forms.forms import FormBuilder
 from wagtail.contrib.forms.models import (
-    AbstractEmailForm, AbstractFormField, FORM_FIELD_CHOICES)
+    AbstractEmailForm,
+    AbstractFormField,
+    FORM_FIELD_CHOICES,
+)
 
 
 class FormField(AbstractFormField):
     # extend the built-in field type choices
     # our field type key will be 'ipaddress'
-    CHOICES = FORM_FIELD_CHOICES + (('ipaddress', 'IP Address'),)
+    CHOICES = FORM_FIELD_CHOICES + (("ipaddress", "IP Address"),)
 
-    page = ParentalKey('FormPage', related_name='form_fields')
+    page = ParentalKey("FormPage", related_name="form_fields")
     # override the field_type field with extended choices
     field_type = models.CharField(
-        verbose_name='field type',
+        verbose_name="field type",
         max_length=16,
         # use the choices tuple defined above
-        choices=CHOICES
+        choices=CHOICES,
     )
 
 
@@ -24057,6 +24342,7 @@ Example:
 
 ```python
 from datetime import date
+
 # ... additional wagtail imports
 from wagtail.contrib.forms.models import AbstractEmailForm
 
@@ -24069,19 +24355,19 @@ class FormPage(AbstractEmailForm):
         email_content = super().render_email(form)
 
         # Add a title (not part of the original method)
-        title = '{}: {}'.format('Form', self.title)
+        title = "{}: {}".format("Form", self.title)
 
-        content = [title, '', email_content, '']
+        content = [title, "", email_content, ""]
 
         # Add a link to the form page
-        content.append('{}: {}'.format('Submitted Via', self.full_url))
+        content.append("{}: {}".format("Submitted Via", self.full_url))
 
         # Add the date the form was submitted
-        submitted_date_str = date.today().strftime('%x')
-        content.append('{}: {}'.format('Submitted on', submitted_date_str))
+        submitted_date_str = date.today().strftime("%x")
+        content.append("{}: {}".format("Submitted on", submitted_date_str))
 
         # Content is joined with a new line to separate each text line
-        content = '\n'.join(content)
+        content = "\n".join(content)
 
         return content
 ```
@@ -24100,6 +24386,7 @@ Example:
 
 ```python
 from datetime import date
+
 # ... additional wagtail imports
 from wagtail.admin.mail import send_mail
 from wagtail.contrib.forms.models import AbstractEmailForm
@@ -24112,13 +24399,18 @@ class FormPage(AbstractEmailForm):
         # `self` is the FormPage, `form` is the form's POST data on submit
 
         # Email addresses are parsed from the FormPage's addresses field
-        addresses = [x.strip() for x in self.to_address.split(',')]
+        addresses = [x.strip() for x in self.to_address.split(",")]
 
         # Subject can be adjusted (adding submitted date), be sure to include the form's defined subject field
-        submitted_date_str = date.today().strftime('%x')
+        submitted_date_str = date.today().strftime("%x")
         subject = f"{self.subject} - {submitted_date_str}"
 
-        send_mail(subject, self.render_email(form), addresses, self.from_address,)
+        send_mail(
+            subject,
+            self.render_email(form),
+            addresses,
+            self.from_address,
+        )
 ```
 
 ## Custom `clean_name` generation
@@ -24171,14 +24463,15 @@ class BasePage(Page):
 
     # ...
 
+
 class FormPage(FormMixin, BasePage):
     intro = RichTextField(blank=True)
     # ...
 
+
 class EmailFormPage(EmailFormMixin, FormMixin, BasePage):
     intro = RichTextField(blank=True)
     # ...
-
 ```
 
 <a id="form-builder-custom-admin-validation"></a>
@@ -24249,8 +24542,7 @@ class HomePage(Page):
         help_text="Homepage image",
     )
     hero_text = models.CharField(
-        blank=True,
-        max_length=255, help_text="Write an introduction for the site"
+        blank=True, max_length=255, help_text="Write an introduction for the site"
     )
     hero_cta = models.CharField(
         blank=True,
@@ -24281,7 +24573,7 @@ class HomePage(Page):
             ],
             heading="Hero section",
         ),
-        FieldPanel('body'),
+        FieldPanel("body"),
     ]
 ```
 
@@ -24382,7 +24674,9 @@ class Member(models.Model):
         EXTRA_LARGE = "XL", "Extra Large"
 
     name = models.CharField(max_length=255)
-    shirt_size = models.CharField(max_length=5, choices=ShirtSize.choices, default=ShirtSize.MEDIUM)
+    shirt_size = models.CharField(
+        max_length=5, choices=ShirtSize.choices, default=ShirtSize.MEDIUM
+    )
 
     def first_name(self):
         return self.name.split()[0]
@@ -24424,10 +24718,13 @@ class MemberViewSet(SnippetViewSet):
     # or
     # list_filter = {"shirt_size": ["exact"], "name": ["icontains"]}
 
-    edit_handler = TabbedInterface([
-        ObjectList([FieldPanel("name")], heading="Details"),
-        ObjectList([FieldPanel("shirt_size")], heading="Preferences"),
-    ])
+    edit_handler = TabbedInterface(
+        [
+            ObjectList([FieldPanel("name")], heading="Details"),
+            ObjectList([FieldPanel("shirt_size")], heading="Preferences"),
+        ]
+    )
+
 
 register_snippet(MemberViewSet)
 ```
@@ -24547,11 +24844,16 @@ from django.db import models
 
 
 class ADGroup(models.Model):
-    guid = models.CharField(verbose_name="GUID", max_length=64, db_index=True, unique=True)
+    guid = models.CharField(
+        verbose_name="GUID", max_length=64, db_index=True, unique=True
+    )
     name = models.CharField(verbose_name="Group", max_length=255)
     domain = models.CharField(verbose_name="Domain", max_length=255, db_index=True)
     description = models.TextField(verbose_name="Description", blank=True, null=True)
-    roles = models.ManyToManyField(Group, verbose_name="Role", related_name="adgroups", blank=True)
+    roles = models.ManyToManyField(
+        Group, verbose_name="Role", related_name="adgroups", blank=True
+    )
+
 
 class Meta:
     verbose_name = "AD group"
@@ -24724,7 +25026,7 @@ MigrateStreamData(
     operations_and_block_paths=[
         (RenameStreamChildrenOperation(old_name="field1", new_name="block1"), ""),
     ],
-    revisions_from=datetime.datetime(2022, 7, 25)
+    revisions_from=datetime.datetime(2022, 7, 25),
 )
 ```
 
@@ -24898,8 +25200,8 @@ Our altered stream data would look like this:
 ```python
 [
     ...,
-    { "type": "struct1", "value": { "char1": "Value1" } },
-    { "type": "struct1", "value": { "char1": "Value2" } },
+    {"type": "struct1", "value": {"char1": "Value1"}},
+    {"type": "struct1", "value": {"char1": "Value2"}},
     ...,
 ]
 ```
@@ -25463,6 +25765,7 @@ We will create a simple endpoint that returns a list of all pages in the site. W
 ```python
 # api.py
 
+
 class BasePageSchema(ModelSchema):
     url: str = Field(None, alias="get_url")
 
@@ -25503,6 +25806,7 @@ We also create a new schema for a specific page type: here, `BlogPage`, with `Ba
 ```python
 from blog.models import BlogPage
 
+
 class BlogPageSchema(BasePageSchema, ModelSchema):
     class Meta(BasePageSchema.Meta):
         model = BlogPage
@@ -25527,6 +25831,7 @@ Here is an example with an additional schema for our `HomePage` type:
 
 ```python
 from home.models import HomePage
+
 
 class HomePageSchema(BasePageSchema, ModelSchema):
     class Meta(BasePageSchema.Meta):
@@ -25599,6 +25904,7 @@ This can also be done with [Ninja resolvers](https://django-ninja.dev/guides/res
 ```python
 from wagtail.rich_text import expand_db_html
 
+
 class HomePageSchema(BasePageSchema, ModelSchema):
     content_type: Literal["homepage"]
     body: str
@@ -25620,6 +25926,7 @@ We use the [`get_renditions()` method](../images/renditions.md#image-renditions-
 
 ```python
 from wagtail.images.models import AbstractRendition
+
 
 class RenditionSchema(ModelSchema):
     # We need to use the Field / alias API for properties

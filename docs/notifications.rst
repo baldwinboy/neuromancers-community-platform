@@ -1,55 +1,41 @@
-Notifications: Event Bus and Event Store
+Notifications: Inbox Event Bus and daisIE Email Bridges
 ======================================================================
 
-NEUROMANCERS has no user-facing notification channels yet. Instead, the platform
-records every business event that may warrant a notification in a durable,
-queryable store — the **event store** — through a small internal **event bus**.
+NEUROMANCERS records every business event that may warrant a notification in a
+durable, queryable store — the **event store** — through a small internal
+**event bus**. Delivery to members is handled by a concrete subscriber that
+forwards events to admin-authored daisIE ``EmailTemplate`` s.
 
-The idea is that a future notification layer (and, eventually, Wagtail-admin
-configured channels with templated copy) will be *subscribers* on this bus:
-they declare which event type they care about, and the bus calls them whenever
-the matching event is recorded. This module is backend-only; no email/SMS/in-app
-message is sent today.
+The pipeline is::
+
+    domain signal -> inbox.events.emit() -> NotificationEventLog (durable)
+                                            -> active EventSubscribers
+                                               -> DaisieBridgeSubscriber
+                                                  -> wagtail_daisIE dispatch()
+                                                     -> EmailTemplate rendered + sent
 
 The event types
 ---------------------------------------------------------------------
 
-The canonical, closed set of events lives in
-``NotificationEventType`` (``neuromancers_network/notifications/models/event_type.py``):
-
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-
-   * - Event
-     - Meaning
-   * - ``booking_requested`` / ``approved`` / ``rejected`` / ``paid`` / ``completed`` / ``cancelled``
-     - A ``MeetingRequest`` was created or moved to that FSM state.
-   * - ``refund_requested`` / ``approved`` / ``rejected`` / ``refunded``
-     - A ``RefundRequest`` was created or moved to that FSM state.
-   * - ``review_created``
-     - A ``Review`` was created.
-   * - ``peer_approved``
-     - A ``PeerProfile`` became approved.
-   * - ``peer_application_approved`` / ``rejected``
-     - A ``PeerApplication`` was decided.
-   * - ``subscription_created`` / ``cancelled``
-     - A peer subscription started, or its Stripe subscription was cancelled.
-   * - ``payment_reminder_due``
-     - Emitted periodically for bookings stuck in ``pending_payment``.
-   * - ``meeting_upcoming`` / ``cancelled``
-     - A meeting starts soon, or a published meeting was archived (cancelled).
+The canonical, closed set of events lives in ``NotificationEventType``
+(``neuromancers_network/inbox/models/event_type.py``). Alongside the booking,
+refund, review, peer, subscription, reminder and meeting events, the account and
+payment events ``account_created``, ``account_deleted``, ``account_degraded``,
+``peer_published_meeting``, ``payment_succeeded`` and ``payment_failed`` are
+recorded.
 
 How events get recorded
 ---------------------------------------------------------------------
 
-Domain code (or the signal receivers in ``signals.py``) calls the bus:
+Signal receivers live in ``neuromancers_network/inbox/signals.py`` (domain
+models), ``neuromancers_network/users/signals.py`` (account lifecycle) and
+emit through the bus:
 
 .. code-block:: python
 
-   from neuromancers_network.notifications.events import emit
+   from neuromancers_network.inbox.events import emit
 
-   log_entry = emit(
+   emit(
        "booking_approved",
        payload={
            "actor_user_id": peer.pk,
@@ -61,81 +47,68 @@ Domain code (or the signal receivers in ``signals.py``) calls the bus:
        event_ref=f"meetingrequest.{request.pk}.approve",
    )
 
-``emit`` appends a row to ``NotificationEventLog`` (the store) and then hands
-the row to every matching subscriber. ``event_ref`` is an optional stable key
-used to keep scheduled emissions idempotent.
-
-Receivers are deliberately failure-isolated: a problem while recording or
-dispatching is logged and never raised, so the event bus cannot break the
-booking/refund flow that caused the event.
+``emit`` appends a row to ``NotificationEventLog`` (the store) and then hands the
+row to every matching subscriber. ``event_ref`` is an optional stable key used to
+keep scheduled emissions idempotent. Receivers are failure-isolated: problems are
+logged, never raised, so the bus cannot break the flow that caused the event.
 
 Subscribing from Wagtail
 ---------------------------------------------------------------------
 
-``EventSubscriber`` (:mod:`neuromancers_network.notifications.models`) is an
-**abstract** base for Wagtail-instantiable subscribers. A concrete subclass
-declares which ``event_type`` it listens to and an ``is_active`` switch; every
-active instance whose event fires receives a call to ``handle_event(log_entry)``.
+``EventSubscriber`` (``neuromancers_network/inbox/models/subscriber.py``) is an
+abstract base for Wagtail-instantiable subscribers. The shipped concrete
+subclass is ``DaisieBridgeSubscriber`` (``inbox/models/daisie_bridge.py``),
+registered as a snippet: create one per ``event_type``, tick ``is_active``, and
+each matching event is forwarded to the daisIE bridge system.
 
-Concrete subclasses are registered automatically with the bus the moment they
-are defined. No concrete subscriber ships in application code on purpose —
-examples live in the test-suite and below.
+Per-member opt-out
+---------------------------------------------------------------------
 
-A minimal, Wagtail-managed example (register as a snippet):
+* ``NotificationPreference`` stores a member's ``disabled_event_types``.
+* ``NotificationSettings`` holds admin-level ``default_disabled_event_types``
+  and ``transactional_events``.
+* ``inbox.services.should_notify(user, event_type)`` decides delivery.
+  Transactional events (``account_*``, ``booking_paid``, refunds, payments,
+  subscriptions) are always delivered.
 
-.. code-block:: python
+The shared bridge builders in ``inbox/bridges.py``
+(``context_from_payload`` / ``recipients_from_payload``) expose the payload to
+the template and resolve only the opted-in recipients.
 
-   from django.db import models
-   from wagtail.snippets.models import register_snippet
-   from wagtail.admin.panels import FieldPanel
+Configuring email content
+---------------------------------------------------------------------
 
-   from neuromancers_network.notifications.models import EventSubscriber
+Map each event key to an ``EmailTemplate`` in ``WAGTAIL_DAISIE_NOTIFICATION_BRIDGES``
+(``config/settings/base.py``). ``template`` matches an ``EmailTemplate`` by name
+or ``template_key``; templates and bridge snippets are created in the Wagtail
+admin (no seed data). ``WAGTAIL_DAISIE_NOTIFICATION_FROM_EMAIL`` sets the
+envelope sender.
 
-   @register_snippet
-   class BookingApprovedEmail(EventSubscriber):
-       subject = models.CharField(max_length=255, blank=True)
-       body = models.TextField(blank=True)
-
-       panels = [
-           FieldPanel("label"),
-           FieldPanel("is_active"),
-           FieldPanel("subject"),
-           FieldPanel("body"),
-       ]
-
-       def handle_event(self, log_entry):
-           # ``log_entry.payload`` is the normalized context (recipient ids,
-           # meeting title, ...). Render template placeholders and dispatch on a
-           # future channel here. Today this is intentionally a no-op besides
-           # the base class's log line.
-           super().handle_event(log_entry)
-
-Every ``BookingApprovedEmail`` the admin creates in Wagtail is an instance of
-this model: create one, set its ``event_type`` to ``booking_approved`` and tick
-``is_active``, and the bus will call ``handle_event`` whenever a booking is
-approved. Untick ``is_active`` (or delete the instance) to stop receiving.
+Session emails include booking, session, access-needs, terms and meeting-link
+values via ``inbox.payloads.session_payload`` (including an ``ics_url`` for the
+member's read-only calendar feed).
 
 Scheduled (time-based) events
 ---------------------------------------------------------------------
 
-Two Celery beat tasks emit time-based events and are idempotent (they never
-write a second log row for the same object):
+Celery beat tasks in ``neuromancers_network/inbox/tasks.py`` emit time-based
+events and are idempotent:
 
-* ``neuromancers_network.notifications.tasks.emit_payment_reminders`` —
-  emits ``payment_reminder_due`` for stale ``pending_payment`` bookings.
-* ``neuromancers_network.notifications.tasks.emit_upcoming_meetings`` —
-  emits ``meeting_upcoming`` for published meetings that start soon and have
-  bookings.
+* ``emit_payment_reminders`` — ``payment_reminder_due`` for stale
+  ``pending_payment`` bookings.
+* ``emit_upcoming_meetings`` — ``meeting_upcoming`` for meetings starting soon.
+* ``emit_session_reminders`` — ``session_reminder_1d`` / ``session_reminder_1h``.
 
-They are registered as periodic tasks by the
-``notifications`` ``0002_periodic_tasks`` data migration.
+Administration
+---------------------------------------------------------------------
+
+* Operations → **Notification preferences** manages per-member opt-outs.
+* Settings → **Email Settings** includes a **Send test email** panel
+  (``/cms/email/test/``).
 
 Where the tests cover this
 ---------------------------------------------------------------------
 
-See ``neuromancers_network/notifications/tests/``:
-
-* ``test_event_store.py`` — recording rows and validating event types.
-* ``test_bus_dispatch.py`` — active/inactive matching, and error isolation.
-* ``test_signals.py`` — database events map to the right bus events.
-* ``test_tasks.py`` — scheduled emissions and idempotency.
+See ``neuromancers_network/inbox/tests/``: ``test_event_store.py``,
+``test_bus_dispatch.py``, ``test_signals.py``, ``test_tasks.py`` and
+``test_session_reminders.py``.

@@ -11,6 +11,7 @@ class PricingType(models.TextChoices):
     PER_HOUR = "per_hour", _("Per hour")
     FIXED = "fixed", _("Fixed price")
     SLIDING_SCALE = "sliding_scale", _("Sliding scale")
+    DURATION_TIERS = "duration_tiers", _("Duration tiers")
 
 
 class ApprovalPolicy(models.TextChoices):
@@ -40,6 +41,13 @@ class MeetingStatus(models.TextChoices):
     DRAFT = "draft", _("Draft")
     PUBLISHED = "published", _("Published")
     ARCHIVED = "archived", _("Archived")
+
+
+class BookingStatus(models.TextChoices):
+    PENDING = "pending", _("Pending")
+    PAID = "paid", _("Paid")
+    CANCELLED = "cancelled", _("Cancelled")
+    REFUNDED = "refunded", _("Refunded")
 
 
 class RecurrenceFrequency(models.TextChoices):

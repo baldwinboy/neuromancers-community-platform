@@ -1,28 +1,16 @@
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
 from django.urls import include
 from django.urls import path
-from django.views import defaults as default_views
-from django.views.generic import TemplateView
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from neuromancers_network.core.views.calendar import CalendarFeedView
+
 from .api import api
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
-    path(
-        "about/",
-        TemplateView.as_view(template_name="pages/about.html"),
-        name="about",
-    ),
-    # Django Admin, use {% url 'admin:index' %}
-    path(settings.ADMIN_URL, admin.site.urls),
-    # User management
-    path("users/", include("neuromancers_network.users.urls", namespace="users")),
-    path("accounts/", include("allauth.urls")),
     # Monitoring
     path("monitoring/", include("django_prometheus.urls")),
     # DJ Stripe — includes webhook endpoint at /stripe/webhook/<uuid>/
@@ -30,45 +18,30 @@ urlpatterns = [
     # Wagtail
     path("cms/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
-    path("pages/", include(wagtail_urls)),
-    # Your stuff: custom urls includes go here
-    # ...
-    # Media files
-    *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
-]
-
-
-# API URLS
-urlpatterns += [
     # API base url
     path("api/", api.urls),
+    # Wagtail DaisIE
+    path("daisie/", include("wagtail_daisIE.dynamic.urls")),
+    # DaisIE notifications (newsletter subscribe/unsubscribe)
+    path("", include("wagtail_daisIE.notifications.urls")),
+    # Read-only ICS calendar feed
+    path(
+        "calendar/<uuid:token>.ics",
+        CalendarFeedView.as_view(),
+        name="calendar_feed",
+    ),
+    # Media
+    *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
+    # Allauth
+    path("", include("allauth.urls")),
+    # Wagtail Pages (catch-all)
+    path("", include(wagtail_urls)),
 ]
 
-if settings.DEBUG:
-    # This allows the error pages to be debugged during development, just visit
-    # these url in browser to see how these error pages look like.
-    urlpatterns += [
-        path(
-            "400/",
-            default_views.bad_request,
-            kwargs={"exception": Exception("Bad Request!")},
-        ),
-        path(
-            "403/",
-            default_views.permission_denied,
-            kwargs={"exception": Exception("Permission Denied")},
-        ),
-        path(
-            "404/",
-            default_views.page_not_found,
-            kwargs={"exception": Exception("Page not Found")},
-        ),
-        path("500/", default_views.server_error),
-    ]
-    if "debug_toolbar" in settings.INSTALLED_APPS:
-        import debug_toolbar
-
-        urlpatterns = [
-            path("__debug__/", include(debug_toolbar.urls)),
-            *urlpatterns,
-        ]
+# Admin-designed error pages.
+handler400 = "wagtail_daisIE.errors.handlers.handler400"
+handler401 = "wagtail_daisIE.errors.handlers.handler401"
+handler403 = "wagtail_daisIE.errors.handlers.handler403"
+handler404 = "wagtail_daisIE.errors.handlers.handler404"
+handler429 = "wagtail_daisIE.errors.handlers.handler429"
+handler500 = "wagtail_daisIE.errors.handlers.handler500"

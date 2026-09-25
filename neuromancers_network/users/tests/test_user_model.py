@@ -87,6 +87,21 @@ class TestIsPeer:
         assert user.is_peer is False
 
 
+class TestIsModerator:
+    def test_regular_user_is_not_moderator(self, user):
+        assert user.is_moderator is False
+
+    def test_active_staff_is_moderator(self):
+        user = UserFactory()
+        user.activate_staff()
+        user.save()
+        assert user.is_moderator is True
+
+    def test_superuser_is_moderator(self):
+        user = UserFactory(is_superuser=True)
+        assert user.is_moderator is True
+
+
 class TestIsVerifiedPeer:
     def test_verified_but_not_peer(self):
         user = make_peer(is_verified=True, kyc_completed=False)

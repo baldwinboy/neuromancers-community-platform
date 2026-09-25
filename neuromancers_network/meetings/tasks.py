@@ -49,6 +49,24 @@ def populate_pending_group_meeting_links():
 
 
 @shared_task
+def mark_completed_sessions():
+    """Mark paid sessions whose start time has passed as completed."""
+    from .models import MeetingRequest  # noqa: PLC0415
+    from .models import MeetingRequestStatus  # noqa: PLC0415
+
+    now = timezone.now()
+    sessions = MeetingRequest.objects.filter(
+        status=MeetingRequestStatus.PAID,
+        requested_start_time__isnull=False,
+        requested_start_time__lt=now,
+    )
+
+    for session in sessions:
+        session.complete()
+        session.save(validate=False, update_fields=["status", "updated_at"])
+
+
+@shared_task
 def generate_recurring_group_meetings():
     """
     Look for group meetings with a recurrence_rule whose scheduled_at
@@ -87,7 +105,11 @@ def generate_recurring_group_meetings():
         if rule.max_occurrences and existing_count >= rule.max_occurrences:
             continue
 
-        if rule.end_date and meeting.scheduled_at.date() >= rule.end_date:
+        if (
+            rule.end_date
+            and meeting.scheduled_at
+            and meeting.scheduled_at.date() >= rule.end_date
+        ):
             continue
 
         next_scheduled = rule.compute_next_occurrence(meeting.scheduled_at)

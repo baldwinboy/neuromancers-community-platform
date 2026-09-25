@@ -17,7 +17,7 @@ URL conf → Middleware → View decorators → View class → Method → Query
 from django.contrib.admin.views.decorators import staff_member_required
 
 urlpatterns = [
-    path('admin/', staff_member_required(admin_view)),
+    path("admin/", staff_member_required(admin_view)),
 ]
 ```
 
@@ -62,9 +62,11 @@ class MyView(BaseCompanyView, DetailView):
 # Permission classes - check what they actually do
 permission_classes = [IsAuthenticated, IsOwner]
 
+
 # get_queryset() - critical for scoping
 def get_queryset(self):
     return Model.objects.filter(...)
+
 
 # has_object_permission() - called by get_object()
 def has_object_permission(self, request, view, obj):

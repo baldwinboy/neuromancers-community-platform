@@ -5,6 +5,9 @@ from neuromancers_network.users.models import User
 
 
 class UpdateUserSchema(ModelSchema):
+    username: str
+    name: str
+
     class Meta:
         model = User
         fields = ["username", "name"]

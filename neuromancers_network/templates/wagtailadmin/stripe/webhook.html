@@ -1,0 +1,28 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% load i18n %}
+
+{% block titletag %}
+  {% trans "Create Stripe webhook" %}
+{% endblock titletag %}
+{% block content %}
+  {% include "wagtailadmin/shared/header.html" with title=_("Create Stripe webhook") icon="cogs" %}
+  <div class="nice-padding">
+    <p>{% trans "Register this endpoint in Stripe with the events you need." %}</p>
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+        {% if field.is_hidden %}
+          {{ field }}
+        {% else %}
+          <div class="w-field">
+            {{ field.label_tag }}
+            {{ field }}
+            {{ field.errors }}
+          </div>
+        {% endif %}
+      {% endfor %}
+      <button type="submit" class="button">{% trans "Create webhook" %}</button>
+    </form>
+  </div>
+{% endblock content %}

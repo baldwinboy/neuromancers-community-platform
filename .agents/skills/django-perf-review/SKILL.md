@@ -42,17 +42,19 @@ Validate by tracing: View → Queryset → Template/Serializer → Loop access
 # PROBLEM: N+1 - each iteration queries profile
 def user_list(request):
     users = User.objects.all()
-    return render(request, 'users.html', {'users': users})
+    return render(request, "users.html", {"users": users})
+
 
 # Template:
 # {% for user in users %}
 #     {{ user.profile.bio }}  ← triggers query per user
 # {% endfor %}
 
+
 # SOLUTION: Prefetch in view
 def user_list(request):
-    users = User.objects.select_related('profile')
-    return render(request, 'users.html', {'users': users})
+    users = User.objects.select_related("profile")
+    return render(request, "users.html", {"users": users})
 ```
 
 ### Rule: Prefetch in serializers, not just views
@@ -67,10 +69,12 @@ class UserSerializer(serializers.ModelSerializer):
     def get_order_count(self, obj):
         return obj.orders.count()  # ← query per user
 
+
 # SOLUTION: Annotate in viewset, access in serializer
 class UserViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
-        return User.objects.annotate(order_count=Count('orders'))
+        return User.objects.annotate(order_count=Count("orders"))
+
 
 class UserSerializer(serializers.ModelSerializer):
     order_count = serializers.IntegerField(read_only=True)
@@ -84,6 +88,7 @@ class User(models.Model):
     @property
     def recent_orders(self):
         return self.orders.filter(created__gte=last_week)[:5]
+
 
 # Used in template loop = N+1
 
@@ -109,12 +114,13 @@ class User(models.Model):
 # PROBLEM: No pagination - loads all rows
 class UserListView(ListView):
     model = User
-    template_name = 'users.html'
+    template_name = "users.html"
+
 
 # SOLUTION: Add pagination
 class UserListView(ListView):
     model = User
-    template_name = 'users.html'
+    template_name = "users.html"
     paginate_by = 25
 ```
 
@@ -157,8 +163,10 @@ users = User.objects.all()[:100]
 # PROBLEM: Filtering on unindexed field
 # User.objects.filter(email=email)  # full scan if no index
 
+
 class User(models.Model):
     email = models.EmailField()  # ← no db_index
+
 
 # SOLUTION: Add index
 class User(models.Model):
@@ -169,7 +177,8 @@ class User(models.Model):
 
 ```python
 # PROBLEM: Sorting requires full scan without index
-Order.objects.order_by('-created')
+Order.objects.order_by("-created")
+
 
 # SOLUTION: Index the sort field
 class Order(models.Model):
@@ -186,8 +195,10 @@ class Order(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['user', 'status']),  # for filter(user=x, status=y)
-            models.Index(fields=['status', '-created']),  # for filter(status=x).order_by('-created')
+            models.Index(fields=["user", "status"]),  # for filter(user=x, status=y)
+            models.Index(
+                fields=["status", "-created"]
+            ),  # for filter(status=x).order_by('-created')
         ]
 ```
 
@@ -208,12 +219,10 @@ class Order(models.Model):
 ```python
 # PROBLEM: N inserts, N round trips
 for item in items:
-    Model.objects.create(name=item['name'])
+    Model.objects.create(name=item["name"])
 
 # SOLUTION: Single bulk insert
-Model.objects.bulk_create([
-    Model(name=item['name']) for item in items
-])
+Model.objects.bulk_create([Model(name=item["name"]) for item in items])
 ```
 
 ### Rule: Use update() or bulk_update instead of save() in loops
@@ -221,16 +230,16 @@ Model.objects.bulk_create([
 ```python
 # PROBLEM: N updates
 for obj in queryset:
-    obj.status = 'done'
+    obj.status = "done"
     obj.save()
 
 # SOLUTION A: Single UPDATE statement (same value for all)
-queryset.update(status='done')
+queryset.update(status="done")
 
 # SOLUTION B: bulk_update (different values)
 for obj in objects:
     obj.status = compute_status(obj)
-Model.objects.bulk_update(objects, ['status'], batch_size=500)
+Model.objects.bulk_update(objects, ["status"], batch_size=500)
 ```
 
 ### Rule: Use delete() on queryset, not in loops
@@ -337,7 +346,7 @@ def get_queryset(self):
 **Fix:**
 ```python
 def get_queryset(self):
-    return User.objects.filter(active=True).select_related('profile')
+    return User.objects.filter(active=True).select_related("profile")
 ```
 ```
 
