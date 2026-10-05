@@ -1,17 +1,6 @@
 """Seed the default theme, chrome menus, error pages and base page tree."""
 
 from django.db import migrations
-from wagtail.models import Page
-from wagtail.models import Site
-from wagtail_daisIE.errors.models import ErrorPage
-from wagtail_daisIE.menus.models import DaisyUIMenu
-from wagtail_daisIE.models import DaisyUITheme
-
-from neuromancers_network.core.models.pages import DashboardPage
-from neuromancers_network.core.models.pages import HomePage
-from neuromancers_network.core.models.pages import ProfileIndexPage
-from neuromancers_network.core.models.pages import SearchPage
-from neuromancers_network.core.models.pages import SettingsPage
 
 ERROR_PAGES = {
     400: "Bad request",
@@ -23,25 +12,21 @@ ERROR_PAGES = {
 }
 
 
-def _seed_theme():
+def _seed_theme(apps):
+    DaisyUITheme = apps.get_model("wagtail_daisIE", "DaisyUITheme")
     theme, _ = DaisyUITheme.objects.get_or_create(
         name="neuromancers",
         defaults={"default": True},
     )
-    if not theme.colors.exists():
-        theme.colors.create()
-    if not theme.radii.exists():
-        theme.radii.create()
-    if not theme.sizes.exists():
-        theme.sizes.create()
-    if not theme.effects.exists():
-        theme.effects.create()
-    if not theme.background.exists():
-        theme.background.create()
+    for relation in ("colors", "radii", "sizes", "effects", "background"):
+        manager = getattr(theme, relation)
+        if not manager.exists():
+            manager.create()
     return theme
 
 
-def _seed_menus():
+def _seed_menus(apps):
+    DaisyUIMenu = apps.get_model("wagtail_daisIE_menus", "DaisyUIMenu")
     for name, layout in (
         ("Main navigation", "navbar"),
         ("Footer", "footer"),
@@ -49,7 +34,8 @@ def _seed_menus():
         DaisyUIMenu.objects.get_or_create(name=name, defaults={"layout": layout})
 
 
-def _seed_error_pages():
+def _seed_error_pages(apps):
+    ErrorPage = apps.get_model("wagtail_daisIE_errors", "ErrorPage")
     for status_code, title in ERROR_PAGES.items():
         ErrorPage.objects.get_or_create(
             status_code=status_code,
@@ -67,7 +53,15 @@ def _ensure_child(parent, page_class, *, slug, title):
     return page
 
 
-def _seed_pages():
+def _seed_pages(apps):
+    Page = apps.get_model("wagtailcore", "Page")
+    Site = apps.get_model("wagtailcore", "Site")
+    HomePage = apps.get_model("core", "HomePage")
+    SearchPage = apps.get_model("core", "SearchPage")
+    ProfileIndexPage = apps.get_model("core", "ProfileIndexPage")
+    DashboardPage = apps.get_model("core", "DashboardPage")
+    SettingsPage = apps.get_model("core", "SettingsPage")
+
     root = Page.objects.filter(depth=1).first()
     if root is None:
         return
@@ -95,15 +89,18 @@ def _seed_pages():
 
 
 def forwards(apps, schema_editor):
-    _seed_theme()
-    _seed_menus()
-    _seed_error_pages()
-    _seed_pages()
+    _seed_theme(apps)
+    _seed_menus(apps)
+    _seed_error_pages(apps)
+    _seed_pages(apps)
 
 
 class Migration(migrations.Migration):
     dependencies = [
         ("core", "0002_initial"),
+        ("wagtail_daisIE", "0001_initial"),
+        ("wagtail_daisIE_menus", "0001_initial"),
+        ("wagtail_daisIE_errors", "0001_initial"),
     ]
     operations = [
         migrations.RunPython(forwards, migrations.RunPython.noop),
