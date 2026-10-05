@@ -1,0 +1,51 @@
+{% load i18n static wagtailcore_tags wagtail_daisIE_tags %}
+
+{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}"
+      {% if daisyui_theme %}data-theme="{{ daisyui_theme.name }}"{% endif %}>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+          content="NEUROMANCERS offers a network for users to offer and request online support" />
+    <title>
+      {% block title %}
+        NEUROMANCERS Network
+      {% endblock title %}
+    </title>
+    {% daisyui_styles %}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    {% daisyui_theme_full_css daisyui_theme %}
+    {% if daisyui_alternate_theme and daisyui_alternate_theme != daisyui_theme %}
+      {% daisyui_theme_css daisyui_alternate_theme %}
+      {% daisyui_theme_font_css daisyui_alternate_theme %}
+      {% daisyui_theme_background_css daisyui_alternate_theme %}
+    {% endif %}
+    {% daisyui_theme_script %}
+    {% daisyui_icon_assets %}
+    {% daisyui_favicon %}
+    {% block extra_head %}
+    {% endblock extra_head %}
+  </head>
+  <body class="flex min-h-screen flex-col bg-base-100 text-base-content {% block body_class %}{% endblock body_class %}"
+        {% if daisyui_page_background_css %}style="background: {{ daisyui_page_background_css }}"{% endif %}>
+    {% block header %}
+      {% daisyui_menu "Main navigation" %}
+    {% endblock header %}
+    <main id="main-content"{% daisyui_main_attrs daisyui_theme %}>
+      {% block messages %}
+        {% daisie_messages %}
+      {% endblock messages %}
+      {% block content %}
+      {% endblock content %}
+    </main>
+    {% block footer %}
+      {% daisyui_menu "Footer" %}
+    {% endblock footer %}
+    {% block extra_body %}
+    {% endblock extra_body %}
+  </body>
+</html>

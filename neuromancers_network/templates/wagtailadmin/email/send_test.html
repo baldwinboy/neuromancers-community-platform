@@ -1,0 +1,18 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% load i18n %}
+
+{% block titletag %}
+  {% translate "Send test email" %}
+{% endblock titletag %}
+{% block content %}
+  {% translate "Send test email" as page_title %}
+  {% include "wagtailadmin/shared/header.html" with title=page_title icon="mail" %}
+  <div class="nice-padding">
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="button button-primary">{% translate "Send test email" %}</button>
+    </form>
+  </div>
+{% endblock content %}

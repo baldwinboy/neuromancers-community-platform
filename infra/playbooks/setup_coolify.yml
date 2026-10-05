@@ -1,0 +1,45 @@
+# Preliminary play: configure passwordless sudo if missing
+#
+# The deploy user is created with --disabled-password and added to the
+# docker group by bootstrap.sh.  While it has no sudo password, it *can*
+# run docker without privileges, so we use a throwaway alpine container to
+# write the NOPASSWD sudoers drop-in when it is absent.
+#
+# Once this play succeeds, the main play below can safely use become: true.
+- name: Bootstrap passwordless sudo
+  hosts: all
+  gather_facts: false
+  become: false
+  tasks:
+    - import_tasks: tasks/bootstrap_sudo.yml
+
+# Main play: Setup Coolify for application
+- name: Setup Coolify
+  hosts: all
+  become: true
+  collections:
+    - community.general
+    - community.crypto
+    - community.docker
+    - ansible.posix
+
+  vars:
+    ssh_alive_interval: 300
+    ssh_max_auth_tries: 3
+    coolify_containers_to_remove:
+      - coolify
+      - coolify-realtime
+      - coolify-redis
+      - coolify-db
+      - coolify-proxy
+      - coolify-sentinel
+
+  tasks:
+    - import_tasks: tasks/base_packages.yml
+    - import_tasks: tasks/install_tailscale.yml
+    - import_tasks: tasks/install_coolify.yml
+    - import_tasks: tasks/configure_firewall.yml
+    - import_tasks: tasks/configure_coolify_api.yml
+
+  handlers:
+    - import_tasks: tasks/restarts.yml

@@ -1,0 +1,12 @@
+---
+- name: Full Infrastructure and Application Deployment
+  ansible.builtin.import_playbook: setup_coolify.yml
+
+- name: Deploy Application on Coolify
+  ansible.builtin.import_playbook: deploy_application.yml
+
+- name: Schedule Maintenance Tasks
+  hosts: all
+  become: true
+  tasks:
+    - import_tasks: tasks/schedule_maintenance.yml

@@ -1,0 +1,343 @@
+- name: Deploy Application
+  hosts: all
+  become: true
+  collections:
+    - community.general
+    - community.crypto
+    - community.docker
+    - ansible.posix
+
+  tasks:
+    # Preflight check
+    - name: Check if Coolify API is enabled
+      ansible.builtin.uri:
+        url: "{{ coolify_healthcheck_url }}"
+        method: GET
+      register: coolify_health
+
+    - name: Set Coolify API token
+      ansible.builtin.set_fact:
+        coolify_api_token: "{{ coolify_admin_token | default(lookup('env', 'COOLIFY_ADMIN_TOKEN', default='')) }}"
+      when: coolify_health.status == 200
+
+    - name: Set BWS access token
+      ansible.builtin.set_fact:
+        bws_access_token: "{{ BWS_ACCESS_TOKEN | default(lookup('env', 'BWS_ACCESS_TOKEN', default='')) }}"
+      when: coolify_health.status == 200
+
+    - name: Set Docker tag
+      ansible.builtin.set_fact:
+        docker_tag: "{{ 'staging' if git_environment == 'staging' else 'latest' }}"
+      when: coolify_health.status == 200
+
+    # Get the Coolify host server as JSON
+    - name: List Coolify servers
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/servers"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        status_code: 200
+        return_content: true
+      register: coolify_server_list
+
+    - name: Get Coolify host server object
+      ansible.builtin.set_fact:
+        coolify_server: "{{ coolify_server_list.json | selectattr('is_coolify_host') | selectattr('is_reachable') | first | default('') }}"
+      when: coolify_server_list is defined
+      failed_when: coolify_server == ''
+
+    # Get or create `neuromancers` project
+    - name: List Coolify projects
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/projects"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        status_code: 200
+        return_content: true
+      register: coolify_project_list
+      retries: 3
+      delay: 2
+
+    - name: Get `neuromancers` project
+      ansible.builtin.set_fact:
+        coolify_project: "{{ coolify_project_list.json | selectattr('name', 'eq', 'neuromancers') | first | default('') }}"
+      when: coolify_project_list is defined
+
+    - name: Create `neuromancers` project if not exists
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/projects"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        return_content: true
+        body_format: json
+        body:
+          name: "neuromancers"
+          description: "NEUROMANCERS Network"
+        status_code: 201
+      register: created_coolify_project
+      when: not coolify_project
+
+    - name: Set project UUID from existing project
+      ansible.builtin.set_fact:
+        coolify_project_uuid: "{{ coolify_project.uuid }}"
+      when: (coolify_project | default('')) != ''
+
+    - name: Set project UUID from created project
+      ansible.builtin.set_fact:
+        coolify_project_uuid: "{{ created_coolify_project.json.uuid }}"
+      when: (coolify_project | default('')) == ''
+
+    # Get or create environment for `neuromancers` project
+    - name: List Coolify environments
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/projects/{{ coolify_project_uuid }}/environments"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        status_code: 200
+        return_content: true
+      register: coolify_environment_list
+      retries: 3
+      delay: 2
+
+    - name: Get `neuromancers` environment
+      ansible.builtin.set_fact:
+        coolify_environment: "{{ coolify_environment_list.json | selectattr('name', 'eq', 'neuromancers') | first | default('') }}"
+      when: coolify_environment_list is defined
+
+    - name: Create `neuromancers` environment if not exists
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/projects/{{ coolify_project_uuid }}/environments"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        return_content: true
+        body_format: json
+        body:
+          name: "neuromancers"
+        status_code: 201
+      register: created_coolify_environment
+      when: not coolify_environment
+
+    # Get or create application for `neuromancers` environment
+    - name: List Coolify applications
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/applications"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        status_code: 200
+        return_content: true
+      register: coolify_application_list
+      retries: 3
+      delay: 2
+
+    - name: Get `neuromancers_network` application
+      ansible.builtin.set_fact:
+        coolify_application: "{{ coolify_application_list.json | selectattr('name', 'eq', 'neuromancers_network') | first | default('') }}"
+      when: coolify_application_list is defined
+
+    - name: Create `neuromancers_network` application if not exists
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/applications/public"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        return_content: true
+        body_format: json
+        body:
+          project_uuid: "{{ coolify_project_uuid }}"
+          server_uuid: "{{ coolify_server.uuid }}"
+          environment_name: "neuromancers"
+          git_repository: "{{ git_repository }}"
+          git_branch: "{{ git_branch }}"
+          build_pack: "dockercompose"
+          ports_exposes: "5000"
+          ports_mappings: "80:5000"
+          name: "neuromancers_network"
+          description: "NEUROMANCERS Network"
+          instant_deploy: false
+          git_commit_sha: "{{ git_commit_sha }}"
+          docker_compose_location: "/docker-compose.coolify.yml"
+          health_check_enabled: true
+          health_check_path: "/api/health"
+          health_check_port: "5000"
+          health_check_method: "GET"
+          health_check_return_code: 200
+          health_check_interval: 30
+          health_check_timeout: 10
+          health_check_retries: 3
+          health_check_start_period: 60
+        status_code: 201
+      register: created_coolify_application
+      when: not coolify_application
+
+    - name: Set application UUID from existing application
+      ansible.builtin.set_fact:
+        coolify_application_uuid: "{{ coolify_application.uuid }}"
+      when: (coolify_application | default('')) != ''
+
+    - name: Set application UUID from created application
+      ansible.builtin.set_fact:
+        coolify_application_uuid: "{{ created_coolify_application.json.uuid }}"
+      when: (coolify_application | default('')) == ''
+
+    # Get existing env vars
+    - name: List existing envs for application
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/envs"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        status_code: 200
+        return_content: true
+      register: coolify_application_envs
+      when: coolify_application_uuid | default('') != ''
+
+    - name: Set existing env vars fact
+      ansible.builtin.set_fact:
+        coolify_env_vars: "{{ coolify_application_envs.json | default([]) }}"
+      when: coolify_application_envs is defined and coolify_application_envs.status == 200
+
+    - name: Set Github secrets for Coolify
+      ansible.builtin.set_fact:
+        github_secrets:
+          - key: "BWS_ACCESS_TOKEN"
+            value: "{{ bws_access_token }}"
+            is_preview: false
+            is_literal: true
+          - key: "DOCKER_TAG"
+            value: "{{ docker_tag }}"
+            is_preview: false
+            is_literal: true
+          - key: "TS_APP_DOMAIN"
+            value: "{{ tailscale_app_domain }}"
+            is_preview: false
+            is_literal: true
+          - key: "TS_METRICS_DOMAIN"
+            value: "{{ tailscale_metrics_domain }}"
+            is_preview: false
+            is_literal: true
+          - key: "TS_MONITOR_DOMAIN"
+            value: "{{ tailscale_monitor_domain }}"
+            is_preview: false
+            is_literal: true
+          - key: "TS_PAAS_DOMAIN"
+            value: "{{ tailscale_paas_domain }}"
+            is_preview: false
+            is_literal: true
+      when: coolify_env_vars is defined and bws_access_token is defined and docker_tag is defined
+
+    # Get secrets from Bitwarden
+    - name: Resolve secrets from Bitwarden Secrets Manager
+      ansible.builtin.shell: bws secret list | jq -r '[.[] | {key:.key,value:.value,is_preview:false,is_literal:true}]'
+      environment:
+        BWS_ACCESS_TOKEN: "{{ bws_access_token }}"
+      register: bws_secrets_raw
+      when: bws_access_token | default('') != ''
+
+    - name: Parse BWS secrets
+      ansible.builtin.set_fact:
+        bws_secrets: "{{ (bws_secrets_raw.stdout | from_json) if bws_secrets_raw is defined and bws_secrets_raw.stdout is defined else [] }}"
+      when: coolify_env_vars is defined
+
+    # Refresh secrets: only update keys that already exist in Coolify.
+    # New secrets must be added manually by a developer via the Coolify UI.
+    # See docs/infra/operator-guide.md#first-deployment for the manual setup.
+    - name: Filter Bitwarden secrets for Coolify
+      ansible.builtin.set_fact:
+        filtered_bws_secrets: "{{ bws_secrets | selectattr('key', 'in', coolify_env_vars | map(attribute='key')) | list }}"
+      when: coolify_env_vars is defined and bws_secrets is defined
+
+    - name: Set list of env items
+      ansible.builtin.set_fact:
+        env_items: "{{ filtered_bws_secrets + github_secrets }}"
+      when: filtered_bws_secrets is defined and github_secrets is defined
+
+    - name: Update Coolify env vars
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}/envs/bulk"
+        method: PATCH
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        body_format: json
+        body:
+          data: "{{ env_items }}"
+        status_code: 201
+      when:
+        - coolify_application_uuid | default('') != ''
+        - env_items | default([]) | length > 0
+
+    # Deploy application
+    - name: Deploy application
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/deploy"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        body_format: json
+        body:
+          uuid: "{{ coolify_application_uuid }}"
+        status_code: 200
+        return_content: true
+      register: coolify_deploy_result
+      when:
+        - coolify_application_uuid | default('') != ''
+        - coolify_env_vars | default([]) | length > 0
+
+    # Get deployment UUID
+    - name: Get deployment UUID
+      ansible.builtin.set_fact:
+        coolify_deployment_uuid: "{{ coolify_deploy_result.json.deployments[0].deployment_uuid | default('') }}"
+      when: coolify_deploy_result is defined and coolify_deploy_result.json.deployments | length > 0
+
+    - name: Wait for deployment to complete
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/deployments/{{ coolify_deployment_uuid }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        status_code: 200
+        return_content: true
+      register: coolify_deployment_result
+      retries: 7 # Retry 7 times
+      delay: 90 # Wait for 90 seconds before retrying
+      until: coolify_deployment_result.json.status in ['failed', 'finished', 'cancelled-by-user']
+      when: coolify_deployment_uuid | default('') != ''
+
+    # Exit if Coolify deployment failed
+    - name: Fail if Coolify deployment failed
+      ansible.builtin.fail:
+        msg: "Coolify deployment failed"
+      when: coolify_deployment_result.json.status == 'failed'
+
+    # Lockdown Coolify
+    - name: Lockdown Coolify port
+      community.general.ufw:
+        rule: allow
+        port: "{{ coolify_port }}"
+        proto: tcp
+        delete: true
+      when: coolify_application_uuid | default('') != ''
+      notify: reload ufw
+
+    - name: Lockdown Coolify real-time port
+      community.general.ufw:
+        rule: allow
+        port: "6001"
+        proto: tcp
+        delete: true
+      when: coolify_application_uuid | default('') != ''
+      notify: reload ufw
+
+    - name: Lockdown Coolify terminal port
+      community.general.ufw:
+        rule: allow
+        port: "6002"
+        proto: tcp
+        delete: true
+      when: coolify_application_uuid | default('') != ''
+      notify: reload ufw

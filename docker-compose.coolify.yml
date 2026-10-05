@@ -1,0 +1,212 @@
+services:
+  ts-django:
+    image: tailscale/tailscale:latest
+    hostname: ts-django
+    environment:
+      - TS_ACCEPT_DNS=true
+      - TS_AUTHKEY=${TS_OAUTH_CLIENT_SECRET}
+      - "TS_EXTRA_ARGS=--advertise-tags=${TAILSCALE_TAG} --reset"
+      - TS_HOSTNAME=django
+      - TS_SERVE_CONFIG=/etc/tailscale/app-config.json
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_APP_DOMAIN=${TS_APP_DOMAIN}
+      - TS_METRICS_DOMAIN=${TS_METRICS_DOMAIN}
+    volumes:
+      - ts-django-mnt:/var/lib/tailscale
+      - /certs/app:/certs/app
+      - /certs/metrics:/certs/metrics
+      - /etc/tailscale/app-config.json:/etc/tailscale/app-config.json:ro
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    restart: unless-stopped
+    post_start:
+      - command:
+          [
+            "sh",
+            "-c",
+            "until tailscale status > /dev/null 2>&1; do sleep 2; done && sleep 5 && until tailscale cert --cert-file /certs/app/cert.pem --key-file /certs/app/key.pem ${TS_APP_DOMAIN}; do echo 'Retrying app cert...'; sleep 10; done && until tailscale cert --cert-file /certs/metrics/cert.pem --key-file /certs/metrics/key.pem ${TS_METRICS_DOMAIN}; do echo 'Retrying metrics cert...'; sleep 10; done",
+          ]
+
+  django:
+    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
+    network_mode: service:ts-django
+    depends_on:
+      ts-django:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+      - TS_APP_DOMAIN=${TS_APP_DOMAIN}
+      - TS_METRICS_DOMAIN=${TS_METRICS_DOMAIN}
+    command: /start
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - /var/log/django:/var/log/django
+
+  postgres:
+    image: ghcr.io/baldwinboy/neuromancers-network-postgres:${DOCKER_TAG:-latest}
+    volumes:
+      - postgres-data:/var/lib/postgresql/18/docker
+      - postgres-backups:/backups
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      - AWS_ENDPOINT_URL_S3=${AWS_ENDPOINT_URL_S3}
+      - RETENTION_DAYS=${RETENTION_DAYS}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: docker.io/redis:8.8
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  celeryworker:
+    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      django:
+        condition: service_healthy
+    environment:
+      - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+    command: /start-celeryworker
+
+  celerybeat:
+    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      django:
+        condition: service_healthy
+    environment:
+      - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+    command: /start-celerybeat
+
+  flower:
+    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      django:
+        condition: service_healthy
+      celeryworker:
+        condition: service_started
+    expose:
+      - 5555
+    environment:
+      - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+    command: /start-flower
+
+  ts-prometheus:
+    image: tailscale/tailscale:latest
+    hostname: ts-prometheus
+    environment:
+      - TS_ACCEPT_DNS=true
+      - TS_AUTHKEY=${TS_OAUTH_CLIENT_SECRET}
+      - "TS_EXTRA_ARGS=--advertise-tags=${TAILSCALE_TAG} --reset"
+      - TS_HOSTNAME=prometheus
+      - TS_SERVE_CONFIG=/etc/tailscale/monitor-config.json
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_MONITOR_DOMAIN=${TS_MONITOR_DOMAIN}
+    volumes:
+      - ts-prometheus-mnt:/var/lib/tailscale
+      - /certs/monitor:/certs/monitor
+      - /etc/tailscale/monitor-config.json:/etc/tailscale/monitor-config.json:ro
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    post_start:
+      - command:
+          [
+            "sh",
+            "-c",
+            "until tailscale status > /dev/null 2>&1; do sleep 2; done && tailscale cert --cert-file /certs/monitor/cert.pem --key-file /certs/monitor/key.pem ${TS_MONITOR_DOMAIN}",
+          ]
+
+  prometheus:
+    image: docker.io/prom/prometheus:main-distroless
+    network_mode: service:ts-prometheus
+    environment:
+      - TS_METRICS_DOMAIN=${TS_METRICS_DOMAIN}
+    volumes:
+      - prometheus-data:/prometheus
+    configs:
+      - source: prometheus-config
+        target: /etc/prometheus/prometheus.yml
+    depends_on:
+      django:
+        condition: service_healthy
+      ts-prometheus:
+        condition: service_started
+
+configs:
+  prometheus-config:
+    content: |
+      global:
+        scrape_interval: 15s
+        evaluation_interval: 15s
+
+      scrape_configs:
+        - job_name: django_http
+          static_configs:
+            - targets: ["${TS_METRICS_DOMAIN}:80"]
+          metrics_path: /monitoring/metrics
+        - job_name: django_https
+          static_configs:
+            - targets: ["${TS_METRICS_DOMAIN}:443"]
+          metrics_path: /monitoring/metrics
+        - job_name: 'coolify-sentinel'
+          static_configs:
+            - targets: ['host.docker.internal:8888']
+          metrics_path: '/api/metrics'
+
+volumes:
+  ts-django-mnt:
+  ts-prometheus-mnt:
+  postgres-data:
+  postgres-backups:
+  redis-data:
+  prometheus-data:

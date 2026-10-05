@@ -1,0 +1,12 @@
+services:
+  postgres:
+    image: postgres:18
+    build: []
+    env_file:
+      - ./.envs/.production/.postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 60s

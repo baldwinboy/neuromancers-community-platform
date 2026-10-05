@@ -1,0 +1,28 @@
+# Install Bitwarden Secrets Manager CLI
+---
+- name: Check if Bitwarden is already installed
+  ansible.builtin.shell: "bws --version || exit 1"
+  register: bitwarden_installed
+
+- name: Install Bitwarden package
+  ansible.builtin.shell: |
+    # Fetch the latest release tag from GitHub API
+    LATEST_TAG=$(curl -s https://api.github.com/repos/bitwarden/sdk-sm/releases/latest \
+    | jq -r '.tag_name')
+
+    # Get only the version number ('xxx-v1.2.3' -> '1.2.3')
+    VERSION=${LATEST_TAG#*-v}
+
+    # Construct the download URL for the Linux AMD64 binary
+    TAG="bws-v${VERSION}"
+    ASSET_NAME="bws-x86_64-unknown-linux-gnu-${VERSION}.zip"
+    DOWNLOAD_URL="https://github.com/bitwarden/sdk-sm/releases/download/${TAG}/${ASSET_NAME}"
+
+    # Download and unzip the binary
+    curl -L -o bws.zip "$DOWNLOAD_URL"
+    unzip bws.zip -d /usr/local/bin
+    rm bws.zip
+
+    # Make the binary executable
+    chmod +x /usr/local/bin/bws
+  when: bitwarden_installed.rc != 0

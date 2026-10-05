@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "skills": {
+    "ansible-expert": {
+      "source": "personamanagmentlayer/pcl",
+      "sourceType": "github",
+      "skillPath": "stdlib/devops/ansible-expert/SKILL.md",
+      "computedHash": "88c36b08fbd97727db5647d2f5e93cfb29c6073f312f0e4c4353b60293a32e34"
+    },
+    "connect-recommend": {
+      "source": "docs.stripe.com",
+      "sourceUrl": "https://docs.stripe.com",
+      "sourceType": "well-known",
+      "computedHash": "86dedaa64b0b9ced37feb61147f8d571323babc574af9868fdddc96027c3b9bc",
+      "wellKnownDigest": "sha256:8d6088e27396ae91579722837a0f837f1f4dad8233f8f49790b4a3a953f2fdc8"
+    },
+    "connect-required-verification-information": {
+      "source": "docs.stripe.com",
+      "sourceUrl": "https://docs.stripe.com",
+      "sourceType": "well-known",
+      "computedHash": "289e0416bda85f6111d9125674c333ee899fcf88a97a9bfab394f6ee30cd6f5b",
+      "wellKnownDigest": "sha256:1637e446e1d0d9d2509de8f915844e0b10df546989c53407eb944817dea2ce7f"
+    },
+    "django-access-review": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/django-access-review/SKILL.md",
+      "computedHash": "f113820ea68a0a8d5b36b36a293da6caed8cb6f2d7115cfc12d63c448e1b7613"
+    },
+    "django-perf-review": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/django-perf-review/SKILL.md",
+      "computedHash": "8f30431b3c007e2dfe7fea44f3805e2dff0f633c078512d33f9b7ebb4c71c19b"
+    },
+    "stripe-apps": {
+      "source": "docs.stripe.com",
+      "sourceUrl": "https://docs.stripe.com",
+      "sourceType": "well-known",
+      "computedHash": "23c32c9b2f231b136387c082050986f0e7764b472bd2f9414d2c74aa98edd91a",
+      "wellKnownDigest": "sha256:a84b9fa7280a2990b1897700be3cb63df217333816791717a218624bb2d3a85f"
+    },
+    "stripe-best-practices": {
+      "source": "docs.stripe.com",
+      "sourceUrl": "https://docs.stripe.com",
+      "sourceType": "well-known",
+      "computedHash": "ea0f8fcc6ed3ca1adf9e61a32d184b783fe9d7a502bb1779cda0e0b88a9222b8",
+      "wellKnownDigest": "sha256:b6c14b5a9433450242dc64574c89f116b89c23178192715ac3b91895d59bf733"
+    },
+    "stripe-directory": {
+      "source": "docs.stripe.com",
+      "sourceUrl": "https://docs.stripe.com",
+      "sourceType": "well-known",
+      "computedHash": "07ad90a28d62dcaab561413f97603bb9abb31c762c14b303ad7878eb6e2eab6a",
+      "wellKnownDigest": "sha256:7fff24f219bc53d779bcdbddcbecac6b89972df53a56b9aff67918304d5f32b8"
+    },
+    "stripe-docs": {
+      "source": "docs.stripe.com",
+      "sourceUrl": "https://docs.stripe.com",
+      "sourceType": "well-known",
+      "computedHash": "ee4a51d34f11386fe6c9f991d5b2d32da69c851124a78a01403412bcf87e73d7",
+      "wellKnownDigest": "sha256:354fb04e9c979223bfecabc994fff41c8da5b5ea155684f1b4ade3a6fed07bac"
+    },
+    "stripe-projects": {
+      "source": "docs.stripe.com",
+      "sourceUrl": "https://docs.stripe.com",
+      "sourceType": "well-known",
+      "computedHash": "d5b674901c9eb8b1c21e9d3a22728f9a4e0a8a6e22737ce7c284ff8daa51a765",
+      "wellKnownDigest": "sha256:5905176ef77e42d7914c794b589d38ff9da86849a54b681b1cfd46ddeafe0012"
+    },
+    "upgrade-stripe": {
+      "source": "docs.stripe.com",
+      "sourceUrl": "https://docs.stripe.com",
+      "sourceType": "well-known",
+      "computedHash": "7d4bc7c38d4723ce73e1832116c85b45b92beeaa5ed460d6b860b84e23b186b9",
+      "wellKnownDigest": "sha256:575b3f78aa822d2aee64b3c4e537e1870acc84cca2c39fa8ed56fc9677b994ec"
+    }
+  }
+}

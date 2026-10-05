@@ -1,0 +1,27 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% load i18n %}
+
+{% block titletag %}
+  {% trans "Sync Stripe" %}
+{% endblock titletag %}
+{% block content %}
+  {% include "wagtailadmin/shared/header.html" with title=_("Sync Stripe") icon="cogs" %}
+  <div class="nice-padding">
+    <p>{% trans "Select the Stripe models to synchronise with dj-stripe." %}</p>
+    <form method="post">
+      {% csrf_token %}
+      <ul>
+        {% for name in stripe_models %}
+          <li>
+            <label>
+              <input type="checkbox" name="models" value="{{ name }}" checked />
+              {{ name }}
+            </label>
+          </li>
+        {% endfor %}
+      </ul>
+      <button type="submit" class="button button-longrunning">{% trans "Sync" %}</button>
+    </form>
+  </div>
+{% endblock content %}

@@ -1,0 +1,19 @@
+{% load i18n %}
+
+<div class="w-panel">
+  <h2 class="w-panel__heading">{% translate "Send test email" %}</h2>
+  <form method="post"
+        action="{% url 'send_test_email' %}"
+        class="w-flex w-items-end w-gap-2">
+    {% csrf_token %}
+    <label class="w-field">
+      <span class="w-field__label">{% translate "Recipient" %}</span>
+      <input class="w-field__input"
+             type="email"
+             name="email"
+             required
+             placeholder="you@example.com" />
+    </label>
+    <button type="submit" class="button button-secondary">{% translate "Send test email" %}</button>
+  </form>
+</div>

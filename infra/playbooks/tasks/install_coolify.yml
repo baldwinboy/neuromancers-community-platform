@@ -1,0 +1,37 @@
+# Install Coolify
+---
+- name: Check whether Coolify is already installed
+  ansible.builtin.stat:
+    path: /data/coolify/source/.env
+  register: coolify_env
+
+- name: Install Coolify if missing
+  ansible.builtin.shell: |
+    curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash
+  environment:
+    ROOT_USERNAME: "{{ coolify_admin_username }}"
+    ROOT_USER_EMAIL: "{{ coolify_admin_email }}"
+    ROOT_USER_PASSWORD: "{{ coolify_admin_password }}"
+  when: not coolify_env.stat.exists
+
+- name: Ensure deploy SSH user is in docker group
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+  when: not coolify_env.stat.exists
+
+- name: Check whether Coolify is already installed
+  ansible.builtin.stat:
+    path: /data/coolify/source/.env
+  register: coolify_env
+
+- name: Wait for Coolify health endpoint
+  ansible.builtin.uri:
+    url: "{{ coolify_healthcheck_url }}"
+    status_code: 200
+  register: coolify_health
+  retries: 3
+  delay: 2
+  until: coolify_health.status == 200
+  when: coolify_env.stat.exists

@@ -1,0 +1,21 @@
+# Checks for passwordless sudo and writes a NOPASSWD sudoers drop-in via
+# a throwaway Docker container when missing.  Meant to be imported by the
+# preliminary play that runs with become: false.
+---
+- name: Check whether passwordless sudo is already active
+  ansible.builtin.raw: sudo -n true 2>/dev/null
+  register: sudo_check
+  changed_when: false
+  ignore_errors: true
+
+- name: Write NOPASSWD sudoers drop-in via Docker
+  ansible.builtin.raw: |
+    docker run --rm -v /:/host alpine sh -c '
+      echo "{{ ansible_user }} ALL=(ALL) NOPASSWD:ALL" > /host/etc/sudoers.d/99-{{ ansible_user }}
+    '
+  when: sudo_check.rc != 0
+
+- name: Verify passwordless sudo now works
+  ansible.builtin.raw: sudo -n true 2>/dev/null
+  changed_when: false
+  when: sudo_check.rc != 0

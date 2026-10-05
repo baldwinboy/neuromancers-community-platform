@@ -1,0 +1,92 @@
+export COMPOSE_FILE := "docker-compose.yml"
+
+## Just does not yet manage signals for subprocesses reliably, which can lead to unexpected behavior.
+## Exercise caution before expanding its usage in production environments.
+## For more information, see https://github.com/casey/just/issues/2473 .
+
+
+# Default command to list all available commands.
+default:
+    @just --list
+
+# build: Build python image.
+build *args:
+    @echo "Building python image..."
+    @docker compose build {{args}}
+
+# up: Start up containers.
+up:
+    @echo "Starting up containers..."
+    @docker compose up -d --remove-orphans
+
+# down: Stop containers.
+down:
+    @echo "Stopping containers..."
+    @docker compose down
+
+# prune: Remove containers and their volumes.
+prune *args:
+    @echo "Killing containers and removing volumes..."
+    @docker compose down -v {{args}}
+
+# logs: View container logs
+logs *args:
+    @docker compose logs -f {{args}}
+
+# manage: Executes `manage.py` command.
+manage +args:
+    @docker compose run --rm django python ./manage.py {{args}}
+
+# pytest: Run tests with pytest.
+pytest *args:
+    @docker compose run --rm django pytest {{args}}
+
+# makemessages: Extract translatable strings into locale catalogs.
+makemessages *args:
+    @docker compose run --rm django python ./manage.py makemessages {{args}}
+
+# compilemessages: Compile locale catalogs into .mo files.
+compilemessages *args:
+    @docker compose run --rm django python ./manage.py compilemessages {{args}}
+
+# docs: Build and serve HTML documentation
+docs:
+    @rm -rf docs/_build
+    @docker compose -f docker-compose.docs.yml up --build -d --remove-orphans
+
+# Remove all the Python and Node.js cache files.
+clean-pyc:
+    find . -name '*.pyc' -exec rm -f {} +
+    find . -name '*.pyo' -exec rm -f {} +
+    find . -name '*~' -exec rm -f {} +
+
+# Install the dependencies.
+install: clean-pyc
+    uv sync --dev
+    npm ci
+
+# Lint the server code with uv.
+lint-server:
+    uv run ruff format --check .
+    uv run ruff check .
+    SKIP=ruff-check,ruff-format,lint:css,lint:format uv run prek run --all-files
+
+# Lint the client code with Prettier.
+lint-client:
+    npm run lint --loglevel silent
+
+# Run all linters.
+lint: lint-server lint-client
+
+# Format the server code with uv.
+format-server:
+    uv run ruff check . --fix
+    uv run ruff format .
+    SKIP=ruff-check,ruff-format,lint:css,lint:format uv run prek run --all-files
+
+# Format the client code with Prettier.
+format-client:
+    npm run format
+
+# Run all formatters.
+format: format-server format-client

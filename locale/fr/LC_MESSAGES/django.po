@@ -1,0 +1,1504 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-05 09:22+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: config/settings/base.py:39
+msgid "English"
+msgstr ""
+
+#: config/settings/base.py:40
+msgid "French"
+msgstr ""
+
+#: config/settings/base.py:41
+msgid "German"
+msgstr ""
+
+#: config/settings/base.py:42
+msgid "Spanish"
+msgstr ""
+
+#: config/settings/base.py:43
+msgid "Portuguese"
+msgstr ""
+
+#: config/settings/base.py:501
+msgid "User"
+msgstr ""
+
+#: config/settings/base.py:506
+msgid "Meeting"
+msgstr ""
+
+#: config/settings/base.py:512
+msgid "Care provider"
+msgstr ""
+
+#: config/settings/base.py:518
+msgid "Review"
+msgstr ""
+
+#: neuromancers_network/core/apps.py:11
+msgid "Core"
+msgstr ""
+
+#: neuromancers_network/core/bulk_actions.py:20
+msgid "Are you sure you want to continue?"
+msgstr ""
+
+#: neuromancers_network/core/bulk_actions.py:21
+msgid "Yes, continue"
+msgstr ""
+
+#: neuromancers_network/core/bulk_actions.py:22
+#: neuromancers_network/meetings/wagtail_hooks.py:163
+#: neuromancers_network/meetings/wagtail_hooks.py:184
+#: neuromancers_network/meetings/wagtail_hooks.py:205
+#: neuromancers_network/meetings/wagtail_hooks.py:226
+#: neuromancers_network/meetings/wagtail_hooks.py:251
+#: neuromancers_network/meetings/wagtail_hooks.py:272
+#: neuromancers_network/meetings/wagtail_hooks.py:293
+#: neuromancers_network/peers/wagtail_hooks.py:87
+#: neuromancers_network/peers/wagtail_hooks.py:107
+#: neuromancers_network/peers/wagtail_hooks.py:127
+#: neuromancers_network/peers/wagtail_hooks.py:147
+msgid "No, go back"
+msgstr ""
+
+#: neuromancers_network/core/bulk_actions.py:40
+#, python-format
+msgid "%(num)d item has been updated"
+msgid_plural "%(num)d items have been updated"
+msgstr[0] ""
+msgstr[1] ""
+
+#: neuromancers_network/core/models/base.py:10
+msgid "Created at"
+msgstr ""
+
+#: neuromancers_network/core/models/base.py:11
+msgid "Updated at"
+msgstr ""
+
+#: neuromancers_network/core/models/calendar.py:19
+msgid "Token"
+msgstr ""
+
+#: neuromancers_network/core/models/calendar.py:25
+#: neuromancers_network/inbox/models/subscriber.py:45
+#: neuromancers_network/taxonomy/models/language.py:16
+#: neuromancers_network/taxonomy/models/tag.py:17
+#: neuromancers_network/taxonomy/models/tag_group.py:15
+#: neuromancers_network/users/models/choices.py:7
+msgid "Active"
+msgstr ""
+
+#: neuromancers_network/core/models/calendar.py:28
+msgid "Calendar feed token"
+msgstr ""
+
+#: neuromancers_network/core/models/calendar.py:29
+msgid "Calendar feed tokens"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:22
+msgid "Publishable key"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:27
+msgid "Secret key"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:32
+msgid "Webhook secret"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:37
+msgid "Client ID"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:40
+msgid "Client ID for Stripe Connect integration."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:43
+msgid "Application fee (%)"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:49
+msgid "The percentage of each payment that you'd like to take from users."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:53
+msgid "Onboarding redirect URL"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:56
+msgid ""
+"The URL to redirect the user to after they leave or complete the Stripe "
+"Connect onboarding flow."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:61
+msgid "Onboarding refresh URL"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:64
+msgid ""
+"The URL to redirect the user to if the Stripe Connect onboarding link "
+"expired, was previously visited or is otherwise invalid."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:76
+msgid "API Keys"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:85
+msgid "Connect"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:90
+msgid "Stripe Settings"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:102
+msgid "SMTP Host"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:103
+msgid "Port"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:104
+msgid "Username"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:105
+msgid "Password"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:106
+msgid "Use TLS"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:107
+msgid "Use SSL"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:109
+msgid "From Address"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:112
+msgid ""
+"\n"
+"            Default sender address for outgoing emails.\n"
+"            Optional, but recommended.\n"
+"            To include a display name, use the format 'Name "
+"<email@example.com>'."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:129
+msgid "SMTP Configuration"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:135
+msgid "Email Settings"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:148
+msgid "GetPronto API Key"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:151
+msgid "API key for GetPronto integration."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:154
+msgid "Whereby API Key"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:157
+msgid "API key for Whereby integration."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:160
+msgid "Whereby Room Prefix"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:163
+msgid "Prefix for Whereby room names. Default is 'neuromancers'."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:169
+msgid "GetPronto"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:173
+msgid "Whereby"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:178
+msgid "Integration Settings"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:182
+msgid "Dropdown"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:183
+msgid "Inline"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:184
+msgid "Sidebar"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:188
+msgid "Stripe adaptive pricing"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:189
+msgid "Manual rates"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:190
+msgid "Fixed rate"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:198
+msgid "Enable localization"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:200
+msgid "Offer translations and a language switcher on the site."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:203
+msgid "Default language"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:212
+msgid "Offered languages"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:213
+msgid "The admin-curated subset of languages offered to visitors."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:216
+msgid "Show language switcher"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:220
+msgid "Switcher style"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:226
+msgid "Detect browser language"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:228
+msgid "Honour the visitor's Accept-Language header when possible."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:231
+msgid "Force default language"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:233
+msgid "Ignore browser detection and always use the default language."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:236
+msgid "Display currency"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:239
+msgid "ISO 4217 currency code used when displaying prices."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:242
+msgid "Enable currency exchange"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:246
+msgid "Exchange rate source"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:252
+msgid "Manual exchange rates"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:255
+msgid "Fallback mapping of {currency_code: rate}."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:265
+#: neuromancers_network/taxonomy/models/language.py:20
+#: neuromancers_network/taxonomy/wagtail_hooks.py:63
+msgid "Languages"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:274
+msgid "Switcher"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:283
+#: neuromancers_network/meetings/models/booking.py:41
+#: neuromancers_network/meetings/models/meeting.py:115
+msgid "Currency"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:288
+msgid "Localization Settings"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:296
+msgid "Username blocklist"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:298
+msgid "One username per line. Applied at sign up."
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:301
+msgid "Treat entries as regular expressions"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:305
+msgid "Case sensitive matching"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:316
+msgid "Username moderation"
+msgstr ""
+
+#: neuromancers_network/core/models/settings.py:321
+msgid "Moderation Settings"
+msgstr ""
+
+#: neuromancers_network/core/utils.py:21
+#, python-brace-format
+msgid ""
+"The slug {slug} is reserved and cannot be used. Please choose a different "
+"slug that is not reserved. Reserved slugs: {reserved_routes_list}"
+msgstr ""
+
+#: neuromancers_network/core/wagtail_hooks.py:25
+msgid "Operations"
+msgstr ""
+
+#: neuromancers_network/inbox/apps.py:8
+msgid "Inbox"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_log.py:34
+#: neuromancers_network/inbox/models/subscriber.py:39
+msgid "Event type"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_log.py:39
+msgid "Payload"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_log.py:41
+msgid "Event reference"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_log.py:46
+msgid ""
+"Stable reference used to dedupe events, e.g. meetingrequest.42.cancelled."
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_log.py:50
+#: neuromancers_network/meetings/models/booking.py:30
+#: neuromancers_network/meetings/models/meeting.py:151
+#: neuromancers_network/meetings/models/refund.py:22
+#: neuromancers_network/meetings/models/request.py:43
+#: neuromancers_network/peers/models/application.py:19
+msgid "Status"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_log.py:54
+msgid "Recorded"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_log.py:55
+msgid "Delivered"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_log.py:56
+msgid "Failed"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_log.py:59
+msgid "Delivery state reserved for future notification channels."
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_log.py:65
+msgid "Notification event log"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_log.py:66
+msgid "Notification event logs"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:14
+msgid "Booking requested"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:15
+msgid "Booking approved"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:16
+msgid "Booking rejected"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:17
+msgid "Booking paid"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:18
+msgid "Booking completed"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:19
+msgid "Booking cancelled"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:22
+msgid "Refund requested"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:23
+msgid "Refund approved"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:24
+msgid "Refund rejected"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:25
+msgid "Refund issued"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:28
+msgid "Review created"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:31
+msgid "Peer approved"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:35
+msgid "Peer application approved"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:41
+msgid "Peer application rejected"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:46
+msgid "Subscription created"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:47
+msgid "Subscription cancelled"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:50
+msgid "Payment reminder due"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:53
+msgid "Upcoming meeting"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:54
+msgid "Cancelled meeting"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:57
+msgid "Session reminder (1 day)"
+msgstr ""
+
+#: neuromancers_network/inbox/models/event_type.py:58
+msgid "Session reminder (1 hour)"
+msgstr ""
+
+#: neuromancers_network/inbox/models/subscriber.py:34
+#: neuromancers_network/meetings/models/pricing.py:55
+msgid "Label"
+msgstr ""
+
+#: neuromancers_network/inbox/models/subscriber.py:36
+msgid "Human readable name shown in the Wagtail admin."
+msgstr ""
+
+#: neuromancers_network/inbox/models/subscriber.py:42
+msgid "The event this subscriber reacts to."
+msgstr ""
+
+#: neuromancers_network/inbox/models/subscriber.py:48
+msgid "Only active subscribers receive events from the bus."
+msgstr ""
+
+#: neuromancers_network/inbox/models/subscriber.py:54
+msgid "Event subscriber"
+msgstr ""
+
+#: neuromancers_network/inbox/models/subscriber.py:55
+msgid "Event subscribers"
+msgstr ""
+
+#: neuromancers_network/meetings/apps.py:7
+#: neuromancers_network/meetings/wagtail_hooks.py:40
+msgid "Meetings"
+msgstr ""
+
+#: neuromancers_network/meetings/models/booking.py:35
+msgid "Total amount"
+msgstr ""
+
+#: neuromancers_network/meetings/models/booking.py:43
+#: neuromancers_network/meetings/models/request.py:68
+msgid "Stripe checkout session ID"
+msgstr ""
+
+#: neuromancers_network/meetings/models/booking.py:48
+#: neuromancers_network/meetings/models/request.py:63
+msgid "Stripe payment intent ID"
+msgstr ""
+
+#: neuromancers_network/meetings/models/booking.py:52
+#: neuromancers_network/meetings/models/request.py:79
+#: neuromancers_network/users/models/profile.py:32
+msgid "Access needs"
+msgstr ""
+
+#: neuromancers_network/meetings/models/booking.py:56
+msgid "Booking"
+msgstr ""
+
+#: neuromancers_network/meetings/models/booking.py:57
+#: neuromancers_network/meetings/wagtail_hooks.py:99
+msgid "Bookings"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:6
+msgid "1:1"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:7
+#: neuromancers_network/taxonomy/models/tag.py:13
+msgid "Group"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:11
+msgid "Per hour"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:12
+msgid "Fixed price"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:13
+msgid "Sliding scale"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:14
+msgid "Duration tiers"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:18
+msgid "Approval required"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:19
+msgid "Pay before join"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:20
+msgid "Pay after join"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:24
+msgid "Pending approval"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:25
+msgid "Pending payment"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:26
+#: neuromancers_network/meetings/models/choices.py:35
+#: neuromancers_network/peers/models/choices.py:7
+msgid "Approved"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:27
+#: neuromancers_network/meetings/models/choices.py:36
+#: neuromancers_network/peers/models/choices.py:8
+msgid "Rejected"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:28
+#: neuromancers_network/meetings/models/choices.py:48
+msgid "Paid"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:29
+msgid "Completed"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:30
+#: neuromancers_network/meetings/models/choices.py:49
+msgid "Cancelled"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:34
+#: neuromancers_network/meetings/models/choices.py:47
+#: neuromancers_network/peers/models/choices.py:6
+msgid "Pending"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:37
+#: neuromancers_network/meetings/models/choices.py:50
+msgid "Refunded"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:41
+msgid "Draft"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:42
+#: neuromancers_network/meetings/models/review.py:33
+msgid "Published"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:43
+msgid "Archived"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:54
+msgid "Daily"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:55
+msgid "Weekly"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:56
+msgid "Biweekly"
+msgstr ""
+
+#: neuromancers_network/meetings/models/choices.py:57
+#: neuromancers_network/payments/models/choices.py:6
+msgid "Monthly"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:64
+msgid "Title"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:65
+#: neuromancers_network/taxonomy/models/tag.py:15
+#: neuromancers_network/taxonomy/models/tag_group.py:13
+msgid "Description"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:67
+msgid "Terms"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:69
+msgid "Free-text terms and conditions."
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:72
+msgid "Meeting type"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:77
+#: neuromancers_network/meetings/models/request.py:109
+msgid "Meeting link"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:80
+msgid ""
+"Auto-populated with a Whereby meeting link close to the time of the event if "
+"left empty. Only valid for group meetings."
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:85
+#: neuromancers_network/meetings/models/request.py:117
+msgid "Whereby meeting ID"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:90
+msgid "Pricing type"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:95
+msgid "Price"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:102
+msgid "Sliding scale min"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:109
+msgid "Sliding scale max"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:117
+msgid "Approval policy"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:122
+msgid "Refund requires approval"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:126
+msgid "Max participants"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:131
+msgid "Maximum number of participants. Required for group meetings, up to 200."
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:143
+#: neuromancers_network/peers/models/profile.py:30
+#: neuromancers_network/taxonomy/models/country.py:20
+#: neuromancers_network/taxonomy/wagtail_hooks.py:54
+msgid "Countries"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:157
+msgid "Scheduled at"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:159
+#: neuromancers_network/meetings/models/pricing.py:23
+msgid "Duration (minutes)"
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:176
+msgid "Recurrence rule for group meetings. Not applicable to 1:1 meetings."
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:272
+msgid "Group meetings must have a start time."
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:274
+msgid "Group meetings must have a duration."
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:279
+msgid "Group meetings must start at least 30 minutes in the future."
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:284
+msgid "Recurrence is not supported for 1:1 meetings."
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:292
+msgid "Max participants is not applicable to 1:1 meetings."
+msgstr ""
+
+#: neuromancers_network/meetings/models/meeting.py:301
+#, python-format
+msgid "Max participants cannot exceed %s."
+msgstr ""
+
+#: neuromancers_network/meetings/models/pricing.py:29
+msgid "Default tier"
+msgstr ""
+
+#: neuromancers_network/meetings/models/pricing.py:33
+msgid "Price tier"
+msgstr ""
+
+#: neuromancers_network/meetings/models/pricing.py:34
+#: neuromancers_network/meetings/wagtail_hooks.py:129
+msgid "Price tiers"
+msgstr ""
+
+#: neuromancers_network/meetings/models/pricing.py:54
+msgid "Amount"
+msgstr ""
+
+#: neuromancers_network/meetings/models/pricing.py:56
+msgid "Default option"
+msgstr ""
+
+#: neuromancers_network/meetings/models/pricing.py:60
+msgid "Price option"
+msgstr ""
+
+#: neuromancers_network/meetings/models/pricing.py:61
+msgid "Price options"
+msgstr ""
+
+#: neuromancers_network/meetings/models/recurrence.py:14
+msgid "Frequency"
+msgstr ""
+
+#: neuromancers_network/meetings/models/recurrence.py:19
+msgid "Interval"
+msgstr ""
+
+#: neuromancers_network/meetings/models/recurrence.py:21
+msgid "How often the meeting repeats (e.g. every 2 weeks)."
+msgstr ""
+
+#: neuromancers_network/meetings/models/recurrence.py:24
+msgid "Days of week"
+msgstr ""
+
+#: neuromancers_network/meetings/models/recurrence.py:28
+msgid ""
+"List of ISO day numbers (1=Mon .. 7=Sun) for weekly/biweekly recurrences. "
+"Ignored for daily recurrences."
+msgstr ""
+
+#: neuromancers_network/meetings/models/recurrence.py:34
+msgid "End date"
+msgstr ""
+
+#: neuromancers_network/meetings/models/recurrence.py:37
+msgid "The recurrence stops on this date. Leave blank for no end."
+msgstr ""
+
+#: neuromancers_network/meetings/models/recurrence.py:40
+msgid "Max occurrences"
+msgstr ""
+
+#: neuromancers_network/meetings/models/recurrence.py:44
+msgid ""
+"Maximum number of occurrences. Leave blank for unlimited (until end_date)."
+msgstr ""
+
+#: neuromancers_network/meetings/models/refund.py:20
+#: neuromancers_network/peers/models/availability.py:24
+msgid "Reason"
+msgstr ""
+
+#: neuromancers_network/meetings/models/refund.py:28
+msgid "Stripe refund ID"
+msgstr ""
+
+#: neuromancers_network/meetings/models/refund.py:32
+msgid "Peer response"
+msgstr ""
+
+#: neuromancers_network/meetings/models/request.py:48
+msgid "Price paid"
+msgstr ""
+
+#: neuromancers_network/meetings/models/request.py:55
+msgid "Support seeker terms / needs"
+msgstr ""
+
+#: neuromancers_network/meetings/models/request.py:59
+msgid "Peer terms of engagement"
+msgstr ""
+
+#: neuromancers_network/meetings/models/request.py:80
+msgid "Terms accepted"
+msgstr ""
+
+#: neuromancers_network/meetings/models/request.py:82
+msgid "Terms accepted at"
+msgstr ""
+
+#: neuromancers_network/meetings/models/request.py:89
+msgid "Requested start time"
+msgstr ""
+
+#: neuromancers_network/meetings/models/request.py:93
+msgid "The start time requested by the support seeker for a 1:1 meeting."
+msgstr ""
+
+#: neuromancers_network/meetings/models/request.py:97
+msgid "Requested duration (minutes)"
+msgstr ""
+
+#: neuromancers_network/meetings/models/request.py:104
+msgid "The duration requested by the support seeker (5-120 minutes)."
+msgstr ""
+
+#: neuromancers_network/meetings/models/request.py:112
+msgid ""
+"Auto-populated with a Whereby meeting link close to the time of the event if "
+"left empty. Only valid for 1:1 meetings."
+msgstr ""
+
+#: neuromancers_network/meetings/models/request.py:188
+msgid ""
+"Requested start time must be at least 10 minutes after the meeting's "
+"creation time."
+msgstr ""
+
+#: neuromancers_network/meetings/models/review.py:29
+msgid "Rating"
+msgstr ""
+
+#: neuromancers_network/meetings/models/review.py:32
+msgid "Comment"
+msgstr ""
+
+#: neuromancers_network/meetings/services.py:89
+msgid "The meeting terms must be accepted to book."
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:87
+msgid "Refund requests"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:146
+msgid "Reviews"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:157
+#: neuromancers_network/meetings/wagtail_hooks.py:266
+msgid "Publish"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:159
+msgid "Publish selected meetings"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:161
+msgid "Publish the selected meetings?"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:162
+#: neuromancers_network/meetings/wagtail_hooks.py:271
+msgid "Yes, publish"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:178
+#: neuromancers_network/meetings/wagtail_hooks.py:287
+msgid "Unpublish"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:180
+msgid "Unpublish selected meetings"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:182
+msgid "Unpublish the selected meetings?"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:183
+#: neuromancers_network/meetings/wagtail_hooks.py:292
+msgid "Yes, unpublish"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:199
+msgid "Archive"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:201
+msgid "Archive selected meetings"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:203
+msgid "Archive the selected meetings?"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:204
+msgid "Yes, archive"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:220
+msgid "Approve refund"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:222
+msgid "Approve selected refund requests"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:224
+msgid "Approve the selected refunds? This issues Stripe refunds."
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:225
+#: neuromancers_network/peers/wagtail_hooks.py:86
+msgid "Yes, approve"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:245
+msgid "Reject refund"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:247
+msgid "Reject selected refund requests"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:249
+msgid "Reject the selected refunds?"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:250
+#: neuromancers_network/peers/wagtail_hooks.py:106
+msgid "Yes, reject"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:268
+msgid "Publish selected reviews"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:270
+msgid "Publish the selected reviews?"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:289
+msgid "Unpublish selected reviews"
+msgstr ""
+
+#: neuromancers_network/meetings/wagtail_hooks.py:291
+msgid "Unpublish the selected reviews?"
+msgstr ""
+
+#: neuromancers_network/payments/apps.py:7
+msgid "Payments"
+msgstr ""
+
+#: neuromancers_network/payments/models/choices.py:7
+msgid "Yearly"
+msgstr ""
+
+#: neuromancers_network/payments/models/profile.py:42
+msgid "KYC completed"
+msgstr ""
+
+#: neuromancers_network/peers/apps.py:7
+msgid "Peers"
+msgstr ""
+
+#: neuromancers_network/peers/models/application.py:17
+msgid "Reason for applying"
+msgstr ""
+
+#: neuromancers_network/peers/models/application.py:31
+msgid "Reviewed at"
+msgstr ""
+
+#: neuromancers_network/peers/models/application.py:32
+msgid "Submission"
+msgstr ""
+
+#: neuromancers_network/peers/models/availability.py:21
+msgid "Start of unavailable window"
+msgstr ""
+
+#: neuromancers_network/peers/models/availability.py:22
+msgid "End of unavailable window"
+msgstr ""
+
+#: neuromancers_network/peers/models/availability.py:27
+msgid "Optional reason for blocking this time window."
+msgstr ""
+
+#: neuromancers_network/peers/models/availability.py:41
+msgid "End time must be after start time."
+msgstr ""
+
+#: neuromancers_network/peers/models/profile.py:19
+msgid "Bio"
+msgstr ""
+
+#: neuromancers_network/peers/models/profile.py:39
+msgid "Default terms & conditions"
+msgstr ""
+
+#: neuromancers_network/peers/models/profile.py:41
+msgid "Terms updated at"
+msgstr ""
+
+#: neuromancers_network/peers/models/profile.py:47
+msgid "Approved by moderator"
+msgstr ""
+
+#: neuromancers_network/peers/models/profile.py:55
+msgid "Approved at"
+msgstr ""
+
+#: neuromancers_network/peers/models/profile.py:58
+msgid "Verified by moderator"
+msgstr ""
+
+#: neuromancers_network/peers/models/profile.py:66
+msgid "Verified at"
+msgstr ""
+
+#: neuromancers_network/peers/models/settings.py:16
+msgid "Require an active subscription"
+msgstr ""
+
+#: neuromancers_network/peers/models/settings.py:20
+msgid "Require completed Stripe KYC"
+msgstr ""
+
+#: neuromancers_network/peers/models/settings.py:24
+msgid "Require moderator verification to publish"
+msgstr ""
+
+#: neuromancers_network/peers/models/settings.py:28
+msgid "Peer plan Stripe Price IDs"
+msgstr ""
+
+#: neuromancers_network/peers/models/settings.py:31
+msgid "Stripe Price IDs that grant peer access."
+msgstr ""
+
+#: neuromancers_network/peers/models/settings.py:42
+msgid "Peer requirements"
+msgstr ""
+
+#: neuromancers_network/peers/models/settings.py:47
+msgid "Peer Requirements Settings"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:29
+msgid "Peer applications"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:42
+msgid "Peer profiles"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:70
+msgid "Member profiles"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:81
+msgid "Approve application"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:83
+msgid "Approve selected applications"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:85
+msgid "Approve the selected peer applications?"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:101
+msgid "Reject application"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:103
+msgid "Reject selected applications"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:105
+msgid "Reject the selected peer applications?"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:121
+msgid "Verify"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:123
+msgid "Verify selected peers"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:125
+msgid "Mark the selected peers as verified?"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:126
+msgid "Yes, verify"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:141
+msgid "Unverify"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:143
+msgid "Unverify selected peers"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:145
+msgid "Remove verification from the selected peers?"
+msgstr ""
+
+#: neuromancers_network/peers/wagtail_hooks.py:146
+msgid "Yes, unverify"
+msgstr ""
+
+#: neuromancers_network/taxonomy/apps.py:7
+msgid "Taxonomy"
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/country.py:10
+#: neuromancers_network/taxonomy/models/language.py:8
+#: neuromancers_network/taxonomy/models/tag_group.py:11
+msgid "Name"
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/country.py:12
+msgid "ISO 3166-1 alpha-2 code"
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/country.py:16
+#: neuromancers_network/taxonomy/models/language.py:12
+#: neuromancers_network/taxonomy/models/tag.py:16
+#: neuromancers_network/taxonomy/models/tag_group.py:14
+msgid "Sort order"
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/country.py:19
+msgid "Country"
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/language.py:9
+msgid "Local name"
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/language.py:10
+msgid "ISO 639-1 code"
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/language.py:14
+msgid "Languages with higher sort order are displayed first."
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/language.py:19
+msgid "Language"
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/tag.py:20
+msgid "Allowed tag"
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/tag.py:21
+#: neuromancers_network/taxonomy/wagtail_hooks.py:44
+msgid "Allowed tags"
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/tag_group.py:12
+msgid "Slug"
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/tag_group.py:18
+msgid "Tag group"
+msgstr ""
+
+#: neuromancers_network/taxonomy/models/tag_group.py:19
+#: neuromancers_network/taxonomy/wagtail_hooks.py:34
+msgid "Tag groups"
+msgstr ""
+
+#: neuromancers_network/taxonomy/validators.py:39
+#, python-format
+msgid "Unknown or inactive tags: %(tags)s"
+msgstr ""
+
+#: neuromancers_network/taxonomy/validators.py:68
+#, python-format
+msgid "Unknown countries: %(countries)s"
+msgstr ""
+
+#: neuromancers_network/taxonomy/wagtail_hooks.py:72
+msgid "Activate"
+msgstr ""
+
+#: neuromancers_network/taxonomy/wagtail_hooks.py:74
+msgid "Activate selected items"
+msgstr ""
+
+#: neuromancers_network/taxonomy/wagtail_hooks.py:77
+msgid "Are you sure you want to activate these items?"
+msgstr ""
+
+#: neuromancers_network/taxonomy/wagtail_hooks.py:78
+msgid "Yes, activate"
+msgstr ""
+
+#: neuromancers_network/taxonomy/wagtail_hooks.py:79
+msgid "No, don't activate"
+msgstr ""
+
+#: neuromancers_network/taxonomy/wagtail_hooks.py:84
+msgid "Deactivate"
+msgstr ""
+
+#: neuromancers_network/taxonomy/wagtail_hooks.py:86
+msgid "Deactivate selected items"
+msgstr ""
+
+#: neuromancers_network/taxonomy/wagtail_hooks.py:89
+msgid "Are you sure you want to deactivate these items?"
+msgstr ""
+
+#: neuromancers_network/taxonomy/wagtail_hooks.py:90
+msgid "Yes, deactivate"
+msgstr ""
+
+#: neuromancers_network/taxonomy/wagtail_hooks.py:91
+msgid "No, don't deactivate"
+msgstr ""
+
+#: neuromancers_network/templates/base.html:75
+msgid "My Profile"
+msgstr ""
+
+#: neuromancers_network/templates/base.html:79
+msgid "Sign Out"
+msgstr ""
+
+#: neuromancers_network/templates/base.html:85
+msgid "Sign Up"
+msgstr ""
+
+#: neuromancers_network/templates/base.html:90
+msgid "Sign In"
+msgstr ""
+
+#: neuromancers_network/templates/wagtailadmin/stripe/sync.html:6
+#: neuromancers_network/templates/wagtailadmin/stripe/sync.html:9
+msgid "Sync Stripe"
+msgstr ""
+
+#: neuromancers_network/templates/wagtailadmin/stripe/sync.html:11
+msgid "Select the Stripe models to synchronise with dj-stripe."
+msgstr ""
+
+#: neuromancers_network/templates/wagtailadmin/stripe/sync.html:24
+msgid "Sync"
+msgstr ""
+
+#: neuromancers_network/users/apps.py:7
+msgid "Users"
+msgstr ""
+
+#: neuromancers_network/users/models/choices.py:6
+msgid "Inactive"
+msgstr ""
+
+#: neuromancers_network/users/models/choices.py:8
+msgid "Suspended"
+msgstr ""
+
+#: neuromancers_network/users/models/choices.py:12
+msgid "Public"
+msgstr ""
+
+#: neuromancers_network/users/models/choices.py:13
+msgid "Members only"
+msgstr ""
+
+#: neuromancers_network/users/models/choices.py:14
+msgid "Private"
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:21
+msgid "Profile picture URL"
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:23
+msgid "Uploaded via getpronto. Set by the upload flow."
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:26
+msgid "Getpronto file ID"
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:34
+msgid "Free-text access needs shared with peers when booking."
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:37
+msgid "Share access needs with peer"
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:39
+msgid "Whether a peer may see your access needs ahead of a meeting."
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:42
+msgid "Visibility"
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:50
+msgid "Meeting request alerts"
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:54
+msgid "Meeting approved alerts"
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:58
+msgid "Meeting reminder alerts"
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:62
+msgid "Review received alerts"
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:66
+msgid "Refund request alerts"
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:70
+msgid "Peer application update alerts"
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:74
+msgid "Platform announcements"
+msgstr ""
+
+#: neuromancers_network/users/models/profile.py:80
+msgid "Timezone"
+msgstr ""
+
+#: neuromancers_network/users/models/user.py:19
+msgid "Full name"
+msgstr ""
+
+#: neuromancers_network/users/models/user.py:20
+msgid "Date of Birth"
+msgstr ""
+
+#: neuromancers_network/users/models/user.py:22
+msgid "Accepted Terms of Service"
+msgstr ""
+
+#: neuromancers_network/users/models/user.py:24
+msgid "Whether the user has accepted the terms of service."
+msgstr ""
+
+#: neuromancers_network/users/models/user.py:31
+msgid "Staff state"
+msgstr ""
+
+#: neuromancers_network/users/validators.py:72
+msgid "This username is not allowed."
+msgstr ""
+
+#: neuromancers_network/users/views.py:31
+msgid "Information successfully updated"
+msgstr ""

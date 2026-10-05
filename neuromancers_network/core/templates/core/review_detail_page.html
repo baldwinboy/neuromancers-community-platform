@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% load i18n wagtailcore_tags %}
+
+{% block title %}
+  {% if page.seo_title %}
+    {{ page.seo_title }}
+  {% else %}
+    {{ page.title }}
+  {% endif %}
+{% endblock title %}
+{% block content %}
+  <article class="mx-auto max-w-3xl py-8">
+    <h1 class="text-4xl font-bold">{{ review.display_title|default:page.title }}</h1>
+    {% if review %}
+      <p class="mt-2 text-lg">{% trans "Rating" %}: {{ review.rating }}/5</p>
+      {% if review.comment %}<p class="mt-4 text-base-content/80">{{ review.comment }}</p>{% endif %}
+    {% endif %}
+    {% for block in page.body %}
+      {% include_block block %}
+    {% endfor %}
+  </article>
+{% endblock content %}

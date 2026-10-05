@@ -1,0 +1,47 @@
+# Schedule maintenance scripts via cron
+---
+- name: Create scripts directory
+  ansible.builtin.file:
+    path: /opt/scripts
+    state: directory
+    mode: "0755"
+
+- name: Copy clear-django-sessions script
+  ansible.builtin.copy:
+    src: ../scripts/clear-django-sessions.sh
+    dest: /opt/scripts/clear-django-sessions.sh
+    mode: "0755"
+
+- name: Schedule clear-django-sessions cron job
+  ansible.builtin.cron:
+    name: "clear-django-sessions"
+    job: "/opt/scripts/clear-django-sessions.sh"
+    hour: "3"
+    minute: "0"
+
+- name: Copy refresh-tailscale-certs.sh script
+  ansible.builtin.copy:
+    src: ../scripts/refresh-tailscale-certs.sh
+    dest: /opt/scripts/refresh-tailscale-certs.sh
+    mode: "0755"
+
+- name: Set Tailscale environment variables in the crontab
+  ansible.builtin.cron:
+    name: "{{ item.name }}"
+    env: yes
+    job: "{{ item.job }}"
+  loop:
+    - name: "TS_APP_DOMAIN"
+      job: "{{ tailscale_app_domain }}"
+    - name: "TS_METRICS_DOMAIN"
+      job: "{{ tailscale_metrics_domain }}"
+    - name: "TS_MONITOR_DOMAIN"
+      job: "{{ tailscale_monitor_domain }}"
+    - name: "TS_PAAS_DOMAIN"
+      job: "{{ tailscale_paas_domain }}"
+
+- name: Schedule refresh-tailscale-certs cron job (monthly)
+  ansible.builtin.cron:
+    name: "refresh-tailscale-certs"
+    job: "/opt/scripts/refresh-tailscale-certs.sh"
+    month: "*/1"

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% load wagtailcore_tags %}
+
+{% block title %}
+  {% if page.seo_title %}
+    {{ page.seo_title }}
+  {% else %}
+    {{ page.title }}
+  {% endif %}
+{% endblock title %}
+{% block content %}
+  <section class="mx-auto max-w-3xl py-8">
+    <header class="mb-6">
+      <h1 class="text-4xl font-bold">{{ page.title|default:user_profile.user.name }}</h1>
+      {% if user_profile.profile_picture_url %}
+        <img class="mt-4 size-24 rounded-full object-cover"
+             src="{{ user_profile.profile_picture_url }}"
+             alt="" />
+      {% endif %}
+    </header>
+    {% if user_profile.bio %}<p class="text-lg text-base-content/80">{{ user_profile.bio }}</p>{% endif %}
+    {% for block in page.body %}
+      {% include_block block %}
+    {% endfor %}
+  </section>
+{% endblock content %}

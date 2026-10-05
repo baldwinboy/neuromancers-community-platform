@@ -1,0 +1,49 @@
+# Uninstall Coolify
+---
+- name: Stop Coolify containers
+  community.docker.docker_container:
+    name: "{{ item }}"
+    state: stopped
+  loop: "{{ coolify_containers_to_remove }}"
+  ignore_errors: true
+
+- name: Remove Coolify containers
+  community.docker.docker_container:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ coolify_containers_to_remove }}"
+  ignore_errors: true
+
+- name: Remove Coolify volumes
+  community.docker.docker_volume:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - coolify-db
+    - coolify-redis
+  ignore_errors: true
+
+- name: Remove Coolify network
+  community.docker.docker_network:
+    name: coolify
+    state: absent
+  ignore_errors: true
+
+- name: Remove Coolify data directory
+  ansible.builtin.file:
+    path: /data/coolify
+    state: absent
+  ignore_errors: true
+
+- name: Remove Coolify images
+  community.docker.docker_image_remove:
+    name: "{{ item }}"
+  loop:
+    - ghcr.io/coollabsio/coolify:latest
+    - ghcr.io/coollabsio/coolify-helper:latest
+    - quay.io/soketi/soketi:1.6-16-alpine
+    - postgres:15-alpine
+    - redis:alpine
+    - traefik:v3.1
+    - lucaslorentz/caddy-docker-proxy:2.8-alpine
+  ignore_errors: true

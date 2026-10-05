@@ -1,0 +1,207 @@
+[project]
+name = "neuromancers-network"
+version = "0.1.0"
+description = "NEUROMANCERS offers a network for users to offer and request online support"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+  { name = "NEUROMANCERS", email = "hello@neuromancers.org.uk" },
+]
+requires-python = "==3.14.*"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+  "argon2-cffi==25.1.0",
+  "babel>=2.18.0",
+  "celery==5.6.3",
+  "clientele[core]>=2.2.2",
+  "crispy-bootstrap5==2026.3",
+  "dj-stripe>=2.11.0",
+  "django>=6.0,<6.1",
+  "django-allauth==65.19.4",
+  "django-anymail==15.0",
+  "django-auditlog>=3.4.1",
+  "django-celery-beat==2.9.0",
+  "django-colorfield==0.14.0",
+  "django-compressor==4.6.0",
+  "django-cors-headers==4.9.0",
+  "django-crispy-forms==2.6",
+  "django-environ==0.14.0",
+  "django-filter==26.1",
+  "django-fsm-2>=4.2.4",
+  "django-model-utils==5.0.0",
+  "django-ninja==1.7.0",
+  "django-prometheus==2.5.0",
+  "django-redis==6.0.0",
+  "django-smart-ratelimit[redis]>=4.12.1",
+  "django-storages[s3]==1.14.6",
+  "django-taggit==6.1.0",
+  "draftail-text-utils==0.3.1",
+  "flower==2.0.1",
+  "gunicorn==26.0.0",
+  "hiredis==3.4.0",
+  "icalendar>=6.1.0",
+  "pillow==12.3.0",
+  "prometheus-client>=0.25.0",
+  "psycopg[c]==3.3.4",
+  "python-slugify==8.0.4",
+  "redis==7.4.0",
+  "rules>=3.5",
+  "sentry-sdk==2.64.0",
+  "wagtail==8.0",
+  "wagtail-daisie[allauth,allauth_emails,blocks,notifications]==2.1.0",
+  "whitenoise==6.12.0",
+]
+
+[dependency-groups]
+dev = [
+  "clientele[cli]>=2.2.2",
+  "coverage==7.16.1",
+  "django-coverage-plugin==3.2.2",
+  "django-debug-toolbar==6.3.0",
+  "django-extensions==4.1",
+  "django-stubs[compatible-mypy]==6.1.1",
+  "djlint==1.40.0",
+  "factory-boy==3.3.3",
+  "ipdb==0.13.13",
+  "mypy==2.1.0",
+  "myst-parser>=5.1.0",
+  "pre-commit==4.6.0",
+  "prek==0.5.3",
+  "psycopg[c]==3.3.4",
+  "pytest==9.1.1",
+  "pytest-django==4.12.0",
+  "pytest-sugar==1.1.1",
+  "ruff==0.16.8",
+  "sphinx==9.1.0",
+  "sphinx-autobuild==2025.8.25",
+  "sphinx-wagtail-theme>=6.5.0",
+  "watchfiles==1.2.0",
+  "werkzeug[watchdog]==3.1.8",
+]
+
+# ==== djLint ====
+[tool.djlint]
+profile = "django"
+include = "H017,H035"
+indent = 2
+max_line_length = 119
+blank_line_after_tag = "load,extends"
+close_void_tags = true
+format_css = true
+format_js = true
+# TODO: remove T002 when fixed https://github.com/djlint/djLint/issues/687
+ignore = "H006,H030,H031,T002"
+css.indent_size = 2
+js.indent_size = 2
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+extend-exclude = [
+  "*/migrations/*.py",
+  "getpronto/*",
+  "staticfiles/*",
+  "whereby/*",
+]
+lint.select = [
+  "A",
+  "ASYNC",
+  "B",
+  "BLE",
+  "C4",
+  "C90",
+  "COM",
+  "DJ",
+  "DTZ",
+  "E",
+  "EM",
+  "ERA",
+  "EXE",
+  "F",
+  "FA",
+  "FBT",
+  "FLY",
+  "G",
+  "I",
+  "ICN",
+  "INP",
+  "INT",
+  "ISC",
+  "N",
+  "PD",
+  "PERF",
+  "PGH",
+  "PIE",
+  "PL",
+  "PT",
+  "PTH",
+  "PYI",
+  "Q",
+  "RET",
+  "RSE",
+  "RUF",
+  "S",
+  "SIM",
+  "SLF",
+  "SLOT",
+  "T10",
+  "T20",
+  "TC",
+  "TID",
+  "TRY",
+  "UP",
+  "W",
+  "YTT",
+]
+lint.ignore = [
+  "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
+  "S101",   # Use of assert detected https://docs.astral.sh/ruff/rules/assert/
+  "SIM102", # sometimes it's better to nest
+  # of types for comparison.
+  # Deactivated because it can make the code slow:
+  # https://github.com/astral-sh/ruff/issues/7871
+]
+lint.isort.force-single-line = true
+
+[tool.pyproject-fmt]
+keep_full_version = true
+
+# ==== mypy ====
+[tool.mypy]
+ignore_missing_imports = true
+python_version = "3.14"
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+plugins = [
+  "mypy_django_plugin.main",
+]
+warn_unused_configs = true
+overrides = [
+  # Django migrations should not produce any errors:
+  { module = "*.migrations.*", ignore_errors = true },
+  # Test modules use untyped factory-boy factories; not worth annotating.
+  { module = [ "*.tests.*", "tests.*" ], ignore_errors = true },
+  # Vendored, code-generated API clients (clientele): duplicate definitions.
+  { module = [ "getpronto.*", "whereby.*" ], ignore_errors = true },
+]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.typecheck"
+
+[tool.pytest]
+# ==== pytest ====
+ini_options.minversion = "6.0"
+ini_options.python_files = [
+  "test_*.py",
+  "tests.py",
+]
+ini_options.addopts = "--ds=config.settings.test --reuse-db --import-mode=importlib"
+
+[tool.coverage]
+# ==== Coverage ====
+run.include = [ "neuromancers_network/**" ]
+run.omit = [ "*/migrations/*", "*/tests/*" ]
+run.plugins = [ "django_coverage_plugin" ]

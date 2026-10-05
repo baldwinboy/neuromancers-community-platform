@@ -1,0 +1,45 @@
+{# Project override: inherit the page/root theme so the navbar follows the
+   visitor's theme toggle instead of staying pinned to its own theme. #}
+{% load i18n wagtailcore_tags wagtail_daisIE_tags %}
+
+<header class="daisyui-navbar">
+  <nav class="daisyui-menu navbar mx-auto w-full max-w-6xl px-4 {{ menu_design_css }} {{ menu_css }}{% if menu.sticky %} sticky top-0 z-50{% endif %}"
+       {% if menu_design_style %}style="{{ menu_design_style }}"{% endif %}
+       aria-label="{{ menu.name }}">
+    <div class="navbar-start">
+      {% include "wagtail_daisIE/blocks/navbar_brand.html" %}
+      <details class="dropdown lg:hidden">
+        <summary class="btn btn-ghost" aria-label="{% trans 'Toggle menu' %}">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               class="h-5 w-5"
+               fill="none"
+               viewBox="0 0 24 24"
+               stroke="currentColor"
+               aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </summary>
+        <ul class="dropdown-content menu z-50 mt-3 w-72 gap-1 rounded-box bg-base-100 p-2 shadow">
+          {% for item in menu_items %}
+            <li>{% include_block item %}</li>
+          {% endfor %}
+          {% if menu.show_search %}
+            <li class="menu-title">{% include "wagtail_daisIE/blocks/navbar_search.html" %}</li>
+          {% endif %}
+          {% if menu.show_theme_toggle %}
+            <li>{% include "wagtail_daisIE/blocks/navbar_theme_toggle.html" %}</li>
+          {% endif %}
+        </ul>
+      </details>
+    </div>
+    <div class="navbar-center hidden lg:flex">{% include "wagtail_daisIE/blocks/megamenu.html" %}</div>
+    <div class="navbar-end gap-2">
+      {% if menu.show_search %}
+        {% include "wagtail_daisIE/blocks/navbar_search.html" %}
+      {% endif %}
+      {% if menu.show_theme_toggle %}
+        {% include "wagtail_daisIE/blocks/navbar_theme_toggle.html" %}
+      {% endif %}
+    </div>
+  </nav>
+</header>
