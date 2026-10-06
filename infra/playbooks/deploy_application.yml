@@ -217,20 +217,20 @@
             value: "{{ tailscale_app_domain }}"
             is_preview: false
             is_literal: true
-          - key: "TS_METRICS_DOMAIN"
-            value: "{{ tailscale_metrics_domain }}"
-            is_preview: false
-            is_literal: true
-          - key: "TS_MONITOR_DOMAIN"
-            value: "{{ tailscale_monitor_domain }}"
-            is_preview: false
-            is_literal: true
           - key: "TS_PAAS_DOMAIN"
             value: "{{ tailscale_paas_domain }}"
             is_preview: false
             is_literal: true
           - key: "TAILSCALE_TAG"
             value: "{{ tailscale_tag }}"
+            is_preview: false
+            is_literal: true
+          - key: "TS_OAUTH_CLIENT_ID"
+            value: "{{ tailscale_oauth_client_id }}"
+            is_preview: false
+            is_literal: true
+          - key: "TS_OAUTH_CLIENT_SECRET"
+            value: "{{ tailscale_oauth_client_secret }}"
             is_preview: false
             is_literal: true
       when: coolify_env_vars is defined and bws_access_token is defined and docker_tag is defined

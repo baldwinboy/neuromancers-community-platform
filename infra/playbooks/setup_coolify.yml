@@ -36,7 +36,9 @@
 
   tasks:
     - import_tasks: tasks/base_packages.yml
+    - import_tasks: tasks/configure_swap.yml
     - import_tasks: tasks/install_tailscale.yml
+    - import_tasks: tasks/configure_tsdproxy.yml
     - import_tasks: tasks/install_coolify.yml
     - import_tasks: tasks/configure_firewall.yml
     - import_tasks: tasks/configure_coolify_api.yml

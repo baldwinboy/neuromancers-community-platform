@@ -56,7 +56,8 @@ These SDKs offer flexible version control:
 
 ```python
 import stripe
-stripe.api_version = '2026-09-30.endive'
+
+stripe.api_version = "2026-09-30.endive"
 ```
 
 ```ruby
@@ -72,10 +73,7 @@ const stripe = require('stripe')('sk_test_xxx', {
 **Per-Request Override:**
 
 ```python
-stripe.Customer.create(
-  email="customer@example.com",
-  stripe_version='2026-09-30.endive'
-)
+stripe.Customer.create(email="customer@example.com", stripe_version="2026-09-30.endive")
 ```
 
 ### Strongly-Typed Languages (Java, Go, .NET)

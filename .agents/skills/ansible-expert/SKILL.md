@@ -123,39 +123,41 @@ all:
 import json
 import boto3
 
+
 def get_inventory():
-    ec2 = boto3.client('ec2', region_name='us-east-1')
-    response = ec2.describe_instances(Filters=[
-        {'Name': 'instance-state-name', 'Values': ['running']}
-    ])
+    ec2 = boto3.client("ec2", region_name="us-east-1")
+    response = ec2.describe_instances(
+        Filters=[{"Name": "instance-state-name", "Values": ["running"]}]
+    )
 
     inventory = {
-        '_meta': {'hostvars': {}},
-        'all': {'hosts': []},
-        'webservers': {'hosts': []},
-        'databases': {'hosts': []},
+        "_meta": {"hostvars": {}},
+        "all": {"hosts": []},
+        "webservers": {"hosts": []},
+        "databases": {"hosts": []},
     }
 
-    for reservation in response['Reservations']:
-        for instance in reservation['Instances']:
-            ip = instance['PrivateIpAddress']
-            tags = {tag['Key']: tag['Value'] for tag in instance.get('Tags', [])}
+    for reservation in response["Reservations"]:
+        for instance in reservation["Instances"]:
+            ip = instance["PrivateIpAddress"]
+            tags = {tag["Key"]: tag["Value"] for tag in instance.get("Tags", [])}
 
-            inventory['all']['hosts'].append(ip)
-            inventory['_meta']['hostvars'][ip] = {
-                'ansible_host': ip,
-                'instance_id': instance['InstanceId'],
-                'instance_type': instance['InstanceType'],
+            inventory["all"]["hosts"].append(ip)
+            inventory["_meta"]["hostvars"][ip] = {
+                "ansible_host": ip,
+                "instance_id": instance["InstanceId"],
+                "instance_type": instance["InstanceType"],
             }
 
             # Group by role tag
-            role = tags.get('Role', '')
+            role = tags.get("Role", "")
             if role in inventory:
-                inventory[role]['hosts'].append(ip)
+                inventory[role]["hosts"].append(ip)
 
     return inventory
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print(json.dumps(get_inventory(), indent=2))
 ```
 

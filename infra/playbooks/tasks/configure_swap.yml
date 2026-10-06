@@ -1,0 +1,51 @@
+# Ensure a swapfile exists to absorb memory pressure on small hosts.
+---
+- name: Check whether swap is active
+  ansible.builtin.command: swapon --show=NAME --noheadings
+  register: swap_active
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Create and enable swapfile
+  when: "'/swapfile' not in swap_active.stdout"
+  block:
+    - name: Allocate swapfile
+      ansible.builtin.command: fallocate -l 4G /swapfile
+      args:
+        creates: /swapfile
+      become: true
+
+    - name: Secure swapfile
+      ansible.builtin.file:
+        path: /swapfile
+        owner: root
+        group: root
+        mode: "0600"
+      become: true
+
+    - name: Format swapfile
+      ansible.builtin.command: mkswap /swapfile
+      become: true
+
+    - name: Enable swapfile
+      ansible.builtin.command: swapon /swapfile
+      become: true
+
+    - name: Persist swapfile in /etc/fstab
+      ansible.builtin.mount:
+        path: none
+        src: /swapfile
+        fstype: swap
+        opts: sw
+        state: present
+      become: true
+
+- name: Reduce swappiness
+  ansible.posix.sysctl:
+    name: vm.swappiness
+    value: "10"
+    sysctl_set: true
+    state: present
+    reload: true
+  become: true

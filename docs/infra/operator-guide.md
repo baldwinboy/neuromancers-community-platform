@@ -88,7 +88,7 @@ bws secret list \
 
 ## Tailscale setup
 
-- The Hetzner host must join the tailnet with `tag:coolify-host`.
+- The Hetzner host must join the tailnet with `tag:<environment>-coolify-ci`, i.e. `tag:production-coolify-ci`.
 - GitHub Actions joins with `tag:ci`.
 - Coolify must be addressed by Tailscale IP or MagicDNS hostname.
 - Do not expose the Coolify dashboard or API to the public internet.
