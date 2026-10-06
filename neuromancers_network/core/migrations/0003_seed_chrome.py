@@ -53,14 +53,18 @@ def _ensure_child(parent, page_class, *, slug, title):
     return page
 
 
-def _seed_pages(apps):
-    Page = apps.get_model("wagtailcore", "Page")
-    Site = apps.get_model("wagtailcore", "Site")
-    HomePage = apps.get_model("core", "HomePage")
-    SearchPage = apps.get_model("core", "SearchPage")
-    ProfileIndexPage = apps.get_model("core", "ProfileIndexPage")
-    DashboardPage = apps.get_model("core", "DashboardPage")
-    SettingsPage = apps.get_model("core", "SettingsPage")
+def _seed_pages():
+    # Page tree operations (add_child, get_children, save_revision) are only
+    # available on the concrete models, not on historical migration models.
+    from wagtail.models import Page, Site
+
+    from neuromancers_network.core.models.pages import (
+        DashboardPage,
+        HomePage,
+        ProfileIndexPage,
+        SearchPage,
+        SettingsPage,
+    )
 
     root = Page.objects.filter(depth=1).first()
     if root is None:
@@ -92,7 +96,7 @@ def forwards(apps, schema_editor):
     _seed_theme(apps)
     _seed_menus(apps)
     _seed_error_pages(apps)
-    _seed_pages(apps)
+    _seed_pages()
 
 
 class Migration(migrations.Migration):
@@ -101,6 +105,8 @@ class Migration(migrations.Migration):
         ("wagtail_daisIE", "0001_initial"),
         ("wagtail_daisIE_menus", "0001_initial"),
         ("wagtail_daisIE_errors", "0001_initial"),
+        # Saving pages triggers the search backend, which needs its index table.
+        ("wagtailsearch", "0010_add_text_fields"),
     ]
     operations = [
         migrations.RunPython(forwards, migrations.RunPython.noop),
