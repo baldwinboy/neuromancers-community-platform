@@ -41,19 +41,48 @@
     - "80" # HTTP
     - "8080" # HTTP
     - "443" # HTTPS
-    - "6001" # Real-time communications
-    - "6002" # Terminal access (Required for Coolify version 4.0.0-beta.336 and above)
-    - "{{ coolify_port }}"
     - "{{ gatus_port }}"
     - "{{ beszel_hub_port }}"
     - "{{ host_prometheus_port }}"
     - "{{ crowdsec_port }}"
+
+# The Coolify control plane (admin 8000, real-time 6001, terminal 6002) must
+# never be reachable from the public internet.  Delete any legacy public allow
+# rules so previously provisioned hosts converge to the tailnet-only state.
+- name: Remove public access to Coolify ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+    delete: true
+  loop:
+    - "{{ coolify_port }}"
+    - "6001"
+    - "6002"
+  notify: reload ufw
 
 - name: Allow traffic from Tailscale
   community.general.ufw:
     rule: allow
     interface: tailscale0
     direction: in
+
+# Docker publishes the Coolify ports through the FORWARD chain (ufw-docker),
+# which plain `ufw allow` does not govern.  Allow the tailnet to reach them
+# directly; the public internet stays blocked by the ufw-docker default.
+- name: Allow tailnet to reach Coolify Docker ports
+  community.general.ufw:
+    route: true
+    rule: allow
+    interface: tailscale0
+    direction: in
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "{{ coolify_port }}"
+    - "6001"
+    - "6002"
+  notify: reload ufw
 
 # Allow local Docker network access
 - name: Get bridge network info

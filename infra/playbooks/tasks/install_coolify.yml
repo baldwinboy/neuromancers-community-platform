@@ -26,12 +26,68 @@
     path: /data/coolify/source/.env
   register: coolify_env
 
+# A stopped Docker daemon also rejects connections on localhost:8000, so make
+# sure it is running before probing the health endpoint.
+- name: Ensure Docker service is running
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+  when: coolify_env.stat.exists
+
+- name: Gather Coolify container states
+  community.docker.docker_container_info:
+    name: "{{ item }}"
+  loop: "{{ coolify_containers_to_remove }}"
+  register: coolify_container_states
+  when: coolify_env.stat.exists
+
+- name: Set Coolify main container state
+  ansible.builtin.set_fact:
+    coolify_main_exists: >-
+      {{
+        (coolify_container_states.results | default([])
+          | selectattr('item', 'equalto', 'coolify')
+          | map(attribute='exists')
+          | list | first) | default(false)
+      }}
+  when: coolify_env.stat.exists
+
+# The data directory can survive while the containers are gone (host reboot,
+# docker prune, a partial uninstall).  Re-running the official installer is the
+# documented, idempotent recovery path: it recreates the containers and keeps
+# the existing volumes and .env.
+- name: Re-install Coolify when data exists but containers are missing
+  ansible.builtin.shell: |
+    curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash
+  environment:
+    ROOT_USERNAME: "{{ coolify_admin_username }}"
+    ROOT_USER_EMAIL: "{{ coolify_admin_email }}"
+    ROOT_USER_PASSWORD: "{{ coolify_admin_password }}"
+  when:
+    - coolify_env.stat.exists
+    - not (coolify_main_exists | default(false))
+
+# Containers present but stopped: start the ones that exist without recreating
+# them (some versions omit optional containers such as coolify-sentinel).
+- name: Start stopped Coolify containers
+  community.docker.docker_container:
+    name: "{{ item.item }}"
+    state: started
+  loop: "{{ coolify_container_states.results | default([]) }}"
+  when:
+    - coolify_env.stat.exists
+    - coolify_main_exists | default(false)
+    - item.item is defined
+    - item.exists | default(false)
+    - not (item.container.State.Running | default(false))
+
 - name: Wait for Coolify health endpoint
   ansible.builtin.uri:
     url: "{{ coolify_healthcheck_url }}"
     status_code: 200
   register: coolify_health
-  retries: 3
-  delay: 2
-  until: coolify_health.status == 200
+  retries: 30
+  delay: 5
+  until: coolify_health.status | default(0) == 200
   when: coolify_env.stat.exists

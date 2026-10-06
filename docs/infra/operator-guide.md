@@ -118,6 +118,31 @@ bws secret list \
 2. Open the private Coolify hostname or Tailscale IP from `COOLIFY_API_URL`.
 3. Confirm the public probe URL still fails from outside the tailnet.
 
+## Coolify lockdown (tailnet-only)
+
+The Coolify control plane is private to the tailnet:
+
+- Ansible (`tasks/configure_firewall.yml`) never opens ports `8000`
+  (dashboard/API), `6001` (real-time) or `6002` (terminal) to the public
+  internet, and deletes any legacy public allow rules on every run.
+- Those ports are reachable only over Tailscale, either at the host's
+  tailnet IP (`http://<tailscale-ip>:8000`) or through the Serve hostname
+  (`https://<stage>-paas.<tailnet>.ts.net`).
+- Docker publishes these ports through the FORWARD chain, so Ansible adds
+  matching `ufw route` rules scoped to `tailscale0`, on top of the
+  `ufw-docker` default-deny for public traffic.
+
+Complete the following instance hardening once, in the Coolify UI:
+
+1. **Settings → Configuration → Advanced**: enable API access only if
+   needed and set **Allowed IPs for API Access** to `100.64.0.0/10`
+   (the Tailscale CGNAT range).
+2. **Settings → Authentication**: disable **Registration Allowed**.
+3. Enable two-factor authentication for every account with elevated access.
+4. Confirm the dashboard is not reachable from outside the tailnet:
+   `curl -m 5 http://<public-ip>:8000/api/v1/health` must fail, while
+   `curl http://<tailscale-ip>:8000/api/v1/health` returns `200`.
+
 ## Normal deployment flow
 
 1. Push reviewed changes to `main` or `staging`.

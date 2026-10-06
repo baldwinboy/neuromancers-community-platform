@@ -17,18 +17,41 @@
     state: started
     enabled: true
 
+- name: Assert Tailscale credentials are available
+  ansible.builtin.assert:
+    that:
+      - tailscale_oauth_client_secret is defined
+      - tailscale_tag is defined
+    fail_msg: >-
+      Tailscale credentials are missing. TS_OAUTH_CLIENT_SECRET and
+      TAILSCALE_TAG must be provided (normally injected from Bitwarden
+      Secrets Manager via `bws run`) before the host can join the tailnet.
+    quiet: true
+  become: true
+
 - name: Check current Tailscale state
-  ansible.builtin.command: tailscale status
-  register: tailscale_status
+  ansible.builtin.command: tailscale status --json
+  register: tailscale_status_raw
   changed_when: false
   failed_when: false
   become: true
+
+- name: Parse current Tailscale state
+  ansible.builtin.set_fact:
+    tailscale_backend_state: >-
+      {{
+        (tailscale_status_raw.stdout | from_json).BackendState
+        if (tailscale_status_raw.stdout | default('') | length > 0)
+        else 'Stopped'
+      }}
 
 - name: Set Tailscale stage name
   ansible.builtin.set_fact:
     tailscale_stage: "{{ 'staging' if git_environment == 'staging' else 'production' }}"
 
-- name: Join tailnet if not already connected
+# "Reachable but not joined" (e.g. NeedsLogin) is possible, so gate on the
+# parsed backend state rather than the command's exit code.
+- name: Join tailnet if not already running
   ansible.builtin.command: >-
     tailscale up
     --authkey={{ tailscale_oauth_client_secret }}
@@ -37,7 +60,8 @@
     --ssh
     --reset
   register: tailscale_join
-  when: tailscale_status.rc != 0 and tailscale_oauth_client_secret is defined and tailscale_tag is defined
+  changed_when: tailscale_join.rc == 0
+  when: tailscale_backend_state != 'Running'
   become: true
 
 - name: Check current Tailscale state
@@ -45,6 +69,36 @@
   register: next_tailscale_status
   changed_when: false
   failed_when: false
+  become: true
+
+- name: Check current Tailscale backend state
+  ansible.builtin.command: tailscale status --json
+  register: tailscale_status_after
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Parse Tailscale backend state after join
+  ansible.builtin.set_fact:
+    tailscale_backend_state_after: >-
+      {{
+        (tailscale_status_after.stdout | from_json).BackendState
+        if (tailscale_status_after.stdout | default('') | length > 0)
+        else 'Unknown'
+      }}
+
+- name: Assert the host joined the tailnet
+  ansible.builtin.assert:
+    that:
+      - tailscale_backend_state_after == 'Running'
+    fail_msg: >-
+      The host did not join the tailnet (BackendState:
+      {{ tailscale_backend_state_after }}).
+      `tailscale status` output:
+      {{ next_tailscale_status.stdout | default('(no stdout)') }}
+      {{ next_tailscale_status.stderr | default('') }}
+    success_msg: "Host is connected to the tailnet."
+    quiet: true
   become: true
 
 - name: Get the Tailscale DNS configuration
