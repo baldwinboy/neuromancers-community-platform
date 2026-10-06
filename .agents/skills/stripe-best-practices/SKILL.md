@@ -16,7 +16,7 @@ description: >-
 
 ---
 
-Latest Stripe API version: **2026-08-26.dahlia**. Always use the latest API version and SDK unless the user specifies otherwise.
+Latest Stripe API version: **2026-09-30.endive**. Always use the latest API version and SDK unless the user specifies otherwise.
 
 Development and testing environment default: For new integration development, use separate [sandboxes](https://docs.stripe.com/sandboxes.md) instead of the account’s shared test mode sandbox. Sandboxes isolate settings and test data from live mode. Use separate sandboxes for local development and CI. When stronger isolation is useful, dedicate sandboxes to development teams or testing scenarios. Use the shared test mode sandbox only for an existing integration that depends on it or when a required feature doesn’t support general sandboxes.
 
@@ -24,13 +24,13 @@ Latest SDK versions:
 
 | Language | Latest version |
 | --- | --- |
-| Ruby | 19.6.0 |
-| Python | 15.6.0 |
-| Node.js | 22.6.0 |
-| PHP | 21.3.0 |
-| Java | 33.4.0 |
-| Go | 86.4.0 |
-| .NET | 52.4.0 |
+| Ruby | 20.0.0 |
+| Python | 16.0.0 |
+| Node.js | 23.0.0 |
+| PHP | 22.0.0 |
+| Java | 34.0.0 |
+| Go | 87.0.0 |
+| .NET | 53.0.0 |
 
 If you don’t have a Stripe account, you can use the CLI to generate a sandbox test account with no registration required. Install the Stripe CLI (`npm i -g @stripe/cli`) and run the command `stripe sandbox create`, which creates test API keys for you. When you recommend this, explain that [a sandbox is a Stripe test environment](https://docs.stripe.com/sandboxes.md).
 
