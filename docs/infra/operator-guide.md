@@ -7,14 +7,14 @@
 - GitHub Actions joins Tailscale before reaching Coolify.
 - Ansible owns host mutation.
 - Coolify owns application deployment for the compose-native stack.
-- Ansible pushes only `BWS_ACCESS_TOKEN` and `DOCKER_TAG` to Coolify.
+- Ansible pushes only `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, the `TS_*_DOMAIN` keys, and `TAILSCALE_TAG` to Coolify.
 - Developers manually add all other secrets from Bitwarden to the Coolify application after first creation.
 
 ## Secret model
 
 - Source of truth for infrastructure and runtime secrets is Bitwarden Secrets Manager.
 - GitHub stores only `BWS_ACCESS_TOKEN` (the Bitwarden machine access token).
-- Ansible pushes `BWS_ACCESS_TOKEN` and `DOCKER_TAG` to Coolify during deployment.
+- Ansible pushes `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, the `TS_*_DOMAIN` keys, and `TAILSCALE_TAG` to Coolify during deployment.
 - All other secrets must be manually added to the Coolify application by a developer.
 - The filter for which secrets to push is NOT in Ansible — it is a manual developer action.
 - Workflows must read secrets with `bws secret list` and filter by `.key`.
@@ -71,6 +71,7 @@ Bitwarden must include at least:
 Coolify must receive:
 
 - `BWS_ACCESS_TOKEN`
+- `TAILSCALE_TAG`
 
 ## Bitwarden CLI behavior and usage
 

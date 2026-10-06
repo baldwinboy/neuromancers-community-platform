@@ -229,6 +229,10 @@
             value: "{{ tailscale_paas_domain }}"
             is_preview: false
             is_literal: true
+          - key: "TAILSCALE_TAG"
+            value: "{{ tailscale_tag }}"
+            is_preview: false
+            is_literal: true
       when: coolify_env_vars is defined and bws_access_token is defined and docker_tag is defined
 
     # Get secrets from Bitwarden

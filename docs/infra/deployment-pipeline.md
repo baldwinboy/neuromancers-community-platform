@@ -159,7 +159,8 @@ The `deploy_application.yml` playbook:
 4. Creates or reuses the environment (`production`/`staging`).
 5. Creates or reuses the `neuromancers_network` application with
    `build_pack: dockercompose` pointing at `docker-compose.coolify.yml`.
-6. Pushes `BWS_ACCESS_TOKEN` and `DOCKER_TAG` as Coolify env vars.
+6. Pushes `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, the `TS_*_DOMAIN` keys, and
+   `TAILSCALE_TAG` as Coolify env vars.
 
 ---
 
@@ -183,7 +184,8 @@ accessible). It manages the Docker Compose stack defined in
 
 ### Runtime secret resolution
 
-Ansible pushes only `BWS_ACCESS_TOKEN` and `DOCKER_TAG` to Coolify.
+Ansible pushes only `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, the `TS_*_DOMAIN`
+keys, and `TAILSCALE_TAG` to Coolify.
 All other runtime secrets must be **manually added** to the Coolify
 application by a developer after first creation.
 
@@ -234,7 +236,8 @@ Bitwarden Secrets Manager
   │           ▼
   │         Application containers (receive secrets at startup)
   │
-  └── BWS_ACCESS_TOKEN → pushed to Coolify by Ansible
+  └── BWS_ACCESS_TOKEN → pushed to Coolify by Ansible (along with DOCKER_TAG,
+        TS_*_DOMAIN, and TAILSCALE_TAG)
 ```
 
 ---
