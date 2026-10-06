@@ -25,7 +25,6 @@ dependencies = [
   "django-auditlog>=3.4.1",
   "django-celery-beat==2.9.0",
   "django-colorfield==0.14.0",
-  "django-compressor==4.6.0",
   "django-cors-headers==4.9.0",
   "django-crispy-forms==2.6",
   "django-environ==0.14.0",
