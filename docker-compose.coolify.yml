@@ -163,7 +163,7 @@ services:
           [
             "sh",
             "-c",
-            "until tailscale status > /dev/null 2>&1; do sleep 2; done && tailscale cert --cert-file /certs/monitor/cert.pem --key-file /certs/monitor/key.pem ${TS_MONITOR_DOMAIN}",
+            "until tailscale status > /dev/null 2>&1; do sleep 2; done && sleep 5 && until tailscale cert --cert-file /certs/monitor/cert.pem --key-file /certs/monitor/key.pem ${TS_MONITOR_DOMAIN}; do echo 'Retrying monitor cert...'; sleep 10; done",
           ]
 
   prometheus:

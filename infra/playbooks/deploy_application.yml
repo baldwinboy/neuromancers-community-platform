@@ -312,11 +312,26 @@
       until: coolify_deployment_result.json.status in ['failed', 'finished', 'cancelled-by-user']
       when: coolify_deployment_uuid | default('') != ''
 
-    # Exit if Coolify deployment failed
+    # Surface the Coolify deployment logs when it did not finish successfully
+    - name: Show Coolify deployment logs
+      ansible.builtin.debug:
+        msg: "{{ ((coolify_deployment_result.json.logs | from_json) | map(attribute='output') | select('string') | list)[-120:] }}"
+      when: >-
+        coolify_deployment_result is defined
+        and (coolify_deployment_result.json.status | default('')) != 'finished'
+        and coolify_deployment_result.json.logs is defined
+        and coolify_deployment_result.json.logs is string
+
+    # Exit if Coolify deployment did not finish successfully
     - name: Fail if Coolify deployment failed
       ansible.builtin.fail:
-        msg: "Coolify deployment failed"
-      when: coolify_deployment_result.json.status == 'failed'
+        msg: >-
+          Coolify deployment did not finish successfully (status:
+          {{ coolify_deployment_result.json.status | default('unknown') }}).
+          Check the deployment logs printed above.
+      when: >-
+        coolify_deployment_result is not defined
+        or (coolify_deployment_result.json.status | default('')) != 'finished'
 
     # Lockdown Coolify
     - name: Lockdown Coolify port

@@ -92,6 +92,7 @@ jobs:
       - name: Install Ansible Galaxy requirements
         run: ansible-galaxy collection install -r infra/galaxy/requirements.yml --force
       - name: Play Ansible Playbook
+        shell: bash
         env:
           ANSIBLE_HOST_KEY_CHECKING: "false"
         run: |
