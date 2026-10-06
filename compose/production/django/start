@@ -9,26 +9,6 @@ python /app/manage.py migrate --noinput
 python /app/manage.py ensure_superuser
 python /app/manage.py collectstatic --noinput
 
-compress_enabled() {
-python << END
-import sys
-
-from environ import Env
-
-env = Env(COMPRESS_ENABLED=(bool, True))
-if env('COMPRESS_ENABLED'):
-    sys.exit(0)
-else:
-    sys.exit(1)
-
-END
-}
-
-if compress_enabled; then
-  # NOTE this command will fail if django-compressor is disabled
-  python /app/manage.py compress
-fi
-
 exec gunicorn config.wsgi \
 --bind 0.0.0.0:5000 \
 --workers=${NUM_WORKERS:-4} \

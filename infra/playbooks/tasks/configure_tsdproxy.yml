@@ -1,0 +1,46 @@
+# Deploy tsdproxy configuration from the repo to the host.
+#
+# Repo files use the .yml extension while tsdproxy expects /config/tsdproxy.yaml
+# (and the list filename declared in tsdproxy.yml is /config/critical.yaml), so
+# the copy's `dest` performs the .yml -> .yaml rename.
+---
+- name: Ensure tsdproxy directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  become: true
+  loop:
+    - /etc/tsdproxy/config
+    - /etc/tsdproxy/data
+
+- name: Deploy tsdproxy config (repo .yml -> host .yaml)
+  ansible.builtin.copy:
+    src: ../../tsdproxy/config/tsdproxy.yml
+    dest: /etc/tsdproxy/config/tsdproxy.yaml
+    mode: "0644"
+  become: true
+
+- name: Deploy tsdproxy list config (repo .yml -> host .yaml)
+  ansible.builtin.copy:
+    src: ../../tsdproxy/config/critical.yml
+    dest: /etc/tsdproxy/config/critical.yaml
+    mode: "0644"
+  become: true
+
+- name: Render tsdproxy placeholders
+  ansible.builtin.replace:
+    path: "{{ item.path }}"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  become: true
+  loop:
+    - path: /etc/tsdproxy/config/tsdproxy.yaml
+      regexp: "__TAILSCALE_TAG__"
+      replace: "{{ tailscale_tag }}"
+    - path: /etc/tsdproxy/config/tsdproxy.yaml
+      regexp: "__TS_STAGE__"
+      replace: "{{ tailscale_stage }}"
+    - path: /etc/tsdproxy/config/critical.yaml
+      regexp: "__TS_STAGE__"
+      replace: "{{ tailscale_stage }}"

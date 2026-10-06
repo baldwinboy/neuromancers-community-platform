@@ -61,12 +61,10 @@
   ansible.builtin.set_fact:
     tailscale_dns_hostname: "{{ tailscale_dns_config.CurrentTailnet.MagicDNSSuffix }}"
 
-- name: Set application and metrics domains
+- name: Set application and paas domains
   ansible.builtin.set_fact:
     tailscale_app_domain: "{{ tailscale_stage }}.{{ tailscale_dns_hostname }}"
-    tailscale_metrics_domain: "{{ tailscale_stage }}-metrics.{{ tailscale_dns_hostname }}"
     tailscale_paas_domain: "{{ tailscale_stage }}-paas.{{ tailscale_dns_hostname }}"
-    tailscale_monitor_domain: "{{ tailscale_stage }}-monitor.{{ tailscale_dns_hostname }}"
 
 - name: Ensure required directories exist
   ansible.builtin.file:
@@ -76,65 +74,7 @@
   become: true
   loop:
     - /certs/paas/
-    - /certs/app
-    - /certs/metrics
-    - /certs/monitor
     - /etc/tailscale
-
-- name: Copy Tailscale serve configs
-  ansible.builtin.copy:
-    src: ../../tailscale/{{ item }}.json
-    dest: /etc/tailscale/{{ item }}-w.json
-    mode: "0644"
-  become: true
-  loop:
-    - app-config
-    - monitor-config
-
-- name: Replace app Tailscale serve config placeholders
-  ansible.builtin.replace:
-    path: /etc/tailscale/app-config-w.json
-    regexp: "{{ item.regexp }}"
-    replace: "{{ item.replace }}"
-  become: true
-  loop:
-    - { regexp: "__TS_SERVICE__", replace: "svc:{{ tailscale_stage }}" }
-    - { regexp: "__TS_APP_DOMAIN__", replace: "{{ tailscale_app_domain }}" }
-    - {
-        regexp: "__TS_METRICS_SERVICE__",
-        replace: "svc:{{ tailscale_stage }}-metrics",
-      }
-    - {
-        regexp: "__TS_METRICS_DOMAIN__",
-        replace: "{{ tailscale_metrics_domain }}",
-      }
-    - { regexp: "__APP_PORT__", replace: "{{ django_port }}" }
-    - { regexp: "__METRICS_PORT__", replace: "{{ django_prometheus_port }}" }
-
-- name: Replace monitor Tailscale serve config placeholders
-  ansible.builtin.replace:
-    path: /etc/tailscale/monitor-config-w.json
-    regexp: "{{ item.regexp }}"
-    replace: "{{ item.replace }}"
-  become: true
-  loop:
-    - {
-        regexp: "__TS_MONITOR_SERVICE__",
-        replace: "svc:{{ tailscale_stage }}-monitor",
-      }
-    - {
-        regexp: "__TS_MONITOR_DOMAIN__",
-        replace: "{{ tailscale_monitor_domain }}",
-      }
-    - { regexp: "__MONITOR_PORT__", replace: "{{ prometheus_port }}" }
-
-- name: Rename config files for update
-  ansible.builtin.include_tasks: rename_file.yml
-  loop:
-    - src: /etc/tailscale/app-config-w.json
-      dest: /etc/tailscale/app-config.json
-    - src: /etc/tailscale/monitor-config-w.json
-      dest: /etc/tailscale/monitor-config.json
 
 - name: Serve Coolify instance on tailnet
   ansible.builtin.shell: |

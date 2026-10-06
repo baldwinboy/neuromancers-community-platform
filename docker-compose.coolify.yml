@@ -1,39 +1,18 @@
 services:
-  ts-django:
-    image: tailscale/tailscale:latest
-    hostname: ts-django
-    environment:
-      - TS_ACCEPT_DNS=true
-      - TS_AUTHKEY=${TS_OAUTH_CLIENT_SECRET}
-      - "TS_EXTRA_ARGS=--advertise-tags=${TAILSCALE_TAG} --reset"
-      - TS_HOSTNAME=django
-      - TS_SERVE_CONFIG=/etc/tailscale/app-config.json
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_APP_DOMAIN=${TS_APP_DOMAIN}
-      - TS_METRICS_DOMAIN=${TS_METRICS_DOMAIN}
+  tsdproxy:
+    image: almeidapaulopt/tsdproxy:dev
     volumes:
-      - ts-django-mnt:/var/lib/tailscale
-      - /certs/app:/certs/app
-      - /certs/metrics:/certs/metrics
-      - /etc/tailscale/app-config.json:/etc/tailscale/app-config.json:ro
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    cap_add:
-      - net_admin
+      - /etc/tsdproxy/data:/data
+      - /etc/tsdproxy/config:/config
     restart: unless-stopped
-    post_start:
-      - command:
-          [
-            "sh",
-            "-c",
-            "until tailscale status > /dev/null 2>&1; do sleep 2; done && sleep 5 && until tailscale cert --cert-file /certs/app/cert.pem --key-file /certs/app/key.pem ${TS_APP_DOMAIN}; do echo 'Retrying app cert...'; sleep 10; done && until tailscale cert --cert-file /certs/metrics/cert.pem --key-file /certs/metrics/key.pem ${TS_METRICS_DOMAIN}; do echo 'Retrying metrics cert...'; sleep 10; done",
-          ]
+    environment:
+      - TSDPROXY_TAILSCALE_DEFAULT_CLIENTID="${TS_OAUTH_CLIENT_ID}"
+      - TSDPROXY_TAILSCALE_DEFAULT_CLIENTSECRET="${TS_OAUTH_CLIENT_SECRET}"
 
   django:
     image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
-    network_mode: service:ts-django
     depends_on:
-      ts-django:
+      tsdproxy:
         condition: service_started
       postgres:
         condition: service_healthy
@@ -42,7 +21,6 @@ services:
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
       - TS_APP_DOMAIN=${TS_APP_DOMAIN}
-      - TS_METRICS_DOMAIN=${TS_METRICS_DOMAIN}
     command: /start
     healthcheck:
       test:
@@ -119,68 +97,25 @@ services:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
     command: /start-celerybeat
 
-  flower:
-    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      django:
-        condition: service_healthy
-      celeryworker:
-        condition: service_started
-    expose:
-      - 5555
-    environment:
-      - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
-    command: /start-flower
-
-  ts-prometheus:
-    image: tailscale/tailscale:latest
-    hostname: ts-prometheus
-    environment:
-      - TS_ACCEPT_DNS=true
-      - TS_AUTHKEY=${TS_OAUTH_CLIENT_SECRET}
-      - "TS_EXTRA_ARGS=--advertise-tags=${TAILSCALE_TAG} --reset"
-      - TS_HOSTNAME=prometheus
-      - TS_SERVE_CONFIG=/etc/tailscale/monitor-config.json
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_MONITOR_DOMAIN=${TS_MONITOR_DOMAIN}
-    volumes:
-      - ts-prometheus-mnt:/var/lib/tailscale
-      - /certs/monitor:/certs/monitor
-      - /etc/tailscale/monitor-config.json:/etc/tailscale/monitor-config.json:ro
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    cap_add:
-      - net_admin
-    restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    post_start:
-      - command:
-          [
-            "sh",
-            "-c",
-            "until tailscale status > /dev/null 2>&1; do sleep 2; done && tailscale cert --cert-file /certs/monitor/cert.pem --key-file /certs/monitor/key.pem ${TS_MONITOR_DOMAIN}",
-          ]
-
   prometheus:
     image: docker.io/prom/prometheus:main-distroless
-    network_mode: service:ts-prometheus
-    environment:
-      - TS_METRICS_DOMAIN=${TS_METRICS_DOMAIN}
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--storage.tsdb.retention.size=1GB"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - prometheus-data:/prometheus
     configs:
       - source: prometheus-config
         target: /etc/prometheus/prometheus.yml
     depends_on:
+      tsdproxy:
+        condition: service_started
       django:
         condition: service_healthy
-      ts-prometheus:
-        condition: service_started
 
 configs:
   prometheus-config:
@@ -190,22 +125,20 @@ configs:
         evaluation_interval: 15s
 
       scrape_configs:
-        - job_name: django_http
+        - job_name: django
           static_configs:
-            - targets: ["${TS_METRICS_DOMAIN}:80"]
+            - targets: ["django:5000"]
           metrics_path: /monitoring/metrics
-        - job_name: django_https
+        - job_name: tsdproxy
           static_configs:
-            - targets: ["${TS_METRICS_DOMAIN}:443"]
-          metrics_path: /monitoring/metrics
+            - targets: ["tsdproxy:8081"]
+          metrics_path: /metrics
         - job_name: 'coolify-sentinel'
           static_configs:
             - targets: ['host.docker.internal:8888']
           metrics_path: '/api/metrics'
 
 volumes:
-  ts-django-mnt:
-  ts-prometheus-mnt:
   postgres-data:
   postgres-backups:
   redis-data:

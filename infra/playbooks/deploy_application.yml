@@ -217,16 +217,20 @@
             value: "{{ tailscale_app_domain }}"
             is_preview: false
             is_literal: true
-          - key: "TS_METRICS_DOMAIN"
-            value: "{{ tailscale_metrics_domain }}"
-            is_preview: false
-            is_literal: true
-          - key: "TS_MONITOR_DOMAIN"
-            value: "{{ tailscale_monitor_domain }}"
-            is_preview: false
-            is_literal: true
           - key: "TS_PAAS_DOMAIN"
             value: "{{ tailscale_paas_domain }}"
+            is_preview: false
+            is_literal: true
+          - key: "TAILSCALE_TAG"
+            value: "{{ tailscale_tag }}"
+            is_preview: false
+            is_literal: true
+          - key: "TS_OAUTH_CLIENT_ID"
+            value: "{{ tailscale_oauth_client_id }}"
+            is_preview: false
+            is_literal: true
+          - key: "TS_OAUTH_CLIENT_SECRET"
+            value: "{{ tailscale_oauth_client_secret }}"
             is_preview: false
             is_literal: true
       when: coolify_env_vars is defined and bws_access_token is defined and docker_tag is defined
@@ -308,11 +312,26 @@
       until: coolify_deployment_result.json.status in ['failed', 'finished', 'cancelled-by-user']
       when: coolify_deployment_uuid | default('') != ''
 
-    # Exit if Coolify deployment failed
+    # Surface the Coolify deployment logs when it did not finish successfully
+    - name: Show Coolify deployment logs
+      ansible.builtin.debug:
+        msg: "{{ ((coolify_deployment_result.json.logs | from_json) | map(attribute='output') | select('string') | list)[-120:] }}"
+      when: >-
+        coolify_deployment_result is defined
+        and (coolify_deployment_result.json.status | default('')) != 'finished'
+        and coolify_deployment_result.json.logs is defined
+        and coolify_deployment_result.json.logs is string
+
+    # Exit if Coolify deployment did not finish successfully
     - name: Fail if Coolify deployment failed
       ansible.builtin.fail:
-        msg: "Coolify deployment failed"
-      when: coolify_deployment_result.json.status == 'failed'
+        msg: >-
+          Coolify deployment did not finish successfully (status:
+          {{ coolify_deployment_result.json.status | default('unknown') }}).
+          Check the deployment logs printed above.
+      when: >-
+        coolify_deployment_result is not defined
+        or (coolify_deployment_result.json.status | default('')) != 'finished'
 
     # Lockdown Coolify
     - name: Lockdown Coolify port

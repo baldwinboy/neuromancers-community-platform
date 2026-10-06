@@ -1,0 +1,24 @@
+defaultProxyProvider: default
+tailscale:
+  providers:
+    default:
+      tags: "__TAILSCALE_TAG__"
+      services: true # Tailscale VIP Services: one shared node, per-proxy FQDN + cert
+      hostname: "__TS_STAGE__-services" # Name of the shared Tailscale machine
+      autoApproveDevices: true # Auto-approve device registration (OAuth only)
+      autoProvisionAcl: true # Ensure tags exist in ACL tagOwners (needs policy:write)
+      preventDuplicates: true # Remove stale offline duplicates before creating nodes
+      maxCertConcurrency: 2 # Max parallel TLS cert generation requests
+  dataDir: /data/
+lists:
+  critical:
+    filename: /config/critical.yaml # List-provider proxies (django, metrics, monitor)
+    healthCheckEnabled: false # Health is observed through Prometheus
+http:
+  hostname: 127.0.0.1 # Keep the dashboard internal; scrape /metrics in-network only
+  port: 8081
+log:
+  level: warn
+  json: false
+proxyAccessLog: false
+adminAllowLocalhost: true # Allow in-network (Docker bridge) access to /metrics

@@ -4,13 +4,19 @@ This file defines the runtime keys that application containers must resolve from
 
 ## Important
 
-After first Coolify application creation, these keys must be **manually added** to the Coolify application via the UI. Ansible does not push them automatically — only `BWS_ACCESS_TOKEN` and `DOCKER_TAG` are pushed by Ansible.
+After first Coolify application creation, these keys must be **manually added** to the Coolify application via the UI. Ansible does not push them automatically — only `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, the `TS_*_DOMAIN` keys, and `TAILSCALE_TAG` are pushed by Ansible.
 
 See [Operator Guide — First deployment](operator-guide.md#first-deployment) for the manual setup procedure.
 
-## Coolify-provided variable
+## Coolify-provided variables (pushed by Ansible)
 
-- `BWS_ACCESS_TOKEN` (pushed by Ansible)
+- `BWS_ACCESS_TOKEN`
+- `DOCKER_TAG`
+- `TS_APP_DOMAIN`
+- `TS_METRICS_DOMAIN`
+- `TS_MONITOR_DOMAIN`
+- `TS_PAAS_DOMAIN`
+- `TAILSCALE_TAG`
 
 ## Canonical runtime keys (manually added to Coolify)
 
