@@ -20,10 +20,10 @@ jobs:
       BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ matrix.branch }}
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
       - run: pip install ansible==13.6.*
       - name: Install latest Bitwarden Secrets Manager CLI
         run: |
