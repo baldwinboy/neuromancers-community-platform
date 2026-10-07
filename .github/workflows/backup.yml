@@ -46,7 +46,6 @@ jobs:
             "TS_OAUTH_CLIENT_ID"
             "TS_OAUTH_CLIENT_SECRET"
             "TAILSCALE_TAG"
-            "TAILSCALE_AUTH_KEY"
           )
 
           secrets_json="$(bws secret list)"

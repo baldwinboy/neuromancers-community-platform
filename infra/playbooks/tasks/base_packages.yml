@@ -17,7 +17,6 @@
       - ufw
       - unzip
     state: present
-    only_upgrade: true
 
 - name: Add CrowdSec package repository
   ansible.builtin.shell: |

@@ -65,7 +65,6 @@ jobs:
             "TS_OAUTH_CLIENT_ID"
             "TS_OAUTH_CLIENT_SECRET"
             "TAILSCALE_TAG"
-            "TAILSCALE_AUTH_KEY"
             "COOLIFY_ADMIN_USERNAME"
             "COOLIFY_ADMIN_EMAIL"
             "COOLIFY_ADMIN_PASSWORD"

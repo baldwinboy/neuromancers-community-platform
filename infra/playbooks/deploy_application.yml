@@ -298,7 +298,6 @@
       register: coolify_deploy_result
       when:
         - coolify_application_uuid | default('') != ''
-        - coolify_env_vars | default([]) | length > 0
 
     # Get deployment UUID
     - name: Get deployment UUID
@@ -338,5 +337,5 @@
           {{ coolify_deployment_result.json.status | default('unknown') }}).
           Check the deployment logs printed above.
       when: >-
-        coolify_deployment_result is not defined
-        or (coolify_deployment_result.json.status | default('')) != 'finished'
+        coolify_deployment_uuid | default('') != ''
+        and (coolify_deployment_result.json.status | default('')) != 'finished'

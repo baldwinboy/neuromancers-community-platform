@@ -59,7 +59,7 @@ sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin prohibit-password/' "$SSHD_CONFI
 sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' "$SSHD_CONFIG"
 sed -i 's/^#\?ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' "$SSHD_CONFIG"
 sed -i 's/^#\?PubkeyAuthentication.*/PubkeyAuthentication yes/' "$SSHD_CONFIG"
-systemctl reload sshd
+systemctl reload ssh
 
 # ── 4. Install Coolify only if missing ───────────────────────────────
 if [ -f "/data/coolify/source/.env" ]; then

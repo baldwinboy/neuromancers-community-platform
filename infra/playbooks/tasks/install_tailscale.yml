@@ -63,6 +63,7 @@
   changed_when: tailscale_join.rc == 0
   when: tailscale_backend_state != 'Running'
   become: true
+  no_log: true
 
 - name: Check current Tailscale state
   ansible.builtin.command: tailscale status
