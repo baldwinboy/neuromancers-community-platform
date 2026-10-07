@@ -486,6 +486,26 @@ WAGTAIL_DAISIE_ALLAUTH_UI = True
 WAGTAIL_DAISIE_ALLAUTH_BASE_TEMPLATE = "base.html"
 WAGTAIL_DAISIE_HEADER_MENU = "Main navigation"
 WAGTAIL_DAISIE_FOOTER_MENU = "Footer"
+# Content page types allowed in the generic page-tree feeds. Forms, indexes,
+# detail pages and system pages are implicitly excluded by this allowlist.
+WAGTAIL_DAISIE_PAGE_FEEDS_CONTENT_TYPES = [
+    "core.StandardPage",
+]
+# Shared by the generic page-tree feed context models. Filter labels are plain
+# str (not gettext_lazy) so they stay JSON-safe for the admin.
+_PAGE_FEED_FILTERS = {
+    "search": {
+        "type": "search",
+        "field": "title",
+        "fields": ["title", "search_description"],
+        "label": "Search",
+    },
+    "published": {
+        "type": "date_range",
+        "field": "first_published_at",
+        "label": "Published",
+    },
+}
 # Context models authors may bind into content (block fields, feeds, pages).
 WAGTAIL_DAISIE_CONTEXT_MODELS = {
     "user": {
@@ -546,6 +566,54 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "label": _("Notification preferences"),
         "model": "inbox.NotificationPreference",
         "source": "neuromancers_network.inbox.selectors.user_notification_preference",
+    },
+    "tag": {
+        "label": _("Tag"),
+        "model": "taxonomy.AllowedTag",
+        "source": "url",
+        "lookup_field": "slug",
+        "lookup_in": "path",
+    },
+    "host_page": {
+        "label": _("Current page"),
+        "model": "wagtailcore.Page",
+        "source": "page",
+        "queryset": "neuromancers_network.core.selectors.host_page_only",
+    },
+    "page_sitewide": {
+        "label": _("Every page"),
+        "model": "wagtailcore.Page",
+        "source": "page",
+        "queryset": "neuromancers_network.core.selectors.sitewide_pages",
+        "filters": _PAGE_FEED_FILTERS,
+    },
+    "page_all": {
+        "label": _("All descendants"),
+        "model": "wagtailcore.Page",
+        "source": "page",
+        "queryset": "neuromancers_network.core.selectors.all_descendants",
+        "filters": _PAGE_FEED_FILTERS,
+    },
+    "page_children": {
+        "label": _("Child pages"),
+        "model": "wagtailcore.Page",
+        "source": "page",
+        "queryset": "neuromancers_network.core.selectors.immediate_children",
+        "filters": _PAGE_FEED_FILTERS,
+    },
+    "page_deeper": {
+        "label": _("Deeper pages"),
+        "model": "wagtailcore.Page",
+        "source": "page",
+        "queryset": "neuromancers_network.core.selectors.deeper_descendants",
+        "filters": _PAGE_FEED_FILTERS,
+    },
+    "tag_page_children": {
+        "label": _("Tag pages"),
+        "model": "core.TagDetailPage",
+        "source": "page",
+        "queryset": "neuromancers_network.core.selectors.tag_page_children",
+        "filters": _PAGE_FEED_FILTERS,
     },
 }
 # Business notifications are delivered through the internal inbox event bus and
@@ -757,6 +825,19 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "title_source": "display_name",
         "slug_source": "username",
         "on_delete": "unlink",
+    },
+    "tag": {
+        "label": "Tag",
+        "model": "taxonomy.AllowedTag",
+        "page_type": "neuromancers_network.core.models.pages.TagDetailPage",
+        "parent": "neuromancers_network.core.models.pages.TagIndexPage",
+        "template_page": "neuromancers_network.core.models.pages.TagIndexPage",
+        "lookup_field": "slug",
+        "lookup_in": "path",
+        "publish_field": "is_active",
+        "title_source": "name",
+        "slug_source": "slug",
+        "on_delete": "page",
     },
 }
 # https://pypi.org/project/draftail-text-utils/

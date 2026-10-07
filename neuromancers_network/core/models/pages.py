@@ -1,8 +1,11 @@
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
+from taggit.managers import TaggableManager
+from wagtail.admin.panels import FieldPanel
 from wagtail_daisIE.detail_pages.models import ModelDetailPage
 from wagtail_daisIE.pages import StyledPageMixin
 
+from neuromancers_network.core.models.tag import StandardPageTag
 from neuromancers_network.core.utils import display_reserved_routes_error
 from neuromancers_network.core.utils import is_reserved_route
 
@@ -30,6 +33,7 @@ class HomePage(ReservedSlugPage):
     template = "core/home_page.html"
     subpage_types = [
         "core.StandardPage",
+        "core.TagIndexPage",
         "core.ProfileIndexPage",
         "core.MeetingIndexPage",
         "core.PeerIndexPage",
@@ -48,6 +52,13 @@ class HomePage(ReservedSlugPage):
 
 class StandardPage(ReservedSlugPage):
     template = "core/standard_page.html"
+    tags = TaggableManager(
+        blank=True,
+        through=StandardPageTag,
+        to="taxonomy.AllowedTag",
+    )
+
+    content_panels = [*ReservedSlugPage.content_panels, FieldPanel("tags")]
 
 
 class SearchPage(ReservedSlugPage):
@@ -146,3 +157,23 @@ class ReviewDetailPage(ModelDetailPage):
     template = "core/review_detail_page.html"
     parent_page_types = ["core.ReviewIndexPage"]
     subpage_types = []
+
+
+class TagIndexPage(ReservedSlugPage):
+    template = "core/tag_index_page.html"
+    subpage_types = ["core.TagDetailPage"]
+
+
+class TagDetailPage(ModelDetailPage):
+    template = "core/tag_detail_page.html"
+    parent_page_types = ["core.TagIndexPage"]
+    subpage_types = []
+
+    def get_context(self, request, *args, **kwargs):
+        from neuromancers_network.core.selectors import (  # noqa: PLC0415
+            pages_tagged_with,
+        )
+
+        context = super().get_context(request, *args, **kwargs)
+        context["tagged_pages"] = pages_tagged_with(self.source)
+        return context

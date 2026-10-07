@@ -1,0 +1,80 @@
+{% load static i18n page_feed %}
+
+{% is_page_feed value.feed.context_model as page_feed %}
+{% if audience_allowed %}
+  {% page_tag_options as tag_options %}
+  {% page_tag_selected as selected_tags %}
+  <div class="{% if block_css %}{{ block_css }}{% endif %}"
+       {% if block_style %} style="{{ block_style }}"{% endif %}
+       data-daisie-feed
+       data-url="{{ feed_url }}{% if page_feed %}?page={{ host_page.pk }}{% endif %}"
+       data-offset="{{ next_offset }}"
+       data-infinite="{% if value.feed.infinite %}true{% else %}false{% endif %}">
+    {% if filters or tag_options and page_feed %}
+      <form method="get" class="mb-6 space-y-4" data-daisie-feed-form>
+        {% if page_feed and host_page %}
+          <input type="hidden" name="page" value="{{ host_page.pk }}" />
+        {% endif %}
+        {% if page_feed and tag_options %}
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">{% trans "Categories" %}</legend>
+            <div class="flex flex-wrap gap-2">
+              {% for option in tag_options %}
+                <label class="btn btn-sm{% if option.value in selected_tags %} btn-active{% endif %}">
+                  <input type="checkbox"
+                         name="tags"
+                         value="{{ option.value }}"
+                         class="sr-only"
+                         {% if option.value in selected_tags %}checked{% endif %} />
+                  {{ option.label }}
+                </label>
+              {% endfor %}
+            </div>
+          </fieldset>
+        {% endif %}
+        {% for filter in filters %}
+          {% include "wagtail_daisIE/blocks/data/feed_filter.html" with filter=filter %}
+        {% endfor %}
+        <noscript>
+          <button type="submit" class="{{ submit_css }}">{% trans "Apply" %}</button>
+        </noscript>
+      </form>
+    {% endif %}
+    {% if allow_layout_toggle and toggle_options %}
+      <div class="mb-4 flex justify-end" data-daisie-feed-toggle hidden>
+        <div class="join" role="radiogroup" aria-label="{% trans 'Layout' %}">
+          {% for option in toggle_options %}
+            <label class="btn btn-sm join-item{% if option.value == layout %} btn-active{% endif %}">
+              <input type="radio"
+                     name="feed_layout"
+                     value="{{ option.value }}"
+                     class="sr-only"
+                     {% if option.value == layout %} checked{% endif %}
+                     data-daisie-feed-layout-option />
+              {{ option.label }}
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+      {{ layout_classes|json_script:"daisie-feed-layout-classes" }}
+    {% endif %}
+    <div data-daisie-feed-items
+         data-daisie-feed-layout="{{ layout }}"
+         class="{{ layout_container_css }}">{{ items_html|safe }}</div>
+    {% if not items_html %}
+      <p class="text-base-content/70">{{ value.feed.empty_message }}</p>
+    {% endif %}
+    <p class="mt-3 text-sm"
+       role="status"
+       aria-live="polite"
+       data-daisie-feed-status></p>
+    {% if has_more %}
+      <div class="mt-4 text-center">
+        <a href="{% if page_feed %}{% querystring offset=next_offset page=host_page.pk %}{% else %}?offset={{ next_offset }}{% endif %}"
+           class="{{ submit_css }}"
+           data-daisie-feed-more>{% trans "Load more" %}</a>
+      </div>
+    {% endif %}
+    <script src="{% static 'wagtail_daisIE/js/feed.js' %}" defer></script>
+  </div>
+{% endif %}
