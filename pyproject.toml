@@ -36,7 +36,7 @@ dependencies = [
   "django-smart-ratelimit[redis]>=4.12.1",
   "django-storages[s3]==1.14.6",
   "django-taggit==6.1.0",
-  "draftail-text-utils>=0.3.1,<0.4",
+  "draftail-text-utils==3.0.0",
   "flower==2.2.0",
   "gunicorn==26.2.0",
   "hiredis==3.4.2",
@@ -48,7 +48,7 @@ dependencies = [
   "rules>=3.5",
   "sentry-sdk==2.71.0",
   "wagtail>=8.0,<8.1",
-  "wagtail-daisie[allauth,allauth_emails,blocks,notifications]==2.1.0",
+  "wagtail-daisie[allauth,allauth_emails,blocks,notifications]==3.0.0",
   "whitenoise==6.12.0",
 ]
 
