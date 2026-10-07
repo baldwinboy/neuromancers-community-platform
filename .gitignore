@@ -189,7 +189,8 @@ $RECYCLE.BIN/
 
 ### macOS template
 # General
-*.DS_Store
+**/*.DS_Store
+**/deploy_payload.json
 .AppleDouble
 .LSOverride
 
