@@ -13,7 +13,9 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event.workflow_run.event == 'push'
+      && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -97,7 +99,9 @@ jobs:
             # Only export values needed by later workflow steps.
             case "$key" in
               HETZNER_SSH_PRIVATE_KEY)
-                echo "::add-mask::$value"
+                while IFS= read -r line; do
+                  echo "::add-mask::$line"
+                done <<< "$value"
                 {
                   echo "$key<<EOF"
                   echo "$value"
@@ -116,7 +120,7 @@ jobs:
             exit 1
           fi
       - name: Connect to tailnet
-        uses: Pikachews/tailscale-action@main
+        uses: Pikachews/tailscale-action@83244b4e48caeeb6d6346e50b794a11f7e920fc9 # v1
         with:
           oauth-client-id: ${{ steps.inject-secrets.outputs.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ steps.inject-secrets.outputs.TS_OAUTH_CLIENT_SECRET }}
