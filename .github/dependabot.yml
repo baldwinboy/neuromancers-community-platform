@@ -38,7 +38,6 @@ updates:
   - package-ecosystem: "docker"
     # Look for a `Dockerfile` in the listed directories
     directories:
-      - "compose/local/node/"
       - "compose/production/aws/"
       - "compose/production/postgres/"
       - "compose/production/traefik/"
@@ -66,3 +65,13 @@ updates:
         update-types:
           - "minor"
           - "patch"
+
+  # Enable version updates for npm tooling
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    groups:
+      npm:
+        patterns:
+          - "*"

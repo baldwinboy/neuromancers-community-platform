@@ -138,6 +138,7 @@
     tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --https=6001 --yes localhost:6001
     tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --https=6002 --yes localhost:6002
   become: true
+  changed_when: false
 
 - name: Generate Tailscale certificates for Coolify
   ansible.builtin.shell: |
