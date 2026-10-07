@@ -1,4 +1,4 @@
-exclude: "^.agents/|^docs/|/migrations/|devcontainer.json"
+exclude: "^.agents/|^docs/|^getpronto/|^whereby/|/migrations/|devcontainer.json"
 default_stages: [pre-commit]
 minimum_pre_commit_version: "3.2.0"
 
@@ -23,14 +23,14 @@ repos:
       - id: detect-private-key
 
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: "1.30.0"
+    rev: "1.33.0"
     hooks:
       - id: django-upgrade
         args: ["--target-version", "6.0"]
 
   # Run the Ruff linter.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.14
+    rev: v0.16.10
     hooks:
       # Linter
       - id: ruff-check
@@ -39,12 +39,12 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: v2.23.0
+    rev: v2.30.1
     hooks:
       - id: pyproject-fmt
 
   - repo: https://github.com/djlint/djLint
-    rev: v1.36.4
+    rev: v1.46.4
     hooks:
       - id: djlint-reformat-django
       - id: djlint-django

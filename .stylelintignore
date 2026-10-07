@@ -1,0 +1,8 @@
+staticfiles
+htmlcov
+coverage
+.venv
+getpronto
+whereby
+docs/_build
+neuromancers_network/static/css/project.css
