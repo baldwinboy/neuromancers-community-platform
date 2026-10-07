@@ -774,4 +774,7 @@ DRAFTAIL_TEXT_UTILS = {
     "FONT_URLS": {
         "MODULE": "neuromancers_network.core.draftail_palette",
     },
+    # Let authors link text to a resolved context value (e.g. ``{{ user.url }}``);
+    # daisIE feeds the editor's dynamic-link control and resolves them at render.
+    "FEATURES": {"DYNAMIC_LINK": True},
 }

@@ -62,7 +62,7 @@ def meetings_create(request, data):
 def meetings_restore_default_terms(request, data):
     user = require_authenticated(request)
     meeting = _owned_meeting(user, data)
-    meeting.terms = default_terms_for(user)
+    meeting.terms = default_terms_for(meeting.peer)
     meeting.save()
     return redirect_back(request)
 

@@ -158,10 +158,9 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = EMAIL_SUBJECT_PREFIX
 # ------------------------------------------------------------------------------
 # https://anymail.readthedocs.io/en/stable/installation/#installing-anymail
 INSTALLED_APPS += ["anymail"]
-# https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
-# https://anymail.readthedocs.io/en/stable/installation/#anymail-settings-reference
-# https://anymail.readthedocs.io/en/stable/esps
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_BACKEND is env-driven in base.py (DJANGO_EMAIL_BACKEND); its default,
+# core.mailer.WagtailEmailBackend, reads the admin EmailSettings model and falls
+# back to the SMTP settings defined in settings.py.
 ANYMAIL: dict[str, object] = {}
 
 # LOGGING

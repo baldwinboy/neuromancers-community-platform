@@ -1035,7 +1035,7 @@ wheels = [
 
 [[package]]
 name = "draftail-text-utils"
-version = "0.3.1"
+version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cssutils" },
@@ -1043,9 +1043,9 @@ dependencies = [
     { name = "wagtail" },
     { name = "wagtail-traverse" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6a/41/c2e026c6abd61837b321cad75bebcd9983175a0e7abb92be5eb871674323/draftail_text_utils-0.3.1.tar.gz", hash = "sha256:6f1e330573e64306494eed716c04030d1539117662852c4ef8235a7f4edd8f23", size = 23629, upload-time = "2026-09-25T09:29:03.858Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/79/609dba11ab3174c607e99c2a6c61e75309c72a5f92ad18eee69718c7ef82/draftail_text_utils-3.0.0.tar.gz", hash = "sha256:99e06ccf620253643e5650da8bbcf5a572869bd678a1da5caf393cd658785299", size = 27954, upload-time = "2026-10-07T15:20:39.014Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/92/91/fb37075850a041d747d5bbde9b81c54f79d0aff6d4d3c22d944093286bdc/draftail_text_utils-0.3.1-py3-none-any.whl", hash = "sha256:497902fbfd5c54fb921ef11f9b35218a7c2bc72c55614befdda4161ce0c6c761", size = 43030, upload-time = "2026-09-25T09:29:02.574Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/ad/b49afb9f560fec79c4b7b986ec1bfa479cb78ef00cac395e789cfb7fe461/draftail_text_utils-3.0.0-py3-none-any.whl", hash = "sha256:b292cf0ca54851581af335b2d7d370ce8cf5e76bc84d2cddf7d98c6febf2a39a", size = 49407, upload-time = "2026-10-07T15:20:37.936Z" },
 ]
 
 [[package]]
@@ -1790,7 +1790,7 @@ requires-dist = [
     { name = "django-smart-ratelimit", extras = ["redis"], specifier = ">=4.12.1" },
     { name = "django-storages", extras = ["s3"], specifier = "==1.14.6" },
     { name = "django-taggit", specifier = "==6.1.0" },
-    { name = "draftail-text-utils", specifier = ">=0.3.1,<0.4" },
+    { name = "draftail-text-utils", specifier = "==3.0.0" },
     { name = "flower", specifier = "==2.2.0" },
     { name = "gunicorn", specifier = "==26.2.0" },
     { name = "hiredis", specifier = "==3.4.2" },
@@ -1802,7 +1802,7 @@ requires-dist = [
     { name = "rules", specifier = ">=3.5" },
     { name = "sentry-sdk", specifier = "==2.71.0" },
     { name = "wagtail", specifier = ">=8.0,<8.1" },
-    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==2.1.0" },
+    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.0.0" },
     { name = "whitenoise", specifier = "==6.12.0" },
 ]
 
@@ -2869,7 +2869,7 @@ wheels = [
 
 [[package]]
 name = "wagtail-daisie"
-version = "2.1.0"
+version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cssutils" },
@@ -2879,9 +2879,9 @@ dependencies = [
     { name = "mjml-python" },
     { name = "wagtail" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/42/75/51334a802f0818ed2ee944273e3c209ecfc6318a345cf6ebddeafe4968e3/wagtail_daisie-2.1.0.tar.gz", hash = "sha256:39df37ccf1602bec9351e229a7b6e8c0130d5f1ea809e0562f97a4513b3a6420", size = 311018, upload-time = "2026-10-05T18:57:02.147Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/75/62/cdc5172a3d2c5d0e19438282ee9724ed0ad808bad8d370e2d116ee88be5e/wagtail_daisie-3.0.0.tar.gz", hash = "sha256:b4aa72164cca198b8be80372735ffb2d483cd8e606f2a598cb135645e2cc08ff", size = 330170, upload-time = "2026-10-07T15:30:46.03Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/60/1b/3d513d92de7ab5b95cc54f7720cd3f7db9dafea23649421cff299a6dc0a4/wagtail_daisie-2.1.0-py3-none-any.whl", hash = "sha256:6db70708d88031f5c6862960d12fcfb97ee6378e0a5e82e27d5e863ed1ed1185", size = 487887, upload-time = "2026-10-05T18:57:00.383Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/a2/40ef9b7523ce12c6883fe4af932bca79179cd8a5a96943f25452028fb234/wagtail_daisie-3.0.0-py3-none-any.whl", hash = "sha256:8e94a463ff93d54deb0b4e6d712453762da2c8279e6d8c36d5b1b10efa52b146", size = 514929, upload-time = "2026-10-07T15:30:44.597Z" },
 ]
 
 [package.optional-dependencies]

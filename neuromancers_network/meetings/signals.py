@@ -1,6 +1,7 @@
 import logging
 
 import stripe
+from django_fsm import can_proceed
 from djstripe.event_handlers import djstripe_receiver
 from djstripe.models import PaymentIntent as StripePaymentIntent
 from djstripe.models import Refund as StripeRefund
@@ -68,7 +69,7 @@ def handle_charge_refunded(sender, event, **kwargs):
         except RefundRequest.DoesNotExist:
             continue
 
-        if refund_request.status != "refunded":
+        if can_proceed(refund_request.mark_refunded):
             refund_request.mark_refunded()
             refund_request.save(update_fields=["status", "updated_at"])
         break

@@ -155,4 +155,4 @@ def is_bookmark_owner(request: HttpRequest) -> bool:
     owner_pk = params.get("user_pk") or params.get("bookmark_user_pk")
     if owner_pk is None:
         return is_own_profile(request)
-    return owner_pk == user.pk
+    return str(owner_pk) == str(user.pk)

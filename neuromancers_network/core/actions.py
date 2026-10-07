@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
+from django.utils.http import url_has_allowed_host_and_scheme
 
 
 def require_authenticated(request):
@@ -44,4 +45,10 @@ def as_list(data, key: str) -> list:
 
 def redirect_back(request) -> HttpResponseRedirect:
     target = request.headers.get("referer") or "/"
+    if not url_has_allowed_host_and_scheme(
+        target,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        target = "/"
     return HttpResponseRedirect(target)
