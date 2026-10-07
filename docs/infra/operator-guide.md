@@ -122,6 +122,14 @@ bws secret list \
 2. Open the private Coolify hostname or Tailscale IP from `COOLIFY_API_URL`.
 3. Confirm the public probe URL still fails from outside the tailnet.
 
+## Monitoring (Gatus)
+
+- Uptime monitoring and the health dashboard run as the `gatus` service in the Coolify stack.
+- Gatus is reachable only over the tailnet at `https://<stage>-monitor.<tailnet>.ts.net` (the tsdproxy `-monitor` VIP); it is never exposed publicly.
+- Checks cover the Django health endpoint, PostgreSQL, the Django app over the tailnet VIP (including certificate expiry) and the Coolify API.
+- Alerts are delivered to Discord via `GATUS_DISCORD_WEBHOOK_URL`, which must be manually added to the Coolify application environment.
+- Uptime history is persisted in the `gatus-data` volume.
+
 ## Coolify lockdown (tailnet-only)
 
 The Coolify control plane is private to the tailnet:

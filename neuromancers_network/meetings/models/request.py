@@ -10,6 +10,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_fsm import GET_STATE
 from django_fsm import FSMField
+from django_fsm import can_proceed
 from django_fsm import transition
 from djstripe.models import Session as StripeSession
 
@@ -318,7 +319,7 @@ class MeetingRequest(Timestamped):
             self.stripe_payment_intent_id = payment_intent_id
         if amount_total is not None:
             self.price_paid = Decimal(amount_total) / Decimal(100)
-        if self.status != MeetingRequestStatus.PAID:
+        if can_proceed(self.mark_paid):
             self.mark_paid()
         self.save(validate=False)
 
@@ -361,4 +362,4 @@ class MeetingRequest(Timestamped):
         result = whereby_meetings(data=data)
         self.meeting_link = result.room_url
         self.whereby_meeting_id = result.meeting_id
-        self.save(update_fields=["meeting_link", "whereby_meeting_id"])
+        self.save(validate=False, update_fields=["meeting_link", "whereby_meeting_id"])

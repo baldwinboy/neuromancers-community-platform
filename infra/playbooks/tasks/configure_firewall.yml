@@ -43,9 +43,6 @@
     - "80" # HTTP
     - "8080" # HTTP
     - "443" # HTTPS
-    - "{{ gatus_port }}"
-    - "{{ beszel_hub_port }}"
-    - "{{ host_prometheus_port }}"
     - "{{ crowdsec_port }}"
 
 # The Coolify control plane (admin 8000, real-time 6001, terminal 6002) must

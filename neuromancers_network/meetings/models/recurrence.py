@@ -8,6 +8,9 @@ from neuromancers_network.core.models.base import Timestamped
 
 from .choices import RecurrenceFrequency
 
+_DAY_NAMES = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+_ISO_WEEKDAYS = frozenset(range(1, 8))
+
 
 class RecurrenceRule(Timestamped):
     frequency = models.CharField(
@@ -50,11 +53,23 @@ class RecurrenceRule(Timestamped):
         verbose_name = "Recurrence rule"
         verbose_name_plural = "Recurrence rules"
 
+    def _normalised_days(self) -> list[int]:
+        """Return the configured ISO weekdays, ignoring out-of-range values."""
+        days = []
+        for value in self.days_of_week or []:
+            try:
+                day = int(value)
+            except TypeError, ValueError:
+                continue
+            if day in _ISO_WEEKDAYS:
+                days.append(day)
+        return sorted(set(days))
+
     def __str__(self):
         parts = [f"Every {self.interval} {self.get_frequency_display()}"]
-        if self.days_of_week:
-            day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-            selected = [day_names[d - 1] for d in self.days_of_week]
+        days = self._normalised_days()
+        if days:
+            selected = [_DAY_NAMES[d - 1] for d in days]
             parts.append(f"on {', '.join(selected)}")
         if self.end_date:
             parts.append(f"until {self.end_date}")
@@ -65,17 +80,19 @@ class RecurrenceRule(Timestamped):
 
     def _next_weekly(self, current):
         candidate = current + timedelta(weeks=self.interval)
-        if not self.days_of_week:
+        days = self._normalised_days()
+        if not days:
             return candidate
-        while candidate.isoweekday() not in self.days_of_week:
+        while candidate.isoweekday() not in days:
             candidate += timedelta(days=1)
         return candidate
 
     def _next_biweekly(self, current):
         candidate = current + timedelta(weeks=2 * self.interval)
-        if not self.days_of_week:
+        days = self._normalised_days()
+        if not days:
             return candidate
-        while candidate.isoweekday() not in self.days_of_week:
+        while candidate.isoweekday() not in days:
             candidate += timedelta(days=1)
         return candidate
 

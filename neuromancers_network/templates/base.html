@@ -1,4 +1,4 @@
-{% load i18n static wagtailcore_tags wagtail_daisIE_tags %}
+{% load i18n static wagtailcore_tags wagtail_daisIE_tags draftail_text_utils_tags %}
 
 {% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
@@ -27,6 +27,7 @@
     {% daisyui_theme_script %}
     {% daisyui_icon_assets %}
     {% daisyui_favicon %}
+    {% draftail_text_assets %}
     {% block extra_head %}
     {% endblock extra_head %}
   </head>

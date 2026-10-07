@@ -80,8 +80,8 @@ usermod -aG docker "$HETZNER_SSH_USER"
 
 # ── 5. Create IaC directories ────────────────────────────────────────
 echo "[5/5] Creating IaC directories..."
-mkdir -p /opt/{gatus/config,beszel,scripts,backups}
-chown -R "$HETZNER_SSH_USER:$HETZNER_SSH_USER" /opt/gatus /opt/beszel /opt/scripts /opt/backups
+mkdir -p /opt/{gatus/config,scripts,backups}
+chown -R "$HETZNER_SSH_USER:$HETZNER_SSH_USER" /opt/gatus /opt/scripts /opt/backups
 
 echo ""
 echo "=== Bootstrap complete! ==="

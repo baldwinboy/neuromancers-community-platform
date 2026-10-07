@@ -1,4 +1,4 @@
-# tsdproxy List provider: only django, metrics and monitor are proxied here.
+# tsdproxy List provider: only django and monitor are proxied here.
 # Each key becomes the Tailscale VIP Service FQDN (e.g. staging.<tailnet>.ts.net).
 # paas (Coolify) is served by the host's own Tailscale instance, not tsdproxy.
 __TS_STAGE__: # django application (Host preserved == TS_APP_DOMAIN)
@@ -6,13 +6,8 @@ __TS_STAGE__: # django application (Host preserved == TS_APP_DOMAIN)
     443/https:
       targets:
         - http://django:5000
-__TS_STAGE__-metrics: # django-prometheus standalone exporter (no Host validation)
+__TS_STAGE__-monitor: # Gatus status page / uptime monitoring
   ports:
     443/https:
       targets:
-        - http://django:8001
-__TS_STAGE__-monitor: # Prometheus UI / metrics
-  ports:
-    443/https:
-      targets:
-        - http://prometheus:9090
+        - http://gatus:8080

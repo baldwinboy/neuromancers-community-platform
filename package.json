@@ -4,14 +4,17 @@
   "version": "0.1.0",
   "type": "module",
   "devDependencies": {
-    "@wagtail/stylelint-config-wagtail": "^1.0.1",
-    "prettier": "^3.8.1",
-    "stylelint": "^16.26.1"
+    "@wagtail/stylelint-config-wagtail": "^2.0.1",
+    "prettier": "^3.9.9",
+    "stylelint": "^17.16.0"
   },
   "scripts": {
     "lint": "npm run lint:format && npm run lint:css",
     "lint:format": "prettier --check \"**/?(.)*.{css,scss,js,ts,tsx,json,yaml,yml}\"",
-    "lint:css": "stylelint --aei --fix lax \"**/?(.)*.{css,scss}\"",
+    "lint:css": "stylelint --allow-empty-input \"**/?(.)*.{css,scss}\"",
     "format": "prettier --write \"**/?(.)*.{css,scss,js,ts,tsx,json,yaml,yml}\""
+  },
+  "overrides": {
+    "stylelint": "^17.16.0"
   }
 }

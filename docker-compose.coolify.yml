@@ -5,6 +5,7 @@ services:
       - /etc/tsdproxy/data:/data
       - /etc/tsdproxy/config:/config
     restart: unless-stopped
+    mem_limit: 128m
     environment:
       TSDPROXY_TAILSCALE_DEFAULT_CLIENTID: ${TS_OAUTH_CLIENT_ID}
       TSDPROXY_TAILSCALE_DEFAULT_CLIENTSECRET: ${TS_OAUTH_CLIENT_SECRET}
@@ -34,6 +35,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+    mem_limit: 512m
     volumes:
       - /var/log/django:/var/log/django
 
@@ -59,6 +61,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    mem_limit: 1024m
 
   redis:
     image: docker.io/redis:8.8
@@ -70,6 +73,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+    mem_limit: 192m
 
   celeryworker:
     image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
@@ -83,6 +87,7 @@ services:
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
     command: /start-celeryworker
+    mem_limit: 384m
 
   celerybeat:
     image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
@@ -96,50 +101,27 @@ services:
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
     command: /start-celerybeat
+    mem_limit: 128m
 
-  prometheus:
-    image: docker.io/prom/prometheus:main-distroless
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=15d"
-      - "--storage.tsdb.retention.size=1GB"
+  gatus:
+    image: ghcr.io/twin/gatus:stable
+    environment:
+      - GATUS_CONFIG_PATH=/config
+      - GATUS_DISCORD_WEBHOOK_URL=${GATUS_DISCORD_WEBHOOK_URL}
+      - TS_APP_DOMAIN=${TS_APP_DOMAIN}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - prometheus-data:/prometheus
-    configs:
-      - source: prometheus-config
-        target: /etc/prometheus/prometheus.yml
+      - gatus-data:/data
+      - /opt/gatus/config:/config:ro
+    mem_limit: 128m
+    restart: unless-stopped
     depends_on:
-      tsdproxy:
-        condition: service_started
       django:
         condition: service_healthy
-
-configs:
-  prometheus-config:
-    content: |
-      global:
-        scrape_interval: 15s
-        evaluation_interval: 15s
-
-      scrape_configs:
-        - job_name: django
-          static_configs:
-            - targets: ["django:5000"]
-          metrics_path: /monitoring/metrics
-        - job_name: tsdproxy
-          static_configs:
-            - targets: ["tsdproxy:8081"]
-          metrics_path: /metrics
-        - job_name: 'coolify-sentinel'
-          static_configs:
-            - targets: ['host.docker.internal:8888']
-          metrics_path: '/api/metrics'
 
 volumes:
   postgres-data:
   postgres-backups:
   redis-data:
-  prometheus-data:
+  gatus-data:

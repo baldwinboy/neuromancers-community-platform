@@ -12,8 +12,8 @@ tailscale:
   dataDir: /data/
 lists:
   critical:
-    filename: /config/critical.yaml # List-provider proxies (django, metrics, monitor)
-    healthCheckEnabled: false # Health is observed through Prometheus
+    filename: /config/critical.yaml # List-provider proxies (django, monitor)
+    healthCheckEnabled: false # Health is observed through Gatus
 http:
   hostname: 127.0.0.1 # Keep the dashboard internal; scrape /metrics in-network only
   port: 8081

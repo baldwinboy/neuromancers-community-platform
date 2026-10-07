@@ -26,11 +26,12 @@ jobs:
       BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
     steps:
       - name: Checkout deployment revision
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
-      - uses: actions/setup-python@v7
-      - run: pip install ansible==13.6.*
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - run: pip install ansible==14.5.*
       - name: Install latest Bitwarden Secrets Manager CLI
         run: |
           # Fetch the latest release tag from GitHub API
