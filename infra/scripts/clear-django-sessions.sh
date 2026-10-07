@@ -8,10 +8,9 @@ fi
 
 docker_bin="/usr/bin/docker"
 
-# Coolify names containers dynamically, so target the running Django service by compose label and image.
+# Coolify names containers dynamically, so target the running Django service by compose label.
 django_container="$(${docker_bin} ps \
     --filter "label=com.docker.compose.service=django" \
-    --filter "ancestor=neuromancers_network_production_django" \
     --format '{{.Names}}' | head -n 1)"
 
 if [ -z "${django_container}" ]; then

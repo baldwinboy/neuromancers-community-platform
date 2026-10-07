@@ -190,15 +190,24 @@
     recurse: false
   become: true
 
-- name: Fix CrowdSec config files and log file permissions
-  ansible.builtin.file:
-    path: "{{ item }}"
-    mode: "0644"
+- name: Check for CrowdSec config and credential files
+  ansible.builtin.stat:
+    path: "{{ item.path }}"
+  register: crowdsec_files
   loop:
-    - /etc/crowdsec/config.yaml
-    - /etc/crowdsec/local_api_credentials.yaml
-    - /etc/crowdsec/online_api_credentials.yaml
-    - /var/log/crowdsec.log
+    - { path: /etc/crowdsec/config.yaml, mode: "0644" }
+    - { path: /var/log/crowdsec.log, mode: "0644" }
+    - { path: /etc/crowdsec/local_api_credentials.yaml, mode: "0600" }
+    - { path: /etc/crowdsec/online_api_credentials.yaml, mode: "0600" }
+  become: true
+
+- name: Fix CrowdSec file permissions
+  ansible.builtin.file:
+    path: "{{ item.item.path }}"
+    state: file
+    mode: "{{ item.item.mode }}"
+  loop: "{{ crowdsec_files.results }}"
+  when: item.stat.exists
   become: true
 
 - name: Attach DOCKER-USER chain to CrowdSec Firewall Remediation

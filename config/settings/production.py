@@ -38,6 +38,9 @@ ALLOWED_HOSTS = [
         for host in DYNAMIC_ALLOWED_HOSTS
         if host and host not in DJANGO_ALLOWED_HOSTS
     ],
+    # Always allow loopback so in-container healthchecks and probes keep
+    # working even when DJANGO_ALLOWED_HOSTS is overridden at runtime.
+    *[host for host in ("localhost", "127.0.0.1") if host not in DJANGO_ALLOWED_HOSTS],
 ]
 
 # DATABASES
@@ -65,6 +68,9 @@ CACHES = {
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # https://docs.djangoproject.com/en/dev/ref/settings/#secure-ssl-redirect
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
+# Never redirect the in-container healthcheck, which is served over plain
+# HTTP on the container network.
+SECURE_REDIRECT_EXEMPT = [r"^api/health$"]
 # https://docs.djangoproject.com/en/dev/ref/settings/#session-cookie-secure
 SESSION_COOKIE_SECURE = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#session-cookie-name
