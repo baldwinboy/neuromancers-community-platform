@@ -35,4 +35,6 @@
   ansible.builtin.cron:
     name: "refresh-tailscale-certs"
     job: "/opt/scripts/refresh-tailscale-certs.sh"
-    month: "*/1"
+    day: "1"
+    hour: "3"
+    minute: "0"

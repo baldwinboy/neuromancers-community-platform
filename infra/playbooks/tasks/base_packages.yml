@@ -17,11 +17,12 @@
       - ufw
       - unzip
     state: present
-    only_upgrade: true
 
 - name: Add CrowdSec package repository
   ansible.builtin.shell: |
-    curl -s https://install.crowdsec.net | sudo sh
+    curl -s https://install.crowdsec.net | sh
+  args:
+    creates: /etc/apt/sources.list.d/crowdsec_crowdsec.list
 
 - name: Install CrowdSec package
   ansible.builtin.apt:

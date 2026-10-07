@@ -24,6 +24,7 @@
       ansible.builtin.set_fact:
         bws_access_token: "{{ BWS_ACCESS_TOKEN | default(lookup('env', 'BWS_ACCESS_TOKEN', default='')) }}"
       when: coolify_health.status == 200
+      no_log: true
 
     - name: Set Docker tag
       ansible.builtin.set_fact:
@@ -201,6 +202,7 @@
       ansible.builtin.set_fact:
         coolify_env_vars: "{{ coolify_application_envs.json | default([]) }}"
       when: coolify_application_envs is defined and coolify_application_envs.status == 200
+      no_log: true
 
     - name: Set Github secrets for Coolify
       ansible.builtin.set_fact:
@@ -234,6 +236,7 @@
             is_preview: false
             is_literal: true
       when: coolify_env_vars is defined and bws_access_token is defined and docker_tag is defined
+      no_log: true
 
     # Get secrets from Bitwarden
     - name: Resolve secrets from Bitwarden Secrets Manager
@@ -242,11 +245,13 @@
         BWS_ACCESS_TOKEN: "{{ bws_access_token }}"
       register: bws_secrets_raw
       when: bws_access_token | default('') != ''
+      no_log: true
 
     - name: Parse BWS secrets
       ansible.builtin.set_fact:
         bws_secrets: "{{ (bws_secrets_raw.stdout | from_json) if bws_secrets_raw is defined and bws_secrets_raw.stdout is defined else [] }}"
       when: coolify_env_vars is defined
+      no_log: true
 
     # Refresh secrets: only update keys that already exist in Coolify.
     # New secrets must be added manually by a developer via the Coolify UI.
@@ -255,11 +260,13 @@
       ansible.builtin.set_fact:
         filtered_bws_secrets: "{{ bws_secrets | selectattr('key', 'in', coolify_env_vars | map(attribute='key')) | list }}"
       when: coolify_env_vars is defined and bws_secrets is defined
+      no_log: true
 
     - name: Set list of env items
       ansible.builtin.set_fact:
         env_items: "{{ filtered_bws_secrets + github_secrets }}"
       when: filtered_bws_secrets is defined and github_secrets is defined
+      no_log: true
 
     - name: Update Coolify env vars
       ansible.builtin.uri:
@@ -274,6 +281,7 @@
       when:
         - coolify_application_uuid | default('') != ''
         - env_items | default([]) | length > 0
+      no_log: true
 
     # Deploy application
     - name: Deploy application
@@ -290,7 +298,6 @@
       register: coolify_deploy_result
       when:
         - coolify_application_uuid | default('') != ''
-        - coolify_env_vars | default([]) | length > 0
 
     # Get deployment UUID
     - name: Get deployment UUID
@@ -330,33 +337,5 @@
           {{ coolify_deployment_result.json.status | default('unknown') }}).
           Check the deployment logs printed above.
       when: >-
-        coolify_deployment_result is not defined
-        or (coolify_deployment_result.json.status | default('')) != 'finished'
-
-    # Lockdown Coolify
-    - name: Lockdown Coolify port
-      community.general.ufw:
-        rule: allow
-        port: "{{ coolify_port }}"
-        proto: tcp
-        delete: true
-      when: coolify_application_uuid | default('') != ''
-      notify: reload ufw
-
-    - name: Lockdown Coolify real-time port
-      community.general.ufw:
-        rule: allow
-        port: "6001"
-        proto: tcp
-        delete: true
-      when: coolify_application_uuid | default('') != ''
-      notify: reload ufw
-
-    - name: Lockdown Coolify terminal port
-      community.general.ufw:
-        rule: allow
-        port: "6002"
-        proto: tcp
-        delete: true
-      when: coolify_application_uuid | default('') != ''
-      notify: reload ufw
+        coolify_deployment_uuid | default('') != ''
+        and (coolify_deployment_result.json.status | default('')) != 'finished'

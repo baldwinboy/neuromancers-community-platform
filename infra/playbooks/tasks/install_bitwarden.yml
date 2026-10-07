@@ -1,8 +1,10 @@
 # Install Bitwarden Secrets Manager CLI
 ---
 - name: Check if Bitwarden is already installed
-  ansible.builtin.shell: "bws --version || exit 1"
+  ansible.builtin.command: bws --version
   register: bitwarden_installed
+  failed_when: false
+  changed_when: false
 
 - name: Install Bitwarden package
   ansible.builtin.shell: |

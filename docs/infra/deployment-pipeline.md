@@ -69,15 +69,20 @@ Push to main/staging
 
 **Workflow file:** `.github/workflows/ci.yml`
 
-**Trigger:** Push or PR to `main`/`staging` (excluding `docs/` paths).
+**Trigger:** Push or PR to `main`/`staging` (excluding `docs/` paths). The
+`docker` job additionally requires the `changes` filter to report
+application changes and runs only on push events.
 
 ### Jobs
 
 | Job | Purpose |
 |-----|---------|
+| `changes` | Detects whether application/build files changed (`dorny/paths-filter`) |
 | `linter` | Runs pre-commit hooks (ruff, djlint, mypy, etc.) |
-| `pytest` | Builds production Docker images, checks DB migrations (`makemigrations --check`), runs `migrate`, runs test suite |
-| `docker` | Pushes built images to GitHub Container Registry |
+| `migrations` | Checks for missing migrations (`makemigrations --check`) and runs `migrate` |
+| `docker` | Builds and pushes images to GitHub Container Registry, only when app files changed and only on push |
+
+The test suite exists (`pytest`) but is not currently run by CI.
 
 ### Image tagging
 
@@ -156,11 +161,12 @@ The `deploy_application.yml` playbook:
 1. Checks Coolify API health.
 2. Lists and identifies the host server.
 3. Creates the `neuromancers` project if missing.
-4. Creates or reuses the environment (`production`/`staging`).
+4. Creates or reuses the `neuromancers` environment.
 5. Creates or reuses the `neuromancers_network` application with
    `build_pack: dockercompose` pointing at `docker-compose.coolify.yml`.
-6. Pushes `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, the `TS_*_DOMAIN` keys, and
-   `TAILSCALE_TAG` as Coolify env vars.
+6. Pushes `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `TS_APP_DOMAIN`, `TS_PAAS_DOMAIN`,
+   `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID`, and `TS_OAUTH_CLIENT_SECRET` as
+   Coolify env vars.
 
 ---
 
@@ -174,18 +180,19 @@ accessible). It manages the Docker Compose stack defined in
 
 | Service | Image | Function |
 |---------|-------|----------|
-| `django` | `neuromancers-network:${DOCKER_TAG}` | Gunicorn WSGI server on port 5000 |
-| `postgres` | `neuromancers-network-postgres:${DOCKER_TAG}` | PostgreSQL 18 |
+| `tsdproxy` | `almeidapaulopt/tsdproxy:dev` | Tailscale proxy/VIP services for the stack |
+| `django` | `ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG}` | Gunicorn WSGI server on port 5000 |
+| `postgres` | `ghcr.io/baldwinboy/neuromancers-network-postgres:${DOCKER_TAG}` | PostgreSQL 18 |
 | `redis` | `docker.io/redis:8.8` | Message broker / cache |
-| `celeryworker` | `neuromancers-network:${DOCKER_TAG}` | Celery async task worker |
-| `celerybeat` | `neuromancers-network:${DOCKER_TAG}` | Celery periodic task scheduler |
-| `flower` | `neuromancers-network:${DOCKER_TAG}` | Celery monitoring dashboard |
-| `prometheus` | `prom/prometheus:v2.53.0` | Metrics collection and healthchecks |
+| `celeryworker` | `ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG}` | Celery async task worker |
+| `celerybeat` | `ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG}` | Celery periodic task scheduler |
+| `prometheus` | `docker.io/prom/prometheus:main-distroless` | Metrics collection and healthchecks |
 
 ### Runtime secret resolution
 
-Ansible pushes only `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, the `TS_*_DOMAIN`
-keys, and `TAILSCALE_TAG` to Coolify.
+Ansible pushes only `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `TS_APP_DOMAIN`,
+`TS_PAAS_DOMAIN`, `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID`, and
+`TS_OAUTH_CLIENT_SECRET` to Coolify.
 All other runtime secrets must be **manually added** to the Coolify
 application by a developer after first creation.
 
@@ -210,8 +217,8 @@ The Django container entrypoint runs sequentially:
 The `/start` script runs:
 
 1. `manage.py migrate --noinput` — Applies pending DB migrations.
-2. `manage.py collectstatic --noinput` — Collects static files.
-3. `manage.py compress` — Compresses static assets (if enabled).
+2. `manage.py ensure_superuser` — Ensures the bootstrap superuser exists.
+3. `manage.py collectstatic --noinput` — Collects static files.
 4. `gunicorn config.wsgi` — Starts the WSGI server.
 
 ---

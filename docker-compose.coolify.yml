@@ -6,8 +6,8 @@ services:
       - /etc/tsdproxy/config:/config
     restart: unless-stopped
     environment:
-      - TSDPROXY_TAILSCALE_DEFAULT_CLIENTID="${TS_OAUTH_CLIENT_ID}"
-      - TSDPROXY_TAILSCALE_DEFAULT_CLIENTSECRET="${TS_OAUTH_CLIENT_SECRET}"
+      TSDPROXY_TAILSCALE_DEFAULT_CLIENTID: ${TS_OAUTH_CLIENT_ID}
+      TSDPROXY_TAILSCALE_DEFAULT_CLIENTSECRET: ${TS_OAUTH_CLIENT_SECRET}
 
   django:
     image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}

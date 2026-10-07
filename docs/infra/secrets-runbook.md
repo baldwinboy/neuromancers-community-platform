@@ -5,7 +5,7 @@
 - All deployment and runtime secrets are stored in Bitwarden Secrets Manager.
 - GitHub stores only `BWS_ACCESS_TOKEN`.
 - Workflows fetch secret data from Bitwarden during execution.
-- Ansible pushes only `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, the `TS_*_DOMAIN` keys, and `TAILSCALE_TAG` to Coolify.
+- Ansible pushes only `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `TS_APP_DOMAIN`, `TS_PAAS_DOMAIN`, `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID`, and `TS_OAUTH_CLIENT_SECRET` to Coolify.
 - All other secrets must be manually added to the Coolify application by a developer.
 - Application containers receive secrets from Coolify environment variables at startup.
 
@@ -22,7 +22,7 @@ After Ansible creates the Coolify application for the first time, a developer mu
    - **Is Literal**: true (values are not template variables)
 5. Save the changes. Coolify will restart the affected containers.
 
-Only secrets present in Coolify will be refreshed on subsequent Ansible deploys. The Ansible playbook filters Bitwarden secrets against those already in Coolify — it does not push new keys.
+The Ansible playbook refreshes only Bitwarden secrets whose keys already exist in Coolify. The seven keys listed above are always pushed; any other new key must be added in Coolify first.
 
 ## Bitwarden CLI constraints
 
@@ -77,10 +77,7 @@ bws run -- 'ansible-playbook infra/playbooks/site.yml --inventory infra/inventor
 - `DJANGO_SECURE_SSL_REDIRECT`
 - `DJANGO_SERVER_EMAIL`
 - `DJANGO_SETTINGS_MODULE`
-- `DOCKER_IMAGE`
-- `HETZNER_TOKEN`
 - `HETZNER_SSH_HOST`
-- `HETZNER_SSH_KNOWN_HOSTS`
 - `HETZNER_SSH_PRIVATE_KEY`
 - `HETZNER_SSH_USER`
 - `POSTGRES_DB`
@@ -100,10 +97,7 @@ bws run -- 'ansible-playbook infra/playbooks/site.yml --inventory infra/inventor
 - `TS_OAUTH_CLIENT_ID`
 - `TS_OAUTH_CLIENT_SECRET`
 - `WEB_CONCURRENCY`
-- `COOLIFY_CLOUDFLARE_DNS_TOKEN`
 - `HETZNER_SSH_PUBLIC_KEY`
-- `TAILSCALE_AUTH_KEY`
-- `ANSIBLE_VAULT_PASSWORD`
 
 ## Rotation procedure
 
@@ -117,9 +111,9 @@ bws run -- 'ansible-playbook infra/playbooks/site.yml --inventory infra/inventor
 
 1. Validate `BWS_ACCESS_TOKEN` is present in the active GitHub environment.
 2. Validate required Bitwarden keys exist before starting deploy mutation.
-	Runtime minimum includes `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT`, `REDIS_URL`, `DJANGO_SECRET_KEY`, `CELERY_FLOWER_USER`, and `CELERY_FLOWER_PASSWORD`.
+	Deploy minimum includes `HETZNER_SSH_HOST`, `HETZNER_SSH_PRIVATE_KEY`, `HETZNER_SSH_USER`, `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_CLIENT_SECRET`, `TAILSCALE_TAG`, `COOLIFY_ADMIN_USERNAME`, `COOLIFY_ADMIN_EMAIL`, `COOLIFY_ADMIN_PASSWORD`, `COOLIFY_ADMIN_TOKEN`, plus the runtime keys in [Coolify Env Mapping](../infra/coolify-env-mapping.md).
 3. Fail fast if any required key is missing or empty.
-4. Mask every extracted secret before writing to step outputs or logs.
+4. Mask every extracted secret before writing to step outputs or logs, including every line of multi-line values.
 
 ## Runtime prerequisites
 

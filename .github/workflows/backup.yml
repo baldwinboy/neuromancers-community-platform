@@ -20,10 +20,10 @@ jobs:
       BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ matrix.branch }}
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
       - run: pip install ansible==13.6.*
       - name: Install latest Bitwarden Secrets Manager CLI
         run: |
@@ -46,7 +46,6 @@ jobs:
             "TS_OAUTH_CLIENT_ID"
             "TS_OAUTH_CLIENT_SECRET"
             "TAILSCALE_TAG"
-            "TAILSCALE_AUTH_KEY"
           )
 
           secrets_json="$(bws secret list)"
@@ -60,7 +59,9 @@ jobs:
             fi
 
             if [[ "$key" == "HETZNER_SSH_PRIVATE_KEY" ]]; then
-              echo "::add-mask::$value"
+              while IFS= read -r line; do
+                echo "::add-mask::$line"
+              done <<< "$value"
               {
                 echo "$key<<EOF"
                 echo "$value"
@@ -78,7 +79,7 @@ jobs:
             exit 1
           fi
       - name: Connect to tailnet
-        uses: Pikachews/tailscale-action@main
+        uses: Pikachews/tailscale-action@83244b4e48caeeb6d6346e50b794a11f7e920fc9 # v1
         with:
           oauth-client-id: ${{ steps.inject-secrets.outputs.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ steps.inject-secrets.outputs.TS_OAUTH_CLIENT_SECRET }}

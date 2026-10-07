@@ -1,13 +1,13 @@
 collections:
   - name: community.general
+    version: "13.5.0"
     source: https://galaxy.ansible.com
   - name: community.crypto
+    version: "3.5.0"
     source: https://galaxy.ansible.com
   - name: community.docker
-    source: https://galaxy.ansible.com
-  - name: arillso.agent
-    source: https://galaxy.ansible.com
-  - name: arillso.system
+    version: "5.4.0"
     source: https://galaxy.ansible.com
   - name: ansible.posix
+    version: "2.2.2"
     source: https://galaxy.ansible.com

@@ -43,7 +43,7 @@ RUN groupadd --gid 1000 dev-user \
   && echo dev-user ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/dev-user \
   && chmod 0440 /etc/sudoers.d/dev-user
 
-ENV PATH="/${APP_HOME}/.venv/bin:$PATH"
+ENV PATH="${APP_HOME}/.venv/bin:$PATH"
 ENV PYTHONPATH="${APP_HOME}/.venv/lib/python3.14/site-packages"
 
 COPY ./compose/production/django/entrypoint /entrypoint

@@ -59,7 +59,7 @@ sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin prohibit-password/' "$SSHD_CONFI
 sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' "$SSHD_CONFIG"
 sed -i 's/^#\?ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' "$SSHD_CONFIG"
 sed -i 's/^#\?PubkeyAuthentication.*/PubkeyAuthentication yes/' "$SSHD_CONFIG"
-systemctl reload sshd
+systemctl reload ssh
 
 # ── 4. Install Coolify only if missing ───────────────────────────────
 if [ -f "/data/coolify/source/.env" ]; then
@@ -89,4 +89,4 @@ echo ""
 echo "Next steps:"
 echo "  1. Log out and back in as $HETZNER_SSH_USER to verify SSH key access."
 echo "  2. Run the Ansible playbook from CI/CD to apply full configuration."
-echo "  3. Configure Coolify at http://$(hostname -I | awk '{print $1}'):8000"
+echo "  3. Configure Coolify over Tailscale, e.g. http://$(tailscale ip -4 2>/dev/null | head -n1):8000"

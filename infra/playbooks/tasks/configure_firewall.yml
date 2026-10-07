@@ -2,13 +2,15 @@
 ---
 # Install UFW Docker script
 - name: Install UFW Docker script
-  ansible.builtin.shell: |
-    curl https://github.com/chaifeng/ufw-docker/raw/master/ufw-docker -o /usr/local/bin/ufw-docker
-    chmod +x /usr/local/bin/ufw-docker
+  ansible.builtin.get_url:
+    url: https://github.com/chaifeng/ufw-docker/raw/master/ufw-docker
+    dest: /usr/local/bin/ufw-docker
+    mode: "0755"
 
 - name: Load UFW Docker script
-  ansible.builtin.shell: |
-    ufw-docker install
+  ansible.builtin.command: ufw-docker install
+  args:
+    creates: /etc/systemd/system/ufw-docker.service
 
 # Set UFW rules
 - name: Set logging
@@ -41,19 +43,49 @@
     - "80" # HTTP
     - "8080" # HTTP
     - "443" # HTTPS
-    - "6001" # Real-time communications
-    - "6002" # Terminal access (Required for Coolify version 4.0.0-beta.336 and above)
-    - "{{ coolify_port }}"
     - "{{ gatus_port }}"
     - "{{ beszel_hub_port }}"
     - "{{ host_prometheus_port }}"
     - "{{ crowdsec_port }}"
+
+# The Coolify control plane (admin 8000, real-time 6001, terminal 6002) must
+# never be reachable from the public internet.  Delete any legacy public allow
+# rules so previously provisioned hosts converge to the tailnet-only state.
+- name: Remove public access to Coolify ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+    delete: true
+  loop:
+    - "{{ coolify_port }}"
+    - "6001"
+    - "6002"
+  failed_when: false
+  notify: reload ufw
 
 - name: Allow traffic from Tailscale
   community.general.ufw:
     rule: allow
     interface: tailscale0
     direction: in
+
+# Docker publishes the Coolify ports through the FORWARD chain (ufw-docker),
+# which plain `ufw allow` does not govern.  Allow the tailnet to reach them
+# directly; the public internet stays blocked by the ufw-docker default.
+- name: Allow tailnet to reach Coolify Docker ports
+  community.general.ufw:
+    route: true
+    rule: allow
+    interface: tailscale0
+    direction: in
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "{{ coolify_port }}"
+    - "6001"
+    - "6002"
+  notify: reload ufw
 
 # Allow local Docker network access
 - name: Get bridge network info
@@ -161,15 +193,24 @@
     recurse: false
   become: true
 
-- name: Fix CrowdSec config files and log file permissions
-  ansible.builtin.file:
-    path: "{{ item }}"
-    mode: "0644"
+- name: Check for CrowdSec config and credential files
+  ansible.builtin.stat:
+    path: "{{ item.path }}"
+  register: crowdsec_files
   loop:
-    - /etc/crowdsec/config.yaml
-    - /etc/crowdsec/local_api_credentials.yaml
-    - /etc/crowdsec/online_api_credentials.yaml
-    - /var/log/crowdsec.log
+    - { path: /etc/crowdsec/config.yaml, mode: "0644" }
+    - { path: /var/log/crowdsec.log, mode: "0644" }
+    - { path: /etc/crowdsec/local_api_credentials.yaml, mode: "0600" }
+    - { path: /etc/crowdsec/online_api_credentials.yaml, mode: "0600" }
+  become: true
+
+- name: Fix CrowdSec file permissions
+  ansible.builtin.file:
+    path: "{{ item.item.path }}"
+    state: file
+    mode: "{{ item.item.mode }}"
+  loop: "{{ crowdsec_files.results }}"
+  when: item.stat.exists
   become: true
 
 - name: Attach DOCKER-USER chain to CrowdSec Firewall Remediation

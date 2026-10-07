@@ -7,16 +7,16 @@
 - GitHub Actions joins Tailscale before reaching Coolify.
 - Ansible owns host mutation.
 - Coolify owns application deployment for the compose-native stack.
-- Ansible pushes only `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, the `TS_*_DOMAIN` keys, and `TAILSCALE_TAG` to Coolify.
+- Ansible pushes only `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `TS_APP_DOMAIN`, `TS_PAAS_DOMAIN`, `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID`, and `TS_OAUTH_CLIENT_SECRET` to Coolify.
 - Developers manually add all other secrets from Bitwarden to the Coolify application after first creation.
 
 ## Secret model
 
 - Source of truth for infrastructure and runtime secrets is Bitwarden Secrets Manager.
 - GitHub stores only `BWS_ACCESS_TOKEN` (the Bitwarden machine access token).
-- Ansible pushes `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, the `TS_*_DOMAIN` keys, and `TAILSCALE_TAG` to Coolify during deployment.
+- Ansible pushes `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `TS_APP_DOMAIN`, `TS_PAAS_DOMAIN`, `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID`, and `TS_OAUTH_CLIENT_SECRET` to Coolify during deployment.
 - All other secrets must be manually added to the Coolify application by a developer.
-- The filter for which secrets to push is NOT in Ansible — it is a manual developer action.
+- Ansible refreshes only Bitwarden keys that already exist as Coolify env vars (`deploy_application.yml` filters on existing keys); new keys must be added by a developer.
 - Workflows must read secrets with `bws secret list` and filter by `.key`.
 - There is no API in `bws` to fetch by key name directly. Use list + jq filtering.
 
@@ -57,21 +57,26 @@ Bitwarden must include at least:
 
 - `TS_OAUTH_CLIENT_ID`
 - `TS_OAUTH_CLIENT_SECRET`
+- `TAILSCALE_TAG`
 - `HETZNER_SSH_HOST`
 - `HETZNER_SSH_PRIVATE_KEY`
 - `HETZNER_SSH_USER`
-- `HETZNER_SSH_KNOWN_HOSTS`
-- `COOLIFY_API_URL`
-- `COOLIFY_API_TOKEN`
-- `COOLIFY_APPLICATION_UUID`
-- `APP_HEALTHCHECK_URL`
-- `COOLIFY_PUBLIC_PROBE_URL`
+- `HETZNER_SSH_PUBLIC_KEY`
+- `COOLIFY_ADMIN_USERNAME`
+- `COOLIFY_ADMIN_EMAIL`
+- `COOLIFY_ADMIN_PASSWORD`
+- `COOLIFY_ADMIN_TOKEN`
 - The runtime application keys listed in [Coolify Env Mapping](../infra/coolify-env-mapping.md)
 
 Coolify must receive:
 
 - `BWS_ACCESS_TOKEN`
+- `DOCKER_TAG`
+- `TS_APP_DOMAIN`
+- `TS_PAAS_DOMAIN`
 - `TAILSCALE_TAG`
+- `TS_OAUTH_CLIENT_ID`
+- `TS_OAUTH_CLIENT_SECRET`
 
 ## Bitwarden CLI behavior and usage
 
@@ -88,8 +93,7 @@ bws secret list \
 
 ## Tailscale setup
 
-- The Hetzner host must join the tailnet with `tag:<environment>-coolify-ci`, i.e. `tag:production-coolify-ci`.
-- GitHub Actions joins with `tag:ci`.
+- The Hetzner host and GitHub Actions both join the tailnet using the single `TAILSCALE_TAG` secret (e.g. `tag:staging-coolify-ci`).
 - Coolify must be addressed by Tailscale IP or MagicDNS hostname.
 - Do not expose the Coolify dashboard or API to the public internet.
 - Do not enable Tailscale Funnel for Coolify.
@@ -118,6 +122,34 @@ bws secret list \
 2. Open the private Coolify hostname or Tailscale IP from `COOLIFY_API_URL`.
 3. Confirm the public probe URL still fails from outside the tailnet.
 
+## Coolify lockdown (tailnet-only)
+
+The Coolify control plane is private to the tailnet:
+
+- Ansible (`tasks/configure_firewall.yml`) never opens ports `8000`
+  (dashboard/API), `6001` (real-time) or `6002` (terminal) to the public
+  internet, and deletes any legacy public allow rules on every run.
+- Those ports are reachable only over Tailscale, either at the host's
+  tailnet IP (`http://<tailscale-ip>:8000`) or through the Serve hostname
+  (`https://<stage>-paas.<tailnet>.ts.net`).
+- Docker publishes these ports through the FORWARD chain, so Ansible adds
+  matching `ufw route` rules scoped to `tailscale0`, on top of the
+  `ufw-docker` default-deny for public traffic.
+- Ports `6001` (real-time) and `6002` (terminal) must remain reachable over
+  the tailnet for the Coolify UI; the `ufw route` rules for them are
+  required and must not be removed.
+
+Complete the following instance hardening once, in the Coolify UI:
+
+1. **Settings → Configuration → Advanced**: enable API access only if
+   needed and set **Allowed IPs for API Access** to `100.64.0.0/10`
+   (the Tailscale CGNAT range).
+2. **Settings → Authentication**: disable **Registration Allowed**.
+3. Enable two-factor authentication for every account with elevated access.
+4. Confirm the dashboard is not reachable from outside the tailnet:
+   `curl -m 5 http://<public-ip>:8000/api/v1/health` must fail, while
+   `curl http://<tailscale-ip>:8000/api/v1/health` returns `200`.
+
 ## Normal deployment flow
 
 1. Push reviewed changes to `main` or `staging`.
@@ -126,7 +158,7 @@ bws secret list \
 4. Confirm Ansible converge succeeds.
 5. Confirm the Coolify application has the secrets needed for runtime (added manually after first deploy).
 6. Confirm deployment finishes successfully.
-7. Confirm smoke checks pass.
+7. Confirm the app health endpoint (`/api/health`) returns `200`.
 
 ## Deployment Workflow
 
@@ -146,11 +178,11 @@ Playbook `setup_coolify.yml` installs and configures:
 1. Log into Coolify dashboard over Tailscale
 2. Go to Settings → API → enable the API
 3. Copy the API token shown on-screen
-4. Store it in Bitwarden Secrets Manager as `COOLIFY_API_TOKEN`
+4. Store it in Bitwarden Secrets Manager as `COOLIFY_ADMIN_TOKEN`
    (This step CANNOT be automated — Coolify requires interactive login)
 
 ### Step 3 — Ansible: Server Reachability (automated)
-Playbook `configure_coolify_api.yml`:
+Task file `configure_coolify_api.yml` (imported by `setup_coolify.yml`):
 - Verifies Coolify API health
 - Generates an ed25519 SSH key for the Coolify host
 - Registers the key with Coolify via the API
@@ -172,12 +204,11 @@ Playbook `configure_coolify_api.yml`:
 
 (This CANNOT be automated initially, as the compose file will not be available until everything is valid)
 
-### Step 5 — Developer: Generate Deploy-Only API Token (manual)
-1. In Coolify, go to Settings → API → generate a new token
-2. Grant only the `deploy` permission
-3. Store in Bitwarden as `COOLIFY_DEPLOY_TOKEN`
-4. Set `COOLIFY_DEPLOY_TOKEN` in GitHub Environment secrets
-(Used by `deploy_application.yml` and GitHub Actions)
+### Step 5 — Developer: Store the Coolify API token
+1. The API token created in Step 2 is stored in Bitwarden as
+   `COOLIFY_ADMIN_TOKEN`.
+2. `deploy_application.yml` and `configure_coolify_api.yml` read that
+   token; no separate deploy-only token is used.
 
 ### Summary Diagram
 [Ansible] → installs Coolify + Tailscale + CrowdSec + Fail2Ban
