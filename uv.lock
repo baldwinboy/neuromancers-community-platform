@@ -845,19 +845,6 @@ wheels = [
 ]
 
 [[package]]
-name = "django-prometheus"
-version = "2.5.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-    { name = "prometheus-client" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7b/c7/dc39c4c19f7b35e827a486d08376de1fad31c50decb26c56e32668314f13/django_prometheus-2.5.0.tar.gz", hash = "sha256:4837b3c3734d8350880839ab8235aafd250b668c348e159d4aecc3cbefeee53e", size = 26465, upload-time = "2026-05-26T19:04:00.77Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/5d/5d/6ec3083ba69545696c962ae505a0e52e280e7592d4c278c2f3803cabb688/django_prometheus-2.5.0-py2.py3-none-any.whl", hash = "sha256:f15efb526cd53f9cf12da72dc55506322f5566b017a819ff27be1da302303134", size = 31801, upload-time = "2026-05-26T19:03:59.505Z" },
-]
-
-[[package]]
 name = "django-redis"
 version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1722,7 +1709,6 @@ dependencies = [
     { name = "django-fsm-2" },
     { name = "django-model-utils" },
     { name = "django-ninja" },
-    { name = "django-prometheus" },
     { name = "django-redis" },
     { name = "django-smart-ratelimit", extra = ["redis"] },
     { name = "django-storages", extra = ["s3"] },
@@ -1733,7 +1719,6 @@ dependencies = [
     { name = "hiredis" },
     { name = "icalendar" },
     { name = "pillow" },
-    { name = "prometheus-client" },
     { name = "psycopg", extra = ["c"] },
     { name = "python-slugify" },
     { name = "redis" },
@@ -1792,7 +1777,6 @@ requires-dist = [
     { name = "django-fsm-2", specifier = ">=4.2.4" },
     { name = "django-model-utils", specifier = "==5.0.0" },
     { name = "django-ninja", specifier = "==1.7.0" },
-    { name = "django-prometheus", specifier = "==2.5.0" },
     { name = "django-redis", specifier = "==6.0.0" },
     { name = "django-smart-ratelimit", extras = ["redis"], specifier = ">=4.12.1" },
     { name = "django-storages", extras = ["s3"], specifier = "==1.14.6" },
@@ -1803,7 +1787,6 @@ requires-dist = [
     { name = "hiredis", specifier = "==3.4.0" },
     { name = "icalendar", specifier = ">=6.1.0" },
     { name = "pillow", specifier = "==12.3.0" },
-    { name = "prometheus-client", specifier = ">=0.25.0" },
     { name = "psycopg", extras = ["c"], specifier = "==3.3.4" },
     { name = "python-slugify", specifier = "==8.0.4" },
     { name = "redis", specifier = "==7.4.0" },

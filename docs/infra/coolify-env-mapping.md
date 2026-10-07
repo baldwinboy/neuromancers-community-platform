@@ -46,12 +46,12 @@ See [Operator Guide — First deployment](operator-guide.md#first-deployment) fo
 - `CELERY_FLOWER_USER`
 - `CELERY_FLOWER_PASSWORD`
 - `WEB_CONCURRENCY`
-- `TS_METRICS_DOMAIN`
+- `GATUS_DISCORD_WEBHOOK_URL`
 
 ## Notes
 
 - Values come from Bitwarden Secrets Manager and are selected by `.key`.
 - Keep key names identical across Bitwarden and application settings where possible.
 - Coolify does not need to store every runtime variable individually if containers resolve them directly from Bitwarden.
-- `TS_METRICS_DOMAIN` is consumed by `config/settings/production.py` and must be present in Coolify even though it is not pushed by Ansible.
+- `GATUS_DISCORD_WEBHOOK_URL` is consumed by the `gatus` service in `docker-compose.coolify.yml` and must be present in Coolify even though it is not pushed by Ansible.
 - If a new runtime variable is introduced in application settings, add it here and update deploy preflight validation and runtime bootstrap logic.

@@ -1,0 +1,41 @@
+storage:
+  type: sqlite
+  path: /data/gatus.db
+  caching: true
+
+alerting:
+  discord:
+    webhook-url: ${GATUS_DISCORD_WEBHOOK_URL}
+
+endpoints:
+  - name: django
+    group: application
+    url: http://django:5000/api/health
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 1000"
+
+  - name: postgres
+    group: application
+    url: tcp://postgres:5432
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
+
+  - name: app-external
+    group: application
+    url: https://${TS_APP_DOMAIN}/api/health
+    interval: 5m
+    client:
+      dns-resolver: "tcp://100.100.100.100:53"
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 48h"
+
+  - name: coolify
+    group: platform
+    url: http://host.docker.internal:8000/api/v1/health
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"

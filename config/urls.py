@@ -11,8 +11,6 @@ from neuromancers_network.core.views.calendar import CalendarFeedView
 from .api import api
 
 urlpatterns = [
-    # Monitoring
-    path("monitoring/", include("django_prometheus.urls")),
     # DJ Stripe — includes webhook endpoint at /stripe/webhook/<uuid>/
     path("stripe/", include("djstripe.urls", namespace="djstripe")),
     # Wagtail

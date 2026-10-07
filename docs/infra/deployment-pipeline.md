@@ -186,7 +186,7 @@ accessible). It manages the Docker Compose stack defined in
 | `redis` | `docker.io/redis:8.8` | Message broker / cache |
 | `celeryworker` | `ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG}` | Celery async task worker |
 | `celerybeat` | `ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG}` | Celery periodic task scheduler |
-| `prometheus` | `docker.io/prom/prometheus:main-distroless` | Metrics collection and healthchecks |
+| `gatus` | `ghcr.io/twin/gatus:stable` | Uptime monitoring, status page and alerts |
 
 ### Runtime secret resolution
 

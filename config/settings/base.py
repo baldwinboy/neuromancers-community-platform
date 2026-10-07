@@ -84,7 +84,6 @@ THIRD_PARTY_APPS = [
     "colorfield",
     "django_celery_beat",
     "corsheaders",
-    "django_prometheus",
     "auditlog",
     "django_fsm",
     "djstripe",
@@ -192,7 +191,6 @@ AUTH_PASSWORD_VALIDATORS = [
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
-    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -205,7 +203,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
-    "django_prometheus.middleware.PrometheusAfterMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 # Admin-authored arbitrary CSS.
@@ -465,7 +462,6 @@ WAGTAIL_RESERVED_ROUTES = [
     "login",
     "logout",
     "media",
-    "monitoring",
     "oauth",
     "oidc",
     "password",

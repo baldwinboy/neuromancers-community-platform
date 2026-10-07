@@ -23,8 +23,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 SERVER_HOST = env("HETZNER_SSH_HOST", default=None)
 CUSTOM_DNS = env("CUSTOM_DNS", default="1.1.1.1")
 TS_APP_DOMAIN = env("TS_APP_DOMAIN", default=None)
-TS_METRICS_DOMAIN = env("TS_METRICS_DOMAIN", default=None)
-DYNAMIC_ALLOWED_HOSTS = [SERVER_HOST, CUSTOM_DNS, TS_APP_DOMAIN, TS_METRICS_DOMAIN]
+DYNAMIC_ALLOWED_HOSTS = [SERVER_HOST, CUSTOM_DNS, TS_APP_DOMAIN]
 DJANGO_ALLOWED_HOSTS = [
     *env.list(
         "DJANGO_ALLOWED_HOSTS",
@@ -233,11 +232,6 @@ sentry_sdk.init(
     environment=env("SENTRY_ENVIRONMENT", default="production"),
     traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.0),
 )
-
-# Prometheus
-# https://github.com/django-commons/django-prometheus/blob/master/documentation/exports.md
-# ------------------------------------------------------------------------------
-PROMETHEUS_METRICS_EXPORT_PORT_RANGE = range(8001, 8050)
 
 # Django Smart Ratelimit
 # ------------------------------------------------------------------------------

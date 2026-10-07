@@ -1,0 +1,18 @@
+# Deploy Gatus configuration from the repo to the host.
+#
+# Repo file uses the .yml extension while Gatus expects /config/config.yaml,
+# so the copy's `dest` performs the .yml -> .yaml rename.
+---
+- name: Ensure Gatus config directory exists
+  ansible.builtin.file:
+    path: /opt/gatus/config
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Deploy Gatus config (repo .yml -> host .yaml)
+  ansible.builtin.copy:
+    src: ../../gatus/config.yml
+    dest: /opt/gatus/config/config.yaml
+    mode: "0644"
+  become: true
