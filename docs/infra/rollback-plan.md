@@ -28,18 +28,17 @@ compatible with the previous release.
 2. Navigate to the `neuromancers_network` application.
 3. Go to the **Environment variables** tab.
 4. Update `DOCKER_TAG` to the previous working tag or SHA:
-   - Production: `previous-sha` (e.g. `abc123def456`)
-   - Staging: `staging-previous-sha` (e.g. `staging-abc123def456`)
+   - Production: previous `{sha}` (e.g. `abc123def456`), or `latest`
+   - Staging: previous `{sha}` (e.g. `abc123def456`), or `staging`
 5. Save the variable.
 6. Go to the **Deployments** tab and click **Redeploy**.
 
 ### Via GitHub Actions (re-run)
 
 1. Go to the **Actions** tab in GitHub.
-2. Find the last successful CI run for the working commit.
-3. In the CI workflow run, scroll to the **deploy** job.
-4. Re-run the `Deploy Infrastructure` workflow.
-5. Confirm the Ansible playbook converges and Coolify redeploys.
+2. Open the `Deploy Infrastructure` workflow run for the last known-good commit.
+3. Re-run the workflow. It deploys the tag Ansible sets (`latest`/`staging`).
+4. Confirm the Ansible playbook converges and Coolify redeploys.
 
 ### Identify the previous image tag
 
@@ -50,9 +49,9 @@ curl -s "https://ghcr.io/v2/baldwinboy/${PACKAGE}/tags/list" \
   | jq -r '.tags[]' | sort -V
 ```
 
-The `:latest` tag represents the last production deploy. The commit SHA
-tags (plain SHA for production, `staging-{SHA}` for staging) allow you
-to pin to a specific version.
+The `:latest` tag represents the last production deploy and `:staging`
+the last staging deploy. Every build is also pushed as a plain `{SHA}`
+tag, which you can use to pin to a specific version.
 
 ---
 
@@ -68,43 +67,36 @@ Use when a schema migration must be reverted or data has been corrupted.
 
 ### Step 2 — Identify the backup to restore
 
-Backups are stored in S3-compatible storage. The naming convention is:
+Backups are stored in S3-compatible storage at the bucket root. The naming
+convention is:
 
 ```
-{DB_NAME}_YYYY-MM-DD_HH:MM:SS.sql.gz
+postgres-YYYYMMDD-HHMMSS.sql.gz
 ```
 
 Retention is configured via the `RETENTION_DAYS` env var (default: 30).
 
 ```bash
-# List available backups via the awscli container
-docker compose -f docker-compose.production.yml run --rm awscli \
-  s3 ls s3://${AWS_S3_BUCKET_NAME}/backups/
+# List available backups on the host
+ssh deploy@hetzner-tailscale-ip 'ls -lht /opt/backups/'
 ```
 
-Alternatively, SSH into the Hetzner host and inspect `/opt/backups/`.
+Backups are also uploaded to the bucket root (`s3://$AWS_S3_BUCKET_NAME/`).
 
 ### Step 3 — Restore the database
 
-Via the maintenance script on the host:
+Restore manually on the host:
 
 ```bash
 # SSH into the host (via Tailscale)
 ssh deploy@hetzner-tailscale-ip
 
-# Run the restore script — it will list backups and prompt for selection
-sudo /opt/scripts/restore.sh
-```
-
-Or manually:
-
-```bash
 # Find the backup
-RESTORE_FILE="/opt/backups/${DB_NAME}_2026-06-28_02:00:00.sql.gz"
+RESTORE_FILE="/opt/backups/postgres-20260628-020000.sql.gz"
 
 # Restore into the running postgres container
 gunzip -c "${RESTORE_FILE}" \
-  | docker exec -i neuromancers-postgres-1 \
+  | docker exec -i <postgres-container> \
     psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"
 ```
 
@@ -150,12 +142,15 @@ incident (security breach, data leak, total outage).
 
 - **Code issue:** Follow medium-severity rollback procedure.
 - **Config issue:** Fix the env var or config, redeploy.
-- **Infrastructure issue:** Run the Ansible playbook with the
-  `setup_coolify.yml` tag to reconfigure the host:
+- **Infrastructure issue:** Run the Ansible playbook to reconfigure the host:
   ```bash
   bws run -- ansible-playbook infra/playbooks/site.yml \
-    --tags setup_coolify
+    --inventory infra/inventory/hosts.yml \
+    --private-key infra/inventory/ssh_key \
+    --extra-vars "git_environment=staging"
   ```
+  Use the same extra-vars as the CI deploy. There is no `setup_coolify`
+  tag — `--tags setup_coolify` would silently run nothing.
 - **Data breach:** Rotate all secrets in Bitwarden, generate new
   `BWS_ACCESS_TOKEN`, update GitHub environment secrets, redeploy.
 
