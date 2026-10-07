@@ -15,10 +15,43 @@ on:
     paths-ignore: ["docs/**"]
 
 concurrency:
-  group: ${{ github.head_ref || github.run_id }}
+  group: ${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v7
+
+      - name: Detect application changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            app:
+              - 'neuromancers_network/**'
+              - 'config/**'
+              - 'locale/**'
+              - 'getpronto/**'
+              - 'whereby/**'
+              - 'manage.py'
+              - 'merge_production_dotenvs_in_dotenv.py'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - '.python-version'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'compose/production/django/**'
+              - 'compose/production/postgres/**'
+              - 'docker-compose.production.yml'
+
   linter:
     runs-on: ubuntu-latest
     steps:
@@ -69,7 +102,8 @@ jobs:
         run: uv run python manage.py migrate
 
   docker:
-    needs: [linter, migrations]
+    needs: [changes, linter, migrations]
+    if: ${{ github.event_name == 'push' && needs.changes.outputs.app == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
