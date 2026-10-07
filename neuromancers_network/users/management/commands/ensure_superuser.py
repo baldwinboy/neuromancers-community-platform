@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 
+from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
@@ -40,6 +41,21 @@ class Command(BaseCommand):
         user.is_staff = True
         user.set_password(password)
         user.save()
+        self._ensure_verified_email(user)
         self.stdout.write(
             self.style.SUCCESS(f"Created superuser {username!r}."),
         )
+
+    def _ensure_verified_email(self, user) -> None:
+        if not user.email:
+            return
+        address, _ = EmailAddress.objects.get_or_create(
+            user=user,
+            email=user.email.lower(),
+        )
+        if not address.set_verified():
+            self.stderr.write(
+                f"Could not verify {address.email!r}: it is already verified "
+                "for another account.",
+            )
+        address.set_as_primary()
