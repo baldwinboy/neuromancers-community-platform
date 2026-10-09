@@ -4,6 +4,7 @@ from neuromancers_network.peers.models import PeerApplication
 from neuromancers_network.peers.models import PeerApplicationStatus
 from neuromancers_network.peers.tests.factories import make_peer
 from neuromancers_network.peers.wagtail_hooks import ApprovePeerApplicationBulkAction
+from neuromancers_network.peers.wagtail_hooks import PeerProfileViewSet
 from neuromancers_network.peers.wagtail_hooks import RejectPeerApplicationBulkAction
 from neuromancers_network.peers.wagtail_hooks import UnverifyPeerBulkAction
 from neuromancers_network.peers.wagtail_hooks import VerifyPeerBulkAction
@@ -45,6 +46,27 @@ class TestPeerApplicationActions:
 
 
 class TestPeerVerificationActions:
+    def test_admin_form_requires_user(self):
+        form_class = PeerProfileViewSet().get_form_class()
+
+        assert "user" in form_class.base_fields
+
+        form = form_class(data={})
+
+        assert not form.is_valid()
+        assert "user" in form.errors
+
+    def test_admin_form_saves_profile_with_user(self):
+        applicant = UserFactory()
+        form_class = PeerProfileViewSet().get_form_class()
+
+        form = form_class(data={"user": applicant.pk})
+
+        assert form.is_valid(), form.errors
+        profile = form.save()
+        assert profile.user == applicant
+        assert profile.user_id is not None
+
     def test_verify_sets_flags(self):
         profile = make_peer().peer_profile
         reviewer = UserFactory()

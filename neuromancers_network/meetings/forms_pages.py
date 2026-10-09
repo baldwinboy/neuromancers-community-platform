@@ -47,7 +47,7 @@ class MeetingFormField(DaisieFormField):
 class MeetingFormPage(DaisieFormPage):
     template = "wagtail_daisIE/forms/form_page.html"
     parent_page_types = ["core.HomePage"]
-    subpage_types = []
+    subpage_types: list[str] = []
 
     def create_instance_from_submission(self, form, submission=None):
         from neuromancers_network.meetings.services import (  # noqa: PLC0415
@@ -80,7 +80,7 @@ class BookingFormField(DaisieFormField):
 class BookingFormPage(DaisieFormPage):
     template = "wagtail_daisIE/forms/form_page.html"
     parent_page_types = ["core.HomePage"]
-    subpage_types = []
+    subpage_types: list[str] = []
 
     def create_instance_from_submission(self, form, submission=None):
         from neuromancers_network.meetings.models import Meeting  # noqa: PLC0415
@@ -132,7 +132,7 @@ class RefundRequestFormField(DaisieFormField):
 class RefundRequestFormPage(DaisieFormPage):
     template = "wagtail_daisIE/forms/form_page.html"
     parent_page_types = ["core.HomePage"]
-    subpage_types = []
+    subpage_types: list[str] = []
 
     def create_instance_from_submission(self, form, submission=None):
         from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
@@ -164,7 +164,7 @@ class ReviewFormField(DaisieFormField):
 class ReviewFormPage(DaisieFormPage):
     template = "wagtail_daisIE/forms/form_page.html"
     parent_page_types = ["core.HomePage"]
-    subpage_types = []
+    subpage_types: list[str] = []
 
     def create_instance_from_submission(self, form, submission=None):
         from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415

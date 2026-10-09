@@ -138,7 +138,7 @@ class Booking(Timestamped):
         stripe.api_key = stripe_settings.secret_key
         session = stripe.checkout.Session.create(
             mode="payment",
-            adaptive_pricing=adaptive_pricing,
+            adaptive_pricing=adaptive_pricing,  # type: ignore[arg-type]
             success_url=request.build_absolute_uri("/pay/success/"),
             cancel_url=request.build_absolute_uri("/pay/cancelled/"),
             line_items=[

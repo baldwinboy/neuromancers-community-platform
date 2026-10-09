@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from django import forms
 from django.db import models
 from django.utils.text import slugify
@@ -116,7 +118,7 @@ class HelpArticle(index.Indexed, Timestamped):
         use_json_field=True,
         verbose_name=_("Steps"),
     )
-    screenshots = models.ManyToManyField(
+    screenshots: models.ManyToManyField[Any, Any] = models.ManyToManyField(
         "wagtailimages.Image",
         blank=True,
         related_name="+",

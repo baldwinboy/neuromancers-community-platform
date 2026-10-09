@@ -29,7 +29,7 @@ class ProfileEditFormField(DaisieFormField):
 class ProfileEditFormPage(DaisieFormPage):
     template = "wagtail_daisIE/forms/form_page.html"
     parent_page_types = ["core.HomePage"]
-    subpage_types = []
+    subpage_types: list[str] = []
 
     def create_instance_from_submission(self, form, submission=None):
         from neuromancers_network.users.models import UserProfile  # noqa: PLC0415

@@ -60,6 +60,7 @@ class PeerProfileViewSet(ModelViewSet):
     search_fields = ["user__username", "user__name", "bio"]
     filterset_class = PeerProfileFilterSet
     form_fields = [
+        "user",
         "bio",
         "default_terms",
         "is_approved",

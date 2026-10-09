@@ -296,7 +296,7 @@ class MeetingRequest(Timestamped):
                     "quantity": 1,
                 },
             ],
-            payment_intent_data=payment_intent_data,
+            payment_intent_data=payment_intent_data,  # type: ignore[arg-type]
             metadata={
                 "meeting_request_id": str(self.pk),
             },

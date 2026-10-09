@@ -63,7 +63,7 @@ class StandardPage(ReservedSlugPage):
 
 class SearchPage(ReservedSlugPage):
     template = "core/search_page.html"
-    subpage_types = []
+    subpage_types: list[str] = []
 
     def get_context(self, request, *args, **kwargs):
         from django.db.models import Q  # noqa: PLC0415
@@ -112,18 +112,18 @@ class SignedInPage(ReservedSlugPage):
 
 class DashboardPage(SignedInPage):
     template = "core/dashboard_page.html"
-    subpage_types = []
+    subpage_types: list[str] = []
 
 
 class SettingsPage(SignedInPage):
     template = "core/settings_page.html"
-    subpage_types = []
+    subpage_types: list[str] = []
 
 
 class UserProfilePage(ModelDetailPage):
     template = "core/user_profile_page.html"
     parent_page_types = ["core.ProfileIndexPage"]
-    subpage_types = []
+    subpage_types: list[str] = []
 
 
 class MeetingIndexPage(ReservedSlugPage):
@@ -144,19 +144,19 @@ class ReviewIndexPage(ReservedSlugPage):
 class MeetingDetailPage(ModelDetailPage):
     template = "core/meeting_detail_page.html"
     parent_page_types = ["core.MeetingIndexPage"]
-    subpage_types = []
+    subpage_types: list[str] = []
 
 
 class PeerProfileDetailPage(ModelDetailPage):
     template = "core/peer_profile_detail_page.html"
     parent_page_types = ["core.PeerIndexPage"]
-    subpage_types = []
+    subpage_types: list[str] = []
 
 
 class ReviewDetailPage(ModelDetailPage):
     template = "core/review_detail_page.html"
     parent_page_types = ["core.ReviewIndexPage"]
-    subpage_types = []
+    subpage_types: list[str] = []
 
 
 class TagIndexPage(ReservedSlugPage):
@@ -167,7 +167,7 @@ class TagIndexPage(ReservedSlugPage):
 class TagDetailPage(ModelDetailPage):
     template = "core/tag_detail_page.html"
     parent_page_types = ["core.TagIndexPage"]
-    subpage_types = []
+    subpage_types: list[str] = []
 
     def get_context(self, request, *args, **kwargs):
         from neuromancers_network.core.selectors import (  # noqa: PLC0415

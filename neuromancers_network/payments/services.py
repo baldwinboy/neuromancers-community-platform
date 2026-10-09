@@ -106,13 +106,17 @@ def create_subscription_checkout(profile: PaymentProfile, request) -> str:
     stripe.api_key = stripe_settings.secret_key
     session = stripe.checkout.Session.create(
         mode="subscription",
-        customer=profile.stripe_customer_id_id,
+        customer=profile.stripe_customer_id_id,  # type: ignore[attr-defined]
         line_items=[{"price": price_id, "quantity": 1} for price_id in price_ids],
         success_url=request.build_absolute_uri("/pay/success/"),
         cancel_url=request.build_absolute_uri("/pay/cancelled/"),
         metadata={"payment_profile_id": str(profile.pk)},
     )
-    return session.url
+    url = session.url
+    if url is None:
+        message = "Stripe did not return a checkout URL"
+        raise ValueError(message)
+    return url
 
 
 def create_express_dashboard_link(profile: PaymentProfile) -> str:
