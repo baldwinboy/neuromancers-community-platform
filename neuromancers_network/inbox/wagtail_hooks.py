@@ -9,7 +9,7 @@ class NotificationPreferenceViewSet(ModelViewSet):
     icon = "mail"
     menu_label = _("Notification preferences")
     menu_name = "notification_preferences"
-    menu_order = 6
+    menu_order = 4
     list_display = ["user", "disabled_event_types", "updated_at"]
     search_fields = ["user__username", "user__name"]
     form_fields = ["user", "disabled_event_types"]

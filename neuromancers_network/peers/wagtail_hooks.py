@@ -52,7 +52,7 @@ class PeerApplicationViewSet(ModelViewSet):
 
 class PeerProfileViewSet(ModelViewSet):
     model = PeerProfile
-    icon = "user"
+    icon = "group"
     menu_label = _("Peer profiles")
     menu_name = "peer_profiles"
     menu_order = 2

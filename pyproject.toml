@@ -30,6 +30,7 @@ dependencies = [
   "django-environ==0.14.0",
   "django-filter==26.2",
   "django-fsm-2>=4.2.4",
+  "django-htmx>=1.29.0",
   "django-model-utils==5.0.0",
   "django-ninja==1.7.1",
   "django-redis==7.0.0",

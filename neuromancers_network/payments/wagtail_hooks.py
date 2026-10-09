@@ -12,10 +12,9 @@ class StripeWebhookEndpointViewSet(ModelViewSet):
     index_view_class = ReadOnlyIndexView
     inspect_view_enabled = True
     add_to_reference_index = False
-    icon = "cogs"
-    menu_label = _("Webhook endpoints")
+    icon = "code"
+    menu_label = _("Stripe webhook endpoints")
     menu_name = "stripe_webhook_endpoints"
-    menu_order = 9
     list_display = ["url", "status"]
     search_fields = ["url"]
     form_fields = ["url"]

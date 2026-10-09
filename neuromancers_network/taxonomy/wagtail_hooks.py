@@ -2,6 +2,7 @@ from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
 from wagtail.admin.filters import WagtailFilterSet
 from wagtail.snippets.views.snippets import SnippetViewSet
+from wagtail.snippets.views.snippets import SnippetViewSetGroup
 
 from neuromancers_network.core.bulk_actions import SetActiveBulkAction
 from neuromancers_network.taxonomy.models import AllowedTag
@@ -30,7 +31,7 @@ class LanguageFilterSet(WagtailFilterSet):
 
 class TagGroupViewSet(SnippetViewSet):
     model = TagGroup
-    icon = "tag"
+    icon = "dots-horizontal"
     menu_label = _("Tag groups")
     list_display = ["name", "slug", "sort_order", "is_active"]
     search_fields = ["name", "description"]
@@ -40,12 +41,21 @@ class TagGroupViewSet(SnippetViewSet):
 
 class AllowedTagViewSet(SnippetViewSet):
     model = AllowedTag
-    icon = "tag"
-    menu_label = _("Allowed tags")
+    icon = "radio-full"
+    menu_label = _("Tags")
     list_display = ["name", "group", "sort_order", "is_active"]
     search_fields = ["name", "description"]
     filterset_class = AllowedTagFilterSet
     list_per_page = 50
+
+
+class TagsViewSetGroup(SnippetViewSetGroup):
+    menu_label = _("Allowed tags")
+    menu_name = "filters_allowed_tags"
+    menu_icon = "tag"
+    menu_order = 1
+    items = (TagGroupViewSet, AllowedTagViewSet)
+    add_to_admin_menu = False
 
 
 class CountryViewSet(SnippetViewSet):
@@ -65,6 +75,19 @@ class LanguageViewSet(SnippetViewSet):
     search_fields = ["name", "name_local", "code"]
     filterset_class = LanguageFilterSet
     list_per_page = 50
+
+
+class FiltersOperationsViewSetGroup(SnippetViewSetGroup):
+    menu_label = _("Filters")
+    menu_name = "operations_filters"
+    menu_icon = "sliders"
+    menu_order = 3
+    items = (
+        TagsViewSetGroup,
+        CountryViewSet,
+        LanguageViewSet,
+    )
+    add_to_admin_menu = False
 
 
 class ActivateBulkAction(SetActiveBulkAction):

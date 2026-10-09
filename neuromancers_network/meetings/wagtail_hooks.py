@@ -7,6 +7,7 @@ from wagtail.admin.filters import WagtailFilterSet
 from wagtail.admin.panels import FieldPanel
 from wagtail.admin.panels import InlinePanel
 from wagtail.admin.viewsets.model import ModelViewSet
+from wagtail.snippets.views.snippets import SnippetViewSetGroup
 
 from neuromancers_network.core.bulk_actions import ConfirmBulkAction
 from neuromancers_network.meetings.forms import MeetingAdminForm
@@ -36,10 +37,10 @@ class MeetingFilterSet(WagtailFilterSet):
 
 class MeetingViewSet(ModelViewSet):
     model = Meeting
-    icon = "date"
+    icon = "calendar-alt"
     menu_label = _("Meetings")
     menu_name = "meetings"
-    menu_order = 4
+    menu_order = 1
     list_display = [
         "title",
         "peer",
@@ -81,24 +82,12 @@ class MeetingViewSet(ModelViewSet):
         )
 
 
-class RefundRequestViewSet(ModelViewSet):
-    model = RefundRequest
-    icon = "undo"
-    menu_label = _("Refund requests")
-    menu_name = "refund_requests"
-    menu_order = 5
-    list_display = ["meeting_request", "status", "created_at"]
-    search_fields = ["reason", "meeting_request__meeting__title"]
-    form_fields = ["meeting_request", "reason", "peer_response"]
-    list_per_page = 50
-
-
 class BookingViewSet(ModelViewSet):
     model = Booking
-    icon = "tick-inverse"
+    icon = "calendar-check"
     menu_label = _("Bookings")
     menu_name = "bookings"
-    menu_order = 7
+    menu_order = 2
     list_display = [
         "meeting",
         "support_seeker",
@@ -128,7 +117,7 @@ class MeetingPriceTierViewSet(ModelViewSet):
     icon = "tag"
     menu_label = _("Price tiers")
     menu_name = "price_tiers"
-    menu_order = 8
+    menu_order = 3
     list_display = ["meeting", "duration_minutes", "is_default"]
     search_fields = ["meeting__title"]
     panels = [
@@ -142,14 +131,41 @@ class MeetingPriceTierViewSet(ModelViewSet):
 
 class ReviewViewSet(ModelViewSet):
     model = Review
-    icon = "star"
+    icon = "pick"
     menu_label = _("Reviews")
     menu_name = "reviews"
-    menu_order = 6
+    menu_order = 4
     list_display = ["peer", "reviewer", "rating", "is_published", "created_at"]
     search_fields = ["comment", "peer__username", "reviewer__username"]
     form_fields = ["rating", "comment", "is_published"]
     list_per_page = 50
+
+
+class RefundRequestViewSet(ModelViewSet):
+    model = RefundRequest
+    icon = "rotate"
+    menu_label = _("Refund requests")
+    menu_name = "refund_requests"
+    menu_order = 5
+    list_display = ["meeting_request", "status", "created_at"]
+    search_fields = ["reason", "meeting_request__meeting__title"]
+    form_fields = ["meeting_request", "reason", "peer_response"]
+    list_per_page = 50
+
+
+class MeetingOperationsViewSetGroup(SnippetViewSetGroup):
+    menu_label = _("Meetings")
+    menu_name = "operations_meetings"
+    menu_icon = "calendar"
+    menu_order = 2
+    items = (
+        MeetingViewSet,
+        BookingViewSet,
+        MeetingPriceTierViewSet,
+        ReviewViewSet,
+        RefundRequestViewSet,
+    )
+    add_to_admin_menu = False
 
 
 class PublishMeetingBulkAction(ConfirmBulkAction):

@@ -112,6 +112,7 @@ WAGTAIL_APPS = [
     "wagtail",
     "modelcluster",
     "taggit",
+    "django_htmx",
     "draftail_text_utils",
 ]
 
@@ -205,6 +206,8 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
+# htmx support for daisIE feeds, actions and form blocks.
+MIDDLEWARE.append("django_htmx.middleware.HtmxMiddleware")
 # Admin-authored arbitrary CSS.
 MIDDLEWARE.append("wagtail_daisIE.middleware.ArbitraryCSSMiddleware")
 
@@ -480,6 +483,9 @@ WAGTAIL_RESERVED_ROUTES = [
 # Wagtail daisIE
 # ------------------------------------------------------------------------------
 # https://pypi.org/project/wagtail-daisie/
+# htmx integration (django-htmx) for feeds, actions and form blocks.
+WAGTAIL_DAISIE_HTMX = True
+WAGTAIL_DAISIE_HTMX_VERSION = 2
 # Render allauth pages (login/signup/etc.) with the DaisyUI theme overrides.
 WAGTAIL_DAISIE_ALLAUTH_UI = True
 # Chrome used to render allauth pages (read by wagtail_daisIE >= 2.0.0).

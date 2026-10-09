@@ -45,10 +45,8 @@ class TestOperationsGroup:
         }
 
         assert {
-            "Peer applications",
+            "Profiles",
             "Meetings",
-            "Bookings",
-            "Price tiers",
-            "Allowed tags",
-            "Webhook endpoints",
+            "Filters",
+            "Read-only",
         } <= labels
