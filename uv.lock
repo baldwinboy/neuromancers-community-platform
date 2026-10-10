@@ -1048,7 +1048,7 @@ wheels = [
 
 [[package]]
 name = "draftail-text-utils"
-version = "3.0.0"
+version = "3.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cssutils" },
@@ -1056,9 +1056,9 @@ dependencies = [
     { name = "wagtail" },
     { name = "wagtail-traverse" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a0/79/609dba11ab3174c607e99c2a6c61e75309c72a5f92ad18eee69718c7ef82/draftail_text_utils-3.0.0.tar.gz", hash = "sha256:99e06ccf620253643e5650da8bbcf5a572869bd678a1da5caf393cd658785299", size = 27954, upload-time = "2026-10-07T15:20:39.014Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8d/72/0aea9415107bd4e8f5850d20793d326b334dba17352e7af0240fc3f172b7/draftail_text_utils-3.0.1.tar.gz", hash = "sha256:2d2f6d0fcdfda756625bbe9a65992a09e87879fd70eb33d48da0eaa1c4719bf8", size = 27935, upload-time = "2026-10-09T18:41:58.531Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b0/ad/b49afb9f560fec79c4b7b986ec1bfa479cb78ef00cac395e789cfb7fe461/draftail_text_utils-3.0.0-py3-none-any.whl", hash = "sha256:b292cf0ca54851581af335b2d7d370ce8cf5e76bc84d2cddf7d98c6febf2a39a", size = 49407, upload-time = "2026-10-07T15:20:37.936Z" },
+    { url = "https://files.pythonhosted.org/packages/06/8e/773c6a6663159bb54f0dfd464cee9fedffb7f8fc0373db75ebd8cd705f48/draftail_text_utils-3.0.1-py3-none-any.whl", hash = "sha256:3c6237109bd02294ea24b0494efb6c8012cbbd580a634eb4091bc5463ba0d381", size = 49406, upload-time = "2026-10-09T18:41:56.944Z" },
 ]
 
 [[package]]
@@ -1805,7 +1805,7 @@ requires-dist = [
     { name = "django-smart-ratelimit", extras = ["redis"], specifier = ">=4.12.1" },
     { name = "django-storages", extras = ["s3"], specifier = "==1.14.6" },
     { name = "django-taggit", specifier = "==6.1.0" },
-    { name = "draftail-text-utils", specifier = "==3.0.0" },
+    { name = "draftail-text-utils", specifier = "==3.0.1" },
     { name = "flower", specifier = "==2.2.0" },
     { name = "gunicorn", specifier = "==26.2.0" },
     { name = "hiredis", specifier = "==3.4.2" },
@@ -1817,7 +1817,7 @@ requires-dist = [
     { name = "rules", specifier = ">=3.5" },
     { name = "sentry-sdk", specifier = "==2.71.0" },
     { name = "wagtail", specifier = ">=8.0,<8.1" },
-    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.0.0" },
+    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.1.0" },
     { name = "whitenoise", specifier = "==6.12.0" },
 ]
 
@@ -2836,7 +2836,7 @@ wheels = [
 
 [[package]]
 name = "virtualenv"
-version = "21.14.5"
+version = "21.14.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "distlib" },
@@ -2845,9 +2845,9 @@ dependencies = [
     { name = "platformdirs" },
     { name = "python-discovery" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/f9/f323b3b6058cff3853b31cf6a49c0425ed797bf9611572ec10d065e08bac/virtualenv-21.14.5.tar.gz", hash = "sha256:c4cb6c13e46b57225a999c7e22a09b163393878facc7ac4c059a57f46faa1647", size = 5467127, upload-time = "2026-10-02T17:42:25.613Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/92/f3/589727d02bc832750cfa00ced4315d127535a22a6d7cfcb369b2fe219a2e/virtualenv-21.14.6.tar.gz", hash = "sha256:c6b74616e64bffa9532cfa9dfd54ffbab0dc9b999df2bb8ec0d75e559b983661", size = 5467961, upload-time = "2026-10-08T14:49:57.376Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/df/93/084f10ebbecdedf7902ed68fbecc903f0e9c5742155bfffb05eccbc071da/virtualenv-21.14.5-py3-none-any.whl", hash = "sha256:b0651e0174982bba17cc6f0aaa2ef496730cb85a3f35eb5d1119d1c904f7d1da", size = 5487482, upload-time = "2026-10-02T17:42:23.38Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/1f/e5182163bcee149dda4eec823d88b0f51f2c0c531b12da896f666f0b80c1/virtualenv-21.14.6-py3-none-any.whl", hash = "sha256:eb1a20c5878569b69667f6a1af03458a8512b3afa7be771a2dafe92fdca05bb9", size = 5487469, upload-time = "2026-10-08T14:49:54.988Z" },
 ]
 
 [[package]]
@@ -2884,19 +2884,20 @@ wheels = [
 
 [[package]]
 name = "wagtail-daisie"
-version = "3.0.0"
+version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cssutils" },
     { name = "django" },
     { name = "django-colorfield" },
+    { name = "django-htmx" },
     { name = "lxml" },
     { name = "mjml-python" },
     { name = "wagtail" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/75/62/cdc5172a3d2c5d0e19438282ee9724ed0ad808bad8d370e2d116ee88be5e/wagtail_daisie-3.0.0.tar.gz", hash = "sha256:b4aa72164cca198b8be80372735ffb2d483cd8e606f2a598cb135645e2cc08ff", size = 330170, upload-time = "2026-10-07T15:30:46.03Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/57/ebe1112a751abb80556741d2c292bd11ecd8d98a2c01ce91b44d1afc69d0/wagtail_daisie-3.1.0.tar.gz", hash = "sha256:70be3218fc9ae991e6d4b26abbc9f7e4983deba6a3f4af1987f3fffb7e7722bb", size = 345198, upload-time = "2026-10-09T22:39:30.191Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/a2/40ef9b7523ce12c6883fe4af932bca79179cd8a5a96943f25452028fb234/wagtail_daisie-3.0.0-py3-none-any.whl", hash = "sha256:8e94a463ff93d54deb0b4e6d712453762da2c8279e6d8c36d5b1b10efa52b146", size = 514929, upload-time = "2026-10-07T15:30:44.597Z" },
+    { url = "https://files.pythonhosted.org/packages/21/75/7c1f8806b472b66fb356b752a437c722ec87485b0dbae6096d35560eec5d/wagtail_daisie-3.1.0-py3-none-any.whl", hash = "sha256:92f1538bcd2da8e9e9bf0b466f44e4d06d4d9595852a77f7da22f81a8f5eba4c", size = 511138, upload-time = "2026-10-09T22:39:28.455Z" },
 ]
 
 [package.optional-dependencies]

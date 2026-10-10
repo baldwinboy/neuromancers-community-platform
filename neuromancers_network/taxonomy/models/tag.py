@@ -13,13 +13,14 @@ class AllowedTag(TagBase):
         verbose_name=_("Group"),
     )
     description = models.TextField(_("Description"), blank=True)
-    sort_order = models.PositiveIntegerField(_("Sort order"), default=0)
+    sort_order = models.IntegerField(_("Sort order"), null=True, blank=True)
+    sort_order_field = "sort_order"
     is_active = models.BooleanField(_("Active"), default=True)
 
     class Meta:
         verbose_name = _("Allowed tag")
         verbose_name_plural = _("Allowed tags")
-        ordering = ["group", "-sort_order", "name"]
+        ordering = ["group", "sort_order", "name"]
         indexes = [
             models.Index(
                 fields=["group", "is_active"],

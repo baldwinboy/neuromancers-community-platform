@@ -1,0 +1,22 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% load i18n %}
+
+{% block titletag %}
+  {% trans "Load from registry" %}
+{% endblock titletag %}
+{% block content %}
+  {% include "wagtailadmin/shared/header.html" with title=_("Load from registry") icon="download" %}
+  <div class="nice-padding">
+    <p>
+      {% blocktrans trimmed %}
+        Load all {{ model_name }} from the official ISO registry. Existing
+        entries are updated in place; conflicting names are skipped.
+      {% endblocktrans %}
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="button button-longrunning">{% trans "Load all" %}</button>
+    </form>
+  </div>
+{% endblock content %}

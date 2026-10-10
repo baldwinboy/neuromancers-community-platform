@@ -11,6 +11,7 @@ from neuromancers_network.meetings.services import publish_meeting
 from neuromancers_network.peers.tests.factories import make_peer
 from neuromancers_network.taxonomy.tests.factories import AllowedTagFactory
 from neuromancers_network.taxonomy.tests.factories import CountryFactory
+from neuromancers_network.taxonomy.tests.factories import LanguageFactory
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -65,26 +66,32 @@ class TestCreateMeetingTaxonomy:
         with pytest.raises(ValidationError):
             create_meeting(peer=peer, tags=["retired"], **meeting_fields())
 
-    def test_unknown_country_is_rejected(self):
+    def test_unknown_taxonomy_is_rejected(self):
         peer = make_peer()
 
         with pytest.raises(ValidationError):
             create_meeting(peer=peer, countries=["ZZ"], **meeting_fields())
 
-    def test_valid_tag_and_country_are_set(self):
+        with pytest.raises(ValidationError):
+            create_meeting(peer=peer, languages=["zz"], **meeting_fields())
+
+    def test_valid_taxonomy_is_set(self):
         peer = make_peer()
         tag = AllowedTagFactory(name="anxiety")
-        country = CountryFactory()
+        countries = [CountryFactory(), CountryFactory()]
+        languages = [LanguageFactory(), LanguageFactory()]
 
         meeting = create_meeting(
             peer=peer,
             tags=[tag],
-            countries=[country],
+            countries=countries,
+            languages=languages,
             **meeting_fields(),
         )
 
         assert list(meeting.tags.all()) == [tag]
-        assert list(meeting.countries.all()) == [country]
+        assert set(meeting.countries.all()) == set(countries)
+        assert set(meeting.languages.all()) == set(languages)
 
 
 class TestPublishMeeting:

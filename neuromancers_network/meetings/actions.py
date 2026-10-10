@@ -50,11 +50,8 @@ def meetings_create(request, data):
     fields = {key: data.get(key) for key in _ALLOWED_MEETING_FIELDS if key in data}
     fields["tags"] = as_list(data, "tags")
     fields["countries"] = as_list(data, "countries")
-    meeting = create_meeting(peer=user, **fields)
-
-    language_ids = as_list(data, "languages")
-    if language_ids:
-        meeting.languages.set(language_ids)
+    fields["languages"] = as_list(data, "languages")
+    create_meeting(peer=user, **fields)
 
     return redirect_back(request)
 

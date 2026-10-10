@@ -3,6 +3,7 @@ from factory.django import DjangoModelFactory
 
 from neuromancers_network.taxonomy.models import AllowedTag
 from neuromancers_network.taxonomy.models import Country
+from neuromancers_network.taxonomy.models import Language
 from neuromancers_network.taxonomy.models import TagGroup
 
 
@@ -32,6 +33,20 @@ class CountryFactory(DjangoModelFactory):
 
     class Meta:
         model = Country
+
+
+def _language_code(n: int) -> str:
+    letters = "abcdefghijklmnopqrstuvwxyz"
+    return f"{letters[(n // 26) % 26]}{letters[n % 26]}"
+
+
+class LanguageFactory(DjangoModelFactory):
+    name = factory.Sequence(lambda n: f"Language {n}")
+    name_local = factory.Sequence(lambda n: f"Language {n} local")
+    code = factory.Sequence(_language_code)
+
+    class Meta:
+        model = Language
 
 
 def ensure_tag(name: str) -> AllowedTag:

@@ -2,6 +2,9 @@
 # ------------------------------------------------------------------------------
 USE_DOCKER=yes
 IPYTHONDIR=/app/.ipython
+DJANGO_SUPERUSER_USERNAME=admin
+DJANGO_SUPERUSER_EMAIL=admin@example.com
+DJANGO_SUPERUSER_PASSWORD=ODAYksJDP316cxjlFm5RCDw1C14DyKh78NVtjrM1uWanzFLQ7sRoTCYyrCBlrbSg
 # Redis
 # ------------------------------------------------------------------------------
 REDIS_URL=redis://redis:6379/0

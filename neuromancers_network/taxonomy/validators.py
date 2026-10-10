@@ -12,6 +12,7 @@ from django.utils.translation import gettext_lazy as _
 
 from neuromancers_network.taxonomy.models import AllowedTag
 from neuromancers_network.taxonomy.models import Country
+from neuromancers_network.taxonomy.models import Language
 
 
 def _resolve_tag(value):
@@ -68,5 +69,34 @@ def validate_countries(values) -> list[Country]:
             _("Unknown countries: %(countries)s")
             % {"countries": ", ".join(str(value) for value in invalid)},
             code="invalid_countries",
+        )
+    return resolved
+
+
+def _resolve_language(value):
+    if isinstance(value, Language):
+        return value
+    text = str(value)
+    language = Language.objects.filter(code__iexact=text).first()
+    if language is None and text.isdigit():
+        language = Language.objects.filter(pk=int(text)).first()
+    return language
+
+
+def validate_languages(values) -> list[Language]:
+    """Resolve *values* to ``Language`` instances."""
+    resolved = []
+    invalid = []
+    for value in values:
+        language = _resolve_language(value)
+        if language is None:
+            invalid.append(value)
+        else:
+            resolved.append(language)
+    if invalid:
+        raise ValidationError(
+            _("Unknown languages: %(languages)s")
+            % {"languages": ", ".join(str(value) for value in invalid)},
+            code="invalid_languages",
         )
     return resolved

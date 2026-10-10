@@ -63,6 +63,7 @@ class MeetingFormPage(DaisieFormPage):
         fields = {key: data[key] for key in _MEETING_FIELDS if key in data}
         fields["tags"] = _as_list(data.get("tags"))
         fields["countries"] = _as_list(data.get("countries"))
+        fields["languages"] = _as_list(data.get("languages"))
         try:
             return create_meeting(peer=user, **fields)
         except PermissionDenied, ValidationError:

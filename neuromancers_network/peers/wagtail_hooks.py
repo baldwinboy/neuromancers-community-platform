@@ -1,7 +1,11 @@
-from django.forms import modelform_factory
+from django import forms
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
 from wagtail.admin.filters import WagtailFilterSet
+from wagtail.admin.panels import FieldPanel
+from wagtail.admin.panels import FieldRowPanel
+from wagtail.admin.panels import MultiFieldPanel
+from wagtail.admin.panels import ObjectList
 from wagtail.admin.viewsets.model import ModelViewSet
 
 from neuromancers_network.core.bulk_actions import ConfirmBulkAction
@@ -59,24 +63,44 @@ class PeerProfileViewSet(ModelViewSet):
     list_display = ["user", "is_approved", "is_verified", "default_terms_updated_at"]
     search_fields = ["user__username", "user__name", "bio"]
     filterset_class = PeerProfileFilterSet
-    form_fields = [
-        "user",
-        "bio",
-        "default_terms",
-        "is_approved",
-        "is_verified",
-        "languages",
-        "countries",
-        "tags",
-    ]
     list_per_page = 50
-
-    def get_form_class(self, for_update=False):  # noqa: FBT002
-        return modelform_factory(
-            self.model,
-            form=PeerProfileAdminForm,
-            fields=self.get_form_fields(),
-        )
+    edit_handler = ObjectList(
+        [
+            FieldPanel("user"),
+            FieldPanel("bio"),
+            FieldPanel("default_terms"),
+            MultiFieldPanel(
+                [
+                    FieldPanel("is_approved"),
+                    FieldPanel("is_verified"),
+                ],
+                heading=_("Approval"),
+                classname="collapsed",
+            ),
+            MultiFieldPanel(
+                [
+                    FieldRowPanel(
+                        [
+                            FieldPanel(
+                                "languages",
+                                classname="w-combobox__menu col6",
+                                widget=forms.CheckboxSelectMultiple,
+                            ),
+                            FieldPanel(
+                                "countries",
+                                classname="w-combobox__menu col6",
+                                widget=forms.CheckboxSelectMultiple,
+                            ),
+                        ],
+                    ),
+                    FieldPanel("tags"),
+                ],
+                heading=_("Filters"),
+                classname="collapsed",
+            ),
+        ],
+        base_form_class=PeerProfileAdminForm,
+    )
 
 
 class UserProfileViewSet(ModelViewSet):

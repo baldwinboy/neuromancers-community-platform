@@ -12,6 +12,7 @@ from django.utils.translation import gettext_lazy as _
 from neuromancers_network.peers.services import is_eligible_peer
 from neuromancers_network.taxonomy.validators import validate_allowed_tags
 from neuromancers_network.taxonomy.validators import validate_countries
+from neuromancers_network.taxonomy.validators import validate_languages
 
 if TYPE_CHECKING:
     from neuromancers_network.users.models import User
@@ -37,6 +38,7 @@ def create_meeting(*, peer: User, **fields) -> Meeting:
 
     tags = fields.pop("tags", None)
     countries = fields.pop("countries", None)
+    languages = fields.pop("languages", None)
     fields.setdefault("terms", default_terms_for(peer))
     meeting = Meeting(peer=peer, **fields)
     meeting.save()
@@ -44,6 +46,8 @@ def create_meeting(*, peer: User, **fields) -> Meeting:
         meeting.tags.set(validate_allowed_tags(tags))
     if countries is not None:
         meeting.countries.set(validate_countries(countries))
+    if languages is not None:
+        meeting.languages.set(validate_languages(languages))
     return meeting
 
 

@@ -1,4 +1,5 @@
 import pytest
+from django import forms
 
 from neuromancers_network.peers.models import PeerApplication
 from neuromancers_network.peers.models import PeerApplicationStatus
@@ -8,6 +9,8 @@ from neuromancers_network.peers.wagtail_hooks import PeerProfileViewSet
 from neuromancers_network.peers.wagtail_hooks import RejectPeerApplicationBulkAction
 from neuromancers_network.peers.wagtail_hooks import UnverifyPeerBulkAction
 from neuromancers_network.peers.wagtail_hooks import VerifyPeerBulkAction
+from neuromancers_network.taxonomy.tests.factories import CountryFactory
+from neuromancers_network.taxonomy.tests.factories import LanguageFactory
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -58,14 +61,32 @@ class TestPeerVerificationActions:
 
     def test_admin_form_saves_profile_with_user(self):
         applicant = UserFactory()
+        languages = [LanguageFactory(), LanguageFactory()]
+        countries = [CountryFactory(), CountryFactory()]
         form_class = PeerProfileViewSet().get_form_class()
 
-        form = form_class(data={"user": applicant.pk})
+        form = form_class(
+            data={
+                "user": applicant.pk,
+                "languages": [language.pk for language in languages],
+                "countries": [country.pk for country in countries],
+            },
+        )
 
         assert form.is_valid(), form.errors
+        assert isinstance(
+            form.fields["languages"].widget,
+            forms.CheckboxSelectMultiple,
+        )
+        assert isinstance(
+            form.fields["countries"].widget,
+            forms.CheckboxSelectMultiple,
+        )
         profile = form.save()
         assert profile.user == applicant
         assert profile.user_id is not None
+        assert set(profile.languages.all()) == set(languages)
+        assert set(profile.countries.all()) == set(countries)
 
     def test_verify_sets_flags(self):
         profile = make_peer().peer_profile

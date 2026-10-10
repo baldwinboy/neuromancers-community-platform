@@ -1,11 +1,14 @@
 import logging
 
-from django.forms import modelform_factory
+from django import forms
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
 from wagtail.admin.filters import WagtailFilterSet
 from wagtail.admin.panels import FieldPanel
+from wagtail.admin.panels import FieldRowPanel
 from wagtail.admin.panels import InlinePanel
+from wagtail.admin.panels import MultiFieldPanel
+from wagtail.admin.panels import ObjectList
 from wagtail.admin.viewsets.model import ModelViewSet
 from wagtail.snippets.views.snippets import SnippetViewSetGroup
 
@@ -51,35 +54,67 @@ class MeetingViewSet(ModelViewSet):
     ]
     search_fields = ["title", "description", "peer__username", "peer__name"]
     filterset_class = MeetingFilterSet
-    form_fields = [
-        "peer",
-        "title",
-        "description",
-        "terms",
-        "meeting_type",
-        "meeting_link",
-        "pricing_type",
-        "price",
-        "sliding_scale_min",
-        "sliding_scale_max",
-        "currency",
-        "approval_policy",
-        "refund_requires_approval",
-        "max_participants",
-        "languages",
-        "countries",
-        "tags",
-        "scheduled_at",
-        "duration_minutes",
-    ]
     list_per_page = 50
-
-    def get_form_class(self, for_update=False):  # noqa: FBT002
-        return modelform_factory(
-            self.model,
-            form=MeetingAdminForm,
-            fields=self.get_form_fields(),
-        )
+    edit_handler = ObjectList(
+        [
+            FieldPanel("peer"),
+            FieldPanel("title"),
+            FieldPanel("description"),
+            FieldPanel("terms"),
+            FieldPanel("meeting_type"),
+            MultiFieldPanel(
+                [
+                    FieldPanel("pricing_type"),
+                    FieldPanel("price"),
+                    FieldPanel("sliding_scale_min"),
+                    FieldPanel("sliding_scale_max"),
+                    FieldPanel("currency"),
+                ],
+                heading=_("Pricing"),
+                classname="collapsed",
+            ),
+            MultiFieldPanel(
+                [
+                    FieldPanel("max_participants"),
+                    FieldPanel("meeting_link"),
+                    FieldPanel("scheduled_at"),
+                    FieldPanel("duration_minutes"),
+                ],
+                heading=_("Group meeting settings"),
+                classname="collapsed",
+            ),
+            MultiFieldPanel(
+                [
+                    FieldPanel("approval_policy"),
+                    FieldPanel("refund_requires_approval"),
+                ],
+                heading=_("Approval"),
+                classname="collapsed",
+            ),
+            MultiFieldPanel(
+                [
+                    FieldRowPanel(
+                        [
+                            FieldPanel(
+                                "languages",
+                                classname="w-combobox__menu col6",
+                                widget=forms.CheckboxSelectMultiple,
+                            ),
+                            FieldPanel(
+                                "countries",
+                                classname="w-combobox__menu col6",
+                                widget=forms.CheckboxSelectMultiple,
+                            ),
+                        ],
+                    ),
+                    FieldPanel("tags"),
+                ],
+                heading=_("Filters"),
+                classname="collapsed",
+            ),
+        ],
+        base_form_class=MeetingAdminForm,
+    )
 
 
 class BookingViewSet(ModelViewSet):
