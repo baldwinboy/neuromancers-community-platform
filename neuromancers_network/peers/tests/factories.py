@@ -1,9 +1,32 @@
 from djstripe.enums import SubscriptionStatus
 
+from neuromancers_network.peers.models import PeerAvailability
 from neuromancers_network.users.tests.factories import PaymentProfileFactory
 from neuromancers_network.users.tests.factories import PeerProfileFactory
 from neuromancers_network.users.tests.factories import PeerSubscriptionFactory
 from neuromancers_network.users.tests.factories import UserFactory
+
+
+def make_availability(  # noqa: PLR0913
+    peer,
+    *,
+    start,
+    end,
+    occurrence="",
+    occurrence_starts_at=None,
+    occurrence_ends_at=None,
+    reason="",
+):
+    """Create an availability window for *peer*."""
+    return PeerAvailability.objects.create(
+        peer=peer,
+        start=start,
+        end=end,
+        occurrence=occurrence,
+        occurrence_starts_at=occurrence_starts_at,
+        occurrence_ends_at=occurrence_ends_at,
+        reason=reason,
+    )
 
 
 def make_peer(

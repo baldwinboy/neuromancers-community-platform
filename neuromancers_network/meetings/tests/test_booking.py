@@ -5,11 +5,18 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django_fsm import TransitionNotAllowed
 
+from neuromancers_network.meetings.models import ApprovalPolicy
 from neuromancers_network.meetings.models import Booking
 from neuromancers_network.meetings.models import BookingStatus
+from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingRequest
+from neuromancers_network.meetings.models import MeetingRequestStatus
+from neuromancers_network.meetings.models import MeetingType
+from neuromancers_network.meetings.models import PricingType
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.tests.factories import create_meeting
+from neuromancers_network.peers.tests.factories import make_availability
+from neuromancers_network.peers.tests.factories import make_peer
 from neuromancers_network.users.tests.factories import UserFactory
 
 ACCESS_NEEDS = "Wheelchair access"
@@ -171,3 +178,146 @@ class TestSessionConstraints:
             ).count()
             == EXPECTED_SESSION_COUNT
         )
+
+
+def _future_window(peer):
+    """Create a 09:00-11:00 availability window two days out; return its start."""
+    start = (timezone.now() + timedelta(days=2)).replace(
+        hour=9,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+    make_availability(peer, start=start, end=start + timedelta(hours=2))
+    return start
+
+
+class TestBookingAvailability:
+    def test_slot_within_window_is_allowed(self):
+        peer = make_peer()
+        start = _future_window(peer)
+
+        booking = create_booking(
+            meeting=create_meeting(peer=peer),
+            seeker=UserFactory(),
+            sessions=[
+                {
+                    "requested_start_time": start,
+                    "requested_duration_minutes": SESSION_DURATION,
+                },
+            ],
+        )
+
+        assert booking.sessions.first().requested_start_time == start
+
+    def test_slot_outside_window_is_rejected(self):
+        peer = make_peer()
+        start = _future_window(peer)
+
+        with pytest.raises(ValidationError):
+            create_booking(
+                meeting=create_meeting(peer=peer),
+                seeker=UserFactory(),
+                sessions=[
+                    {
+                        "requested_start_time": start + timedelta(hours=5),
+                        "requested_duration_minutes": SESSION_DURATION,
+                    },
+                ],
+            )
+
+    def test_slot_ending_past_window_is_rejected(self):
+        peer = make_peer()
+        start = _future_window(peer)
+
+        with pytest.raises(ValidationError):
+            create_booking(
+                meeting=create_meeting(peer=peer),
+                seeker=UserFactory(),
+                sessions=[
+                    {
+                        "requested_start_time": start + timedelta(hours=1, minutes=45),
+                        "requested_duration_minutes": SESSION_DURATION,
+                    },
+                ],
+            )
+
+    def test_peer_without_windows_is_unrestricted(self):
+        booking = create_booking(
+            meeting=create_meeting(peer=UserFactory()),
+            seeker=UserFactory(),
+            sessions=[
+                {
+                    "requested_start_time": timezone.now() + timedelta(days=2),
+                    "requested_duration_minutes": SESSION_DURATION,
+                },
+            ],
+        )
+
+        assert booking.pk is not None
+
+    def test_group_meeting_ignores_windows(self):
+        peer = make_peer()
+        _future_window(peer)
+        meeting = Meeting.objects.create(
+            peer=peer,
+            title="Group",
+            description="Test",
+            meeting_type=MeetingType.GROUP,
+            pricing_type=PricingType.FIXED,
+            price=5,
+            approval_policy=ApprovalPolicy.PAY_AFTER_JOIN,
+            currency="GBP",
+            scheduled_at=timezone.now() + timedelta(days=3),
+            duration_minutes=60,
+        )
+
+        booking = create_booking(
+            meeting=meeting,
+            seeker=UserFactory(),
+            sessions=[
+                {
+                    "requested_start_time": timezone.now() + timedelta(days=2),
+                    "requested_duration_minutes": SESSION_DURATION,
+                },
+            ],
+        )
+
+        assert booking.pk is not None
+
+
+class TestBookingRequestStatus:
+    def test_pay_after_join_is_approved(self):
+        booking = create_booking(
+            meeting=create_meeting(peer=UserFactory()),
+            seeker=UserFactory(),
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+
+        assert booking.sessions.first().status == MeetingRequestStatus.APPROVED
+
+    def test_pay_before_join_awaits_payment(self):
+        meeting = create_meeting(peer=UserFactory())
+        meeting.approval_policy = ApprovalPolicy.PAY_BEFORE_JOIN
+        meeting.save()
+
+        booking = create_booking(
+            meeting=meeting,
+            seeker=UserFactory(),
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+
+        assert booking.sessions.first().status == MeetingRequestStatus.PENDING_PAYMENT
+
+    def test_approval_required_awaits_approval(self):
+        meeting = create_meeting(peer=UserFactory())
+        meeting.approval_policy = ApprovalPolicy.APPROVAL_REQUIRED
+        meeting.save()
+
+        booking = create_booking(
+            meeting=meeting,
+            seeker=UserFactory(),
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+
+        assert booking.sessions.first().status == MeetingRequestStatus.PENDING_APPROVAL

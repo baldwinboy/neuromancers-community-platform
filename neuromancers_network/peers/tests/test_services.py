@@ -1,11 +1,21 @@
-import pytest
+from datetime import timedelta
 
+import pytest
+from django.utils import timezone
+
+from neuromancers_network.meetings.models import MeetingRequest
+from neuromancers_network.meetings.tests.factories import create_meeting
 from neuromancers_network.peers.models.settings import PeerRequirementsSettings
+from neuromancers_network.peers.services import available_slots
 from neuromancers_network.peers.services import eligibility_failures
 from neuromancers_network.peers.services import is_eligible_peer
+from neuromancers_network.peers.tests.factories import make_availability
 from neuromancers_network.peers.tests.factories import make_peer
+from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
+
+EXPECTED_DAILY_SLOTS = 3
 
 
 class TestEligibility:
@@ -46,3 +56,104 @@ class TestEligibility:
 
         user = make_peer(is_verified=True)
         assert is_eligible_peer(user) is True
+
+
+def _approved_request(peer, *, start, minutes):
+    meeting = create_meeting(peer=peer)
+    request = MeetingRequest(
+        meeting=meeting,
+        support_seeker=UserFactory(),
+        requested_start_time=start,
+        requested_duration_minutes=minutes,
+    )
+    request.start()  # PAY_AFTER_JOIN -> APPROVED
+    request.save()
+    return request
+
+
+class TestAvailableSlots:
+    def test_no_windows_means_no_slots(self):
+        assert available_slots(make_peer()) == []
+
+    def test_one_off_window(self):
+        peer = make_peer()
+        start = timezone.now() + timedelta(days=1)
+        end = start + timedelta(hours=2)
+        make_availability(peer, start=start, end=end)
+
+        assert available_slots(peer) == [(start, end)]
+
+    def test_recurring_daily_expands(self):
+        peer = make_peer()
+        base = (timezone.now() + timedelta(days=1)).replace(
+            hour=9,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        make_availability(
+            peer,
+            start=base,
+            end=base + timedelta(hours=1),
+            occurrence="daily",
+            occurrence_starts_at=base,
+            occurrence_ends_at=base + timedelta(days=2),
+        )
+
+        slots = available_slots(peer)
+        assert len(slots) == EXPECTED_DAILY_SLOTS
+        assert slots[0] == (base, base + timedelta(hours=1))
+
+    def test_overnight_recurring_window(self):
+        peer = make_peer()
+        base = (timezone.now() + timedelta(days=1)).replace(
+            hour=22,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        make_availability(
+            peer,
+            start=base,
+            end=base + timedelta(hours=4),
+            occurrence="daily",
+            occurrence_starts_at=base,
+            occurrence_ends_at=base + timedelta(days=1),
+        )
+
+        start, end = available_slots(peer)[0]
+        assert start == base
+        assert end == base + timedelta(hours=4)
+
+    def test_booked_time_is_removed(self):
+        peer = make_peer()
+        base = (timezone.now() + timedelta(days=2)).replace(
+            hour=9,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        make_availability(
+            peer,
+            start=base,
+            end=base + timedelta(hours=3),
+        )
+        _approved_request(peer, start=base + timedelta(hours=1), minutes=60)
+
+        assert available_slots(peer) == [
+            (base, base + timedelta(hours=1)),
+            (base + timedelta(hours=2), base + timedelta(hours=3)),
+        ]
+
+    def test_fully_booked_slot_is_removed(self):
+        peer = make_peer()
+        base = (timezone.now() + timedelta(days=2)).replace(
+            hour=9,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        make_availability(peer, start=base, end=base + timedelta(hours=1))
+        _approved_request(peer, start=base, minutes=60)
+
+        assert available_slots(peer) == []
