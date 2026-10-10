@@ -1,5 +1,6 @@
 import pytest
 from wagtail.snippets.models import get_snippet_models
+from wagtail_daisIE.dynamic.registry import get_context_model
 
 from neuromancers_network.taxonomy.models import AllowedTag
 from neuromancers_network.taxonomy.models import Country
@@ -7,6 +8,7 @@ from neuromancers_network.taxonomy.models import Language
 from neuromancers_network.taxonomy.models import TagGroup
 from neuromancers_network.taxonomy.registry import load_countries
 from neuromancers_network.taxonomy.registry import load_languages
+from neuromancers_network.taxonomy.selectors import install_tag_group_filters
 from neuromancers_network.taxonomy.wagtail_hooks import ActivateBulkAction
 from neuromancers_network.taxonomy.wagtail_hooks import AllowedTagViewSet
 from neuromancers_network.taxonomy.wagtail_hooks import DeactivateBulkAction
@@ -57,6 +59,17 @@ class TestBulkActions:
 
         assert created > 0
         assert Language.objects.filter(code="en").exists()
+
+
+class TestTagGroupFilters:
+    def test_tag_group_becomes_a_feed_filter(self):
+        TagGroup.objects.create(name="Lived experience")
+
+        install_tag_group_filters()
+
+        filters = get_context_model("meeting").get_filters()
+        assert "tag_group_lived-experience" in filters
+        assert filters["tag_group_lived-experience"]["label"] == "Lived experience"
 
 
 class TestViewSets:

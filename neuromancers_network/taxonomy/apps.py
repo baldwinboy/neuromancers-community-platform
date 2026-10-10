@@ -7,6 +7,6 @@ class TaxonomyConfig(AppConfig):
     verbose_name = _("Taxonomy")
 
     def ready(self):
-        """
-        Override this method in subclasses to run code when Django starts.
-        """
+        from .selectors import install_tag_group_filters  # noqa: PLC0415
+
+        install_tag_group_filters()

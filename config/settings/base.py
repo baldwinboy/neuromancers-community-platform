@@ -512,6 +512,109 @@ _PAGE_FEED_FILTERS = {
         "label": "Published",
     },
 }
+# Feed filters for meetings and care-provider profiles. ISO codes/slugs are
+# offered as choices; the `query` callables resolve them and preserve the
+# faceted search semantics. Per-tag-group filters are appended at runtime
+# (neuromancers_network.taxonomy.selectors.install_tag_group_filters).
+_MEETING_FILTERS = {
+    "search": {
+        "type": "search",
+        "field": "title",
+        "fields": ["title", "description"],
+        "label": "Search",
+    },
+    "language": {
+        "type": "choice",
+        "field": "languages",
+        "multi": True,
+        "autocomplete": True,
+        "label": "Language",
+        "choices": "neuromancers_network.taxonomy.selectors.language_choices",
+        "query": "neuromancers_network.taxonomy.selectors.meeting_language_query",
+    },
+    "country": {
+        "type": "choice",
+        "field": "countries",
+        "multi": True,
+        "autocomplete": True,
+        "label": "Country",
+        "choices": "neuromancers_network.taxonomy.selectors.country_choices",
+        "query": "neuromancers_network.taxonomy.selectors.meeting_country_query",
+    },
+    "tag": {
+        "type": "choice",
+        "field": "tags",
+        "multi": True,
+        "autocomplete": True,
+        "label": "Tag",
+        "choices": "neuromancers_network.taxonomy.selectors.tag_choices",
+        "query": "neuromancers_network.taxonomy.selectors.meeting_tag_query",
+    },
+    "meeting_type": {
+        "type": "choice",
+        "field": "meeting_type",
+        "label": "Meeting type",
+        "choices": [("1:1", "1:1"), ("group", "Group")],
+    },
+    "pricing_type": {
+        "type": "choice",
+        "field": "pricing_type",
+        "multi": True,
+        "label": "Pricing type",
+        "choices": [
+            ("per_hour", "Per hour"),
+            ("fixed", "Fixed price"),
+            ("sliding_scale", "Sliding scale"),
+            ("duration_tiers", "Duration tiers"),
+        ],
+    },
+    "schedule": {
+        "type": "date_range",
+        "field": "scheduled_at",
+        "label": "Schedule",
+    },
+    "amount": {
+        "type": "number_range",
+        "field": "price",
+        "label": "Price",
+        "query": "neuromancers_network.taxonomy.selectors.meeting_amount_query",
+    },
+}
+_PEER_FILTERS = {
+    "search": {
+        "type": "search",
+        "field": "bio",
+        "fields": ["bio"],
+        "label": "Search",
+    },
+    "language": {
+        "type": "choice",
+        "field": "languages",
+        "multi": True,
+        "autocomplete": True,
+        "label": "Language",
+        "choices": "neuromancers_network.taxonomy.selectors.language_choices",
+        "query": "neuromancers_network.taxonomy.selectors.peer_language_query",
+    },
+    "country": {
+        "type": "choice",
+        "field": "countries",
+        "multi": True,
+        "autocomplete": True,
+        "label": "Country",
+        "choices": "neuromancers_network.taxonomy.selectors.country_choices",
+        "query": "neuromancers_network.taxonomy.selectors.peer_country_query",
+    },
+    "tag": {
+        "type": "choice",
+        "field": "tags",
+        "multi": True,
+        "autocomplete": True,
+        "label": "Tag",
+        "choices": "neuromancers_network.taxonomy.selectors.tag_choices",
+        "query": "neuromancers_network.taxonomy.selectors.peer_tag_query",
+    },
+}
 # Context models authors may bind into content (block fields, feeds, pages).
 WAGTAIL_DAISIE_CONTEXT_MODELS = {
     "user": {
@@ -526,6 +629,8 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "lookup_field": "pk",
         "queryset": "neuromancers_network.meetings.selectors.published_meetings",
         "select_related": ["peer"],
+        "prefetch_related": ["languages", "countries", "tags"],
+        "filters": _MEETING_FILTERS,
     },
     "peer_profile": {
         "label": _("Care provider"),
@@ -534,6 +639,8 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "lookup_field": "pk",
         "queryset": "neuromancers_network.peers.selectors.approved_peers",
         "select_related": ["user"],
+        "prefetch_related": ["languages", "countries", "tags"],
+        "filters": _PEER_FILTERS,
     },
     "review": {
         "label": _("Review"),

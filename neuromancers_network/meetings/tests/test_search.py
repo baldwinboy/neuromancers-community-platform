@@ -1,10 +1,20 @@
+from decimal import Decimal
+
 import pytest
+from django.http import QueryDict
 from django.test import Client
 
+from neuromancers_network.meetings.models import Meeting
+from neuromancers_network.meetings.models import MeetingPriceOption
+from neuromancers_network.meetings.models import MeetingPriceTier
 from neuromancers_network.meetings.models import MeetingStatus
 from neuromancers_network.meetings.search import search_meetings
 from neuromancers_network.meetings.tests.factories import create_meeting
 from neuromancers_network.taxonomy.models import Language
+from neuromancers_network.taxonomy.selectors import meeting_amount_query
+from neuromancers_network.taxonomy.selectors import meeting_country_query
+from neuromancers_network.taxonomy.selectors import meeting_language_query
+from neuromancers_network.taxonomy.selectors import meeting_tag_query
 from neuromancers_network.taxonomy.tests.factories import AllowedTagFactory
 from neuromancers_network.taxonomy.tests.factories import CountryFactory
 from neuromancers_network.users.tests.factories import UserFactory
@@ -12,6 +22,8 @@ from neuromancers_network.users.tests.factories import UserFactory
 pytestmark = pytest.mark.django_db
 
 HTTP_OK = 200
+SESSION_DURATION = 30
+TIER_PRICE = Decimal("40.00")
 
 
 @pytest.fixture
@@ -114,6 +126,55 @@ class TestSearchMeetings:
 
         results = search_meetings(countries=[country])
         assert list(results) == [matching]
+
+
+class TestMeetingFilterQueries:
+    def test_language_query(self, languages):
+        en, de = languages
+        english = create_meeting(peer=UserFactory(), title="English", languages=[en])
+        create_meeting(peer=UserFactory(), title="German", languages=[de])
+
+        params = QueryDict("filter_language=en")
+        results = meeting_language_query(Meeting.objects.all(), params, "language")
+        assert list(results) == [english]
+
+    def test_country_query(self):
+        country = CountryFactory()
+        matching = create_meeting(
+            peer=UserFactory(),
+            title="Local",
+            countries=[country],
+        )
+        create_meeting(peer=UserFactory(), title="Elsewhere")
+
+        params = QueryDict(f"filter_country={country.code}")
+        results = meeting_country_query(Meeting.objects.all(), params, "country")
+        assert list(results) == [matching]
+
+    def test_tag_query(self):
+        matching = create_meeting(peer=UserFactory(), title="Anxiety", tags=["anxiety"])
+        create_meeting(peer=UserFactory(), title="Grief", tags=["grief"])
+
+        params = QueryDict("filter_tag=anxiety")
+        results = meeting_tag_query(Meeting.objects.all(), params, "tag")
+        assert list(results) == [matching]
+
+    def test_amount_query_uses_tier_price(self):
+        tiered = create_meeting(peer=UserFactory(), title="Tiered")
+        tier = MeetingPriceTier.objects.create(
+            meeting=tiered,
+            duration_minutes=SESSION_DURATION,
+        )
+        MeetingPriceOption.objects.create(
+            tier=tier,
+            amount=TIER_PRICE,
+            is_default=True,
+        )
+        create_meeting(peer=UserFactory(), title="Cheap")  # flat price of 25
+
+        params = QueryDict("filter_amount_min=30")
+        results = meeting_amount_query(Meeting.objects.all(), params, "amount")
+        assert set(results) == {tiered}
 
 
 class TestSearchMeetingsAPI:
