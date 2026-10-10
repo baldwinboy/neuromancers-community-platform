@@ -889,6 +889,23 @@ WAGTAIL_DAISIE_ACTIONS = {
         "label": _("Save notification preferences"),
         "handler": "neuromancers_network.users.actions.profile_save_notification_preferences",
     },
+    # Settings-page sections (rendered by an app template override).
+    "settings.account": {
+        "label": _("Account settings"),
+        "handler": "neuromancers_network.users.settings.action_handler",
+    },
+    "settings.profile": {
+        "label": _("Profile settings"),
+        "handler": "neuromancers_network.users.settings.action_handler",
+    },
+    "settings.privacy": {
+        "label": _("Privacy settings"),
+        "handler": "neuromancers_network.users.settings.action_handler",
+    },
+    "settings.notifications": {
+        "label": _("Notification settings"),
+        "handler": "neuromancers_network.users.settings.action_handler",
+    },
 }
 WAGTAIL_DAISIE_DETAIL_PAGES = {
     "meeting": {

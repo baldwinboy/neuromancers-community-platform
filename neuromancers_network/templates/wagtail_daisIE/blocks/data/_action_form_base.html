@@ -1,0 +1,29 @@
+{% load notifications wagtailcore_tags wagtail_daisIE_tags %}
+
+{% if action_url %}
+  <form method="post"
+        action="{{ action_url }}"
+        class="space-y-4"
+        hx-post="{{ action_url }}"
+        hx-target="#daisie-action-form-status-{{ block.id }}"
+        hx-swap="innerHTML">
+    {% csrf_token %}
+    {% if value.target_expression %}
+      <input type="hidden"
+             name="target"
+             value="{% daisie_expr value.target_expression %}" />
+    {% endif %}
+    <input type="hidden" name="daisie_behaviour" value="{{ value.behaviour }}" />
+    <input type="hidden" name="daisie_message" value="{{ message_text }}" />
+    <input type="hidden" name="daisie_message_icon" value="{{ message_icon }}" />
+    <input type="hidden" name="daisie_message_tags" value="{{ message_tags }}" />
+    <input type="hidden" name="daisie_message_level" value="{{ message_level }}" />
+    {% for field in value.fields %}
+      {% include_block field %}
+    {% endfor %}
+    {% include_block value.button %}
+    <div id="daisie-action-form-status-{{ block.id }}"
+         role="status"
+         aria-live="polite"></div>
+  </form>
+{% endif %}

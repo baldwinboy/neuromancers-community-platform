@@ -28,6 +28,8 @@ urlpatterns = [
         CalendarFeedView.as_view(),
         name="calendar_feed",
     ),
+    # App-owned settings section forms (loaded by the Settings page tabs)
+    path("settings/forms/", include("neuromancers_network.users.settings")),
     # Media
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
     # Allauth

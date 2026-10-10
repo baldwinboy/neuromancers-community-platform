@@ -1,0 +1,14 @@
+{% load i18n %}
+
+{% if value.action|slice:":9" == "settings." %}
+  <div hx-get="{% url 'settings:section' key=value.action %}"
+       hx-trigger="load"
+       hx-swap="innerHTML">
+    <p class="opacity-70">{% trans "Loading settings…" %}</p>
+    <noscript>
+      <a class="btn" href="{% url 'settings:section' key=value.action %}">{% trans "Open settings" %}</a>
+    </noscript>
+  </div>
+{% else %}
+  {% include "wagtail_daisIE/blocks/data/_action_form_base.html" %}
+{% endif %}
