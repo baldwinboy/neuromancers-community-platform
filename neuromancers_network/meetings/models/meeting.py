@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField
 from django_fsm import transition
+from modelcluster.models import ClusterableModel
 from taggit.managers import TaggableManager
 from wagtail.search import index
 
@@ -55,7 +56,7 @@ def _is_valid_meeting_link(url):
     return any(host == d or host.endswith("." + d) for d in VALID_MEETING_LINK_DOMAINS)
 
 
-class Meeting(index.Indexed, Timestamped):  # type: ignore[django-manager-missing]
+class Meeting(index.Indexed, ClusterableModel, Timestamped):  # type: ignore[django-manager-missing]
     peer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -241,6 +242,15 @@ class Meeting(index.Indexed, Timestamped):  # type: ignore[django-manager-missin
     def is_live(self) -> bool:
         return self.status == MeetingStatus.PUBLISHED
 
+    @property
+    def offered_durations(self) -> list[int]:
+        return list(
+            self.price_tiers.order_by("duration_minutes").values_list(
+                "duration_minutes",
+                flat=True,
+            ),
+        )
+
     def get_absolute_url(self) -> str:
         from django.contrib.contenttypes.models import ContentType  # noqa: PLC0415
 
@@ -299,6 +309,10 @@ class Meeting(index.Indexed, Timestamped):  # type: ignore[django-manager-missin
             ):
                 errors["scheduled_at"] = _(
                     "Group meetings must start at least 30 minutes in the future.",
+                )
+            if self.pricing_type == PricingType.DURATION_TIERS:
+                errors["pricing_type"] = _(
+                    "Duration tiers are not supported for group meetings.",
                 )
 
         if self.meeting_type == MeetingType.ONE_ON_ONE and self.recurrence_rule_id:

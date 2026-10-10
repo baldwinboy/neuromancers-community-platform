@@ -118,3 +118,23 @@ def create_booking(  # noqa: PLR0913
             terms_accepted_at=accepted_at,
         )
     return booking
+
+
+def sync_meeting_durations(meeting: Meeting, durations: list[int]) -> None:
+    """Reconcile a 1:1 meeting's price tiers with the given *durations*.
+
+    Existing tiers are retained (preserving their price options); tiers whose
+    duration is no longer offered are removed, and new durations gain an empty
+    tier ready for pricing.
+    """
+    from .models import MeetingPriceTier  # noqa: PLC0415
+
+    desired = set(durations)
+    existing = {tier.duration_minutes: tier for tier in meeting.price_tiers.all()}
+
+    for duration in sorted(desired - existing.keys()):
+        MeetingPriceTier.objects.create(meeting=meeting, duration_minutes=duration)
+
+    stale = existing.keys() - desired
+    if stale:
+        meeting.price_tiers.filter(duration_minutes__in=stale).delete()

@@ -4,6 +4,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
+from wagtail.admin.panels import FieldPanel
+from wagtail.admin.panels import InlinePanel
 
 from neuromancers_network.core.models.base import Timestamped
 
@@ -14,7 +16,7 @@ from .meeting import MIN_DURATION_MINUTES
 class MeetingPriceTier(ClusterableModel):
     """A duration-based price tier for a meeting (e.g. 30/60 minutes)."""
 
-    meeting = models.ForeignKey(
+    meeting = ParentalKey(
         "meetings.Meeting",
         on_delete=models.CASCADE,
         related_name="price_tiers",
@@ -27,6 +29,12 @@ class MeetingPriceTier(ClusterableModel):
         ],
     )
     is_default = models.BooleanField(_("Default tier"), default=False)
+
+    panels = [
+        FieldPanel("duration_minutes"),
+        FieldPanel("is_default"),
+        InlinePanel("options"),
+    ]
 
     class Meta:
         ordering = ["duration_minutes"]

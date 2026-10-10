@@ -1,3 +1,4 @@
+import json
 import logging
 
 from django import forms
@@ -14,6 +15,7 @@ from wagtail.snippets.views.snippets import SnippetViewSetGroup
 
 from neuromancers_network.core.bulk_actions import ConfirmBulkAction
 from neuromancers_network.meetings.forms import MeetingAdminForm
+from neuromancers_network.meetings.forms import PricingTypeSelect
 from neuromancers_network.meetings.models import Booking
 from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingPriceTier
@@ -64,23 +66,68 @@ class MeetingViewSet(ModelViewSet):
             FieldPanel("meeting_type"),
             MultiFieldPanel(
                 [
-                    FieldPanel("pricing_type"),
-                    FieldPanel("price"),
-                    FieldPanel("sliding_scale_min"),
-                    FieldPanel("sliding_scale_max"),
-                    FieldPanel("currency"),
+                    FieldPanel("scheduled_at"),
+                    FieldPanel("duration_minutes"),
+                    FieldPanel("max_participants"),
+                    FieldPanel("meeting_link"),
                 ],
-                heading=_("Pricing"),
+                heading=_("Schedule & capacity"),
                 classname="collapsed",
+                attrs={
+                    "data-w-rules-target": "show",
+                    "data-w-rules": json.dumps(
+                        {
+                            "meeting_type": ["group"],
+                        },
+                    ),
+                },
             ),
             MultiFieldPanel(
                 [
-                    FieldPanel("max_participants"),
-                    FieldPanel("meeting_link"),
-                    FieldPanel("scheduled_at"),
-                    FieldPanel("duration_minutes"),
+                    FieldPanel("pricing_type", widget=PricingTypeSelect),
+                    FieldPanel("currency"),
+                    InlinePanel(
+                        "price_tiers",
+                        attrs={
+                            "data-w-rules-target": "show",
+                            "data-w-rules": json.dumps(
+                                {
+                                    "pricing_type": ["duration_tiers"],
+                                    "meeting_type": ["1:1"],
+                                },
+                            ),
+                            "data-w-rules-match": "all",
+                        },
+                    ),
+                    FieldPanel(
+                        "price",
+                        attrs={
+                            "data-w-rules-target": "show",
+                            "data-w-rules": json.dumps(
+                                {
+                                    "pricing_type": ["fixed", "per_hour"],
+                                },
+                            ),
+                            "data-w-rules-match": "any",
+                        },
+                    ),
+                    FieldRowPanel(
+                        [
+                            FieldPanel("sliding_scale_min", classname="col6"),
+                            FieldPanel("sliding_scale_max", classname="col6"),
+                        ],
+                        heading=_("Sliding scale"),
+                        attrs={
+                            "data-w-rules-target": "show",
+                            "data-w-rules": json.dumps(
+                                {
+                                    "pricing_type": ["sliding_scale"],
+                                },
+                            ),
+                        },
+                    ),
                 ],
-                heading=_("Group meeting settings"),
+                heading=_("Pricing"),
                 classname="collapsed",
             ),
             MultiFieldPanel(
@@ -114,6 +161,10 @@ class MeetingViewSet(ModelViewSet):
             ),
         ],
         base_form_class=MeetingAdminForm,
+        attrs={
+            "data-controller": "w-rules",
+            "data-action": "change->w-rules#resolve",
+        },
     )
 
 
