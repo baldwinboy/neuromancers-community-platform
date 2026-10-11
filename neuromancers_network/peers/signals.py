@@ -9,6 +9,8 @@ from __future__ import annotations
 import logging
 
 from django.db import DatabaseError
+from django.db.models.signals import post_delete
+from django.db.models.signals import post_save
 from djstripe.event_handlers import djstripe_receiver
 from djstripe.models import Subscription as StripeSubscription
 
@@ -86,3 +88,79 @@ def sync_peer_subscription(sender, event, **kwargs):
     elif existing.subscription_id != stripe_subscription.pk:
         existing.subscription = stripe_subscription
         existing.save(update_fields=["subscription", "updated_at"])
+
+
+# --- Calendar event sync ----------------------------------------------------
+
+
+def _safe(func, *args):
+    try:
+        func(*args)
+    except Exception:
+        logger.exception("Calendar sync failed for %s", func.__name__)
+
+
+def connect_calendar_signals() -> None:
+    """Keep ``CalendarEvent`` rows in sync with their source objects."""
+    from neuromancers_network.meetings.models import Meeting  # noqa: PLC0415
+    from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
+    from neuromancers_network.peers import calendar  # noqa: PLC0415
+    from neuromancers_network.peers.models import PeerAvailability  # noqa: PLC0415
+
+    def on_availability(sender, instance, **kwargs):
+        _safe(calendar.sync_availability, instance)
+
+    def on_availability_delete(sender, instance, **kwargs):
+        _safe(calendar.remove_events, "availability", instance.pk)
+
+    def on_request(sender, instance, **kwargs):
+        _safe(calendar.sync_request, instance)
+
+    def on_request_delete(sender, instance, **kwargs):
+        _safe(calendar.remove_events, "request", instance.pk)
+
+    def on_meeting(sender, instance, **kwargs):
+        _safe(calendar.sync_meeting, instance)
+
+    def on_meeting_delete(sender, instance, **kwargs):
+        _safe(calendar.remove_events, "meeting", instance.pk)
+
+    post_save.connect(
+        on_availability,
+        sender=PeerAvailability,
+        dispatch_uid="peers.calendar.availability.save",
+        weak=False,
+    )
+    post_delete.connect(
+        on_availability_delete,
+        sender=PeerAvailability,
+        dispatch_uid="peers.calendar.availability.delete",
+        weak=False,
+    )
+    post_save.connect(
+        on_request,
+        sender=MeetingRequest,
+        dispatch_uid="peers.calendar.request.save",
+        weak=False,
+    )
+    post_delete.connect(
+        on_request_delete,
+        sender=MeetingRequest,
+        dispatch_uid="peers.calendar.request.delete",
+        weak=False,
+    )
+    post_save.connect(
+        on_meeting,
+        sender=Meeting,
+        dispatch_uid="peers.calendar.meeting.save",
+        weak=False,
+    )
+    post_delete.connect(
+        on_meeting_delete,
+        sender=Meeting,
+        dispatch_uid="peers.calendar.meeting.delete",
+        weak=False,
+    )
+
+
+connect_calendar_signals()

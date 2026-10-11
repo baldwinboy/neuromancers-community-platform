@@ -1,16 +1,20 @@
 from datetime import timedelta
 
 import pytest
+from django.test import RequestFactory
 from django.utils import timezone
 
 from neuromancers_network.meetings.models import MeetingRequest
 from neuromancers_network.meetings.tests.factories import create_meeting
+from neuromancers_network.peers.models import CalendarEvent
 from neuromancers_network.peers.models.settings import PeerRequirementsSettings
+from neuromancers_network.peers.selectors import peer_calendar_events
 from neuromancers_network.peers.services import available_slots
 from neuromancers_network.peers.services import eligibility_failures
 from neuromancers_network.peers.services import is_eligible_peer
 from neuromancers_network.peers.tests.factories import make_availability
 from neuromancers_network.peers.tests.factories import make_peer
+from neuromancers_network.users.models import UserProfile
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -157,3 +161,81 @@ class TestAvailableSlots:
         _approved_request(peer, start=base, minutes=60)
 
         assert available_slots(peer) == []
+
+
+class TestCalendarSync:
+    def _window(self, peer):
+        start = (timezone.now() + timedelta(days=2)).replace(
+            hour=9,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        return make_availability(peer, start=start, end=start + timedelta(hours=1))
+
+    def test_window_creates_available_event(self):
+        peer = make_peer()
+        window = self._window(peer)
+
+        assert (
+            CalendarEvent.objects.filter(
+                source_type="availability",
+                source_id=window.pk,
+                kind="available",
+            ).count()
+            == 1
+        )
+
+    def test_deleting_window_removes_event(self):
+        peer = make_peer()
+        window = self._window(peer)
+        window.delete()
+
+        assert not CalendarEvent.objects.filter(
+            source_type="availability",
+            source_id=window.pk,
+        ).exists()
+
+
+class TestPeerCalendarEvents:
+    def _request(self, viewer, profile=None):
+        request = RequestFactory().get("/")
+        request.user = viewer
+        if profile is not None:
+            request.daisie_path_params = {"pk": profile.pk}
+        return request
+
+    def _window(self, peer):
+        start = (timezone.now() + timedelta(days=2)).replace(
+            hour=9,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        return make_availability(peer, start=start, end=start + timedelta(hours=1))
+
+    def test_owner_sees_events(self):
+        peer = make_peer()
+        self._window(peer)
+
+        events = peer_calendar_events(self._request(peer, peer.peer_profile))
+        assert events.count() == 1
+
+    def test_unpublished_calendar_hidden_from_others(self):
+        peer = make_peer()
+        self._window(peer)
+        viewer = make_peer()
+
+        events = peer_calendar_events(self._request(viewer, peer.peer_profile))
+        assert events.count() == 0
+
+    def test_published_calendar_shows_availability(self):
+        peer = make_peer()
+        profile, _created = UserProfile.objects.get_or_create(user=peer)
+        profile.show_calendar = True
+        profile.save()
+        self._window(peer)
+        viewer = make_peer()
+
+        events = peer_calendar_events(self._request(viewer, peer.peer_profile))
+        assert [event.display_title for event in events] == ["Available"]

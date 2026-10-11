@@ -67,7 +67,7 @@ def _add_months(value: datetime, months: int) -> datetime:
     return value.replace(year=year, month=month, day=day)
 
 
-def _window_occurrences(
+def window_occurrences(
     window: PeerAvailability,
     now: datetime,
     horizon: datetime,
@@ -186,6 +186,6 @@ def available_slots(
 
     slots: list[tuple[datetime, datetime]] = []
     for window in PeerAvailability.objects.filter(peer=user):
-        for start, end in _window_occurrences(window, now, horizon):
+        for start, end in window_occurrences(window, now, horizon):
             slots.extend(_subtract_bookings(start, end, booked))
     return [(start, end) for start, end in slots if end > now]

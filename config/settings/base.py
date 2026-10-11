@@ -656,6 +656,12 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "source": "request.user",
         "queryset": "neuromancers_network.peers.selectors.my_availability",
     },
+    "calendar_event": {
+        "label": _("Calendar event"),
+        "model": "peers.CalendarEvent",
+        "source": "request.user",
+        "queryset": "neuromancers_network.peers.selectors.peer_calendar_events",
+    },
     "review": {
         "label": _("Review"),
         "model": "meetings.Review",

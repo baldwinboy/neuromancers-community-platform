@@ -74,6 +74,23 @@ class UserProfile(index.Indexed, Timestamped):
         default=True,
     )
 
+    # Calendar visibility (peers publish their calendar explicitly)
+    show_calendar = models.BooleanField(
+        _("Publish my calendar"),
+        default=False,
+        help_text=_("Let other members see your availability and booked slots."),
+    )
+    show_peer_meeting_details = models.BooleanField(
+        _("Show 1:1 meeting titles"),
+        default=False,
+        help_text=_("Show 1:1 titles on your calendar (readers always see times)."),
+    )
+    show_group_meeting_details = models.BooleanField(
+        _("Show group meeting titles"),
+        default=True,
+        help_text=_("Show public group meeting titles on your calendar."),
+    )
+
     # Preferences
     country = models.CharField(
         _("Country"),

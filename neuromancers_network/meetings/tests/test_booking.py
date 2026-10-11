@@ -15,6 +15,7 @@ from neuromancers_network.meetings.models import MeetingType
 from neuromancers_network.meetings.models import PricingType
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.tests.factories import create_meeting
+from neuromancers_network.peers.models import CalendarEvent
 from neuromancers_network.peers.tests.factories import make_availability
 from neuromancers_network.peers.tests.factories import make_peer
 from neuromancers_network.users.tests.factories import UserFactory
@@ -255,6 +256,30 @@ class TestBookingAvailability:
         )
 
         assert booking.pk is not None
+
+    def test_booking_creates_private_calendar_event(self):
+        peer = make_peer()
+        start = _future_window(peer)
+        seeker = UserFactory()
+
+        booking = create_booking(
+            meeting=create_meeting(peer=peer),
+            seeker=seeker,
+            sessions=[
+                {
+                    "requested_start_time": start,
+                    "requested_duration_minutes": SESSION_DURATION,
+                },
+            ],
+        )
+
+        event = CalendarEvent.objects.get(
+            source_type="request",
+            source_id=booking.sessions.first().pk,
+        )
+        assert event.kind == "one_to_one"
+        assert event.owner_id == peer.pk
+        assert event.participant_ids == [seeker.pk]
 
     def test_group_meeting_ignores_windows(self):
         peer = make_peer()

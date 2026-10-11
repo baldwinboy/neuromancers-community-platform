@@ -13,3 +13,9 @@ class AvailabilityOccurrence(models.TextChoices):
     DAILY = "daily", _("Daily")
     WEEKLY = "weekly", _("Weekly")
     MONTHLY = "monthly", _("Monthly")
+
+
+class CalendarEventKind(models.TextChoices):
+    AVAILABLE = "available", _("Available")
+    ONE_TO_ONE = "one_to_one", _("1:1 meeting")
+    GROUP = "group", _("Group meeting")
