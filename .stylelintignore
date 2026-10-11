@@ -2,6 +2,7 @@ staticfiles
 htmlcov
 coverage
 .venv
+daily
 getpronto
 whereby
 docs/_build

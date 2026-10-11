@@ -149,6 +149,23 @@ class EmailSettings(BaseGenericSetting):
 class IntegrationSettings(BaseGenericSetting):
     """API keys for external integrations, editable by Wagtail admins."""
 
+    class MeetingProvider(models.TextChoices):
+        WHEREBY = "whereby", _("Whereby")
+        DAILY = "daily", _("Daily.co")
+
+    meeting_provider = models.CharField(
+        _("Meeting provider"),
+        max_length=20,
+        choices=MeetingProvider.choices,
+        default=MeetingProvider.WHEREBY,
+        help_text=_("Service used to generate meeting links for bookings."),
+    )
+    meeting_room_prefix = models.CharField(
+        _("Meeting room prefix"),
+        max_length=50,
+        default="neuromancers",
+        help_text=_("Prefix for generated meeting room names."),
+    )
     getpronto_api_key = models.CharField(
         _("GetPronto API Key"),
         max_length=255,
@@ -161,21 +178,29 @@ class IntegrationSettings(BaseGenericSetting):
         blank=True,
         help_text=_("API key for Whereby integration."),
     )
-    whereby_room_prefix = models.CharField(
-        _("Whereby Room Prefix"),
-        max_length=50,
-        default="neuromancers",
-        help_text=_("Prefix for Whereby room names. Default is 'neuromancers'."),
+    daily_api_key = models.CharField(
+        _("Daily API Key"),
+        max_length=255,
+        blank=True,
+        help_text=_("API key for Daily.co integration."),
     )
 
     panels = [
+        MultiFieldPanel(
+            [FieldPanel("meeting_provider"), FieldPanel("meeting_room_prefix")],
+            heading=_("Meeting rooms"),
+        ),
         MultiFieldPanel(
             [FieldPanel("getpronto_api_key")],
             heading=_("GetPronto"),
         ),
         MultiFieldPanel(
-            [FieldPanel("whereby_api_key"), FieldPanel("whereby_room_prefix")],
+            [FieldPanel("whereby_api_key")],
             heading=_("Whereby"),
+        ),
+        MultiFieldPanel(
+            [FieldPanel("daily_api_key")],
+            heading=_("Daily.co"),
         ),
     ]
 

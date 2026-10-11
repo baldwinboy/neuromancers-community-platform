@@ -100,6 +100,7 @@ js.indent_size = 2
 # Exclude a variety of commonly ignored directories.
 extend-exclude = [
   "*/migrations/*.py",
+  "daily/*",
   "getpronto/*",
   "staticfiles/*",
   "whereby/*",
@@ -184,7 +185,7 @@ overrides = [
   # Test modules use untyped factory-boy factories; not worth annotating.
   { module = [ "*.tests.*", "tests.*" ], ignore_errors = true },
   # Vendored, code-generated API clients (clientele): duplicate definitions.
-  { module = [ "getpronto.*", "whereby.*" ], ignore_errors = true },
+  { module = [ "daily.*", "getpronto.*", "whereby.*" ], ignore_errors = true },
 ]
 
 [tool.django-stubs]

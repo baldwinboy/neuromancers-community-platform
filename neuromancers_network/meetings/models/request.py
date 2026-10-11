@@ -105,17 +105,17 @@ class MeetingRequest(Timestamped):
         help_text=_("The duration requested by the support seeker (5-120 minutes)."),
     )
 
-    # Meeting link — auto-populated via whereby if left empty (1:1 meetings only)
+    # Meeting link — auto-populated via the configured provider if left empty
     meeting_link = models.URLField(
         _("Meeting link"),
         blank=True,
         help_text=_(
-            "Auto-populated with a Whereby meeting link close to the time "
-            "of the event if left empty. Only valid for 1:1 meetings.",
+            "Auto-populated with a meeting link close to the time of the "
+            "event if left empty. Only valid for 1:1 meetings.",
         ),
     )
-    whereby_meeting_id = models.CharField(
-        _("Whereby meeting ID"),
+    provider_room_id = models.CharField(
+        _("Provider room ID"),
         max_length=255,
         blank=True,
     )
@@ -338,28 +338,27 @@ class MeetingRequest(Timestamped):
 
     def populate_meeting_link(self):
         """
-        Create a Whereby room and populate meeting_link + whereby_meeting_id.
-        Called by Celery task close to meeting time, or manually.
-        Only applicable to 1:1 meetings.
+        Create a meeting room and populate meeting_link + provider_room_id.
+
+        Called by Celery task close to meeting time, or manually. Only
+        applicable to 1:1 meetings.
         """
-        from neuromancers_network.core.apis import configure_whereby  # noqa: PLC0415
-        from neuromancers_network.core.apis import whereby_room_prefix  # noqa: PLC0415
-        from whereby.client import meetings as whereby_meetings  # noqa: PLC0415
-        from whereby.schemas import MeetingsApplicationJson  # noqa: PLC0415
+        from neuromancers_network.core.apis import meeting_room_prefix  # noqa: PLC0415
+        from neuromancers_network.core.meeting_providers import (  # noqa: PLC0415
+            get_provider,
+        )
 
         start = self.requested_start_time
         duration = self.requested_duration_minutes
         if not start or not duration or self.meeting_link:
             return
 
-        configure_whereby()
         end_date = start + timedelta(minutes=duration)
-        data = MeetingsApplicationJson(  # type: ignore[call-arg]
-            end_date=end_date.isoformat(),
-            start_date=start.isoformat(),
-            room_name_prefix=whereby_room_prefix(),
+        result = get_provider().create_room(
+            start_at=start,
+            end_at=end_date,
+            prefix=meeting_room_prefix(),
         )
-        result = whereby_meetings(data=data)
         self.meeting_link = result.room_url
-        self.whereby_meeting_id = result.meeting_id
-        self.save(validate=False, update_fields=["meeting_link", "whereby_meeting_id"])
+        self.provider_room_id = result.room_id
+        self.save(validate=False, update_fields=["meeting_link", "provider_room_id"])

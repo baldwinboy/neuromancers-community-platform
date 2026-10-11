@@ -8,7 +8,7 @@ from django.utils import timezone
 def populate_pending_meeting_links():
     """
     For MeetingRequests within the next hour that have no meeting_link,
-    create a Whereby room and populate the link.
+    create a meeting room and populate the link.
     Applies to 1:1 meetings only (group meetings get links on creation).
     """
     from .models import MeetingRequest  # noqa: PLC0415
@@ -30,7 +30,7 @@ def populate_pending_meeting_links():
 
 @shared_task
 def populate_pending_group_meeting_links():
-    """Populate missing Whereby links for soon-starting group meetings."""
+    """Populate missing meeting links for soon-starting group meetings."""
     from .models import Meeting  # noqa: PLC0415
     from .models import MeetingType  # noqa: PLC0415
 
@@ -72,7 +72,7 @@ def generate_recurring_group_meetings():
     Look for group meetings with a recurrence_rule whose scheduled_at
     is in the past and create the next occurrence.
 
-    For each generated meeting a Whereby link is created automatically.
+    For each generated meeting a meeting link is created automatically.
     The source meeting is advanced via ``RecurrenceRule.advance_meeting``
     so that subsequent task runs compute the correct next slot.
     """

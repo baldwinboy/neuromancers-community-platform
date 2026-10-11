@@ -43,6 +43,7 @@ jobs:
               - 'locale/**'
               - 'getpronto/**'
               - 'whereby/**'
+              - 'daily/**'
               - 'manage.py'
               - 'merge_production_dotenvs_in_dotenv.py'
               - 'pyproject.toml'

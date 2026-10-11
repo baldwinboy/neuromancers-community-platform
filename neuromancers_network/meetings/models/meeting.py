@@ -78,12 +78,12 @@ class Meeting(index.Indexed, ClusterableModel, Timestamped):  # type: ignore[dja
         _("Meeting link"),
         blank=True,
         help_text=_(
-            "Auto-populated with a Whereby meeting link close to the time "
+            "Auto-populated with a meeting link close to the time "
             "of the event if left empty. Only valid for group meetings.",
         ),
     )
-    whereby_meeting_id = models.CharField(
-        _("Whereby meeting ID"),
+    provider_room_id = models.CharField(
+        _("Provider room ID"),
         max_length=255,
         blank=True,
     )
@@ -344,7 +344,7 @@ class Meeting(index.Indexed, ClusterableModel, Timestamped):  # type: ignore[dja
 
     def populate_meeting_link(self, *, force=False):
         """
-        Create a Whereby room and populate meeting_link + whereby_meeting_id.
+        Create a meeting room and populate meeting_link + provider_room_id.
 
         Parameters
         ----------
@@ -363,10 +363,10 @@ class Meeting(index.Indexed, ClusterableModel, Timestamped):  # type: ignore[dja
           more than 10 minutes in the past, or a valid meeting-link URL
           already exists.
         """
-        from neuromancers_network.core.apis import configure_whereby  # noqa: PLC0415
-        from neuromancers_network.core.apis import whereby_room_prefix  # noqa: PLC0415
-        from whereby.client import meetings as whereby_meetings  # noqa: PLC0415
-        from whereby.schemas import MeetingsApplicationJson  # noqa: PLC0415
+        from neuromancers_network.core.apis import meeting_room_prefix  # noqa: PLC0415
+        from neuromancers_network.core.meeting_providers import (  # noqa: PLC0415
+            get_provider,
+        )
 
         if (
             not self.scheduled_at
@@ -387,17 +387,15 @@ class Meeting(index.Indexed, ClusterableModel, Timestamped):  # type: ignore[dja
         if not force and _is_valid_meeting_link(self.meeting_link):
             return
 
-        configure_whereby()
         end_date = self.scheduled_at + timedelta(minutes=self.duration_minutes)
-        data = MeetingsApplicationJson(  # type: ignore[call-arg]
-            end_date=end_date.isoformat(),
-            start_date=self.scheduled_at.isoformat(),
-            room_name_prefix=whereby_room_prefix(),
+        result = get_provider().create_room(
+            start_at=self.scheduled_at,
+            end_at=end_date,
+            prefix=meeting_room_prefix(),
         )
-        result = whereby_meetings(data=data)
         self.meeting_link = result.room_url
-        self.whereby_meeting_id = result.meeting_id
-        self.save(validate=False, update_fields=["meeting_link", "whereby_meeting_id"])
+        self.provider_room_id = result.room_id
+        self.save(validate=False, update_fields=["meeting_link", "provider_room_id"])
 
     @property
     def is_fully_booked(self):
