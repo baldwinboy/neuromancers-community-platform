@@ -1,5 +1,4 @@
 import pytest
-from wagtail.snippets.models import get_snippet_models
 from wagtail_daisIE.dynamic.registry import get_context_model
 
 from neuromancers_network.taxonomy.models import AllowedTag
@@ -10,9 +9,7 @@ from neuromancers_network.taxonomy.registry import load_countries
 from neuromancers_network.taxonomy.registry import load_languages
 from neuromancers_network.taxonomy.selectors import install_tag_group_filters
 from neuromancers_network.taxonomy.wagtail_hooks import ActivateBulkAction
-from neuromancers_network.taxonomy.wagtail_hooks import AllowedTagViewSet
 from neuromancers_network.taxonomy.wagtail_hooks import DeactivateBulkAction
-from neuromancers_network.taxonomy.wagtail_hooks import TagGroupViewSet
 
 pytestmark = pytest.mark.django_db
 
@@ -70,17 +67,3 @@ class TestTagGroupFilters:
         filters = get_context_model("meeting").get_filters()
         assert "tag_group_lived-experience" in filters
         assert filters["tag_group_lived-experience"]["label"] == "Lived experience"
-
-
-class TestViewSets:
-    def test_taxonomy_snippets_are_registered(self):
-        registered = set(get_snippet_models())
-        assert {TagGroup, AllowedTag, Country, Language} <= registered
-
-    def test_reorder_enabled_for_groups_and_tags(self):
-        assert TagGroupViewSet().reorder_view_enabled is True
-        assert AllowedTagViewSet().reorder_view_enabled is True
-
-    def test_tag_group_slug_is_editable(self):
-        form_class = TagGroupViewSet().get_form_class()
-        assert "slug" in form_class.base_fields

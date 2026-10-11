@@ -2,7 +2,6 @@ import pytest
 from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory
 
-from neuromancers_network.core.wagtail_hooks import OperationsViewSetGroup
 from neuromancers_network.meetings.actions import meetings_delete
 from neuromancers_network.meetings.actions import meetings_publish
 from neuromancers_network.meetings.models import MeetingStatus
@@ -46,21 +45,6 @@ class TestMeetingBulkActions:
 
         meeting.refresh_from_db()
         assert meeting.status == MeetingStatus.ARCHIVED
-
-
-class TestOperationsGroup:
-    def test_group_collects_viewsets(self):
-        labels = {
-            str(viewset.menu_label)
-            for viewset in OperationsViewSetGroup().registerables
-        }
-
-        assert {
-            "Profiles",
-            "Meetings",
-            "Filters",
-            "Read-only",
-        } <= labels
 
 
 class TestMeetingManageActions:

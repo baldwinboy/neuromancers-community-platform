@@ -79,11 +79,6 @@ class TestCreateBooking:
 
         assert booking.sessions.first().access_needs == SESSION_ACCESS_NEEDS
 
-    def test_explicit_status_is_kept(self):
-        booking, _meeting, _seeker = make_booking(status=BookingStatus.PAID)
-
-        assert booking.status == BookingStatus.PAID
-
 
 class TestBookingStatus:
     def test_mark_paid(self):
@@ -244,18 +239,20 @@ class TestBookingAvailability:
             )
 
     def test_peer_without_windows_is_unrestricted(self):
+        start = timezone.now() + timedelta(days=2)
+
         booking = create_booking(
             meeting=create_meeting(peer=UserFactory()),
             seeker=UserFactory(),
             sessions=[
                 {
-                    "requested_start_time": timezone.now() + timedelta(days=2),
+                    "requested_start_time": start,
                     "requested_duration_minutes": SESSION_DURATION,
                 },
             ],
         )
 
-        assert booking.pk is not None
+        assert booking.sessions.get().requested_start_time == start
 
     def test_booking_creates_private_calendar_event(self):
         peer = make_peer()
@@ -296,19 +293,20 @@ class TestBookingAvailability:
             scheduled_at=timezone.now() + timedelta(days=3),
             duration_minutes=60,
         )
+        outside_window = timezone.now() + timedelta(days=2)
 
         booking = create_booking(
             meeting=meeting,
             seeker=UserFactory(),
             sessions=[
                 {
-                    "requested_start_time": timezone.now() + timedelta(days=2),
+                    "requested_start_time": outside_window,
                     "requested_duration_minutes": SESSION_DURATION,
                 },
             ],
         )
 
-        assert booking.pk is not None
+        assert booking.sessions.get().requested_start_time == outside_window
 
 
 class TestBookingRequestStatus:

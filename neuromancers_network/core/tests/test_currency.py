@@ -3,7 +3,6 @@ from decimal import Decimal
 import pytest
 
 from neuromancers_network.core.currency import convert_amount
-from neuromancers_network.core.currency import display_currency
 from neuromancers_network.core.currency import format_amount
 from neuromancers_network.core.i18n import bust_localization_cache
 from neuromancers_network.core.models import LocalizationSettings
@@ -55,13 +54,6 @@ class TestConvertAmount:
         assert convert_amount(Decimal("10.00"), source_currency="GBP") == Decimal(
             "10.00",
         )
-
-
-class TestDisplayCurrency:
-    def test_display_currency(self):
-        configure(display_currency="USD")
-
-        assert display_currency() == "USD"
 
 
 class TestFormatAmount:

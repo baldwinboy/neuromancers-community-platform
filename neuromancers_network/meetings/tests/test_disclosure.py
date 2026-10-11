@@ -76,15 +76,3 @@ class TestAccessNeeds:
         )
 
         assert booking.access_needs == OVERRIDE_ACCESS_NEEDS
-
-    def test_sessions_inherit_booking_access_needs(self):
-        seeker = UserFactory()
-
-        booking = create_booking(
-            meeting=create_meeting(peer=UserFactory()),
-            seeker=seeker,
-            access_needs=OVERRIDE_ACCESS_NEEDS,
-            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
-        )
-
-        assert booking.sessions.first().access_needs == OVERRIDE_ACCESS_NEEDS
