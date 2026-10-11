@@ -63,8 +63,58 @@ def emit(event_type, *, payload=None, event_ref=""):
     return log_entry
 
 
+def _notification_link(payload) -> str:
+    meta = (payload or {}).get("meta") or {}
+    meeting_id = meta.get("meeting_id")
+    if not meeting_id:
+        return ""
+    from neuromancers_network.meetings.models import Meeting  # noqa: PLC0415
+
+    meeting = Meeting.objects.filter(pk=meeting_id).first()
+    return meeting.get_absolute_url() if meeting is not None else ""
+
+
+def persist_notifications(log_entry) -> None:
+    """Materialise one in-app ``Notification`` per opted-in recipient."""
+    from django.contrib.auth import get_user_model  # noqa: PLC0415
+
+    from .models.notification import Notification  # noqa: PLC0415
+    from .services import should_notify  # noqa: PLC0415
+
+    payload = log_entry.payload or {}
+    ids = [pk for pk in (payload.get("recipient_user_ids") or []) if pk is not None]
+    if not ids:
+        return
+
+    event_type = log_entry.event_type
+    title = str(NotificationEventType(event_type).label)
+    link_url = _notification_link(payload)
+    event_ref = log_entry.event_ref or f"nel:{log_entry.pk}"
+
+    users = get_user_model().objects.filter(pk__in=ids)
+    for user in users:
+        if not should_notify(user, event_type):
+            continue
+        Notification.objects.get_or_create(
+            recipient=user,
+            event_ref=event_ref,
+            defaults={
+                "event_type": event_type,
+                "title": title,
+                "link_url": link_url,
+            },
+        )
+
+
 def _dispatch(log_entry) -> None:
-    """Call ``handle_event`` on matching active subscribers."""
+    """Materialise in-app notifications, then call matching subscribers."""
+    try:
+        persist_notifications(log_entry)
+    except Exception:
+        logger.exception(
+            "Could not persist notifications for event %s",
+            log_entry.event_type,
+        )
     for subscriber in collect_active_subscribers(log_entry.event_type):
         try:
             subscriber.handle_event(log_entry)

@@ -1,8 +1,14 @@
 import pytest
+from django.test import RequestFactory
 
 import neuromancers_network.inbox.events as events_module
+from neuromancers_network.inbox.actions import notifications_delete
+from neuromancers_network.inbox.actions import notifications_mark_all_read
+from neuromancers_network.inbox.actions import notifications_mark_read
 from neuromancers_network.inbox.events import emit
+from neuromancers_network.inbox.models import Notification
 from neuromancers_network.inbox.models import NotificationEventLog
+from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -79,3 +85,86 @@ class TestDispatch:
 
         assert NotificationEventLog.objects.count() == 1
         assert log_entry.pk is not None
+
+
+def _post(user):
+    request = RequestFactory().post("/", {})
+    request.user = user
+    return request
+
+
+class TestNotificationPersistence:
+    def test_emit_materialises_for_recipients(self):
+        user = UserFactory()
+
+        emit("review_created", payload={"recipient_user_ids": [user.pk]})
+
+        assert (
+            Notification.objects.filter(
+                recipient=user,
+                event_type="review_created",
+            ).count()
+            == 1
+        )
+
+    def test_dedupe_by_event_ref(self):
+        user = UserFactory()
+        payload = {"recipient_user_ids": [user.pk]}
+
+        emit("review_created", payload=payload, event_ref="review:1")
+        emit("review_created", payload=payload, event_ref="review:1")
+
+        assert (
+            Notification.objects.filter(
+                recipient=user,
+                event_type="review_created",
+            ).count()
+            == 1
+        )
+
+    def test_without_recipients_no_rows(self):
+        emit("review_created", payload={})
+
+        assert Notification.objects.count() == 0
+
+
+class TestNotificationActions:
+    def test_mark_read(self):
+        user = UserFactory()
+        notification = Notification.objects.create(
+            recipient=user,
+            event_type="review_created",
+        )
+
+        notifications_mark_read(_post(user), {"target": notification.pk})
+
+        notification.refresh_from_db()
+        assert notification.is_read is True
+
+    def test_mark_all_read(self):
+        user = UserFactory()
+        Notification.objects.create(recipient=user, event_type="review_created")
+        Notification.objects.create(recipient=user, event_type="review_created")
+
+        notifications_mark_all_read(_post(user), {})
+
+        assert (
+            Notification.objects.filter(
+                recipient=user,
+                read_at__isnull=True,
+            ).count()
+            == 0
+        )
+
+    def test_delete_is_soft(self):
+        user = UserFactory()
+        notification = Notification.objects.create(
+            recipient=user,
+            event_type="review_created",
+        )
+
+        notifications_delete(_post(user), {"target": notification.pk})
+
+        notification.refresh_from_db()
+        assert notification.deleted_at is not None
+        assert Notification.objects.filter(pk=notification.pk).exists()

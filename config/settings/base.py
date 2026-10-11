@@ -700,6 +700,20 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "model": "inbox.NotificationPreference",
         "source": "neuromancers_network.inbox.selectors.user_notification_preference",
     },
+    "notification": {
+        "label": _("Notification"),
+        "model": "inbox.Notification",
+        "source": "request.user",
+        "queryset": "neuromancers_network.inbox.selectors.user_notifications",
+        "filters": {
+            "unread": {
+                "type": "boolean",
+                "field": "read_at",
+                "label": "Unread",
+                "query": "neuromancers_network.inbox.selectors.notification_unread_query",
+            },
+        },
+    },
     "tag": {
         "label": _("Tag"),
         "model": "taxonomy.AllowedTag",
@@ -949,6 +963,18 @@ WAGTAIL_DAISIE_ACTIONS = {
     "settings.notifications": {
         "label": _("Notification settings"),
         "handler": "neuromancers_network.users.settings.action_handler",
+    },
+    "notifications.mark_read": {
+        "label": _("Mark notification read"),
+        "handler": "neuromancers_network.inbox.actions.notifications_mark_read",
+    },
+    "notifications.mark_all_read": {
+        "label": _("Mark all notifications read"),
+        "handler": "neuromancers_network.inbox.actions.notifications_mark_all_read",
+    },
+    "notifications.delete": {
+        "label": _("Delete notification"),
+        "handler": "neuromancers_network.inbox.actions.notifications_delete",
     },
 }
 WAGTAIL_DAISIE_DETAIL_PAGES = {
