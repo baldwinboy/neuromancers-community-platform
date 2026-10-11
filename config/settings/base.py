@@ -860,6 +860,11 @@ WAGTAIL_DAISIE_FORM_FIELD_TYPES = {
         "is_upload": True,
         "handler": "neuromancers_network.core.uploads.store_document",
     },
+    "duration_tiers": {
+        "label": _("Duration tiers"),
+        "field": "neuromancers_network.meetings.tier_fields.DurationTiersField",
+        "widget": "neuromancers_network.meetings.tier_fields.DurationTiersWidget",
+    },
 }
 WAGTAIL_DAISIE_FORM_UPLOAD_HANDLER = "neuromancers_network.core.uploads.store_document"
 WAGTAIL_DAISIE_APPROVAL_WORKFLOWS = {

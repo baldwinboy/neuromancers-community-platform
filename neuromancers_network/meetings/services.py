@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from datetime import timedelta
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from django.core.exceptions import PermissionDenied
@@ -198,3 +199,43 @@ def sync_meeting_durations(meeting: Meeting, durations: list[int]) -> None:
     stale = existing.keys() - desired
     if stale:
         meeting.price_tiers.filter(duration_minutes__in=stale).delete()
+
+
+def apply_duration_tiers(meeting: Meeting, rows) -> None:
+    """Reconcile a 1:1 meeting's tiers and their default price from *rows*.
+
+    *rows* is a list of ``{"duration_minutes": int, "amount": Decimal | None}``
+    (as produced by ``meetings.tier_fields.DurationTiersField``). Each row's
+    ``amount`` becomes the tier's default price option; a missing amount clears
+    the tier's options.
+    """
+    from .models import MeetingPriceOption  # noqa: PLC0415
+
+    durations = [
+        int(row["duration_minutes"])
+        for row in rows
+        if row.get("duration_minutes") is not None
+    ]
+    sync_meeting_durations(meeting, durations)
+
+    for row in rows:
+        minutes = row.get("duration_minutes")
+        if minutes is None:
+            continue
+        tier = meeting.price_tiers.filter(duration_minutes=int(minutes)).first()
+        if tier is None:
+            continue
+        amount = row.get("amount")
+        if amount in (None, ""):
+            tier.options.all().delete()
+            continue
+        option = tier.options.filter(is_default=True).first()
+        if option is None:
+            MeetingPriceOption.objects.create(
+                tier=tier,
+                amount=Decimal(str(amount)),
+                is_default=True,
+            )
+        else:
+            option.amount = Decimal(str(amount))
+            option.save(update_fields=["amount", "updated_at"])

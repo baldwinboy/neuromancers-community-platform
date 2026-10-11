@@ -1,0 +1,16 @@
+{% load i18n %}
+
+<div class="flex flex-wrap items-end gap-2">
+  <input type="number"
+         name="{{ name }}-duration"
+         min="5"
+         max="120"
+         class="input input-bordered"
+         placeholder="{% trans 'Minutes' %}" />
+  <input type="number"
+         name="{{ name }}-amount"
+         min="0"
+         step="0.01"
+         class="input input-bordered"
+         placeholder="{% trans 'Price' %}" />
+</div>

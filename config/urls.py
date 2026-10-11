@@ -30,6 +30,8 @@ urlpatterns = [
     ),
     # App-owned settings section forms (loaded by the Settings page tabs)
     path("settings/forms/", include("neuromancers_network.users.settings")),
+    # htmx fragments for meeting form pages (duration-tier repeater)
+    path("meetings/", include("neuromancers_network.meetings.urls")),
     # Media
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
     # Allauth

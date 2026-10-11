@@ -36,6 +36,14 @@ def _as_list(value) -> list:
     return [item.strip() for item in str(value).split(",") if item.strip()]
 
 
+def _tier_rows(page, data):
+    """Return the cleaned duration-tier rows from *data*, if present."""
+    for field in page.get_form_fields():
+        if getattr(field, "field_type", "") == "duration_tiers":
+            return data.get(field.clean_name)
+    return None
+
+
 class MeetingFormField(DaisieFormField):
     page = ParentalKey(
         "meetings.MeetingFormPage",
@@ -51,6 +59,9 @@ class MeetingFormPage(DaisieFormPage):
 
     def create_instance_from_submission(self, form, submission=None):
         from neuromancers_network.meetings.services import (  # noqa: PLC0415
+            apply_duration_tiers,
+        )
+        from neuromancers_network.meetings.services import (  # noqa: PLC0415
             create_meeting,
         )
 
@@ -65,9 +76,14 @@ class MeetingFormPage(DaisieFormPage):
         fields["countries"] = _as_list(data.get("countries"))
         fields["languages"] = _as_list(data.get("languages"))
         try:
-            return create_meeting(peer=user, **fields)
+            meeting = create_meeting(peer=user, **fields)
         except PermissionDenied, ValidationError:
             return None
+
+        rows = _tier_rows(self, data)
+        if rows:
+            apply_duration_tiers(meeting, rows)
+        return meeting
 
 
 class MeetingEditFormField(DaisieFormField):
@@ -87,13 +103,23 @@ class MeetingEditFormPage(DaisieFormPage):
     subpage_types: list[str] = []
 
     def update_instance_from_submission(self, form, instance):
+        from neuromancers_network.meetings.services import (  # noqa: PLC0415
+            apply_duration_tiers,
+        )
+
         request = getattr(self, "_daisie_request", None)
         user = getattr(request, "user", None)
         if instance is None or user is None or not user.is_authenticated:
             return None
         if instance.peer_id != user.pk and not getattr(user, "is_moderator", False):
             return None
-        return super().update_instance_from_submission(form, instance)
+
+        result = super().update_instance_from_submission(form, instance)
+        if result is not None:
+            rows = _tier_rows(self, form.cleaned_data)
+            if rows:
+                apply_duration_tiers(result, rows)
+        return result
 
 
 class BookingFormField(DaisieFormField):

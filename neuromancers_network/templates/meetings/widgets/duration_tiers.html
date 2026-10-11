@@ -1,0 +1,29 @@
+{% load i18n %}
+
+<div>
+  <div id="duration-tier-rows-{{ widget.name }}" class="space-y-2">
+    {% for row in rows %}
+      <div class="flex flex-wrap items-end gap-2">
+        <input type="number"
+               name="{{ widget.name }}-duration"
+               value="{{ row.duration_minutes }}"
+               min="5"
+               max="120"
+               class="input input-bordered"
+               placeholder="{% trans 'Minutes' %}" />
+        <input type="number"
+               name="{{ widget.name }}-amount"
+               value="{{ row.amount }}"
+               min="0"
+               step="0.01"
+               class="input input-bordered"
+               placeholder="{% trans 'Price' %}" />
+      </div>
+    {% endfor %}
+  </div>
+  <button type="button"
+          class="btn btn-sm btn-outline mt-2"
+          hx-get="{% url 'meetings:tier_row' %}?name={{ widget.name }}"
+          hx-target="#duration-tier-rows-{{ widget.name }}"
+          hx-swap="beforeend">{% trans "Add duration" %}</button>
+</div>
