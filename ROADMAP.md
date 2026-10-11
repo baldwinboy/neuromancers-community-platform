@@ -1,533 +1,327 @@
-# Settings Page Roadmap
+# NEUROMANCERS Network — Roadmap (Phases 7–11)
 
-Recreate the tabbed **Settings** page from the old `mvp` branch on the current
-`core.SettingsPage`, using `wagtail-daisIE` blocks for the shell and **app-owned
-forms** for the mini-forms.
+> Status: **Phases 1–6 are implemented and committed** (filters, availability
+> enforcement, admin-authored Settings page, peer-session support + host edit
+> page + duration-tier repeater, privacy-aware calendar, notification inbox).
+>
+> This document is the finalised plan for **Phase 7 through Phase 11**. It
+> supersedes all earlier drafts. Every phase is designed for **production-grade
+> code with no regressions**, prioritising **legal compliance, accessibility,
+> maintainability and cost**; where Stripe provides a cost-efficient solution
+> that matches the need, that solution is used.
 
-The end state: **admins only place blocks** (a `TabsBlock` plus one
-`ActionFormBlock` per section). All markup, validation and uploads live in
-`neuromancers_network`, loaded into the tabs with htmx.
+## Cross-cutting principles
 
-- No new pages, models, or migrations: the existing `core.SettingsPage`
-  (`neuromancers_network/core/models/pages.py`) is reused.
-- Progressive enhancement: every form still works without JavaScript (full
-  POST + `{% daisie_messages %}`).
-- The app owns forms; `wagtail-daisIE` owns the tab shell, icons, audience
-  gating, `?tab=` state and the block palette.
+- App code owns models, selectors, services, actions, form-field types and
+  daisIE registries. **All UI is authored in the Wagtail admin** (blocks,
+  feeds, tabs, actions, pages). Nothing is hard-coded unless it is objectively
+  required (e.g. an upload handler or an audience predicate).
+- **Reuse, don't re-implement**: `search_*`, `create_booking`,
+  `sync_meeting_durations`, daisIE context models/filters/actions, and the
+  existing Stripe/dj-stripe plumbing.
+- **Additive schema only**; one committed migration per change;
+  `makemigrations --check` must stay clean.
+- **HTMX** is reused (django-htmx + `WAGTAIL_DAISIE_HTMX`); new endpoints are
+  minimal GET fragments only.
+- **Signal-driven writes are failure-isolated** so a sync error can never break
+  the caller's transaction.
+- Tests are **refined, not duplicated**; framework-only tests are pruned.
 
----
+## Verification (run after each phase)
 
-## Architecture
-
-```
-SettingsPage.body
-└── TabsBlock                         (admin-authored, daisIE)
-    ├── TabItemBlock key=account   icon=…            audience=…
-    │   └── ActionFormBlock action="settings.account"
-    ├── TabItemBlock key=profile   icon=…            audience=…
-    │   └── ActionFormBlock action="settings.profile"
-    ├── TabItemBlock key=notifications               audience=…
-    │   └── ActionFormBlock action="settings.notifications"
-    ├── TabItemBlock key=calendar                    audience=…
-    │   └── ActionFormBlock action="settings.calendar"
-    ├── TabItemBlock key=privacy   audience=peer
-    │   └── ActionFormBlock action="settings.privacy"
-    └── TabItemBlock key=payments  audience=peer
-        └── ActionFormBlock action="settings.payments"
-```
-
-`ActionFormBlock` normally collects daisie input blocks; the app overrides its
-template so that, for the reserved `settings.*` action keys, it instead loads a
-full app-rendered form:
-
-```
-GET  /settings/forms/<key>/   -> fragment with current values  (prefill)
-POST /settings/forms/<key>/   -> fragment with errors/success  (validation, upload)
-```
-
-`TabsBlock`/`TabItemBlock` continue to provide the tab strip, icons, audience
-gating and `?tab=` selection (no app code needed for that).
-
----
-
-## B1. Prerequisites
-
-1. Release `wagtail-daisIE` containing the new features (`TabsBlock` icons /
-   `key` / per-tab `audience` / wider tab content, `ActionFormBlock`, htmx).
-2. Bump the pin in `pyproject.toml` (`wagtail-daisie==X.Y.Z`) and run
-   `uv sync`.
-3. Confirm `django_htmx` wiring is present in `config/settings/base.py`:
-   - `"django_htmx"` in `INSTALLED_APPS`
-   - `"django_htmx.middleware.HtmxMiddleware"` in `MIDDLEWARE`
-   - `WAGTAIL_DAISIE_HTMX = True`, `WAGTAIL_DAISIE_HTMX_VERSION = 2`
-4. ~~Uncomment `{% daisie_htmx %}` in
-   `neuromancers_network/templates/base.html`~~
-   **Done** — `wagtail-daisIE 3.1.0` ships the tag; it now loads htmx 2 and
-   `django-htmx` (settings + middleware already satisfy the `W001`/`W002` checks).
 ```sh
-uv sync
-uv run ./manage.py check          # should be warning-free for wagtail_daisIE.W001/W002
-uv run ./manage.py migrate
+just manage makemigrations --check --noinput
+just manage check
+just pytest
 ```
 
 ---
 
-## B2. App-owned forms
+# Phase 7 — Payments parity, cart, avatar, disconnect
 
-Create a `settings` package under the users app:
+**Goal:** direct-charge Stripe Connect (peer is merchant of record, UK),
+admin-controlled fees and tax, compliance gates, multi-peer cart, refunds,
+payment history/receipts, provider agreement, ToS re-acceptance, avatar upload,
+and connected-account webhooks.
 
-```
-neuromancers_network/users/settings/
-├── __init__.py
-├── forms.py
-├── registry.py
-├── views.py
-├── urls.py
-└── templates/users/settings/
-    ├── _section.html          # form wrapper + errors + submit
-    ├── _account.html
-    ├── _profile.html
-    ├── _notifications.html
-    ├── _privacy.html
-    ├── _payments.html
-    └── _calendar.html
-```
+## Decisions (locked)
 
-Adapt the `mvp` forms (`mvp:apps/accounts/forms.py`) to the **current** models:
-
-| mvp form | current model(s) |
+| Topic | Decision |
 |---|---|
-| `AccountSettingsForm` | `users.User` (`first_name`, `last_name`, `username`, `date_of_birth`) |
-| `ProfileForm` | `users.UserProfile` (`access_needs`, `access_needs_visible_to_peer`, `visibility`, `country`, `timezone`, `languages`, `profile_picture_url`) |
-| `NotificationSettingsForm` | `users.UserProfile.notify_*` + `inbox.NotificationPreference.disabled_event_types` |
-| `PeerPrivacySettingsForm` | `users.UserProfile.visibility` / `access_needs_visible_to_peer` |
+| Charge model | **Direct charges** — peer's connected account is merchant of record; peer bears Stripe processing |
+| Jurisdiction | United Kingdom |
+| Platform fee | Admin-set % taken **out of** the peer's payment; **meetings only** |
+| Subscriptions | Billed by the platform via the **Stripe Dashboard**; hard gate |
+| KYC gate | `kyc_completed` (≈ `charges_enabled` + `payouts_enabled` + no due requirements) |
+| Refunds | Auto/review per meeting; partial refunds behind an admin toggle; allowed anytime post-payment; Stripe processing fee non-refundable |
+| Cart | Multi-peer; **one Checkout Session per peer** via a “Pay all” button |
+| ToS | Signup checkbox **plus** `needs_tos_acceptance` audience + `accept_tos` action + admin reset (bulk + dedicated view) |
+| Templates | Multiple named **terms** and **access-needs** templates |
+| Receipts | Link to Stripe’s **hosted receipt** |
+| Tax | Stripe Tax **on by default**, admin opt-out |
+| Account type | **Express** (includes the Express dashboard) |
+| Currency | Per-peer currency; cross-currency via Stripe adaptive pricing |
 
-Move the mvp validators (`name_no_banned_words`, `name_safe_characters`,
-`user_over_18`, username uniqueness) into the app (they already exist in
-`users/validators.py`).
+## A. Stripe settings (admin)
 
-```python
-# neuromancers_network/users/settings/forms.py
-from django import forms
-from django.contrib.auth import get_user_model
-from neuromancers_network.users.models import UserProfile
-from neuromancers_network.users.validators import validate_username_not_blocked
+`core/models/settings.py::StripeSettings` gains:
 
-User = get_user_model()
+- `charge_type` — `direct` (default) / `destination` / `separate` (fallback).
+- `connect_country` — default `GB`.
+- `allow_partial_refunds` — boolean.
+- `tax_mode` — `stripe_tax` (default) / `off`.
+- `subscription_enabled` — boolean (shows the “subscribe” button).
 
+Keep `application_fee` (%). Add panels. Migration **`core/0006`**.
 
-class AccountForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = ("first_name", "last_name", "username", "date_of_birth")
-        widgets = {"date_of_birth": forms.DateInput(attrs={"type": "date"})}
+## B. Direct charges, tax and receipts
 
-    def clean_username(self):
-        value = self.cleaned_data["username"].lower()
-        if User.objects.filter(username=value).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError("A user with that username already exists.")
-        validate_username_not_blocked(value)
-        return value
+- `Booking.create_checkout_session` / `MeetingRequest.create_checkout_session`
+  create the Checkout Session **on the connected account**
+  (`stripe_account=<acct>`) with `application_fee_amount` = admin % and
+  `automatic_tax={"enabled": True}` when `tax_mode = stripe_tax`.
+- Store/derive the **hosted receipt URL** from the payment intent’s charge so
+  the payment-history page can link to it.
+- Keep the existing destination-charge code path behind `charge_type =
+  destination` (no regression if the admin switches).
 
+## C. Eligibility gating
 
-class ProfileForm(forms.ModelForm):
-    display_picture_file = forms.FileField(required=False, label="Profile picture")
+- “Bookable/publishable” requires `kyc_completed`.
+- `create_booking` and checkout refuse ineligible peers with a clear message.
+- Feed selectors exclude meetings whose peer is currently ineligible.
 
-    class Meta:
-        model = UserProfile
-        fields = ("access_needs", "country", "timezone", "languages")
-```
+## D. Subscription gate and lapse
 
-> Keep the current join/save helpers (`core/actions.py`) where practical; the
-> forms only need to expose `initial` and validate.
+On any `PeerSubscription` change:
 
----
+- **1:1 meetings** → `unpublish`.
+- **Group meetings with no paid bookings** → `unpublish`.
+- **Group meetings with paid participants** → stay published but **hidden from
+  feeds** and **block new bookings** (existing paid participants retain access).
 
-## B3. Section registry
+Expose an admin-enabled **`peer.subscribe`** button (plan price IDs from
+`PeerRequirementsSettings.peer_plan_price_ids`).
 
-One place maps an action key to its form, save logic and permission:
+## E. Refunds
 
-```python
-# neuromancers_network/users/settings/registry.py
-from dataclasses import dataclass
-from collections.abc import Callable
+- Partial refunds when `allow_partial_refunds` (amount input).
+- Issued against the **connected account**; allowed anytime after payment.
+- Auto vs review unchanged (`Meeting.refund_requires_approval`).
+- UI copy states the Stripe processing fee is non-refundable.
 
-from . import forms
+## F. Terms, provider agreement, meeting terms, templates
 
+**Signup ToS**
+- `users/forms.py::UserSignupForm` gains a required `accept_tos` checkbox
+  (linked to the T&Cs `StandardPage`); on signup it sets
+  `User.accepted_tos = True`. No schema change.
 
-@dataclass(frozen=True)
-class Section:
-    key: str  # "settings.account"
-    form: type
-    save: Callable  # (request, form) -> None
-    audience: str = "authenticated"  # informational; tab gating uses blocks
+**Re-acceptance**
+- New audience rule **`needs_tos_acceptance`** (`core/audience.py` +
+  `WAGTAIL_DAISIE_AUDIENCE_RULES`) with a predicate
+  (`authenticated ∧ ¬accepted_tos`) **and** an optional `queryset`.
+- Add `queryset`s to `authenticated`, `peer`, `verified_peer`, `moderator` so
+  the admin view can target audiences.
+- New action **`accept_tos`** (sets `request.user.accepted_tos = True`;
+  idempotent; auth-only) in `WAGTAIL_DAISIE_ACTIONS`.
+- Admins build an alert/page with `audience = needs_tos_acceptance` and an
+  `accept_tos` button.
+- **Reset controls:** (a) `ResetTosBulkAction` on `UserProfileViewSet`
+  (Operations → Profiles); (b) a dedicated admin view (registered via
+  `register_admin_urls`, surfaced under Operations) with an audience dropdown
+  (rules that define a `queryset`) + “All users”, with confirmation.
 
+**Provider agreement**
+- `PeerProfile` gains `provider_agreement_accepted_at` and
+  `provider_agreement_version`.
+- Action `peer.accept_provider_agreement`; enforced before Connect
+  onboarding/dashboard and before publishing. Content is an admin-authored
+  `StandardPage`; acceptance is an admin-authored `ActionFormBlock`.
 
-def _save_account(request, form):
-    form.save()
+**Meeting terms**
+- Publishing requires **non-empty terms** (validation).
+- Multiple named **terms templates** on `PeerProfile.terms_templates` and
+  **access-needs templates** on `UserProfile.access_needs_templates` (JSON lists
+  of `{name, body}`).
+- Actions `meetings.apply_terms_template`; an access-needs template picker on
+  booking. Keep `meetings.restore_default_terms`.
 
+## G. Payment history and receipts
 
-def _save_profile(request, form):
-    profile = form.save(commit=False)
-    handle_avatar(request, profile)  # see B8
-    profile.save()
-    form.save_m2m()
+- **Peers:** the Stripe **Express dashboard** (payouts, fees, refunds, disputes,
+  tax documents).
+- **Seekers:** an admin-authored **payment-history feed** (context model over
+  bookings/payment intents) showing status, amount and a **hosted receipt
+  link**.
 
+## H. Cart (per-peer “Pay all”)
 
-SECTIONS: dict[str, Section] = {
-    "settings.account": Section("settings.account", forms.AccountForm, _save_account),
-    "settings.profile": Section("settings.profile", forms.ProfileForm, _save_profile),
-    "settings.notifications": Section(
-        "settings.notifications", forms.NotificationForm, ...
-    ),
-    "settings.privacy": Section("settings.privacy", forms.PrivacyForm, ...),
-    "settings.payments": Section("settings.payments", forms.PaymentsForm, ...),
-    "settings.calendar": Section("settings.calendar", forms.CalendarForm, ...),
-}
-```
+- `unpaid_booking` context model + a daisIE-authored feed/filters.
+- Action `bookings.checkout_many`: groups the selected bookings by peer and
+  starts **one Checkout Session per peer** (sequential).
 
-Keys must start with `settings.` so the slot override (B6) can recognise them.
+## I. Disconnect
 
----
+- Action `peer.stripe_disconnect`: unlink the local `PaymentProfile` and
+  delete/deauthorise the Stripe Express account.
 
-## B4. Section view
+## J. Avatar upload (GetPronto)
 
-A single view renders and saves every section.
+- `users/avatar.py`: presign + confirm upload, delete the previous file, store
+  `profile_picture_url` / `profile_picture_getpronto_id`.
+- Register an `image` `is_upload` form-field type + handler so an
+  admin-authored profile form performs the upload. No new template.
 
-```python
-# neuromancers_network/users/settings/views.py
-from django.contrib import messages
-from django.http import HttpResponse
-from django.shortcuts import redirect, render
-from django.template.loader import render_to_string
+## K. Connected-account webhooks
 
-from neuromancers_network.core.actions import redirect_back, require_authenticated
-from .registry import SECTIONS
+Handle **account-scoped** events (event carries `account`):
 
+- `checkout.session.completed`, `payment_intent.succeeded`,
+  `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`,
+  `account.updated`.
+- Ensure `payments/signals.py`, `meetings/signals.py` and `inbox/signals.py`
+  sync from the connected account (`djstripe` `stripe_account`) so refunds and
+  disputes started in a peer’s dashboard reflect on the platform.
 
-def settings_section(request, key):
-    user = require_authenticated(request)
-    section = SECTIONS.get(key)
-    if section is None:
-        from django.http import Http404
+## Migrations
 
-        raise Http404
+- `core/0006` — Stripe settings fields.
+- `peers/0005` — provider agreement fields + `terms_templates`.
+- `users/0004` — `access_needs_templates`.
+- No `accepted_tos` schema change.
 
-    if request.method == "POST":
-        form = section.form(
-            request.POST, request.FILES, instance=_instance(section, user)
-        )
-        if form.is_valid():
-            section.save(request, form)
-            if getattr(request, "htmx", False):
-                return HttpResponse(
-                    render_to_string(_template(section), {"saved": True}, request)
-                )
-            messages.success(request, "Settings updated")
-            return redirect_back(request)
-        status = 200  # htmx swaps 2xx by default
-    else:
-        form = section.form(
-            instance=_instance(section, user)
-        )  # prefill via initial/instance
-        status = 200
+## Admin Help (added to the Phase 10 seed)
 
-    html = render_to_string(
-        "users/settings/_section.html",
-        {"form": form, "key": key, "section": section},
-        request,
-    )
-    return HttpResponse(html, status=status)
-```
+Non-technical, high-school-level, well-formatted, idempotent:
 
-- `_instance(section, user)` returns the model instance (`user`, `user.user_profile`,
-  `user.notification_preference`, …), so **GET prefills** the fields and
-  **POST validates** them.
-- `_template(section)` picks the per-section partial (or a shared
-  `_section.html` with `{% include section.template %}`) so `payments` and
-  `calendar` can render links-only panels.
-- htmx requests return a fragment; non-htmx POSTs redirect with messages
-  (no-JS fallback).
-
-Wire `request.htmx` defensively if `django_htmx` is not installed:
-`getattr(request, "htmx", False)`.
-
----
-
-## B5. URL routing
-
-Expose the sections before the Wagtail catch-all.
-
-```python
-# neuromancers_network/users/settings/urls.py
-from django.urls import path
-from .views import settings_section
-
-app_name = "settings"
-
-urlpatterns = [
-    path("<str:key>/", settings_section, name="section"),
-]
-```
-
-```python
-# config/urls.py  (before the Wagtail Page catch-all)
-(path("settings/forms/", include("neuromancers_network.users.settings.urls")),)
-```
+1. **What each platform costs** — Stripe (card fees, Connect per-active-account,
+   Stripe Tax 0.5%), Whereby, GetPronto, Daily, Hetzner, Tailscale, Cloudflare,
+   GitHub, Coolify. Each row: what it does, how it’s charged, typical cost,
+   pricing link, “prices change” note.
+2. **How payments work here (the charge model)** — plain language + the table:
+   destination vs **direct (chosen)** vs separate charges/transfers, covering
+   merchant of record, who pays processing, platform fee, refunds/chargeback
+   liability, platform maintenance, connect cost.
+3. **Why we made these choices** — subscription gate, Express/KYC, provider
+   agreement, refund policy, Stripe Tax, per-peer cart payment, direct charges.
+4. **Managing money as a care provider** — the Express dashboard.
+5. **Paying as a seeker** — book → pay → receipt → refunds.
+6. **Accepting the Terms & Conditions (for admins)** — the
+   `needs_tos_acceptance` audience, building an alert/page with `accept_tos`,
+   and resetting acceptance (one user / audience / everyone).
+7. Extend the existing refunds/fees/tax FAQ.
 
 ---
 
-## B6. Action-form slot override
+# Phase 8 — Blog, Contact and Host dashboard (admin-authored)
 
-Override the plugin template so `ActionFormBlock` becomes an htmx loader for
-`settings.*` keys and falls back to the plugin markup otherwise.
+**Goal:** recreate the remaining mvp surfaces as admin-authored daisIE pages,
+with app-side selectors and actions only.
 
-```django
-{# neuromancers_network/templates/wagtail_daisIE/blocks/data/action_form.html #}
-{% load wagtailcore_tags %}
-{% if value.action|slice:":9" == "settings." %}
-  <div
-    hx-get="{% url 'settings:section' key=value.action %}"
-    hx-trigger="load"
-    hx-swap="innerHTML"
-  >
-    <a href="{% url 'settings:section' key=value.action %}">Open settings</a>
-    <span class="loading loading-spinner"></span>
-  </div>
-{% else %}
-  {# Keep the plugin's original action-form body here if it is used elsewhere. #}
-  {% include "users/settings/_action_form_inner.html" %}
-{% endif %}
-```
+- **Blog** — a `StandardPage`-based blog index + post detail (feeds and detail
+  pages), admin-authored. No app models unless required.
+- **Contact** — a `DaisieFormPage` contact form (topics as a small taxonomy or
+  a choice list), admin-authored.
+- **Host dashboard** — host-scoped context models (`host_requests`,
+  `host_refunds`, `host_meetings`) and actions:
+  - `bookings.approve`, `bookings.reject`, `bookings.revoke` (revoke-with-refund)
+  - `refunds.approve`, `refunds.reject`
+  Admin authors a `TabsBlock` for the actions with feeds as sibling blocks
+  (feeds cannot nest in tabs). Approval actions flip the model flag so the
+  existing daisIE approval signal runs.
 
-- The app template dir already takes precedence over the package
-  (`TEMPLATES.DIRS`), matching the existing `.../blocks/data/feed.html` override.
-- Copy the plugin's `action_form.html` body into
-  `users/settings/_action_form_inner.html` and include it in the `{% else %}`
-  branch only if `ActionFormBlock` is used for non-settings actions; otherwise
-  that branch can render nothing.
+**Testing:** refine existing action/selector tests; no new files.
 
 ---
 
-## B7. Author the page (admin only)
+# Phase 9 — Admin Help guide reader
 
-1. In the Wagtail admin, open the existing **Settings** page
-   (`core.SettingsPage`).
-2. Add a **Tabs** block.
-3. For each tab set **Label**, **Key** (`account`, `profile`, `notifications`,
-   `calendar`, `privacy`, `payments`), **Icon**, and — for Privacy and
-   Payments — **Audience → Care providers**.
-4. Inside each tab place one **Action form** block and choose the matching
-   action (`settings.account`, …). Leave its fields/button empty; the app
-   renders them.
-5. Publish.
+**Goal:** read the Help snippets like a guide from the admin.
 
-No migration is produced: `TabsBlock`, `TabItemBlock` and `ActionFormBlock` are
-serialised by registry key, and the page/body streams are unchanged.
+- Keep `HelpArticle` / `HelpCategory` / `GlossaryTerm` as **editable snippets**
+  (already registered under the “Admin Guide” menu).
+- Add a staff-only reader: `core/views/help.py` + one template, registered via
+  `register_admin_urls`, a help-menu hook and a dashboard panel. Renders
+  articles grouped by category (`body`/`steps` StreamFields).
+- No schema change.
 
 ---
 
-## B8. Profile avatar pipeline
+# Phase 10 — `seed_help_guide` command
 
-`ProfileForm.display_picture_file` is handled in the section view / save:
+**Goal:** ship initial, non-technical help content.
 
-1. Validate content type (`image/jpeg|png|gif|webp`) and size (≤ 2 MB).
-2. Compress (e.g. WebP, max dimension 512) and upload with the vendored
-   GetPronto client (`core/apis.configure_getpronto()`,
-   `getpronto.client.upload_presign`/`upload_confirm`).
-3. Delete the previous file (`profile_picture_getpronto_id`) when replacing.
-4. Store `profile_picture_url` and `profile_picture_getpronto_id` on
-   `UserProfile`.
-5. Render the preview in `users/settings/_profile.html`.
+- Idempotent `get_or_create` management command (`get_or_create`, never
+  clobbers edits).
+- Seeds the five categories, the article set below, and Glossary terms —
+  including **Stripe, Stripe Connect, Express dashboard, Whereby, GetPronto,
+  Daily**, and the non-technical concepts (Project, Platform, Django, Wagtail,
+  daisIE, Environment, Repository, Deployment, IaC, Ansible, GitHub, GitHub
+  Actions, Coolify, Secrets, Bitwarden, Hetzner, Tailscale, Cloudflare, DNS,
+  API key, webhook, OAuth, KYC, ICS, Tag group, Allowed tag, Taxonomy, etc.).
+- Articles:
+  1. What is NEUROMANCERS Network?
+  2. Core concepts (Project, Platform, Django, Wagtail, Environment,
+     Repository, Deployment, IaC, Ansible, GitHub, Coolify, Secrets, Hetzner).
+  3. Search & filters.
+  4. Tag groups vs allowed tags.
+  5. Meeting links: group vs 1:1.
+  6. Account (Allauth) emails vs notification emails.
+  7. Editor quick-start (Operations menu).
+  8. Infrastructure & deployments (operator guide) + the four operator Q&As.
+  9. Getting help.
+  10. **What each platform costs** (Phase 7 content).
+  11. **How payments work here / charge model** (Phase 7 table).
+  12. **Why we made these choices**.
+  13. **Managing money as a care provider**.
+  14. **Paying as a seeker**.
+  15. **Accepting the Terms & Conditions (for admins)**.
 
-Because the app owns the form, the upload needs no plugin upload handler —
-`request.FILES` reaches the app view directly.
-
----
-
-## B9. Payments / Stripe section
-
-- The Payments panel renders one of three states from the user's Stripe
-  account (`payments.services.ensure_stripe_account` / `payment_profile`):
-  connected, onboarding incomplete, or not connected.
-- Reuse the existing actions/views:
-  - `peer.connect_stripe` (`neuromancers_network/peers/actions.py`)
-  - `peer.open_stripe_dashboard`
-- Add a disconnect handler + register it in `WAGTAIL_DAISIE_ACTIONS`
-  (`config/settings/base.py`), e.g. `settings.stripe_disconnect`, and render
-  the button in `_payments.html` as an `ActionFormBlock`/`ActionBlock` or a
-  plain POST form inside the app panel.
-
----
-
-## B10. Calendar section
-
-- Render the member's read-only ICS feed link from
-  `core.models.CalendarFeedToken` (create it lazily if missing):
-
-```python
-token, _ = CalendarFeedToken.objects.get_or_create(user=user)
-url = reverse("calendar_feed", kwargs={"token": token.token})
-```
-
-- Show the service information (Google/Outlook/Apple) as static content in
-  `_calendar.html`. The `CalendarFeedView` already serves the file.
+**Testing:** idempotency verified by running the command twice.
 
 ---
 
-## Verification
+# Phase 11 — `seed_pages` command (MVP-style pages)
 
-- **Unit/functional:** GET prefill renders current values; invalid POST returns
-  the fragment with field errors; valid POST persists and (htmx) returns a
-  success alert; avatar upload stores the URL and deletes the old file.
-- **No-JS:** with `{% daisie_htmx %}` removed/disabled, each tab's link opens
-  the section URL as a full page, and POST redirects back with
-  `{% daisie_messages %}`.
-- **Commands:**
+**Goal:** pre-seed pages and chrome so the admin starts from an MVP-shaped site.
+
+- Re-runnable `core/management/commands/seed_pages.py`; `--force` overwrites,
+  otherwise only fills empty bodies. Runs after `core/0003_seed_chrome`.
+- **Signed-in pages** are `core.StandardPage` with an `audience` block
+  (`authenticated`) — no new page models:
+  - `/settings` — `hero` + `tabs` (Account / Profile / Notifications /
+    Calendar / Privacy(peer) / Payments(peer)), each an `action_form` bound to
+    the matching `settings.*` action (Calendar and Payments completed in
+    Phases 5/7).
+  - `diary` — upcoming meetings calendar + bookings feed + cart “Pay all”.
+  - `inbox` — notification feed + mark-read/delete actions.
+  - `/meetings` — hero + published-meetings feed with Phase 1 filters; detail
+    design via the shared `design_template`.
+  - `/dashboard`, `/search` — shortcuts/feeds and search facets.
+- **Feed snippets** (`wagtail_daisIE_feeds.Feed`) seeded by name:
+  `meetings-published`, `bookings-upcoming`, `unpaid-bookings`,
+  `notifications-user`, optional `reviews-published`.
+- **Home chrome** — seed the home `hero` and the **Main navigation** / **Footer**
+  menu bodies (`DaisyUIMenu`) with links to the seeded pages.
+- Idempotent `get_or_create` for feeds/menus; `--force` to overwrite page
+  bodies.
+
+**Testing:** refine `core/tests/test_page_feeds.py` to assert the seeded feeds
+resolve and the pages exist; idempotency verified by running twice.
+
+---
+
+# Appendix — verification and housekeeping
 
 ```sh
-uv run ./manage.py check
-uv run ./manage.py test users core
-uv run pytest
+just manage makemigrations --check --noinput
+just manage check
+just pytest
+just manage seed_help_guide && just manage seed_pages && just manage seed_pages
 ```
 
-- **Manual:** load `/settings` (or the page URL) and confirm tab switching,
-  per-tab audience gating for non-peers, and that each mini-form saves.
-
----
-
-# Peer Session Management Roadmap (list / create / edit / delete + availability)
-
-Recreate the `mvp` PeerSession management screens on `staging` using
-`wagtail-daisIE` blocks and app-owned code. **Do not change this repo until the
-daisIE release below is pinned.** No new pages/models are strictly required for
-the shell; the app owns forms, uploads, pricing and validation.
-
-## Prerequisite
-
-`wagtail-daisIE` must ship the following (see the daisIE implementation plan):
-
-- **Autocomplete multi-select** — widget + form-field type (`choices` config
-  supports `True` for the Choices box with `5-120/5` ranges, or a callable for
-  model-backed options); a `Data-input` block; and a feed-filter variant
-  (`autocomplete: true` on a `choice` filter).
-- **`DaisieFormPage` edit mode** — `form_mode = "edit"` on a developer-defined
-  page subclass; the bound instance is resolved from `context_bindings`; fields
-  prefill from it and submission updates it. Class attribute only (no schema).
-- **Context-bound initial/choices** — choice callables receive the bound form
-  context (instance + resolved context models).
-- **M2M/taggit persistence** — `create`/`update_instance_from_submission` set
-  many-to-many values after save.
-- **Action confirm dialog** — `ActionButtonBlock.confirm` renders a CSS `:target`
-  modal; no JS/endpoint.
-- **Feed `sort` filter type** and **annotation/`query` filters** in the
-  context-model `filters` spec.
-
-Bump the pin (`wagtail-daisie==X.Y.Z`), `uv sync`, then
-`uv run ./manage.py check` (W001/W002 clean) and `uv run ./manage.py migrate`.
-
-## Reuse (already present)
-
-- Unified `meetings.Meeting` (`1:1` / `group`) with `scheduled_at` +
-  `duration_minutes`; `PricingType.DURATION_TIERS`.
-- `MeetingPriceTier(duration_minutes, is_default)` +
-  `MeetingPriceOption(amount, label, is_default)`, consumed by
-  `Meeting.price_for()` and `MeetingRequest.requested_duration_minutes`.
-- `MeetingDetailPage` + `WAGTAIL_DAISIE_DETAIL_PAGES["meeting"]`.
-- Existing actions: `meetings.create`, `bookings.request`.
-
-## App-owned pieces
-
-- `WAGTAIL_DAISIE_CONTEXT_MODELS`: add `language` (active) and `country`
-  querysets for autocomplete; a `my_meeting` model (queryset filtered by
-  `request.user`) for the host list.
-- `WAGTAIL_DAISIE_FORM_FIELD_TYPES`:
-  - `languages` / `countries` — `MultipleChoiceField` + autocomplete widget,
-    `choices` callable over the taxonomy.
-  - `durations` — `TypedMultipleChoiceField(coerce=int)` + autocomplete widget,
-    `choices: True` (admin enters `5-120/5`).
-  - `duration_tiers` — composite field + HTMX-repeater widget.
-- `meetings/views.py` + `meetings/urls.py` — authenticated `GET` returning one
-  `_tier_row.html` fragment for the “Add duration” button (HTMX).
-- `meetings/services.py` — `sync_meeting_durations(meeting, rows)` writing
-  `MeetingPriceTier` + a default `MeetingPriceOption`; `offered_durations`
-  property on `Meeting`; validate `requested_duration_minutes ∈ offered_durations`.
-- `Meeting.clean()` — duration tiers only valid for `1:1`.
-
-## Admin-authored pages
-
-1. **Host sessions** — a `Feed` (context model `my_meeting`) with item blocks:
-   card + status badge + `Action` buttons **Edit / Publish / Delete** (Delete
-   uses the confirm dialog). “Host a session” links to the create page.
-2. **Create 1:1** — `MeetingFormPage` (page-level `meeting_type`) with
-   `languages`, `countries`, `durations`, and the `duration_tiers` repeater.
-3. **Edit** — `MeetingEditPage(DaisieFormPage)` (`form_mode = "edit"`) bound via
-   a `context_bindings` URL `pk`; fields prefill and choices scope to the
-   instance.
-4. **Delete/publish** — registered actions (`meetings.delete`, `meetings.publish`)
-   with a confirmation.
-
-## Seeker scheduling (1:1)
-
-Server-render on `MeetingDetailPage`: a duration/price **tier choice** plus a
-`datetime-local` start input, posting to `bookings.request`; validate against
-`offered_durations()` and reuse `MeetingRequest.clean()`’s ≥10-minute rule.
-No htmx needed (the meeting is in context).
-
-## Tests to update (app)
-
-- `meetings/tests/test_services.py` — `create_meeting` with `durations`/languages.
-- `meetings/tests/test_pricing.py` — `offered_durations` / `sync_meeting_durations`.
-- `meetings/tests/test_booking.py` — reject an un-offered duration; 1:1-only tiers.
-
-## Verification
-
-```sh
-uv run ./manage.py check
-uv run ./manage.py makemigrations --check --noinput
-uv run pytest
-```
-
----
-
-# Taxonomy Management Roadmap (tags / languages / countries)
-
-## HTMX
-
-- `{% daisie_htmx %}` is enabled in `base.html`; `wagtail-daisIE 3.1.0` ships the
-  tag and `django_htmx` + middleware are already wired (`wagtail_daisIE.W001`/
-  `W002` stay quiet).
-
-## Admin multi-select for languages/countries
-
-- `PeerProfileViewSet` and `MeetingViewSet` use a panel-based `edit_handler`
-  (`ObjectList(..., base_form_class=...AdminForm)`) with a
-  `MultiFieldPanel([FieldPanel("languages", widget=CheckboxSelectMultiple),
-  FieldPanel("countries", widget=CheckboxSelectMultiple)],
-  heading=..., classname="collapsed")`. The `collapsed` class renders the group
-  closed by default; Wagtail's panel JS expands it automatically when a field
-  has an error. Admin-only — daisIE form pages keep their own authoring blocks.
-- `create_meeting()` now validates/sets `languages` (via `validate_languages`),
-  and `meetings.actions` / `MeetingFormPage` route languages through it.
-
-## Tag groups & allowed tags
-
-- **Drill-down:** each tag group row exposes a “Manage tags” button linking to
-  the tag listing filtered by that group (`?group=<pk>`); the add view is
-  prefilled with the group and the listing's add URL preserves the filter. Bulk
-  Activate/Deactivate run on the filtered set (Wagtail's existing bulk actions).
-- **Sort order:** `TagGroup` / `AllowedTag` use a nullable `sort_order` with a
-  `sort_order_field` attribute, enabling Wagtail's out-of-box drag-and-drop
-  reordering (values are seeded on create because the default is `None`).
-- **Slug:** both viewsets use `TitleFieldPanel("name")` so the slug mirrors the
-  name while untouched. `TagGroup.slug` is now editable and only auto-filled when
-  blank; `AllowedTag.slug` (taggit) is unchanged.
-
-## Registry import (Babel / CLDR)
-
-- `taxonomy/registry.py` loads ISO 3166-1 countries and ISO 639-1 languages from
-  Babel's CLDR data, upserting by `code` and skipping name conflicts.
-- Each listing (`Country`, `Language`) renders a “Load all from registry” header
-  button to a confirmation view (`taxonomy/views.py`, `register_admin_urls`).
-  No bulk action is registered (the header button is the single entry point and
-  works on an empty listing).
+- All new admin surfaces are authored in the Wagtail admin; app code supplies
+  only models, selectors, services, actions, form-field types and registries.
+- Migrations are additive and committed per change.
+- Refined tests only; redundant framework-level tests are removed.
