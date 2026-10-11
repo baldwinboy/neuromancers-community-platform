@@ -4,10 +4,15 @@ from __future__ import annotations
 
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.utils.dateparse import parse_datetime
 
 from neuromancers_network.core.actions import redirect_back
 from neuromancers_network.core.actions import require_authenticated
 from neuromancers_network.peers.models import PeerApplication
+from neuromancers_network.peers.models import PeerAvailability
 from neuromancers_network.peers.services import is_eligible_peer
 
 
@@ -75,9 +80,58 @@ def peer_open_stripe_dashboard(request, data):
     return HttpResponseRedirect(payment_profile.create_express_dashboard_link())
 
 
+def _parse_dt(value):
+    """Parse an ISO datetime/date string into an aware datetime, or ``None``."""
+    if value in (None, ""):
+        return None
+    parsed = parse_datetime(str(value))
+    if parsed is None:
+        as_date = parse_date(str(value))
+        if as_date is None:
+            return None
+        parsed = timezone.datetime.combine(as_date, timezone.datetime.min.time())
+    if timezone.is_naive(parsed):
+        parsed = timezone.make_aware(parsed)
+    return parsed
+
+
+def availability_create(request, data):
+    user = require_authenticated(request)
+    window = PeerAvailability(
+        peer=user,
+        start=_parse_dt(data.get("start") or data.get("starts_at")),
+        end=_parse_dt(data.get("end") or data.get("ends_at")),
+        occurrence=(data.get("occurrence") or ""),
+        occurrence_starts_at=_parse_dt(data.get("occurrence_starts_at")),
+        occurrence_ends_at=_parse_dt(data.get("occurrence_ends_at")),
+        reason=(data.get("reason") or ""),
+    )
+    window.full_clean()
+    window.save()
+    return redirect_back(request)
+
+
+def availability_delete(request, data):
+    user = require_authenticated(request)
+    pk = (
+        data.get("window")
+        or data.get("availability")
+        or data.get("pk")
+        or data.get("target")
+    )
+    window = get_object_or_404(PeerAvailability, pk=pk)
+    if window.peer_id != user.pk and not user.is_moderator:
+        message = "You cannot manage this availability window"
+        raise PermissionDenied(message)
+    window.delete()
+    return redirect_back(request)
+
+
 HANDLERS = {
     "peers.apply": peers_apply,
     "peer.connect_stripe": peer_connect_stripe,
     "peer.subscribe": peer_subscribe,
     "peer.open_stripe_dashboard": peer_open_stripe_dashboard,
+    "availability.create": availability_create,
+    "availability.delete": availability_delete,
 }

@@ -12,6 +12,20 @@ def published_meetings(request=None, page=None):
     return search_meetings()
 
 
+def my_meetings(request=None, page=None):
+    """The signed-in peer's own meetings (any status)."""
+    from neuromancers_network.meetings.models import Meeting  # noqa: PLC0415
+
+    user = getattr(request, "user", None)
+    if user is None or not getattr(user, "is_authenticated", False):
+        return Meeting.objects.none()
+    return (
+        Meeting.objects.filter(peer=user)
+        .select_related("peer")
+        .prefetch_related("languages", "countries", "tags")
+    )
+
+
 def published_reviews(request=None, page=None):
     """Published reviews, with their peer prefetched."""
     return Review.objects.filter(is_published=True).select_related("peer", "reviewer")

@@ -642,6 +642,20 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "prefetch_related": ["languages", "countries", "tags"],
         "filters": _PEER_FILTERS,
     },
+    "my_meeting": {
+        "label": _("My meetings"),
+        "model": "meetings.Meeting",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.my_meetings",
+        "select_related": ["peer"],
+        "prefetch_related": ["languages", "countries", "tags"],
+    },
+    "my_availability": {
+        "label": _("My availability"),
+        "model": "peers.PeerAvailability",
+        "source": "request.user",
+        "queryset": "neuromancers_network.peers.selectors.my_availability",
+    },
     "review": {
         "label": _("Review"),
         "model": "meetings.Review",
@@ -841,9 +855,33 @@ WAGTAIL_DAISIE_ACTIONS = {
         "label": _("Create meeting"),
         "handler": "neuromancers_network.meetings.actions.meetings_create",
     },
+    "meetings.publish": {
+        "label": _("Publish meeting"),
+        "handler": "neuromancers_network.meetings.actions.meetings_publish",
+    },
+    "meetings.unpublish": {
+        "label": _("Unpublish meeting"),
+        "handler": "neuromancers_network.meetings.actions.meetings_unpublish",
+    },
+    "meetings.archive": {
+        "label": _("Archive meeting"),
+        "handler": "neuromancers_network.meetings.actions.meetings_archive",
+    },
+    "meetings.delete": {
+        "label": _("Delete meeting"),
+        "handler": "neuromancers_network.meetings.actions.meetings_delete",
+    },
     "meetings.restore_default_terms": {
         "label": _("Restore default terms"),
         "handler": "neuromancers_network.meetings.actions.meetings_restore_default_terms",
+    },
+    "availability.create": {
+        "label": _("Add availability"),
+        "handler": "neuromancers_network.peers.actions.availability_create",
+    },
+    "availability.delete": {
+        "label": _("Remove availability"),
+        "handler": "neuromancers_network.peers.actions.availability_delete",
     },
     "bookings.checkout": {
         "label": _("Book and pay"),

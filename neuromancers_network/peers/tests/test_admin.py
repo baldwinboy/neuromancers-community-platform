@@ -1,8 +1,17 @@
+from datetime import timedelta
+
 import pytest
 from django import forms
+from django.core.exceptions import PermissionDenied
+from django.test import RequestFactory
+from django.utils import timezone
 
+from neuromancers_network.peers.actions import availability_create
+from neuromancers_network.peers.actions import availability_delete
 from neuromancers_network.peers.models import PeerApplication
 from neuromancers_network.peers.models import PeerApplicationStatus
+from neuromancers_network.peers.models import PeerAvailability
+from neuromancers_network.peers.tests.factories import make_availability
 from neuromancers_network.peers.tests.factories import make_peer
 from neuromancers_network.peers.wagtail_hooks import ApprovePeerApplicationBulkAction
 from neuromancers_network.peers.wagtail_hooks import PeerProfileViewSet
@@ -14,6 +23,9 @@ from neuromancers_network.taxonomy.tests.factories import LanguageFactory
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
+
+EXPECTED_START_HOUR = 9
+EXPECTED_END_HOUR = 11
 
 
 class TestPeerApplicationActions:
@@ -107,3 +119,45 @@ class TestPeerVerificationActions:
         profile.refresh_from_db()
         assert profile.is_verified is False
         assert profile.verified_by == reviewer
+
+
+def _post(user):
+    request = RequestFactory().post("/", {})
+    request.user = user
+    return request
+
+
+class TestAvailabilityActions:
+    def test_create_window(self):
+        peer = make_peer()
+
+        availability_create(
+            _post(peer),
+            {
+                "start": "2026-11-01T09:00",
+                "end": "2026-11-01T11:00",
+                "occurrence": "daily",
+            },
+        )
+
+        window = PeerAvailability.objects.get(peer=peer)
+        assert window.start.hour == EXPECTED_START_HOUR
+        assert window.end.hour == EXPECTED_END_HOUR
+        assert window.occurrence == "daily"
+
+    def test_owner_can_delete(self):
+        peer = make_peer()
+        start = timezone.now() + timedelta(days=1)
+        window = make_availability(peer, start=start, end=start + timedelta(hours=1))
+
+        availability_delete(_post(peer), {"target": window.pk})
+
+        assert not PeerAvailability.objects.filter(pk=window.pk).exists()
+
+    def test_delete_requires_ownership(self):
+        peer = make_peer()
+        start = timezone.now() + timedelta(days=1)
+        window = make_availability(peer, start=start, end=start + timedelta(hours=1))
+
+        with pytest.raises(PermissionDenied):
+            availability_delete(_post(make_peer()), {"target": window.pk})
