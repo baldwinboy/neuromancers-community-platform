@@ -11,5 +11,6 @@ operator-guide
 secrets-runbook
 coolify-env-mapping
 deployment-pipeline
+secure-domain-plan
 rollback-plan
 ```
