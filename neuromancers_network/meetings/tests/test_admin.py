@@ -4,6 +4,7 @@ from django.test import RequestFactory
 
 from neuromancers_network.meetings.actions import meetings_delete
 from neuromancers_network.meetings.actions import meetings_publish
+from neuromancers_network.meetings.forms_pages import MeetingEditFormPage
 from neuromancers_network.meetings.models import MeetingStatus
 from neuromancers_network.meetings.selectors import my_meetings
 from neuromancers_network.meetings.tests.factories import create_meeting
@@ -86,3 +87,22 @@ class TestMyMeetings:
         anonymous.user = type("Anon", (), {"is_authenticated": False})()
 
         assert list(my_meetings(request=anonymous)) == []
+
+
+class TestMeetingEditFormPage:
+    def test_form_mode_is_edit(self):
+        assert MeetingEditFormPage.form_mode == "edit"
+
+    def test_non_owner_cannot_update(self):
+        meeting = create_meeting(peer=make_peer())
+        page = MeetingEditFormPage()
+        setattr(page, "_daisie_request", _request(make_peer()))  # noqa: B010
+
+        assert page.update_instance_from_submission(object(), meeting) is None
+
+    def test_anonymous_cannot_update(self):
+        meeting = create_meeting(peer=make_peer())
+        page = MeetingEditFormPage()
+        setattr(page, "_daisie_request", None)  # noqa: B010
+
+        assert page.update_instance_from_submission(object(), meeting) is None

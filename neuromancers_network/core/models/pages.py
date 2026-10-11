@@ -43,6 +43,7 @@ class HomePage(ReservedSlugPage):
         "core.SearchPage",
         "peers.PeerApplicationFormPage",
         "meetings.MeetingFormPage",
+        "meetings.MeetingEditFormPage",
         "meetings.BookingFormPage",
         "meetings.RefundRequestFormPage",
         "meetings.ReviewFormPage",

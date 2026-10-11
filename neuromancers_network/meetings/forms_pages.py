@@ -70,6 +70,32 @@ class MeetingFormPage(DaisieFormPage):
             return None
 
 
+class MeetingEditFormField(DaisieFormField):
+    page = ParentalKey(
+        "meetings.MeetingEditFormPage",
+        on_delete=models.CASCADE,
+        related_name="form_fields",
+    )
+
+
+class MeetingEditFormPage(DaisieFormPage):
+    """Host-facing edit page for an existing 1:1 or group meeting."""
+
+    template = "wagtail_daisIE/forms/form_page.html"
+    form_mode = "edit"
+    parent_page_types = ["core.HomePage"]
+    subpage_types: list[str] = []
+
+    def update_instance_from_submission(self, form, instance):
+        request = getattr(self, "_daisie_request", None)
+        user = getattr(request, "user", None)
+        if instance is None or user is None or not user.is_authenticated:
+            return None
+        if instance.peer_id != user.pk and not getattr(user, "is_moderator", False):
+            return None
+        return super().update_instance_from_submission(form, instance)
+
+
 class BookingFormField(DaisieFormField):
     page = ParentalKey(
         "meetings.BookingFormPage",
