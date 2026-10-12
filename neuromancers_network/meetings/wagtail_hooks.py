@@ -43,7 +43,7 @@ class MeetingFilterSet(WagtailFilterSet):
 class MeetingViewSet(ModelViewSet):
     model = Meeting
     icon = "calendar-alt"
-    menu_label = _("Meetings")
+    menu_label = _("All meetings")
     menu_name = "meetings"
     menu_order = 1
     list_display = [

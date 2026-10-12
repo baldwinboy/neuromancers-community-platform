@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
 from wagtail.admin.filters import WagtailFilterSet
@@ -195,10 +196,35 @@ class UnverifyPeerBulkAction(ConfirmBulkAction):
         return len(objects), 0
 
 
+class ResetTosBulkAction(ConfirmBulkAction):
+    models = [UserProfile]
+    display_name = _("Reset Terms acceptance")
+    action_type = "reset_tos"
+    aria_label = _("Reset Terms acceptance for selected members")
+    icon = "warning"
+    confirm_message = _("Require the selected members to accept the Terms again?")
+    action_button_text = _("Yes, reset")
+    no_action_button_text = _("No, go back")
+
+    @classmethod
+    def execute_action(cls, objects, **kwargs):
+        user_ids = [profile.user_id for profile in objects]
+        updated = (
+            get_user_model()
+            .objects.filter(
+                pk__in=user_ids,
+                accepted_tos=True,
+            )
+            .update(accepted_tos=False)
+        )
+        return updated, 0
+
+
 for action_class in [
     ApprovePeerApplicationBulkAction,
     RejectPeerApplicationBulkAction,
     VerifyPeerBulkAction,
     UnverifyPeerBulkAction,
+    ResetTosBulkAction,
 ]:
     hooks.register("register_bulk_action", action_class)

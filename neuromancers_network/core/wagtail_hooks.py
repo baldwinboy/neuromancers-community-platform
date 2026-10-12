@@ -1,6 +1,9 @@
+from django.contrib.auth import get_user_model
 from django.urls import path
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
+from wagtail.admin.viewsets.base import ViewSet
+from wagtail.admin.viewsets.base import ViewSetGroup
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import SnippetViewSet
 from wagtail.snippets.views.snippets import SnippetViewSetGroup
@@ -11,6 +14,7 @@ from neuromancers_network.core.models import HelpCategory
 from neuromancers_network.core.views.email import SendTestEmailView
 from neuromancers_network.core.views.stripe import StripeSyncView
 from neuromancers_network.core.views.stripe import StripeWebhookView
+from neuromancers_network.core.views.tos import ResetTosView
 from neuromancers_network.inbox.wagtail_hooks import NotificationPreferenceViewSet
 from neuromancers_network.meetings.wagtail_hooks import MeetingOperationsViewSetGroup
 from neuromancers_network.payments.wagtail_hooks import StripeWebhookEndpointViewSet
@@ -20,6 +24,8 @@ from neuromancers_network.peers.wagtail_hooks import UserProfileViewSet
 from neuromancers_network.taxonomy.wagtail_hooks import FiltersOperationsViewSetGroup
 
 from .utils import prevent_reserved_routes
+
+User = get_user_model()
 
 
 # Change the order of the `Help` menu item
@@ -31,7 +37,20 @@ def reorder_menu_items(request, menu_items):
             break
 
 
-class ProfileOperationsViewSetGroup(SnippetViewSetGroup):
+class ResetTosViewSet(ViewSet):
+    menu_label = _("Reset Terms acceptance")
+    menu_name = "reset_tos"
+    menu_icon = "warning"
+    menu_order = 5
+    name = "reset-tos"
+
+    def get_urlpatterns(self):
+        return [
+            path("", ResetTosView.as_view(), name="index"),
+        ]
+
+
+class ProfileOperationsViewSetGroup(ViewSetGroup):
     menu_label = _("Profiles")
     menu_name = "operations_profiles"
     menu_icon = "group"
@@ -41,6 +60,7 @@ class ProfileOperationsViewSetGroup(SnippetViewSetGroup):
         PeerProfileViewSet,
         UserProfileViewSet,
         NotificationPreferenceViewSet,
+        ResetTosViewSet,
     )
     add_to_admin_menu = False
 

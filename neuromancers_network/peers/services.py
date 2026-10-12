@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Iterator
 
-    from neuromancers_network.users.models import User
+    from django.contrib.auth.models import AbstractBaseUser
 
 
 def peer_requirements() -> PeerRequirementsSettings:
@@ -27,7 +27,7 @@ def peer_requirements() -> PeerRequirementsSettings:
     return PeerRequirementsSettings.load()
 
 
-def eligibility_failures(user: User) -> list[str]:
+def eligibility_failures(user: AbstractBaseUser) -> list[str]:
     """Return the reasons *user* is not (yet) an eligible peer."""
     failures: list[str] = []
 
@@ -54,7 +54,7 @@ def eligibility_failures(user: User) -> list[str]:
     return failures
 
 
-def is_eligible_peer(user: User | None) -> bool:
+def is_eligible_peer(user: AbstractBaseUser | None) -> bool:
     """Whether *user* is approved and meets the configured peer requirements."""
     if user is None or not getattr(user, "is_authenticated", False):
         return False
@@ -215,7 +215,7 @@ def _subtract_bookings(
 
 
 def _booked_ranges(
-    user: User,
+    user: AbstractBaseUser,
     exclude_request=None,
 ) -> Iterator[tuple[datetime, datetime]]:
     from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
@@ -239,7 +239,7 @@ def _booked_ranges(
 
 
 def available_slots(
-    user: User,
+    user: AbstractBaseUser,
     *,
     horizon_days: int = 90,
     until: datetime | None = None,

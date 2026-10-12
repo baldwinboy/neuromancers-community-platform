@@ -1,8 +1,49 @@
+from __future__ import annotations
+
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.shortcuts import redirect
 from django.utils.translation import gettext_lazy as _
 from wagtail.coreutils import cautious_slugify
+
+ALL_AUDIENCE = "all"
+
+
+def audience_choices() -> list[tuple[str, str]]:
+    """Audience rules that define a queryset, plus an "All users" option."""
+    rules = getattr(settings, "WAGTAIL_DAISIE_AUDIENCE_RULES", {})
+    choices: list[tuple[str, str]] = [(ALL_AUDIENCE, _("All users"))]
+    for key, rule in rules.items():
+        if rule.get("queryset"):
+            choices.append((key, rule.get("label", key)))
+    return choices
+
+
+def users_for_audiences(audiences):
+    """Return a de-duplicated User queryset for a list of audience keys."""
+    from wagtail_daisIE.base_blocks.audience import (  # noqa: PLC0415
+        resolve_audience_queryset,
+    )
+
+    user_model = get_user_model()
+    if ALL_AUDIENCE in audiences:
+        return user_model.objects.all()
+
+    query = Q()
+    matched = False
+    for key in audiences:
+        queryset = resolve_audience_queryset(key)
+        if queryset is None:
+            continue
+        matched = True
+        # values("pk") keeps the inner query cheap and composable.
+        query |= Q(pk__in=queryset.values("pk"))
+
+    if not matched:
+        return user_model.objects.none()
+    return user_model.objects.filter(query)
 
 
 def get_reserved_routes():

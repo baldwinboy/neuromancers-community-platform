@@ -16,20 +16,20 @@ from typing import TYPE_CHECKING
 from neuromancers_network.peers.services import is_eligible_peer
 
 if TYPE_CHECKING:
+    from django.contrib.auth.models import AbstractBaseUser
     from django.http import HttpRequest
 
     from neuromancers_network.meetings.models import Meeting
-    from neuromancers_network.users.models import User
 
 
-def _request_user(request: HttpRequest) -> User | None:
+def _request_user(request: HttpRequest) -> AbstractBaseUser | None:
     user = getattr(request, "user", None)
     if user is not None and getattr(user, "is_authenticated", False):
         return user
     return None
 
 
-def _is_moderator(user: User | None) -> bool:
+def _is_moderator(user: AbstractBaseUser | None) -> bool:
     return user is not None and bool(user.is_staff or user.is_superuser)
 
 
@@ -46,9 +46,10 @@ def _path_params(request: HttpRequest) -> dict:
     return {}
 
 
-def _target_user(request: HttpRequest) -> User | None:
-    from neuromancers_network.users.models import User  # noqa: PLC0415
+def _target_user(request: HttpRequest) -> AbstractBaseUser | None:
+    from django.contrib.auth import get_user_model  # noqa: PLC0415
 
+    user_model = get_user_model()
     params = _path_params(request)
     lookup: dict[str, object] = {}
     if "user_pk" in params:
@@ -65,7 +66,7 @@ def _target_user(request: HttpRequest) -> User | None:
             lookup["pk"] = requested
         else:
             lookup["username"] = requested
-    return User.objects.filter(**lookup).first()
+    return user_model.objects.filter(**lookup).first()
 
 
 def _meeting(request: HttpRequest) -> Meeting | None:
@@ -169,25 +170,27 @@ def is_bookmark_owner(request: HttpRequest) -> bool:
 
 def authenticated_users():
     """Active users (the ``authenticated`` audience queryset)."""
-    from neuromancers_network.users.models import User  # noqa: PLC0415
+    from django.contrib.auth import get_user_model  # noqa: PLC0415
 
-    return User.objects.filter(is_active=True)
+    return get_user_model().objects.filter(is_active=True)
 
 
 def peer_users():
     """Currently eligible care providers."""
-    from neuromancers_network.peers.services import eligible_peer_q  # noqa: PLC0415
-    from neuromancers_network.users.models import User  # noqa: PLC0415
+    from django.contrib.auth import get_user_model  # noqa: PLC0415
 
-    return User.objects.filter(eligible_peer_q())
+    from neuromancers_network.peers.services import eligible_peer_q  # noqa: PLC0415
+
+    return get_user_model().objects.filter(eligible_peer_q())
 
 
 def verified_peer_users():
     """Currently eligible, verified care providers."""
-    from neuromancers_network.peers.services import eligible_peer_q  # noqa: PLC0415
-    from neuromancers_network.users.models import User  # noqa: PLC0415
+    from django.contrib.auth import get_user_model  # noqa: PLC0415
 
-    return User.objects.filter(
+    from neuromancers_network.peers.services import eligible_peer_q  # noqa: PLC0415
+
+    return get_user_model().objects.filter(
         eligible_peer_q(),
         peer_profile__is_verified=True,
     )
@@ -195,18 +198,18 @@ def verified_peer_users():
 
 def moderator_users():
     """Active staff and superusers."""
+    from django.contrib.auth import get_user_model  # noqa: PLC0415
     from django.db.models import Q  # noqa: PLC0415
 
     from neuromancers_network.users.models import StaffState  # noqa: PLC0415
-    from neuromancers_network.users.models import User  # noqa: PLC0415
 
-    return User.objects.filter(
+    return get_user_model().objects.filter(
         Q(is_superuser=True) | Q(staff_state=StaffState.ACTIVE),
     )
 
 
 def needs_tos_acceptance_users():
     """Active members who have not accepted the Terms and Conditions."""
-    from neuromancers_network.users.models import User  # noqa: PLC0415
+    from django.contrib.auth import get_user_model  # noqa: PLC0415
 
-    return User.objects.filter(is_active=True, accepted_tos=False)
+    return get_user_model().objects.filter(is_active=True, accepted_tos=False)

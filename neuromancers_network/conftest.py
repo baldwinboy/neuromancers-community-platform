@@ -7,7 +7,7 @@ import pytest
 from neuromancers_network.users.tests.factories import UserFactory
 
 if TYPE_CHECKING:
-    from neuromancers_network.users.models import User
+    from django.contrib.auth.models import AbstractBaseUser
 
 
 @pytest.fixture(autouse=True)
@@ -16,5 +16,5 @@ def _media_storage(settings, tmpdir) -> None:
 
 
 @pytest.fixture
-def user(db) -> User:
+def user(db) -> AbstractBaseUser:
     return UserFactory.create()
