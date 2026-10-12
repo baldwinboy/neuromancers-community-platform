@@ -20,7 +20,10 @@ logger = logging.getLogger(__name__)
 DEFAULT_WEBHOOK_EVENTS = [
     "account.updated",
     "checkout.session.completed",
+    "payment_intent.succeeded",
     "charge.refunded",
+    "charge.dispute.created",
+    "charge.dispute.closed",
     "customer.subscription.created",
     "customer.subscription.updated",
     "customer.subscription.deleted",

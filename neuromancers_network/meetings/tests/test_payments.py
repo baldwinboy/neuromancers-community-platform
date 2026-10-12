@@ -1,4 +1,5 @@
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -8,6 +9,7 @@ from neuromancers_network.core.models import StripeSettings
 from neuromancers_network.meetings.actions import bookings_checkout_many
 from neuromancers_network.meetings.models import ApprovalPolicy
 from neuromancers_network.meetings.models import Booking
+from neuromancers_network.meetings.models import BookingStatus
 from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingPriceOption
 from neuromancers_network.meetings.models import MeetingPriceTier
@@ -546,3 +548,48 @@ class TestCartCheckout:
 
         assert response.status_code == HTTP_REDIRECT
         assert response.url == "https://cart.example"
+
+
+class TestConnectedWebhooks:
+    def _event(self, event_type, object_data, *, account=None):
+        return SimpleNamespace(
+            type=event_type,
+            data={"object": object_data},
+            default_api_key="sk_test",
+            djstripe_owner_account=account,
+        )
+
+    def test_checkout_marks_booking_paid(self):
+        configure_stripe()
+        booking = make_booking()
+        booking.stripe_checkout_session_id = "cs_paid"
+        booking.save(update_fields=["stripe_checkout_session_id"])
+        event = self._event(
+            "checkout.session.completed",
+            {"id": "cs_paid", "payment_intent": None, "amount_total": 2000},
+        )
+
+        from neuromancers_network.meetings.signals import (  # noqa: PLC0415
+            handle_checkout_session_completed,
+        )
+
+        with patch(
+            "neuromancers_network.meetings.signals.StripeSession.sync_from_stripe_data",
+        ):
+            handle_checkout_session_completed(sender=None, event=event)
+
+        booking.refresh_from_db()
+        assert booking.status == BookingStatus.PAID
+
+    def test_charge_dispute_is_synced(self):
+        event = self._event("charge.dispute.created", {"id": "dp_1"})
+        from neuromancers_network.meetings.signals import (  # noqa: PLC0415
+            handle_charge_dispute,
+        )
+
+        with patch(
+            "neuromancers_network.meetings.signals.StripeDispute.sync_from_stripe_data",
+        ) as sync:
+            handle_charge_dispute(sender=None, event=event)
+
+        sync.assert_called_once()
