@@ -8,6 +8,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField
+from django_fsm import FSMModelMixin
 from django_fsm import transition
 from modelcluster.models import ClusterableModel
 from taggit.managers import TaggableManager
@@ -56,7 +57,7 @@ def _is_valid_meeting_link(url):
     return any(host == d or host.endswith("." + d) for d in VALID_MEETING_LINK_DOMAINS)
 
 
-class Meeting(index.Indexed, ClusterableModel, Timestamped):  # type: ignore[django-manager-missing]
+class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # type: ignore[django-manager-missing]
     peer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

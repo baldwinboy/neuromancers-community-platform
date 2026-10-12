@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField
+from django_fsm import FSMModelMixin
 from django_fsm import transition
 from djstripe.models import Session as StripeSession
 
@@ -13,7 +14,7 @@ from neuromancers_network.core.models.base import Timestamped
 from .choices import BookingStatus
 
 
-class Booking(Timestamped):
+class Booking(FSMModelMixin, Timestamped):
     """A seeker's purchase of one or more sessions of a meeting."""
 
     meeting = models.ForeignKey(

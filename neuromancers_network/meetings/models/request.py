@@ -10,6 +10,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_fsm import GET_STATE
 from django_fsm import FSMField
+from django_fsm import FSMModelMixin
 from django_fsm import can_proceed
 from django_fsm import transition
 from djstripe.models import Session as StripeSession
@@ -29,7 +30,7 @@ def _approval_target(request, *_args, **_kwargs):
     return MeetingRequestStatus.APPROVED
 
 
-class MeetingRequest(Timestamped):
+class MeetingRequest(FSMModelMixin, Timestamped):
     meeting = models.ForeignKey(
         Meeting,
         on_delete=models.CASCADE,

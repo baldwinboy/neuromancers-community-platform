@@ -2,13 +2,14 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField
+from django_fsm import FSMModelMixin
 from django_fsm import transition
 from wagtail.search import index
 
 from .choices import StaffState
 
 
-class User(index.Indexed, AbstractUser):
+class User(FSMModelMixin, index.Indexed, AbstractUser):
     """
     Minimal user model for account management.
     All users have support seeker capabilities by default.

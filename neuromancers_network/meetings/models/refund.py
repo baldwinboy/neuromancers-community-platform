@@ -2,6 +2,7 @@ import stripe
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField
+from django_fsm import FSMModelMixin
 from django_fsm import transition
 from djstripe.models import Refund as StripeRefund
 
@@ -11,7 +12,7 @@ from neuromancers_network.meetings.models.request import MeetingRequest
 from .choices import RefundStatus
 
 
-class RefundRequest(Timestamped):
+class RefundRequest(FSMModelMixin, Timestamped):
     meeting_request = models.OneToOneField(
         MeetingRequest,
         on_delete=models.CASCADE,
