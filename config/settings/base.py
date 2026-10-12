@@ -971,6 +971,10 @@ WAGTAIL_DAISIE_ACTIONS = {
         "label": _("Accept provider agreement"),
         "handler": "neuromancers_network.peers.actions.peer_accept_provider_agreement",
     },
+    "peer.stripe_disconnect": {
+        "label": _("Disconnect Stripe"),
+        "handler": "neuromancers_network.peers.actions.peer_stripe_disconnect",
+    },
     "profile.edit": {
         "label": _("Edit profile"),
         "handler": "neuromancers_network.users.actions.profile_edit",

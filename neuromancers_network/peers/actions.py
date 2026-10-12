@@ -104,6 +104,21 @@ def peer_accept_provider_agreement(request, data):
     return redirect_back(request)
 
 
+def peer_stripe_disconnect(request, data):
+    """Delete the peer's connected Stripe account and unlink the local profile."""
+    from neuromancers_network.payments.services import (  # noqa: PLC0415
+        disconnect_stripe_account,
+    )
+
+    user = require_authenticated(request)
+    payment_profile = getattr(user, "payment_profile", None)
+    if payment_profile is None or not payment_profile.stripe_connect_account_id_id:
+        message = "No connected Stripe account to disconnect"
+        raise PermissionDenied(message)
+    disconnect_stripe_account(payment_profile)
+    return redirect_back(request)
+
+
 def _parse_dt(value):
     """Parse an ISO datetime/date string into an aware datetime, or ``None``."""
     if value in (None, ""):
@@ -157,6 +172,7 @@ HANDLERS = {
     "peer.subscribe": peer_subscribe,
     "peer.open_stripe_dashboard": peer_open_stripe_dashboard,
     "peer.accept_provider_agreement": peer_accept_provider_agreement,
+    "peer.stripe_disconnect": peer_stripe_disconnect,
     "availability.create": availability_create,
     "availability.delete": availability_delete,
 }

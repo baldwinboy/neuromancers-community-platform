@@ -7,6 +7,7 @@ from djstripe.enums import SubscriptionStatus
 from neuromancers_network.core.models import StripeSettings
 from neuromancers_network.payments.models.profile import StripeConnectOnboardingLink
 from neuromancers_network.payments.services import create_express_dashboard_link
+from neuromancers_network.payments.services import disconnect_stripe_account
 from neuromancers_network.payments.services import ensure_payment_profile
 from neuromancers_network.payments.services import ensure_stripe_account
 from neuromancers_network.users.tests.factories import AccountFactory
@@ -217,6 +218,35 @@ class TestExpressDashboardLink:
 
         with pytest.raises(ValueError, match="no connected Stripe account"):
             create_express_dashboard_link(profile)
+
+
+class TestDisconnectStripeAccount:
+    def test_deletes_account_and_unlinks_profile(self):
+        configure_stripe()
+        profile = PaymentProfileFactory(
+            stripe_connect_account_id=AccountFactory(id=EXISTING_ACCOUNT_ID),
+            kyc_completed=True,
+        )
+
+        with patch(
+            "neuromancers_network.payments.services.stripe.Account.delete",
+        ) as delete_account:
+            disconnect_stripe_account(profile)
+
+        delete_account.assert_called_once_with(EXISTING_ACCOUNT_ID)
+        profile.refresh_from_db()
+        assert profile.stripe_connect_account_id_id is None
+        assert profile.kyc_completed is False
+
+    def test_noop_without_account(self):
+        profile = PaymentProfileFactory(stripe_connect_account_id=None)
+
+        with patch(
+            "neuromancers_network.payments.services.stripe.Account.delete",
+        ) as delete_account:
+            disconnect_stripe_account(profile)
+
+        delete_account.assert_not_called()
 
 
 def make_event(account_id: str, account_data: dict | None = None):

@@ -127,6 +127,31 @@ def receipt_url_for(payment_intent_id: str) -> str:
     return charge.receipt_url or ""
 
 
+def disconnect_stripe_account(profile: PaymentProfile) -> None:
+    """Delete the peer's Stripe Express account and unlink the local profile."""
+    account_id = profile.stripe_connect_account_id_id
+    if not account_id:
+        return
+
+    stripe_settings = StripeSettings.load()
+    if not stripe_settings.secret_key:
+        message = "Stripe secret key is not configured"
+        raise ValueError(message)
+
+    stripe.api_key = stripe_settings.secret_key
+    stripe.Account.delete(account_id)
+
+    profile.stripe_connect_account_id = None
+    profile.kyc_completed = False
+    profile.save(
+        update_fields=[
+            "stripe_connect_account_id",
+            "kyc_completed",
+            "updated_at",
+        ],
+    )
+
+
 def create_subscription_checkout(profile: PaymentProfile, request) -> str:
     """Create a Stripe Checkout session for the peer subscription plan.
 
