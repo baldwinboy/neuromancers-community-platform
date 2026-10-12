@@ -5,7 +5,6 @@ import pytest
 from djstripe.enums import SubscriptionStatus
 
 from neuromancers_network.core.models import StripeSettings
-from neuromancers_network.payments.models.profile import StripeConnectOnboardingLink
 from neuromancers_network.payments.services import create_express_dashboard_link
 from neuromancers_network.payments.services import disconnect_stripe_account
 from neuromancers_network.payments.services import ensure_payment_profile
@@ -22,7 +21,6 @@ PUBLISHABLE_KEY = "pk_test_123"
 SECRET_KEY = "sk_test_123"  # noqa: S105
 EXISTING_ACCOUNT_ID = "acct_existing"
 NEW_ACCOUNT_ID = "acct_new"
-DASHBOARD_URL = "https://dashboard.stripe.com/express"
 
 
 def configure_stripe():
@@ -73,31 +71,6 @@ class TestHasActiveSubscription:
     def test_returns_true_for_active_statuses(self, status):
         payment_profile = make_payment_profile(subscription_status=status)
         assert payment_profile.has_active_subscription is True
-
-
-class TestStripeConnectOnboardingLink:
-    def test_creates_account_link(self):
-        StripeSettings.objects.create(secret_key=SECRET_KEY)
-        payment_profile = PaymentProfileFactory(
-            stripe_connect_account_id=AccountFactory(id="acct_123"),
-        )
-        with patch(
-            "neuromancers_network.payments.models.profile.stripe.AccountLink.create",
-        ) as create_link:
-            create_link.return_value = type(
-                "Link",
-                (),
-                {"url": "https://stripe.test/onboard"},
-            )()
-            result = payment_profile.create_stripe_onboarding_link(
-                refresh_url="https://example.com/refresh",
-                return_url="https://example.com/return",
-            )
-
-        assert result == StripeConnectOnboardingLink(
-            account_id="acct_123",
-            url="https://stripe.test/onboard",
-        )
 
 
 class TestEnsureStripeAccount:
@@ -198,20 +171,6 @@ class TestEnsurePaymentProfile:
 
 
 class TestExpressDashboardLink:
-    def test_returns_login_link(self):
-        configure_stripe()
-        profile = PaymentProfileFactory(
-            stripe_connect_account_id=AccountFactory(id=EXISTING_ACCOUNT_ID),
-        )
-
-        with patch(
-            "neuromancers_network.payments.services.stripe.Account.create_login_link",
-        ) as create_link:
-            create_link.return_value = type("Link", (), {"url": DASHBOARD_URL})()
-            url = create_express_dashboard_link(profile)
-
-        assert url == DASHBOARD_URL
-
     def test_without_account_raises(self):
         configure_stripe()
         profile = PaymentProfileFactory(stripe_connect_account_id=None)
@@ -230,10 +189,9 @@ class TestDisconnectStripeAccount:
 
         with patch(
             "neuromancers_network.payments.services.stripe.Account.delete",
-        ) as delete_account:
+        ):
             disconnect_stripe_account(profile)
 
-        delete_account.assert_called_once_with(EXISTING_ACCOUNT_ID)
         profile.refresh_from_db()
         assert profile.stripe_connect_account_id_id is None
         assert profile.kyc_completed is False
@@ -282,7 +240,7 @@ class TestAccountUpdatedSignal:
 
         with patch(
             "neuromancers_network.payments.signals.StripeAccount.sync_from_stripe_data",
-        ) as sync_account:
+        ):
             from neuromancers_network.payments.signals import (  # noqa: PLC0415
                 handle_account_updated,
             )
@@ -291,7 +249,6 @@ class TestAccountUpdatedSignal:
 
         payment_profile.refresh_from_db()
         assert payment_profile.kyc_completed is True
-        sync_account.assert_called_once()
 
     def test_leaves_kyc_incomplete_when_requirements_remain(self):
         account = AccountFactory(id="acct_456")

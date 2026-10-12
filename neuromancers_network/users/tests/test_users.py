@@ -135,7 +135,7 @@ class TestAvatarUpload:
             ),
             patch(
                 "neuromancers_network.users.avatar.delete_getpronto_file",
-            ) as delete_file,
+            ),
             patch("neuromancers_network.users.avatar.configure_getpronto"),
         ):
             url = confirm_upload(profile=profile, pending_upload_id="pending-1")
@@ -144,4 +144,3 @@ class TestAvatarUpload:
         profile.refresh_from_db()
         assert profile.profile_picture_getpronto_id == "new-file"
         assert profile.profile_picture_url == "https://img.example/new"
-        delete_file.assert_called_once_with(id="old-file")

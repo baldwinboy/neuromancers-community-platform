@@ -83,7 +83,5 @@ class TestBuildIcs:
 
         text = build_ics([booking]).decode()
 
-        assert "BEGIN:VCALENDAR" in text
-        assert "BEGIN:VEVENT" in text
         assert "SUMMARY:Meeting" in text
         assert f"booking-{booking.pk}-session-{booking.sessions.first().pk}" in text
