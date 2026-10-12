@@ -6,7 +6,9 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db import transaction
 from django.test import RequestFactory
+from django.utils import timezone
 
+from neuromancers_network.meetings.actions import meetings_apply_terms_template
 from neuromancers_network.meetings.actions import meetings_delete
 from neuromancers_network.meetings.forms_pages import MeetingEditFormPage
 from neuromancers_network.meetings.models import ApprovalPolicy
@@ -18,6 +20,7 @@ from neuromancers_network.meetings.models import PricingType
 from neuromancers_network.meetings.selectors import my_meetings
 from neuromancers_network.meetings.services import apply_duration_tiers
 from neuromancers_network.meetings.services import create_meeting
+from neuromancers_network.meetings.services import publish_meeting
 from neuromancers_network.meetings.tests.factories import create_meeting as make_meeting
 from neuromancers_network.meetings.tier_fields import DurationTiersField
 from neuromancers_network.peers.tests.factories import make_peer
@@ -267,3 +270,57 @@ class TestDurationTiersField:
             DurationTiersField(required=False).clean(
                 [{"duration_minutes": 3, "amount": ""}],
             )
+
+
+def _accept_provider_agreement(peer):
+    profile = peer.peer_profile
+    profile.provider_agreement_accepted_at = timezone.now()
+    profile.save(update_fields=["provider_agreement_accepted_at", "updated_at"])
+
+
+class TestPublishMeeting:
+    def test_requires_terms(self):
+        peer = make_peer()
+        _accept_provider_agreement(peer)
+        meeting = make_meeting(peer=peer, status=MeetingStatus.DRAFT)
+
+        with pytest.raises(ValidationError, match="terms"):
+            publish_meeting(meeting)
+
+    def test_requires_provider_agreement(self):
+        peer = make_peer()
+        meeting = make_meeting(peer=peer, status=MeetingStatus.DRAFT)
+        meeting.terms = "Terms"
+        meeting.save()
+
+        with pytest.raises(PermissionDenied, match="provider agreement"):
+            publish_meeting(meeting)
+
+    def test_publishes_when_ready(self):
+        peer = make_peer()
+        _accept_provider_agreement(peer)
+        meeting = make_meeting(peer=peer, status=MeetingStatus.DRAFT)
+        meeting.terms = "Terms"
+        meeting.save()
+
+        publish_meeting(meeting)
+
+        meeting.refresh_from_db()
+        assert meeting.status == MeetingStatus.PUBLISHED
+
+
+class TestApplyTermsTemplate:
+    def test_applies_template_body(self):
+        peer = make_peer()
+        profile = peer.peer_profile
+        profile.terms_templates = [{"name": "Standard", "body": "Template body"}]
+        profile.save(update_fields=["terms_templates", "updated_at"])
+        meeting = make_meeting(peer=peer, status=MeetingStatus.DRAFT)
+
+        meetings_apply_terms_template(
+            _request(peer),
+            {"target": meeting.pk, "template": "Standard"},
+        )
+
+        meeting.refresh_from_db()
+        assert meeting.terms == "Template body"

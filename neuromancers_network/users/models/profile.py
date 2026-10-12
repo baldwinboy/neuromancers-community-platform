@@ -37,6 +37,13 @@ class UserProfile(index.Indexed, Timestamped):
         default=True,
         help_text=_("Whether a peer may see your access needs ahead of a meeting."),
     )
+    # Named access-needs templates: [{"name": ..., "body": ...}]
+    access_needs_templates = models.JSONField(
+        _("Access needs templates"),
+        default=list,
+        blank=True,
+        help_text=_("Named access-needs templates, each with a name and body."),
+    )
     visibility = models.CharField(
         _("Visibility"),
         max_length=10,

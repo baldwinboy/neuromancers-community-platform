@@ -19,8 +19,11 @@ from neuromancers_network.meetings.tests.factories import create_meeting
 from neuromancers_network.peers import signals
 from neuromancers_network.peers.actions import availability_create
 from neuromancers_network.peers.actions import availability_delete
+from neuromancers_network.peers.actions import peer_accept_provider_agreement
+from neuromancers_network.peers.actions import peer_connect_stripe
 from neuromancers_network.peers.models import CalendarEvent
 from neuromancers_network.peers.models import PeerAvailability
+from neuromancers_network.peers.models.profile import PROVIDER_AGREEMENT_VERSION
 from neuromancers_network.peers.models.settings import PeerRequirementsSettings
 from neuromancers_network.peers.selectors import peer_calendar_events
 from neuromancers_network.peers.services import available_slots
@@ -395,3 +398,21 @@ class TestAvailabilityActions:
 
         with pytest.raises(PermissionDenied):
             availability_delete(_post(make_peer()), {"target": window.pk})
+
+
+class TestProviderAgreement:
+    def test_accept_records_agreement(self):
+        peer = make_peer()
+
+        peer_accept_provider_agreement(_post(peer), {})
+
+        profile = peer.peer_profile
+        profile.refresh_from_db()
+        assert profile.provider_agreement_accepted_at is not None
+        assert profile.provider_agreement_version == PROVIDER_AGREEMENT_VERSION
+
+    def test_connect_stripe_requires_agreement(self):
+        peer = make_peer()
+
+        with pytest.raises(PermissionDenied, match="provider agreement"):
+            peer_connect_stripe(_post(peer), {})

@@ -56,7 +56,16 @@ def create_meeting(*, peer: AbstractBaseUser, **fields) -> Meeting:
 
 
 def publish_meeting(meeting: Meeting) -> Meeting:
-    """Publish *meeting* (draft → published)."""
+    """Publish *meeting* after enforcing terms and the provider agreement."""
+    if not (meeting.terms or "").strip():
+        message = _("Add meeting terms before publishing.")
+        raise ValidationError(message)
+
+    profile = getattr(meeting.peer, "peer_profile", None)
+    if profile is None or not profile.has_accepted_provider_agreement:
+        message = _("Accept the care provider agreement before publishing.")
+        raise PermissionDenied(message)
+
     meeting.publish()
     meeting.save(validate=False, update_fields=["status", "updated_at"])
     return meeting

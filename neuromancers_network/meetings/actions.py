@@ -70,6 +70,28 @@ def meetings_restore_default_terms(request, data):
     return redirect_back(request)
 
 
+def _template_body(templates, selector):
+    """Return the body of a named/indexed template, or ``None`` if not found."""
+    for index, template in enumerate(templates or []):
+        if not isinstance(template, dict):
+            continue
+        if str(index) == str(selector) or template.get("name") == selector:
+            return template.get("body") or ""
+    return None
+
+
+def meetings_apply_terms_template(request, data):
+    user = require_authenticated(request)
+    meeting = _owned_meeting(user, data)
+    profile = getattr(meeting.peer, "peer_profile", None)
+    templates = getattr(profile, "terms_templates", []) if profile is not None else []
+    body = _template_body(templates, data.get("template"))
+    if body is not None:
+        meeting.terms = body
+        meeting.save(update_fields=["terms", "updated_at"])
+    return redirect_back(request)
+
+
 def meetings_publish(request, data):
     user = require_authenticated(request)
     meeting = _owned_meeting(user, data)
@@ -106,6 +128,15 @@ def bookings_request(request, data):
     meeting_pk = data.get("meeting") or data.get("meeting_id")
     meeting = get_object_or_404(Meeting, pk=meeting_pk)
 
+    access_needs = data.get("access_needs")
+    template_key = data.get("access_needs_template")
+    if template_key not in (None, ""):
+        profile = getattr(user, "user_profile", None)
+        templates = getattr(profile, "access_needs_templates", []) if profile else []
+        body = _template_body(templates, template_key)
+        if body is not None:
+            access_needs = body
+
     session = {
         "requested_start_time": data.get("requested_start_time"),
         "requested_duration_minutes": data.get("requested_duration_minutes")
@@ -116,7 +147,7 @@ def bookings_request(request, data):
         meeting=meeting,
         seeker=user,
         sessions=sessions,
-        access_needs=data.get("access_needs"),
+        access_needs=access_needs,
         peer_terms=data.get("peer_terms") or meeting.terms,
         terms_accepted=as_bool(data.get("agree_to_terms")),
     )
@@ -161,6 +192,7 @@ HANDLERS = {
     "meetings.archive": meetings_archive,
     "meetings.delete": meetings_delete,
     "meetings.restore_default_terms": meetings_restore_default_terms,
+    "meetings.apply_terms_template": meetings_apply_terms_template,
     "bookings.request": bookings_request,
     "bookings.checkout": bookings_checkout,
     "bookings.request_refund": bookings_request_refund,

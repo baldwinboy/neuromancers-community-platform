@@ -909,6 +909,10 @@ WAGTAIL_DAISIE_ACTIONS = {
         "label": _("Restore default terms"),
         "handler": "neuromancers_network.meetings.actions.meetings_restore_default_terms",
     },
+    "meetings.apply_terms_template": {
+        "label": _("Apply terms template"),
+        "handler": "neuromancers_network.meetings.actions.meetings_apply_terms_template",
+    },
     "availability.create": {
         "label": _("Add availability"),
         "handler": "neuromancers_network.peers.actions.availability_create",
@@ -944,6 +948,10 @@ WAGTAIL_DAISIE_ACTIONS = {
     "peer.open_stripe_dashboard": {
         "label": _("Open Stripe dashboard"),
         "handler": "neuromancers_network.peers.actions.peer_open_stripe_dashboard",
+    },
+    "peer.accept_provider_agreement": {
+        "label": _("Accept provider agreement"),
+        "handler": "neuromancers_network.peers.actions.peer_accept_provider_agreement",
     },
     "profile.edit": {
         "label": _("Edit profile"),

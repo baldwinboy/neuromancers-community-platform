@@ -2,6 +2,8 @@ import json
 import logging
 
 from django import forms
+from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
 from wagtail.admin.filters import WagtailFilterSet
@@ -266,12 +268,19 @@ class PublishMeetingBulkAction(ConfirmBulkAction):
 
     @classmethod
     def execute_action(cls, objects, **kwargs):
+        from neuromancers_network.meetings.services import (  # noqa: PLC0415
+            publish_meeting,
+        )
+
         published = 0
         for meeting in objects:
-            if meeting.status == MeetingStatus.DRAFT:
-                meeting.publish()
-                meeting.save(validate=False, update_fields=["status", "updated_at"])
-                published += 1
+            if meeting.status != MeetingStatus.DRAFT:
+                continue
+            try:
+                publish_meeting(meeting)
+            except PermissionDenied, ValidationError:
+                continue
+            published += 1
         return published, 0
 
 

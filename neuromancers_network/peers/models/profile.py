@@ -9,6 +9,8 @@ from neuromancers_network.core.models import Timestamped
 
 from .tag import PeerProfileTag
 
+PROVIDER_AGREEMENT_VERSION = "1"
+
 
 class PeerProfile(index.Indexed, Timestamped):  # type: ignore[django-manager-missing]
     user = models.OneToOneField(
@@ -40,6 +42,24 @@ class PeerProfile(index.Indexed, Timestamped):  # type: ignore[django-manager-mi
     default_terms_updated_at = models.DateTimeField(
         _("Terms updated at"),
         null=True,
+        blank=True,
+    )
+    # Named terms templates: [{"name": ..., "body": ...}]
+    terms_templates = models.JSONField(
+        _("Terms templates"),
+        default=list,
+        blank=True,
+    )
+
+    # Provider agreement — accepted before Stripe onboarding / publishing
+    provider_agreement_accepted_at = models.DateTimeField(
+        _("Provider agreement accepted at"),
+        null=True,
+        blank=True,
+    )
+    provider_agreement_version = models.CharField(
+        _("Provider agreement version"),
+        max_length=20,
         blank=True,
     )
 
@@ -133,6 +153,10 @@ class PeerProfile(index.Indexed, Timestamped):  # type: ignore[django-manager-mi
     @property
     def is_live(self) -> bool:
         return bool(self.is_approved)
+
+    @property
+    def has_accepted_provider_agreement(self) -> bool:
+        return self.provider_agreement_accepted_at is not None
 
     def get_absolute_url(self) -> str:
         from django.contrib.contenttypes.models import ContentType  # noqa: PLC0415

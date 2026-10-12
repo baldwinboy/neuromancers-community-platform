@@ -14,7 +14,16 @@ from neuromancers_network.core.actions import require_authenticated
 from neuromancers_network.payments.services import ensure_payment_profile
 from neuromancers_network.peers.models import PeerApplication
 from neuromancers_network.peers.models import PeerAvailability
+from neuromancers_network.peers.models.profile import PROVIDER_AGREEMENT_VERSION
 from neuromancers_network.peers.services import is_eligible_peer
+
+
+def _require_provider_agreement(user):
+    profile = getattr(user, "peer_profile", None)
+    if profile is None or not profile.has_accepted_provider_agreement:
+        message = "Accept the care provider agreement first"
+        raise PermissionDenied(message)
+    return profile
 
 
 def peers_apply(request, data):
@@ -33,6 +42,7 @@ def peers_apply(request, data):
 
 def peer_connect_stripe(request, data):
     user = require_authenticated(request)
+    _require_provider_agreement(user)
     payment_profile = ensure_payment_profile(user)
 
     fallback = request.build_absolute_uri(user.get_absolute_url())
@@ -63,6 +73,7 @@ def peer_open_stripe_dashboard(request, data):
     )
 
     user = require_authenticated(request)
+    _require_provider_agreement(user)
     if not is_eligible_peer(user):
         message = "Only eligible care providers can open the Stripe dashboard"
         raise PermissionDenied(message)
@@ -73,6 +84,24 @@ def peer_open_stripe_dashboard(request, data):
         message = "No payment profile for this user"
         raise PermissionDenied(message)
     return HttpResponseRedirect(payment_profile.create_express_dashboard_link())
+
+
+def peer_accept_provider_agreement(request, data):
+    user = require_authenticated(request)
+    profile = getattr(user, "peer_profile", None)
+    if profile is None:
+        message = "Only care providers can accept the provider agreement"
+        raise PermissionDenied(message)
+    profile.provider_agreement_accepted_at = timezone.now()
+    profile.provider_agreement_version = PROVIDER_AGREEMENT_VERSION
+    profile.save(
+        update_fields=[
+            "provider_agreement_accepted_at",
+            "provider_agreement_version",
+            "updated_at",
+        ],
+    )
+    return redirect_back(request)
 
 
 def _parse_dt(value):
@@ -127,6 +156,7 @@ HANDLERS = {
     "peer.connect_stripe": peer_connect_stripe,
     "peer.subscribe": peer_subscribe,
     "peer.open_stripe_dashboard": peer_open_stripe_dashboard,
+    "peer.accept_provider_agreement": peer_accept_provider_agreement,
     "availability.create": availability_create,
     "availability.delete": availability_delete,
 }
