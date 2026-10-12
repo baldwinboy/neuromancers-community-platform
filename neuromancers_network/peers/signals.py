@@ -17,6 +17,7 @@ from djstripe.models import Subscription as StripeSubscription
 from neuromancers_network.payments.models import PaymentProfile
 from neuromancers_network.peers.models import PeerSubscription
 from neuromancers_network.peers.models.settings import PeerRequirementsSettings
+from neuromancers_network.peers.services import enforce_subscription_lapse
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,7 @@ def sync_peer_subscription(sender, event, **kwargs):
     if removed or not is_peer_plan:
         if existing is not None:
             existing.delete()
+            _safe(enforce_subscription_lapse, payment_profile)
         return
 
     if existing is None:

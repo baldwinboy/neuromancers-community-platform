@@ -87,6 +87,49 @@ def eligible_peer_q(prefix: str = "") -> Q:
     return query
 
 
+def _has_paid_participants(meeting) -> bool:
+    """Whether *meeting* has at least one paid participant."""
+    from neuromancers_network.meetings.models import Booking  # noqa: PLC0415
+    from neuromancers_network.meetings.models import BookingStatus  # noqa: PLC0415
+    from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
+    from neuromancers_network.meetings.models import (  # noqa: PLC0415
+        MeetingRequestStatus,
+    )
+
+    return (
+        MeetingRequest.objects.filter(
+            meeting=meeting,
+            status=MeetingRequestStatus.PAID,
+        ).exists()
+        or Booking.objects.filter(meeting=meeting, status=BookingStatus.PAID).exists()
+    )
+
+
+def enforce_subscription_lapse(payment_profile) -> None:
+    """Unpublish meetings that cannot remain live after a subscription lapses.
+
+    1:1 meetings are always unpublished. Group meetings are unpublished only
+    when they have no paid participants; a group with paid participants stays
+    published but drops out of feeds and cannot take new bookings (the
+    eligibility gate and feed filter handle those).
+    """
+    from neuromancers_network.meetings.models import Meeting  # noqa: PLC0415
+    from neuromancers_network.meetings.models import MeetingStatus  # noqa: PLC0415
+    from neuromancers_network.meetings.models import MeetingType  # noqa: PLC0415
+
+    user = payment_profile.user
+    published = Meeting.objects.filter(peer=user, status=MeetingStatus.PUBLISHED)
+    for meeting in published:
+        keep_published = (
+            meeting.meeting_type == MeetingType.GROUP
+            and _has_paid_participants(meeting)
+        )
+        if keep_published:
+            continue
+        meeting.unpublish()
+        meeting.save(validate=False, update_fields=["status", "updated_at"])
+
+
 def _add_months(value: datetime, months: int) -> datetime:
     month = value.month - 1 + months
     year = value.year + month // 12

@@ -1,17 +1,27 @@
 from datetime import timedelta
+from decimal import Decimal
+from types import SimpleNamespace
 
 import pytest
 from django.test import RequestFactory
 from django.utils import timezone
 
+from neuromancers_network.meetings.models import ApprovalPolicy
+from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingRequest
+from neuromancers_network.meetings.models import MeetingRequestStatus
+from neuromancers_network.meetings.models import MeetingStatus
+from neuromancers_network.meetings.models import MeetingType
+from neuromancers_network.meetings.models import PricingType
 from neuromancers_network.meetings.tests.factories import create_meeting
+from neuromancers_network.peers import signals
 from neuromancers_network.peers.models import CalendarEvent
 from neuromancers_network.peers.models.settings import PeerRequirementsSettings
 from neuromancers_network.peers.selectors import peer_calendar_events
 from neuromancers_network.peers.services import available_slots
 from neuromancers_network.peers.services import eligibility_failures
 from neuromancers_network.peers.services import eligible_peer_q
+from neuromancers_network.peers.services import enforce_subscription_lapse
 from neuromancers_network.peers.services import is_eligible_peer
 from neuromancers_network.peers.tests.factories import make_availability
 from neuromancers_network.peers.tests.factories import make_peer
@@ -68,6 +78,94 @@ class TestEligibility:
 
         user = make_peer(is_verified=True)
         assert is_eligible_peer(user) is True
+
+
+def make_group_meeting(peer, *, status=MeetingStatus.PUBLISHED):
+    meeting = Meeting(
+        peer=peer,
+        title="Group",
+        description="Test",
+        meeting_type=MeetingType.GROUP,
+        pricing_type=PricingType.FIXED,
+        price=Decimal("5.00"),
+        approval_policy=ApprovalPolicy.PAY_AFTER_JOIN,
+        currency="GBP",
+        scheduled_at=timezone.now() + timedelta(days=3),
+        duration_minutes=60,
+        status=status,
+    )
+    meeting.save(validate=False)
+    return meeting
+
+
+class TestSubscriptionLapse:
+    def test_unpublishes_one_to_one_meeting(self):
+        peer = make_peer()
+        meeting = create_meeting(peer=peer)
+
+        enforce_subscription_lapse(peer.payment_profile)
+
+        meeting.refresh_from_db()
+        assert meeting.status == MeetingStatus.DRAFT
+
+    def test_unpublishes_group_without_paid_participants(self):
+        peer = make_peer()
+        meeting = make_group_meeting(peer)
+
+        enforce_subscription_lapse(peer.payment_profile)
+
+        meeting.refresh_from_db()
+        assert meeting.status == MeetingStatus.DRAFT
+
+    def test_keeps_group_with_paid_participant_published(self):
+        peer = make_peer()
+        meeting = make_group_meeting(peer)
+        MeetingRequest.objects.create(
+            meeting=meeting,
+            support_seeker=UserFactory(),
+            status=MeetingRequestStatus.PAID,
+        )
+
+        enforce_subscription_lapse(peer.payment_profile)
+
+        meeting.refresh_from_db()
+        assert meeting.status == MeetingStatus.PUBLISHED
+
+    def test_ignores_already_unpublished_meetings(self):
+        peer = make_peer()
+        meeting = create_meeting(peer=peer, status=MeetingStatus.DRAFT)
+
+        enforce_subscription_lapse(peer.payment_profile)
+
+        meeting.refresh_from_db()
+        assert meeting.status == MeetingStatus.DRAFT
+
+
+class TestSubscriptionLapseSignal:
+    def test_lapse_runs_when_subscription_is_removed(self, monkeypatch):
+        peer = make_peer()
+        meeting = create_meeting(peer=peer)
+        event = SimpleNamespace(
+            type="customer.subscription.deleted",
+            data={
+                "object": {
+                    "id": "sub_lapsed",
+                    "customer": peer.payment_profile.stripe_customer_id_id,
+                    "status": "canceled",
+                },
+            },
+            default_api_key="sk_test",
+        )
+        monkeypatch.setattr(
+            signals.StripeSubscription,
+            "sync_from_stripe_data",
+            lambda data, api_key=None: None,
+        )
+
+        signals.sync_peer_subscription(sender=None, event=event)
+
+        meeting.refresh_from_db()
+        assert meeting.status == MeetingStatus.DRAFT
 
 
 def _approved_request(peer, *, start, minutes):
