@@ -21,6 +21,15 @@ def language_choices():
 class StripeSettings(BaseGenericSetting):
     """Runtime Stripe configuration editable by Wagtail admins."""
 
+    class ChargeType(models.TextChoices):
+        DIRECT = "direct", _("Direct charges (peer is merchant of record)")
+        DESTINATION = "destination", _("Destination charges")
+        SEPARATE = "separate", _("Separate charges and transfers")
+
+    class TaxMode(models.TextChoices):
+        STRIPE_TAX = "stripe_tax", _("Stripe Tax")
+        OFF = "off", _("Off")
+
     publishable_key = models.CharField(
         _("Publishable key"),
         max_length=255,
@@ -68,6 +77,39 @@ class StripeSettings(BaseGenericSetting):
             " link expired, was previously visited or is otherwise invalid.",
         ),
     )
+    charge_type = models.CharField(
+        _("Charge type"),
+        max_length=20,
+        choices=ChargeType.choices,
+        default=ChargeType.DIRECT,
+        help_text=_(
+            "How meeting payments are charged. Direct makes the care provider "
+            "the merchant of record; destination and separate are fallbacks.",
+        ),
+    )
+    connect_country = models.CharField(
+        _("Connect country"),
+        max_length=2,
+        default="GB",
+        help_text=_("Two-letter country code for new Express connected accounts."),
+    )
+    tax_mode = models.CharField(
+        _("Tax mode"),
+        max_length=20,
+        choices=TaxMode.choices,
+        default=TaxMode.STRIPE_TAX,
+        help_text=_("Automatic tax collection on checkout sessions."),
+    )
+    allow_partial_refunds = models.BooleanField(
+        _("Allow partial refunds"),
+        default=False,
+        help_text=_("Let peers and admins refund part of a payment."),
+    )
+    subscription_enabled = models.BooleanField(
+        _("Subscriptions enabled"),
+        default=True,
+        help_text=_("Show the peer subscribe button."),
+    )
 
     panels = [
         MultiFieldPanel(
@@ -80,12 +122,22 @@ class StripeSettings(BaseGenericSetting):
         ),
         MultiFieldPanel(
             [
+                FieldPanel("charge_type"),
+                FieldPanel("connect_country"),
                 FieldPanel("client_id"),
                 FieldPanel("application_fee"),
                 FieldPanel("onboarding_redirect_url"),
                 FieldPanel("onboarding_refresh_url"),
             ],
             heading=_("Connect"),
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("tax_mode"),
+                FieldPanel("allow_partial_refunds"),
+                FieldPanel("subscription_enabled"),
+            ],
+            heading=_("Compliance"),
         ),
         StripeOpsPanel(),
     ]

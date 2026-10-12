@@ -240,8 +240,11 @@ class MeetingRequest(FSMModelMixin, Timestamped):
         pass
 
     def create_checkout_session(self, request):
-        """Create a Stripe-hosted Checkout Session for this booking."""
+        """Create a Checkout Session for this request via the charge strategy."""
         from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
+        from neuromancers_network.payments.charges import (  # noqa: PLC0415
+            build_charge_plan,
+        )
 
         stripe_settings = StripeSettings.load(request)
         if not stripe_settings.secret_key:
@@ -255,8 +258,6 @@ class MeetingRequest(FSMModelMixin, Timestamped):
             message = "Request is not ready for payment"
             raise ValueError(message)
 
-        success_url = request.build_absolute_uri("/pay/success/")
-        cancel_url = request.build_absolute_uri("/pay/cancelled/")
         amount = self.meeting.price
         if self.requested_duration_minutes:
             tier_price = self.meeting.price_for(self.requested_duration_minutes)
@@ -268,26 +269,23 @@ class MeetingRequest(FSMModelMixin, Timestamped):
 
         currency = self.meeting.currency.lower()
         amount_minor = int(amount * 100)
-        fee_percent = stripe_settings.application_fee or 0
         peer_profile = getattr(self.meeting.peer, "payment_profile", None)
         destination = (
             peer_profile.stripe_connect_account_id_id
             if peer_profile is not None
             else None
         )
-        payment_intent_data = None
-        if destination:
-            payment_intent_data = {
-                "application_fee_amount": round(amount_minor * fee_percent / 100),
-                "transfer_data": {"destination": destination},
-            }
+        plan = build_charge_plan(
+            amount_minor=amount_minor,
+            destination=destination,
+            stripe_settings=stripe_settings,
+        )
 
-        stripe.api_key = stripe_settings.secret_key
-        session = stripe.checkout.Session.create(
-            mode="payment",
-            success_url=success_url,
-            cancel_url=cancel_url,
-            line_items=[
+        session_kwargs = {
+            "mode": "payment",
+            "success_url": request.build_absolute_uri("/pay/success/"),
+            "cancel_url": request.build_absolute_uri("/pay/cancelled/"),
+            "line_items": [
                 {
                     "price_data": {
                         "currency": currency,
@@ -297,11 +295,19 @@ class MeetingRequest(FSMModelMixin, Timestamped):
                     "quantity": 1,
                 },
             ],
-            payment_intent_data=payment_intent_data,  # type: ignore[arg-type]
-            metadata={
+            "metadata": {
                 "meeting_request_id": str(self.pk),
             },
-        )
+        }
+        if plan.payment_intent_data:
+            session_kwargs["payment_intent_data"] = plan.payment_intent_data
+        if plan.automatic_tax:
+            session_kwargs["automatic_tax"] = plan.automatic_tax
+        if plan.stripe_account:
+            session_kwargs["stripe_account"] = plan.stripe_account
+
+        stripe.api_key = stripe_settings.secret_key
+        session = stripe.checkout.Session.create(**session_kwargs)
         StripeSession.sync_from_stripe_data(session, api_key=stripe_settings.secret_key)
         self.stripe_checkout_session_id = session.id
         self.__dict__["status"] = MeetingRequestStatus.PENDING_PAYMENT

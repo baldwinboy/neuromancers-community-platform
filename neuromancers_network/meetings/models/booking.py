@@ -99,8 +99,11 @@ class Booking(FSMModelMixin, Timestamped):
         return total
 
     def create_checkout_session(self, request):
-        """Create a destination-charge Checkout Session for this booking."""
+        """Create a Checkout Session for this booking via the charge strategy."""
         from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
+        from neuromancers_network.payments.charges import (  # noqa: PLC0415
+            build_charge_plan,
+        )
 
         stripe_settings = StripeSettings.load(request)
         if not stripe_settings.is_ready:
@@ -113,9 +116,6 @@ class Booking(FSMModelMixin, Timestamped):
             if peer_profile is not None
             else None
         )
-        if not destination:
-            message = "Peer has no connected Stripe account"
-            raise ValueError(message)
 
         amount = (
             self.total_amount if self.total_amount is not None else self.compute_total()
@@ -125,8 +125,11 @@ class Booking(FSMModelMixin, Timestamped):
             raise ValueError(message)
 
         amount_minor = int(amount * 100)
-        fee_percent = stripe_settings.application_fee or 0
-        application_fee_amount = round(amount_minor * fee_percent / 100)
+        plan = build_charge_plan(
+            amount_minor=amount_minor,
+            destination=destination,
+            stripe_settings=stripe_settings,
+        )
 
         from neuromancers_network.core.models import (  # noqa: PLC0415
             LocalizationSettings,
@@ -136,13 +139,12 @@ class Booking(FSMModelMixin, Timestamped):
         if LocalizationSettings.load(request).exchange_rate_source == "stripe":
             adaptive_pricing = {"enabled": True}
 
-        stripe.api_key = stripe_settings.secret_key
-        session = stripe.checkout.Session.create(
-            mode="payment",
-            adaptive_pricing=adaptive_pricing,  # type: ignore[arg-type]
-            success_url=request.build_absolute_uri("/pay/success/"),
-            cancel_url=request.build_absolute_uri("/pay/cancelled/"),
-            line_items=[
+        session_kwargs = {
+            "mode": "payment",
+            "adaptive_pricing": adaptive_pricing,
+            "success_url": request.build_absolute_uri("/pay/success/"),
+            "cancel_url": request.build_absolute_uri("/pay/cancelled/"),
+            "line_items": [
                 {
                     "price_data": {
                         "currency": self.meeting.currency.lower(),
@@ -152,12 +154,17 @@ class Booking(FSMModelMixin, Timestamped):
                     "quantity": 1,
                 },
             ],
-            payment_intent_data={
-                "application_fee_amount": application_fee_amount,
-                "transfer_data": {"destination": destination},
-            },
-            metadata={"booking_id": str(self.pk)},
-        )
+            "metadata": {"booking_id": str(self.pk)},
+        }
+        if plan.payment_intent_data:
+            session_kwargs["payment_intent_data"] = plan.payment_intent_data
+        if plan.automatic_tax:
+            session_kwargs["automatic_tax"] = plan.automatic_tax
+        if plan.stripe_account:
+            session_kwargs["stripe_account"] = plan.stripe_account
+
+        stripe.api_key = stripe_settings.secret_key
+        session = stripe.checkout.Session.create(**session_kwargs)
         StripeSession.sync_from_stripe_data(
             session,
             api_key=stripe_settings.secret_key,
