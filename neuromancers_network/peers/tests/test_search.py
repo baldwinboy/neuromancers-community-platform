@@ -130,8 +130,6 @@ class TestSearchPeers:
 
         assert list(search_peers(countries=[country])) == [peer]
 
-
-class TestPeerFilterQueries:
     def test_language_query(self, languages):
         en, _ = languages
         peer = PeerProfileFactory(is_approved=True)

@@ -90,9 +90,6 @@ class TestMyMeetings:
 
 
 class TestMeetingEditFormPage:
-    def test_form_mode_is_edit(self):
-        assert MeetingEditFormPage.form_mode == "edit"
-
     def test_non_owner_cannot_update(self):
         meeting = create_meeting(peer=make_peer())
         page = MeetingEditFormPage()

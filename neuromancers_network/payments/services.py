@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import stripe
 from djstripe.models import Account as StripeAccount
+from djstripe.models import Customer as StripeCustomer
 from djstripe.models import WebhookEndpoint as StripeWebhookEndpoint
 
 from neuromancers_network.core.models import StripeSettings
@@ -44,12 +45,43 @@ def _individual_payload(user) -> dict:
     return individual
 
 
+def ensure_payment_profile(user) -> PaymentProfile:
+    """Return the user's payment profile, bootstrapping it lazily if missing.
+
+    Creates the local ``PaymentProfile`` and its dj-stripe ``Customer`` on first
+    use. Idempotent: an existing profile is returned untouched.
+    """
+    from neuromancers_network.payments.models import PaymentProfile  # noqa: PLC0415
+
+    existing = getattr(user, "payment_profile", None)
+    if existing is not None:
+        return existing
+
+    stripe_settings = StripeSettings.load()
+    if not stripe_settings.secret_key:
+        message = "Stripe secret key is not configured"
+        raise ValueError(message)
+
+    stripe.api_key = stripe_settings.secret_key
+    customer = stripe.Customer.create(
+        email=user.email,
+        name=user.name or user.get_username(),
+        metadata={"user_id": str(user.pk)},
+    )
+    stripe_customer = StripeCustomer.sync_from_stripe_data(
+        customer,
+        api_key=stripe_settings.secret_key,
+    )
+    profile, _created = PaymentProfile.objects.get_or_create(
+        user=user,
+        defaults={"stripe_customer_id": stripe_customer},
+    )
+    return profile
+
+
 def ensure_stripe_account(user) -> StripeAccount:
     """Return the user's connected account, creating an express account if needed."""
-    profile = getattr(user, "payment_profile", None)
-    if profile is None:
-        message = "No payment profile for this user"
-        raise ValueError(message)
+    profile = ensure_payment_profile(user)
     if profile.stripe_connect_account_id_id:
         existing = profile.stripe_connect_account_id
         if existing is not None:

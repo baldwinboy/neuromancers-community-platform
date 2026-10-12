@@ -5,8 +5,10 @@ import pytest
 from neuromancers_network.core.models import StripeSettings
 from neuromancers_network.payments.services import create_express_dashboard_link
 from neuromancers_network.payments.services import create_webhook_endpoint
+from neuromancers_network.payments.services import ensure_payment_profile
 from neuromancers_network.payments.services import ensure_stripe_account
 from neuromancers_network.users.tests.factories import AccountFactory
+from neuromancers_network.users.tests.factories import CustomerFactory
 from neuromancers_network.users.tests.factories import PaymentProfileFactory
 from neuromancers_network.users.tests.factories import UserFactory
 
@@ -58,11 +60,71 @@ class TestEnsureStripeAccount:
         assert account.id == NEW_ACCOUNT_ID
         assert profile.stripe_connect_account_id_id == NEW_ACCOUNT_ID
 
-    def test_missing_profile_raises(self):
+    def test_bootstraps_profile_for_new_user(self):
+        configure_stripe()
         user = UserFactory()
 
-        with pytest.raises(ValueError, match="No payment profile"):
-            ensure_stripe_account(user)
+        with (
+            patch(
+                "neuromancers_network.payments.services.stripe.Customer.create",
+            ) as create_customer,
+            patch(
+                "neuromancers_network.payments.services."
+                "StripeCustomer.sync_from_stripe_data",
+            ) as sync_customer,
+            patch(
+                "neuromancers_network.payments.services.stripe.Account.create",
+            ) as create_account,
+            patch(
+                "neuromancers_network.payments.services.StripeAccount.sync_from_stripe_data",
+            ) as sync_account,
+        ):
+            create_customer.return_value = {"id": "cus_boot"}
+            sync_customer.return_value = CustomerFactory(id="cus_boot")
+            create_account.return_value = {"id": NEW_ACCOUNT_ID}
+            sync_account.return_value = AccountFactory(id=NEW_ACCOUNT_ID)
+            account = ensure_stripe_account(user)
+
+        user.refresh_from_db()
+        assert account.id == NEW_ACCOUNT_ID
+        assert user.payment_profile.stripe_customer_id_id == "cus_boot"
+
+
+class TestEnsurePaymentProfile:
+    def test_returns_existing_profile(self):
+        profile = PaymentProfileFactory()
+
+        assert ensure_payment_profile(profile.user) == profile
+
+    def test_creates_profile_and_customer(self):
+        configure_stripe()
+        user = UserFactory()
+
+        with (
+            patch(
+                "neuromancers_network.payments.services.stripe.Customer.create",
+            ) as create_customer,
+            patch(
+                "neuromancers_network.payments.services."
+                "StripeCustomer.sync_from_stripe_data",
+            ) as sync_customer,
+        ):
+            create_customer.return_value = {"id": "cus_new"}
+            sync_customer.return_value = CustomerFactory(id="cus_new")
+            profile = ensure_payment_profile(user)
+
+        assert profile.user == user
+        assert profile.stripe_customer_id_id == "cus_new"
+        assert user.payment_profile == profile
+
+    def test_requires_stripe_configuration(self):
+        user = UserFactory()
+        config = StripeSettings.load()
+        config.secret_key = ""
+        config.save()
+
+        with pytest.raises(ValueError, match="secret key"):
+            ensure_payment_profile(user)
 
 
 class TestExpressDashboardLink:

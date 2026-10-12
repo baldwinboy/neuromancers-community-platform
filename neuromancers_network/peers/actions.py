@@ -11,6 +11,7 @@ from django.utils.dateparse import parse_datetime
 
 from neuromancers_network.core.actions import redirect_back
 from neuromancers_network.core.actions import require_authenticated
+from neuromancers_network.payments.services import ensure_payment_profile
 from neuromancers_network.peers.models import PeerApplication
 from neuromancers_network.peers.models import PeerAvailability
 from neuromancers_network.peers.services import is_eligible_peer
@@ -32,10 +33,7 @@ def peers_apply(request, data):
 
 def peer_connect_stripe(request, data):
     user = require_authenticated(request)
-    payment_profile = getattr(user, "payment_profile", None)
-    if payment_profile is None:
-        message = "No payment profile for this user"
-        raise PermissionDenied(message)
+    payment_profile = ensure_payment_profile(user)
 
     fallback = request.build_absolute_uri(user.get_absolute_url())
     refresh_url = data.get("refresh_url") or fallback
@@ -54,10 +52,7 @@ def peer_subscribe(request, data):
     )
 
     user = require_authenticated(request)
-    payment_profile = getattr(user, "payment_profile", None)
-    if payment_profile is None:
-        message = "No payment profile for this user"
-        raise PermissionDenied(message)
+    payment_profile = ensure_payment_profile(user)
     return HttpResponseRedirect(create_subscription_checkout(payment_profile, request))
 
 
