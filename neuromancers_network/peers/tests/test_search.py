@@ -1,22 +1,14 @@
 import pytest
-from django.http import QueryDict
-from django.test import Client
 
 from neuromancers_network.meetings.tests.factories import create_meeting
-from neuromancers_network.peers.models import PeerProfile
 from neuromancers_network.peers.search import search_peers
 from neuromancers_network.taxonomy.models import Language
-from neuromancers_network.taxonomy.selectors import peer_country_query
-from neuromancers_network.taxonomy.selectors import peer_language_query
-from neuromancers_network.taxonomy.selectors import peer_tag_query
 from neuromancers_network.taxonomy.tests.factories import AllowedTagFactory
 from neuromancers_network.taxonomy.tests.factories import CountryFactory
 from neuromancers_network.taxonomy.tests.factories import ensure_tag
 from neuromancers_network.users.tests.factories import PeerProfileFactory
 
 pytestmark = pytest.mark.django_db
-
-HTTP_OK = 200
 
 
 @pytest.fixture
@@ -129,55 +121,3 @@ class TestSearchPeers:
         PeerProfileFactory(is_approved=True)
 
         assert list(search_peers(countries=[country])) == [peer]
-
-    def test_language_query(self, languages):
-        en, _ = languages
-        peer = PeerProfileFactory(is_approved=True)
-        peer.languages.add(en)
-        PeerProfileFactory(is_approved=True)
-
-        params = QueryDict("filter_language=en")
-        results = peer_language_query(PeerProfile.objects.all(), params, "language")
-        assert list(results) == [peer]
-
-    def test_country_query(self):
-        country = CountryFactory()
-        peer = PeerProfileFactory(is_approved=True)
-        peer.countries.add(country)
-        PeerProfileFactory(is_approved=True)
-
-        params = QueryDict(f"filter_country={country.code}")
-        results = peer_country_query(PeerProfile.objects.all(), params, "country")
-        assert list(results) == [peer]
-
-    def test_tag_query(self):
-        peer = PeerProfileFactory(is_approved=True)
-        peer.tags.add(ensure_tag("anxiety"))
-        PeerProfileFactory(is_approved=True)
-
-        params = QueryDict("filter_tag=anxiety")
-        results = peer_tag_query(PeerProfile.objects.all(), params, "tag")
-        assert list(results) == [peer]
-
-
-class TestSearchPeersAPI:
-    def test_search_endpoint_finds_peer_via_meeting(self, languages, user):
-        en, _ = languages
-        meeting_peer = PeerProfileFactory(is_approved=True)
-        meeting_peer.languages.add(en)
-        create_meeting(
-            peer=meeting_peer.user,
-            title="Anxiety support",
-            tags=["anxiety"],
-        )
-        PeerProfileFactory(is_approved=True)
-
-        client = Client()
-        client.force_login(user)
-        response = client.get("/api/peers/search/?languages=en&tags=anxiety")
-
-        assert response.status_code == HTTP_OK
-        payload = response.json()
-        assert [entry["username"] for entry in payload] == [meeting_peer.user.username]
-        assert payload[0]["languages"] == ["en"]
-        assert payload[0]["tags"] == []

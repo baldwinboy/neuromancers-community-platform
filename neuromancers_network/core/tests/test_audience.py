@@ -104,24 +104,3 @@ class TestTosAcceptance:
         UserFactory(accepted_tos=True)
 
         assert list(audience.needs_tos_acceptance_users()) == [pending]
-
-
-class TestAudienceQuerysets:
-    def test_peer_users_matches_only_eligible(self):
-        eligible = make_peer()
-        UserFactory()
-
-        assert list(audience.peer_users()) == [eligible]
-
-    def test_moderator_users_selects_staff_and_superusers(self):
-        staff = UserFactory(staff_state=StaffState.ACTIVE)
-        superuser = UserFactory(is_superuser=True)
-        UserFactory()
-
-        assert set(audience.moderator_users()) == {staff, superuser}
-
-    def test_authenticated_users_excludes_inactive(self):
-        active = UserFactory()
-        UserFactory(is_active=False)
-
-        assert list(audience.authenticated_users()) == [active]

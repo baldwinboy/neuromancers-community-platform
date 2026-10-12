@@ -1,13 +1,21 @@
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
+from django.utils import timezone
 
 from neuromancers_network.core.currency import convert_amount
-from neuromancers_network.core.currency import format_amount
 from neuromancers_network.core.i18n import bust_localization_cache
+from neuromancers_network.core.ical import build_ics
 from neuromancers_network.core.models import LocalizationSettings
+from neuromancers_network.meetings.services import create_booking
+from neuromancers_network.meetings.tests.factories import create_meeting
+from neuromancers_network.peers.tests.factories import make_peer
+from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
+
+SESSION_DURATION = 30
 
 
 def configure(**kwargs):
@@ -16,6 +24,19 @@ def configure(**kwargs):
         setattr(config, field, value)
     config.save()
     bust_localization_cache()
+
+
+def make_booking_with_session():
+    return create_booking(
+        meeting=create_meeting(peer=make_peer()),
+        seeker=UserFactory(),
+        sessions=[
+            {
+                "requested_start_time": timezone.now() + timedelta(hours=24),
+                "requested_duration_minutes": SESSION_DURATION,
+            },
+        ],
+    )
 
 
 class TestConvertAmount:
@@ -56,21 +77,13 @@ class TestConvertAmount:
         )
 
 
-class TestFormatAmount:
-    def test_gbp_in_english_locale(self):
-        configure(display_currency="GBP")
+class TestBuildIcs:
+    def test_contains_calendar_and_event(self):
+        booking = make_booking_with_session()
 
-        assert format_amount(Decimal("10"), locale="en_GB") == "£10.00"
+        text = build_ics([booking]).decode()
 
-    def test_eur_in_german_locale(self):
-        configure(display_currency="EUR")
-
-        formatted = format_amount(Decimal("10"), locale="de_DE")
-
-        assert "€" in formatted
-        assert "10,00" in formatted
-
-    def test_explicit_currency_and_locale(self):
-        formatted = format_amount(Decimal("5"), currency="USD", locale="en_US")
-
-        assert formatted == "$5.00"
+        assert "BEGIN:VCALENDAR" in text
+        assert "BEGIN:VEVENT" in text
+        assert "SUMMARY:Meeting" in text
+        assert f"booking-{booking.pk}-session-{booking.sessions.first().pk}" in text

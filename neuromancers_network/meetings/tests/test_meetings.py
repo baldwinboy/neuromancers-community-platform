@@ -1,0 +1,269 @@
+from decimal import Decimal
+
+import pytest
+from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.db import transaction
+from django.test import RequestFactory
+
+from neuromancers_network.meetings.actions import meetings_delete
+from neuromancers_network.meetings.forms_pages import MeetingEditFormPage
+from neuromancers_network.meetings.models import ApprovalPolicy
+from neuromancers_network.meetings.models import MeetingPriceOption
+from neuromancers_network.meetings.models import MeetingPriceTier
+from neuromancers_network.meetings.models import MeetingStatus
+from neuromancers_network.meetings.models import MeetingType
+from neuromancers_network.meetings.models import PricingType
+from neuromancers_network.meetings.selectors import my_meetings
+from neuromancers_network.meetings.services import apply_duration_tiers
+from neuromancers_network.meetings.services import create_meeting
+from neuromancers_network.meetings.tests.factories import create_meeting as make_meeting
+from neuromancers_network.meetings.tier_fields import DurationTiersField
+from neuromancers_network.peers.tests.factories import make_peer
+from neuromancers_network.taxonomy.tests.factories import AllowedTagFactory
+from neuromancers_network.taxonomy.tests.factories import CountryFactory
+from neuromancers_network.taxonomy.tests.factories import LanguageFactory
+from neuromancers_network.users.tests.factories import UserFactory
+
+pytestmark = pytest.mark.django_db
+
+
+def _request(user):
+    request = RequestFactory().post("/", {})
+    request.user = user
+    return request
+
+
+def meeting_fields() -> dict:
+    return {
+        "title": "Session",
+        "description": "A test meeting",
+        "meeting_type": MeetingType.ONE_ON_ONE,
+        "pricing_type": PricingType.FIXED,
+        "price": 25,
+        "approval_policy": ApprovalPolicy.PAY_AFTER_JOIN,
+        "currency": "GBP",
+    }
+
+
+class TestCreateMeeting:
+    def test_ineligible_peer_is_rejected(self):
+        peer = UserFactory()
+
+        with pytest.raises(PermissionDenied):
+            create_meeting(peer=peer, **meeting_fields())
+
+    def test_eligible_peer_creates_draft_with_default_terms(self):
+        peer = make_peer(default_terms="Be kind")
+
+        meeting = create_meeting(peer=peer, **meeting_fields())
+
+        assert meeting.status == MeetingStatus.DRAFT
+        assert meeting.terms == "Be kind"
+
+    def test_explicit_terms_are_kept(self):
+        peer = make_peer(default_terms="Default")
+
+        meeting = create_meeting(peer=peer, terms="Custom", **meeting_fields())
+
+        assert meeting.terms == "Custom"
+
+
+class TestCreateMeetingTaxonomy:
+    def test_unknown_tag_is_rejected(self):
+        peer = make_peer()
+
+        with pytest.raises(ValidationError):
+            create_meeting(peer=peer, tags=["unknown"], **meeting_fields())
+
+    def test_inactive_tag_is_rejected(self):
+        peer = make_peer()
+        AllowedTagFactory(name="retired", is_active=False)
+
+        with pytest.raises(ValidationError):
+            create_meeting(peer=peer, tags=["retired"], **meeting_fields())
+
+    def test_unknown_taxonomy_is_rejected(self):
+        peer = make_peer()
+
+        with pytest.raises(ValidationError):
+            create_meeting(peer=peer, countries=["ZZ"], **meeting_fields())
+
+        with pytest.raises(ValidationError):
+            create_meeting(peer=peer, languages=["zz"], **meeting_fields())
+
+    def test_valid_taxonomy_is_set(self):
+        peer = make_peer()
+        tag = AllowedTagFactory(name="anxiety")
+        countries = [CountryFactory(), CountryFactory()]
+        languages = [LanguageFactory(), LanguageFactory()]
+
+        meeting = create_meeting(
+            peer=peer,
+            tags=[tag],
+            countries=countries,
+            languages=languages,
+            **meeting_fields(),
+        )
+
+        assert list(meeting.tags.all()) == [tag]
+        assert set(meeting.countries.all()) == set(countries)
+        assert set(meeting.languages.all()) == set(languages)
+
+
+class TestMeetingManageActions:
+    def test_delete_requires_ownership(self):
+        meeting = make_meeting(peer=make_peer())
+
+        with pytest.raises(PermissionDenied):
+            meetings_delete(_request(make_peer()), {"target": meeting.pk})
+
+    def test_owner_can_delete(self):
+        meeting = make_meeting(peer=make_peer())
+
+        meetings_delete(_request(meeting.peer), {"target": meeting.pk})
+
+        assert not type(meeting).objects.filter(pk=meeting.pk).exists()
+
+
+class TestMyMeetings:
+    def test_returns_only_signed_in_users_meetings(self):
+        peer = make_peer()
+        mine = make_meeting(peer=peer, title="Mine")
+        make_meeting(peer=make_peer(), title="Theirs")
+
+        results = my_meetings(request=_request(peer))
+
+        assert list(results) == [mine]
+
+    def test_anonymous_sees_nothing(self):
+        make_meeting(peer=make_peer())
+        anonymous = RequestFactory().get("/")
+        anonymous.user = type("Anon", (), {"is_authenticated": False})()
+
+        assert list(my_meetings(request=anonymous)) == []
+
+
+class TestMeetingEditFormPage:
+    def test_non_owner_cannot_update(self):
+        meeting = make_meeting(peer=make_peer())
+        page = MeetingEditFormPage()
+        setattr(page, "_daisie_request", _request(make_peer()))  # noqa: B010
+
+        assert page.update_instance_from_submission(object(), meeting) is None
+
+    def test_anonymous_cannot_update(self):
+        meeting = make_meeting(peer=make_peer())
+        page = MeetingEditFormPage()
+        setattr(page, "_daisie_request", None)  # noqa: B010
+
+        assert page.update_instance_from_submission(object(), meeting) is None
+
+
+def make_meeting_with_tiers():
+    meeting = make_meeting(peer=UserFactory())
+    tier = MeetingPriceTier.objects.create(meeting=meeting, duration_minutes=60)
+    standard = MeetingPriceOption.objects.create(
+        tier=tier,
+        amount=Decimal("50.00"),
+        label="Standard",
+        is_default=True,
+    )
+    reduced = MeetingPriceOption.objects.create(
+        tier=tier,
+        amount=Decimal("30.00"),
+        label="Reduced",
+    )
+    return meeting, tier, standard, reduced
+
+
+class TestPriceOptions:
+    def test_options_for_known_duration(self):
+        meeting, _tier, standard, reduced = make_meeting_with_tiers()
+
+        assert set(meeting.price_options_for(60)) == {standard, reduced}
+
+    def test_options_for_unknown_duration_is_empty(self):
+        meeting, _tier, _standard, _reduced = make_meeting_with_tiers()
+
+        assert list(meeting.price_options_for(15)) == []
+
+
+class TestPriceFor:
+    def test_default_option_amount(self):
+        meeting, _tier, _standard, _reduced = make_meeting_with_tiers()
+
+        assert meeting.price_for(60) == Decimal("50.00")
+
+    def test_specific_option_amount(self):
+        meeting, _tier, _standard, reduced = make_meeting_with_tiers()
+
+        assert meeting.price_for(60, option_id=reduced.pk) == Decimal("30.00")
+
+    def test_unknown_option_returns_none(self):
+        meeting, _tier, _standard, _reduced = make_meeting_with_tiers()
+
+        assert meeting.price_for(60, option_id=99999) is None
+
+    def test_unknown_duration_falls_back_to_meeting_price(self):
+        meeting, _tier, _standard, _reduced = make_meeting_with_tiers()
+
+        assert meeting.price_for(15) == meeting.price
+
+
+class TestTierConstraints:
+    def test_duplicate_duration_rejected(self):
+        meeting = make_meeting(peer=UserFactory())
+        MeetingPriceTier.objects.create(meeting=meeting, duration_minutes=30)
+
+        with pytest.raises(IntegrityError), transaction.atomic():
+            MeetingPriceTier.objects.create(meeting=meeting, duration_minutes=30)
+
+
+class TestApplyDurationTiers:
+    def test_creates_tiers_and_default_options(self):
+        meeting = make_meeting(peer=UserFactory())
+
+        apply_duration_tiers(
+            meeting,
+            [
+                {"duration_minutes": 30, "amount": Decimal("20.00")},
+                {"duration_minutes": 60, "amount": Decimal("35.00")},
+            ],
+        )
+
+        assert set(meeting.price_tiers.values_list("duration_minutes", flat=True)) == {
+            30,
+            60,
+        }
+        assert meeting.price_for(30) == Decimal("20.00")
+        assert meeting.price_for(60) == Decimal("35.00")
+
+    def test_removes_stale_tiers(self):
+        meeting = make_meeting(peer=UserFactory())
+        MeetingPriceTier.objects.create(meeting=meeting, duration_minutes=15)
+
+        apply_duration_tiers(
+            meeting,
+            [{"duration_minutes": 30, "amount": Decimal("10.00")}],
+        )
+
+        assert list(meeting.price_tiers.values_list("duration_minutes", flat=True)) == [
+            30,
+        ]
+
+    def test_blank_amount_clears_options(self):
+        meeting, _tier, _standard, _reduced = make_meeting_with_tiers()
+
+        apply_duration_tiers(meeting, [{"duration_minutes": 60, "amount": None}])
+
+        assert list(meeting.price_options_for(60)) == []
+
+
+class TestDurationTiersField:
+    def test_rejects_out_of_range_duration(self):
+        with pytest.raises(ValidationError):
+            DurationTiersField(required=False).clean(
+                [{"duration_minutes": 3, "amount": ""}],
+            )

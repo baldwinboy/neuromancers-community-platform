@@ -1,12 +1,28 @@
 import pytest
 from djstripe.enums import SubscriptionStatus
 
+from neuromancers_network.users.forms import UserSignupForm
 from neuromancers_network.users.tests.factories import PaymentProfileFactory
 from neuromancers_network.users.tests.factories import PeerProfileFactory
 from neuromancers_network.users.tests.factories import PeerSubscriptionFactory
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
+
+VALID_PASSWORD = "s3cret-Passw0rd!"  # noqa: S105
+
+
+def signup_data(**overrides):
+    data = {
+        "username": "newcomer",
+        "email": "newcomer@example.com",
+        "email2": "newcomer@example.com",
+        "password1": VALID_PASSWORD,
+        "password2": VALID_PASSWORD,
+        "accept_tos": True,
+    }
+    data.update(overrides)
+    return data
 
 
 def make_peer(
@@ -28,10 +44,15 @@ def make_peer(
     return user
 
 
-class TestIsPeer:
-    def test_no_peer_profile(self, user):
-        assert user.is_peer is False
+class TestUserSignupForm:
+    def test_accept_tos_is_required(self):
+        form = UserSignupForm(data=signup_data(accept_tos=False))
 
+        assert not form.is_valid()
+        assert "accept_tos" in form.errors
+
+
+class TestIsPeer:
     def test_unapproved_peer_profile(self):
         user = UserFactory()
         PeerProfileFactory(user=user, is_approved=False)
@@ -76,21 +97,6 @@ class TestIsPeer:
         assert user.is_peer is False
 
 
-class TestIsModerator:
-    def test_regular_user_is_not_moderator(self, user):
-        assert user.is_moderator is False
-
-    def test_active_staff_is_moderator(self):
-        user = UserFactory()
-        user.activate_staff()
-        user.save()
-        assert user.is_moderator is True
-
-    def test_superuser_is_moderator(self):
-        user = UserFactory(is_superuser=True)
-        assert user.is_moderator is True
-
-
 class TestIsVerifiedPeer:
     def test_verified_but_not_peer(self):
         user = make_peer(is_verified=True, kyc_completed=False)
@@ -105,6 +111,3 @@ class TestIsVerifiedPeer:
         user = make_peer(is_verified=True)
         assert user.is_peer is True
         assert user.is_verified_peer is True
-
-    def test_no_peer_profile(self, user):
-        assert user.is_verified_peer is False

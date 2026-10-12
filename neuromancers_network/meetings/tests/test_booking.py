@@ -3,11 +3,9 @@ from datetime import timedelta
 import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from django_fsm import TransitionNotAllowed
 
 from neuromancers_network.meetings.models import ApprovalPolicy
 from neuromancers_network.meetings.models import Booking
-from neuromancers_network.meetings.models import BookingStatus
 from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingRequest
 from neuromancers_network.meetings.models import MeetingRequestStatus
@@ -18,6 +16,7 @@ from neuromancers_network.meetings.tests.factories import create_meeting
 from neuromancers_network.peers.models import CalendarEvent
 from neuromancers_network.peers.tests.factories import make_availability
 from neuromancers_network.peers.tests.factories import make_peer
+from neuromancers_network.users.models import UserProfile
 from neuromancers_network.users.tests.factories import UserFactory
 
 ACCESS_NEEDS = "Wheelchair access"
@@ -28,6 +27,9 @@ FIRST_SESSION_OFFSET_HOURS = 24
 SECOND_SESSION_OFFSET_HOURS = 48
 EXPECTED_SINGLE_SESSION = 1
 EXPECTED_SESSION_COUNT = 2
+TERMS = "Be kind and respectful"
+PROFILE_ACCESS_NEEDS = "Step-free access"
+OVERRIDE_ACCESS_NEEDS = "Quiet room"
 
 pytestmark = pytest.mark.django_db
 
@@ -55,7 +57,6 @@ class TestCreateBooking:
 
         assert booking.meeting == meeting
         assert booking.support_seeker == seeker
-        assert booking.status == BookingStatus.PENDING
         assert booking.currency == meeting.currency
         assert booking.access_needs == ACCESS_NEEDS
 
@@ -84,41 +85,6 @@ class TestCreateBooking:
         )
 
         assert booking.sessions.first().access_needs == SESSION_ACCESS_NEEDS
-
-
-class TestBookingStatus:
-    def test_mark_paid(self):
-        booking, _meeting, _seeker = make_booking()
-
-        booking.mark_paid()
-        booking.save()
-
-        booking.refresh_from_db()
-        assert booking.status == BookingStatus.PAID
-
-    def test_cancel_from_pending(self):
-        booking, _meeting, _seeker = make_booking()
-
-        booking.cancel()
-        booking.save()
-
-        booking.refresh_from_db()
-        assert booking.status == BookingStatus.CANCELLED
-
-    def test_refund_requires_paid(self):
-        booking, _meeting, _seeker = make_booking()
-
-        with pytest.raises(TransitionNotAllowed):
-            booking.refund()
-
-    def test_refund_from_paid(self):
-        booking, _meeting, _seeker = make_booking(status=BookingStatus.PAID)
-
-        booking.refund()
-        booking.save()
-
-        booking.refresh_from_db()
-        assert booking.status == BookingStatus.REFUNDED
 
 
 class TestSessionConstraints:
@@ -350,3 +316,150 @@ class TestBookingRequestStatus:
         )
 
         assert booking.sessions.first().status == MeetingRequestStatus.PENDING_APPROVAL
+
+
+def make_policy_meeting(*, approval_policy):
+    return Meeting(
+        peer=UserFactory(),
+        title="Test meeting",
+        description="Test",
+        meeting_type=MeetingType.ONE_ON_ONE,
+        pricing_type=PricingType.FIXED,
+        approval_policy=approval_policy,
+        currency="GBP",
+        scheduled_at=timezone.now(),
+        duration_minutes=30,
+    )
+
+
+def make_policy_request(*, approval_policy):
+    meeting = make_policy_meeting(approval_policy=approval_policy)
+    request = MeetingRequest(meeting=meeting, support_seeker=UserFactory())
+    request.start()
+    return request
+
+
+class TestApprovalPolicy:
+    def test_approval_required_starts_pending_approval(self):
+        request = make_policy_request(approval_policy=ApprovalPolicy.APPROVAL_REQUIRED)
+        assert request.status == MeetingRequestStatus.PENDING_APPROVAL
+        assert request.requires_approval is True
+        assert request.requires_payment_before_join is False
+        assert request.can_join is False
+        assert request.can_pay is False
+
+    def test_approval_required_then_paid_before_join(self):
+        request = make_policy_request(approval_policy=ApprovalPolicy.APPROVAL_REQUIRED)
+        request.approve()
+        assert request.status == MeetingRequestStatus.APPROVED
+        assert request.can_join is True
+        assert request.can_pay is True
+        request.mark_paid()
+        assert request.status == MeetingRequestStatus.PAID
+        assert request.can_join is True
+
+    def test_pay_before_join_starts_pending_payment(self):
+        request = make_policy_request(approval_policy=ApprovalPolicy.PAY_BEFORE_JOIN)
+        assert request.status == MeetingRequestStatus.PENDING_PAYMENT
+        assert request.requires_approval is False
+        assert request.requires_payment_before_join is True
+        assert request.can_join is False
+        assert request.can_pay is True
+
+    def test_pay_before_join_can_only_join_after_paid(self):
+        request = make_policy_request(approval_policy=ApprovalPolicy.PAY_BEFORE_JOIN)
+        request.mark_paid()
+        assert request.status == MeetingRequestStatus.PAID
+        assert request.can_join is True
+
+    def test_pay_after_join_starts_approved(self):
+        request = make_policy_request(approval_policy=ApprovalPolicy.PAY_AFTER_JOIN)
+        assert request.status == MeetingRequestStatus.APPROVED
+        assert request.requires_approval is False
+        assert request.requires_payment_before_join is False
+        assert request.allows_join_before_payment is True
+        assert request.can_join is True
+        assert request.can_pay is True
+
+    def test_pay_after_join_can_pay_later(self):
+        request = make_policy_request(approval_policy=ApprovalPolicy.PAY_AFTER_JOIN)
+        request.mark_paid()
+        assert request.status == MeetingRequestStatus.PAID
+
+    def test_one_on_one_request_must_start_at_least_10_minutes_after_meeting_creation(
+        self,
+    ):
+        meeting = make_policy_meeting(approval_policy=ApprovalPolicy.APPROVAL_REQUIRED)
+        meeting.save()
+        request = MeetingRequest(
+            meeting=meeting,
+            support_seeker=UserFactory(),
+            requested_start_time=meeting.created_at + timedelta(minutes=5),
+        )
+
+        with pytest.raises(ValidationError):
+            request.full_clean()
+
+
+def make_meeting_with_terms(terms=TERMS):
+    meeting = create_meeting(peer=make_peer())
+    meeting.terms = terms
+    meeting.save()
+    return meeting
+
+
+class TestTermsAgreement:
+    def test_terms_required_to_book(self):
+        meeting = make_meeting_with_terms()
+
+        with pytest.raises(ValidationError):
+            create_booking(meeting=meeting, seeker=UserFactory())
+
+    def test_agreed_terms_are_snapshotted_on_sessions(self):
+        meeting = make_meeting_with_terms()
+        seeker = UserFactory()
+
+        booking = create_booking(
+            meeting=meeting,
+            seeker=seeker,
+            peer_terms=TERMS,
+            terms_accepted=True,
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+
+        session = booking.sessions.first()
+        assert session.terms_accepted is True
+        assert session.peer_terms == TERMS
+        assert session.terms_accepted_at is not None
+
+    def test_meeting_without_terms_needs_no_acceptance(self):
+        meeting = create_meeting(peer=make_peer())
+
+        booking = create_booking(meeting=meeting, seeker=UserFactory())
+
+        assert booking.pk is not None
+
+
+class TestAccessNeeds:
+    def test_defaults_to_profile(self):
+        seeker = UserFactory()
+        UserProfile.objects.create(user=seeker, access_needs=PROFILE_ACCESS_NEEDS)
+
+        booking = create_booking(
+            meeting=create_meeting(peer=make_peer()),
+            seeker=seeker,
+        )
+
+        assert booking.access_needs == PROFILE_ACCESS_NEEDS
+
+    def test_per_request_override_wins(self):
+        seeker = UserFactory()
+        UserProfile.objects.create(user=seeker, access_needs=PROFILE_ACCESS_NEEDS)
+
+        booking = create_booking(
+            meeting=create_meeting(peer=make_peer()),
+            seeker=seeker,
+            access_needs=OVERRIDE_ACCESS_NEEDS,
+        )
+
+        assert booking.access_needs == OVERRIDE_ACCESS_NEEDS

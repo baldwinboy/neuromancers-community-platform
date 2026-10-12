@@ -3,6 +3,8 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
+from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory
 from django.utils import timezone
 
@@ -15,7 +17,10 @@ from neuromancers_network.meetings.models import MeetingType
 from neuromancers_network.meetings.models import PricingType
 from neuromancers_network.meetings.tests.factories import create_meeting
 from neuromancers_network.peers import signals
+from neuromancers_network.peers.actions import availability_create
+from neuromancers_network.peers.actions import availability_delete
 from neuromancers_network.peers.models import CalendarEvent
+from neuromancers_network.peers.models import PeerAvailability
 from neuromancers_network.peers.models.settings import PeerRequirementsSettings
 from neuromancers_network.peers.selectors import peer_calendar_events
 from neuromancers_network.peers.services import available_slots
@@ -25,13 +30,16 @@ from neuromancers_network.peers.services import enforce_subscription_lapse
 from neuromancers_network.peers.services import is_eligible_peer
 from neuromancers_network.peers.tests.factories import make_availability
 from neuromancers_network.peers.tests.factories import make_peer
-from neuromancers_network.users.models import User
 from neuromancers_network.users.models import UserProfile
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
 
+User = get_user_model()
+
 EXPECTED_DAILY_SLOTS = 3
+EXPECTED_START_HOUR = 9
+EXPECTED_END_HOUR = 11
 
 
 class TestEligibility:
@@ -345,3 +353,45 @@ class TestPeerCalendarEvents:
 
         events = peer_calendar_events(self._request(viewer, peer.peer_profile))
         assert [event.display_title for event in events] == ["Available"]
+
+
+def _post(user):
+    request = RequestFactory().post("/", {})
+    request.user = user
+    return request
+
+
+class TestAvailabilityActions:
+    def test_create_window(self):
+        peer = make_peer()
+
+        availability_create(
+            _post(peer),
+            {
+                "start": "2026-11-01T09:00",
+                "end": "2026-11-01T11:00",
+                "occurrence": "daily",
+            },
+        )
+
+        window = PeerAvailability.objects.get(peer=peer)
+        assert window.start.hour == EXPECTED_START_HOUR
+        assert window.end.hour == EXPECTED_END_HOUR
+        assert window.occurrence == "daily"
+
+    def test_owner_can_delete(self):
+        peer = make_peer()
+        start = timezone.now() + timedelta(days=1)
+        window = make_availability(peer, start=start, end=start + timedelta(hours=1))
+
+        availability_delete(_post(peer), {"target": window.pk})
+
+        assert not PeerAvailability.objects.filter(pk=window.pk).exists()
+
+    def test_delete_requires_ownership(self):
+        peer = make_peer()
+        start = timezone.now() + timedelta(days=1)
+        window = make_availability(peer, start=start, end=start + timedelta(hours=1))
+
+        with pytest.raises(PermissionDenied):
+            availability_delete(_post(make_peer()), {"target": window.pk})
