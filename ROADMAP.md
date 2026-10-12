@@ -1,10 +1,10 @@
-# NEUROMANCERS Network — Roadmap (Phases 7–11)
+# NEUROMANCERS Network — Roadmap (Phases 7–12)
 
 > Status: **Phases 1–6 are implemented and committed** (filters, availability
 > enforcement, admin-authored Settings page, peer-session support + host edit
 > page + duration-tier repeater, privacy-aware calendar, notification inbox).
 >
-> This document is the finalised plan for **Phase 7 through Phase 11**. It
+> This document is the finalised plan for **Phase 7 through Phase 12**. It
 > supersedes all earlier drafts. Every phase is designed for **production-grade
 > code with no regressions**, prioritising **legal compliance, accessibility,
 > maintainability and cost**; where Stripe provides a cost-efficient solution
@@ -312,6 +312,101 @@ resolve and the pages exist; idempotency verified by running twice.
 
 ---
 
+# Phase 12 — Admin-controlled allauth pages & emails (daisIE 3.2.0)
+
+**Goal:** give editors full control of every allauth account page and every
+outgoing email (allauth + notifications), with one reusable email header/footer
+authored once and live-referenced by all templates, seeded by a single
+idempotent command. Bounded deliverable; no daisIE fork, no follow-on refactor.
+
+**Principle:** reference, don't duplicate — shared chrome lives in reusable
+snippets (`ReusableBlock` / `EmailReusableBlock`); pure builders plus a thin
+command supply the seed content; all UI stays admin-authored.
+
+## Decisions (locked)
+
+| Topic | Decision |
+|---|---|
+| Reusability | daisIE **reusable blocks** (3.2.0): web `ReusableBlock`, email `EmailReusableBlock` + `reusable` email block |
+| ToS field | `accepted_tos` (matches the user model) |
+| `ACCOUNT_SIGNUP_FIELDS` | Trimmed to native keys only |
+| Email chrome | One reusable header + footer, live-referenced by every template |
+| Company copy | Literal editable defaults with placeholder tokens |
+| Scope | 17 allauth pages + 20 allauth emails + 27 notification emails (47 templates) |
+| CTA | Per-category |
+| Web reusables | Out of scope |
+| Command | `ensure_daisie_templates` (idempotent, `--force`) |
+
+## A. Dependency
+
+- Bump `wagtail-daisie[...]` to `==3.2.0` (adds `ReusableBlock` and
+  `EmailReusableBlock` + the `reusable` email block); refresh `uv.lock`.
+
+## B. Signup form
+
+- `users/forms.py::UserSignupForm` gains `name`, `date_of_birth`, `accepted_tos`
+  (required), `field_order`, and `save()` persisting them.
+- `config/settings/base.py`: `ACCOUNT_SIGNUP_FIELDS` trimmed to
+  `["username*", "email*", "email2*", "password1*", "password2*"]`. daisIE 3.2.0
+  field discovery then exposes every field in the allauth page designer.
+
+## C. Reusable email chrome (seeded once)
+
+- **Email header** — `section → column → header` = `{{ site.site_name }}`.
+- **Email footer** — `section → column → rich_text` with the registered-company
+  line (`{{ site.site_name }} is a company registered under [COMPANY NUMBER].
+  Registered office: [REGISTERED OFFICE].`) and the site sign-off. Bracketed
+  tokens are editable defaults.
+
+## D. `ensure_daisie_templates` command (`core`)
+
+Idempotent; `--force`, `--pages-only`, `--emails-only`; per-item failure
+isolation; prints created/updated/skipped.
+
+1. Ensure the default `AllauthPageOverride` / `AllauthEmailOverride` rows and
+   the two reusable entries.
+2. **Pages (17):** seed the body (`header` + an `auth_field` per discovered
+   field + `auth_form`; field-less views get a message + sign-in button); set
+   active, default theme and the header/footer chrome menus.
+3. **Emails (47):** one `EmailTemplate` per allauth prefix and notification
+   event, composing `reusable(header) → body(greeting + CTA) →
+   reusable(footer)`; link + activate the allauth overrides; notification
+   bridges match by name/`template_key`.
+4. Pure builders (`page_body`, `email_body`, `cta_for`, default copy) live in
+   `core/daisie_seed.py` for unit testing.
+
+### Per-category CTA
+
+- **allauth:** confirmation/signup → `activate_url`; reset key →
+  `password_reset_url`; unknown/already-exists → `signup_url`; code-only →
+  message only; changed/set/deleted + mfa/social → `account.login_url`.
+- **notifications:** booking/session/meeting/reminder family →
+  `payload.meta.meeting_link` (+ `ics_url` where present); all others →
+  `account.login_url`.
+
+## E. Template override
+
+- Override `wagtail_daisIE/blocks/inputs/_autocomplete_ui.html` in the project
+  (same markup, shipped developer comment removed); project `TEMPLATES.DIRS`
+  precede app dirs.
+
+## Verification
+
+```sh
+just manage makemigrations --check --noinput
+just manage check
+just pytest
+just manage ensure_daisie_templates && just manage ensure_daisie_templates
+```
+
+**Definition of done:** checks clean; the command re-run is a no-op (`--force`
+updates); `/accounts/login/` and `/accounts/signup/` render controlled labels
+and `{{ user.* }}`; one email shows the reusable header/footer; editing the
+reusable footer updates every template. Tests: pure builder units plus command
+idempotency; no framework-only tests.
+
+---
+
 # Appendix — verification and housekeeping
 
 ```sh
@@ -319,6 +414,7 @@ just manage makemigrations --check --noinput
 just manage check
 just pytest
 just manage seed_help_guide && just manage seed_pages && just manage seed_pages
+just manage ensure_daisie_templates && just manage ensure_daisie_templates
 ```
 
 - All new admin surfaces are authored in the Wagtail admin; app code supplies
