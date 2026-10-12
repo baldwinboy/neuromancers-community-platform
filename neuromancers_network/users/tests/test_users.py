@@ -1,7 +1,12 @@
+from types import SimpleNamespace
+from unittest.mock import patch
+
 import pytest
 from djstripe.enums import SubscriptionStatus
 
+from neuromancers_network.users.avatar import confirm_upload
 from neuromancers_network.users.forms import UserSignupForm
+from neuromancers_network.users.models import UserProfile
 from neuromancers_network.users.tests.factories import PaymentProfileFactory
 from neuromancers_network.users.tests.factories import PeerProfileFactory
 from neuromancers_network.users.tests.factories import PeerSubscriptionFactory
@@ -111,3 +116,32 @@ class TestIsVerifiedPeer:
         user = make_peer(is_verified=True)
         assert user.is_peer is True
         assert user.is_verified_peer is True
+
+
+class TestAvatarUpload:
+    def test_confirm_stores_fields_and_deletes_previous(self):
+        user = UserFactory()
+        profile, _created = UserProfile.objects.get_or_create(user=user)
+        profile.profile_picture_getpronto_id = "old-file"
+        profile.save(update_fields=["profile_picture_getpronto_id"])
+        result = SimpleNamespace(
+            file={"id": "new-file", "secureUrl": "https://img.example/new"},
+        )
+
+        with (
+            patch(
+                "neuromancers_network.users.avatar.upload_confirm",
+                return_value=result,
+            ),
+            patch(
+                "neuromancers_network.users.avatar.delete_getpronto_file",
+            ) as delete_file,
+            patch("neuromancers_network.users.avatar.configure_getpronto"),
+        ):
+            url = confirm_upload(profile=profile, pending_upload_id="pending-1")
+
+        assert url == "https://img.example/new"
+        profile.refresh_from_db()
+        assert profile.profile_picture_getpronto_id == "new-file"
+        assert profile.profile_picture_url == "https://img.example/new"
+        delete_file.assert_called_once_with(id="old-file")

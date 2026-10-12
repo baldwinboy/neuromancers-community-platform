@@ -883,6 +883,14 @@ WAGTAIL_DAISIE_FORM_FIELD_TYPES = {
         "is_upload": True,
         "handler": "neuromancers_network.core.uploads.store_document",
     },
+    "image": {
+        "label": _("Image upload"),
+        "field": "django.forms.ImageField",
+        "widget": "django.forms.ClearableFileInput",
+        "css": "file-input w-full",
+        "is_upload": True,
+        "handler": "neuromancers_network.users.avatar.store_image",
+    },
     "duration_tiers": {
         "label": _("Duration tiers"),
         "field": "neuromancers_network.meetings.tier_fields.DurationTiersField",
