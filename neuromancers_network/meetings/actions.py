@@ -5,6 +5,7 @@ from __future__ import annotations
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
+from django_fsm import can_proceed
 
 from neuromancers_network.core.actions import as_bool
 from neuromancers_network.core.actions import as_list
@@ -14,6 +15,8 @@ from neuromancers_network.meetings.models import Booking
 from neuromancers_network.meetings.models import BookingStatus
 from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingRequest
+from neuromancers_network.meetings.models import MeetingRequestStatus
+from neuromancers_network.meetings.models import RefundRequest
 from neuromancers_network.meetings.models.booking import (
     create_checkout_session_for_bookings,
 )
@@ -189,6 +192,92 @@ def bookings_checkout_many(request, data):
     return redirect(create_checkout_session_for_bookings(bookings, request))
 
 
+def _host_request(user, data) -> MeetingRequest:
+    pk = (
+        data.get("meeting_request")
+        or data.get("meeting_request_id")
+        or data.get("target")
+        or data.get("pk")
+    )
+    meeting_request = get_object_or_404(MeetingRequest, pk=pk)
+    if meeting_request.meeting.peer_id != user.pk and not user.is_moderator:
+        message = "You cannot manage this booking"
+        raise PermissionDenied(message)
+    return meeting_request
+
+
+def _host_refund(user, data) -> RefundRequest:
+    pk = (
+        data.get("refund_request")
+        or data.get("refund_request_id")
+        or data.get("target")
+        or data.get("pk")
+    )
+    refund_request = get_object_or_404(RefundRequest, pk=pk)
+    if (
+        refund_request.meeting_request.meeting.peer_id != user.pk
+        and not user.is_moderator
+    ):
+        message = "You cannot manage this refund"
+        raise PermissionDenied(message)
+    return refund_request
+
+
+def bookings_approve(request, data):
+    user = require_authenticated(request)
+    meeting_request = _host_request(user, data)
+    if not can_proceed(meeting_request.approve):
+        message = "This booking cannot be approved"
+        raise PermissionDenied(message)
+    meeting_request.approve()
+    meeting_request.save()
+    return redirect_back(request)
+
+
+def bookings_reject(request, data):
+    user = require_authenticated(request)
+    meeting_request = _host_request(user, data)
+    if not can_proceed(meeting_request.reject):
+        message = "This booking cannot be rejected"
+        raise PermissionDenied(message)
+    meeting_request.reject()
+    meeting_request.save()
+    return redirect_back(request)
+
+
+def bookings_revoke(request, data):
+    user = require_authenticated(request)
+    meeting_request = _host_request(user, data)
+    if meeting_request.status == MeetingRequestStatus.PAID:
+        meeting_request.request_refund(data.get("reason") or "Revoked by host")
+    if can_proceed(meeting_request.cancel):
+        meeting_request.cancel()
+        meeting_request.save()
+    return redirect_back(request)
+
+
+def refunds_approve(request, data):
+    user = require_authenticated(request)
+    refund_request = _host_refund(user, data)
+    if not can_proceed(refund_request.approve):
+        message = "This refund cannot be approved"
+        raise PermissionDenied(message)
+    refund_request.approve(amount=data.get("amount") or None)
+    refund_request.save()
+    return redirect_back(request)
+
+
+def refunds_reject(request, data):
+    user = require_authenticated(request)
+    refund_request = _host_refund(user, data)
+    if not can_proceed(refund_request.reject):
+        message = "This refund cannot be rejected"
+        raise PermissionDenied(message)
+    refund_request.reject()
+    refund_request.save()
+    return redirect_back(request)
+
+
 def bookings_request_refund(request, data):
     """Raise a refund request against one of the seeker's paid sessions."""
     user = require_authenticated(request)
@@ -217,5 +306,10 @@ HANDLERS = {
     "bookings.request": bookings_request,
     "bookings.checkout": bookings_checkout,
     "bookings.checkout_many": bookings_checkout_many,
+    "bookings.approve": bookings_approve,
+    "bookings.reject": bookings_reject,
+    "bookings.revoke": bookings_revoke,
     "bookings.request_refund": bookings_request_refund,
+    "refunds.approve": refunds_approve,
+    "refunds.reject": refunds_reject,
 }

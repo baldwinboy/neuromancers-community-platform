@@ -697,6 +697,25 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "queryset": "neuromancers_network.meetings.selectors.unpaid_bookings",
         "select_related": ["meeting"],
     },
+    "host_meeting": {
+        "label": _("Host meeting"),
+        "model": "meetings.Meeting",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.host_meetings",
+    },
+    "host_request": {
+        "label": _("Host booking request"),
+        "model": "meetings.MeetingRequest",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.host_requests",
+        "select_related": ["meeting", "support_seeker"],
+    },
+    "host_refund": {
+        "label": _("Host refund request"),
+        "model": "meetings.RefundRequest",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.host_refunds",
+    },
     "peer_application": {
         "label": _("Peer application"),
         "model": "peers.PeerApplication",
@@ -950,6 +969,26 @@ WAGTAIL_DAISIE_ACTIONS = {
     "bookings.checkout_many": {
         "label": _("Pay for selected bookings"),
         "handler": "neuromancers_network.meetings.actions.bookings_checkout_many",
+    },
+    "bookings.approve": {
+        "label": _("Approve booking"),
+        "handler": "neuromancers_network.meetings.actions.bookings_approve",
+    },
+    "bookings.reject": {
+        "label": _("Reject booking"),
+        "handler": "neuromancers_network.meetings.actions.bookings_reject",
+    },
+    "bookings.revoke": {
+        "label": _("Revoke booking"),
+        "handler": "neuromancers_network.meetings.actions.bookings_revoke",
+    },
+    "refunds.approve": {
+        "label": _("Approve refund"),
+        "handler": "neuromancers_network.meetings.actions.refunds_approve",
+    },
+    "refunds.reject": {
+        "label": _("Reject refund"),
+        "handler": "neuromancers_network.meetings.actions.refunds_reject",
     },
     "bookings.request": {
         "label": _("Request booking"),

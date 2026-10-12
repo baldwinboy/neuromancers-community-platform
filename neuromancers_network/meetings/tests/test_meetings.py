@@ -1,4 +1,5 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import PermissionDenied
@@ -8,17 +9,25 @@ from django.db import transaction
 from django.test import RequestFactory
 from django.utils import timezone
 
+from neuromancers_network.core.models import StripeSettings
+from neuromancers_network.meetings.actions import bookings_approve
+from neuromancers_network.meetings.actions import bookings_revoke
 from neuromancers_network.meetings.actions import meetings_apply_terms_template
 from neuromancers_network.meetings.actions import meetings_delete
+from neuromancers_network.meetings.actions import refunds_approve
 from neuromancers_network.meetings.forms_pages import MeetingEditFormPage
 from neuromancers_network.meetings.models import ApprovalPolicy
 from neuromancers_network.meetings.models import MeetingPriceOption
 from neuromancers_network.meetings.models import MeetingPriceTier
+from neuromancers_network.meetings.models import MeetingRequestStatus
 from neuromancers_network.meetings.models import MeetingStatus
 from neuromancers_network.meetings.models import MeetingType
 from neuromancers_network.meetings.models import PricingType
+from neuromancers_network.meetings.models import RefundRequest
+from neuromancers_network.meetings.models import RefundStatus
 from neuromancers_network.meetings.selectors import my_meetings
 from neuromancers_network.meetings.services import apply_duration_tiers
+from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.services import create_meeting
 from neuromancers_network.meetings.services import publish_meeting
 from neuromancers_network.meetings.tests.factories import create_meeting as make_meeting
@@ -324,3 +333,68 @@ class TestApplyTermsTemplate:
 
         meeting.refresh_from_db()
         assert meeting.terms == "Template body"
+
+
+def _pending_request(peer):
+    meeting = make_meeting(peer=peer, status=MeetingStatus.PUBLISHED)
+    meeting.approval_policy = ApprovalPolicy.APPROVAL_REQUIRED
+    meeting.save()
+    booking = create_booking(
+        meeting=meeting,
+        seeker=UserFactory(),
+        sessions=[{"requested_duration_minutes": 30}],
+    )
+    return booking.sessions.first()
+
+
+def _paid_request(peer, *, refund_requires_approval=True):
+    meeting_request = _pending_request(peer)
+    meeting_request.__dict__["status"] = MeetingRequestStatus.PAID
+    meeting_request.stripe_payment_intent_id = "pi_host"
+    meeting_request.save()
+    meeting = meeting_request.meeting
+    meeting.refund_requires_approval = refund_requires_approval
+    meeting.save()
+    return meeting_request
+
+
+class TestHostActions:
+    def test_non_host_cannot_approve(self):
+        meeting_request = _pending_request(make_peer())
+
+        with pytest.raises(PermissionDenied):
+            bookings_approve(_request(make_peer()), {"target": meeting_request.pk})
+
+    def test_revoke_paid_request_raises_refund(self):
+        peer = make_peer()
+        meeting_request = _paid_request(peer)
+
+        bookings_revoke(_request(peer), {"target": meeting_request.pk})
+
+        meeting_request.refresh_from_db()
+        assert meeting_request.status == MeetingRequestStatus.CANCELLED
+        assert RefundRequest.objects.filter(meeting_request=meeting_request).exists()
+
+    def test_refunds_approve_issues_refund(self):
+        config = StripeSettings.load()
+        config.secret_key = "sk_test_123"  # noqa: S105
+        config.save()
+        peer = make_peer()
+        meeting_request = _paid_request(peer)
+        refund = meeting_request.request_refund("Please")
+
+        with (
+            patch(
+                "neuromancers_network.meetings.models.refund.stripe.Refund.create",
+            ) as create_refund,
+            patch(
+                "neuromancers_network.meetings.models.refund."
+                "StripeRefund.sync_from_stripe_data",
+            ),
+        ):
+            create_refund.return_value = type("Refund", (), {"id": "re_host"})()
+            refunds_approve(_request(peer), {"target": refund.pk})
+
+        refund.refresh_from_db()
+        assert refund.status == RefundStatus.APPROVED
+        assert refund.stripe_refund_id == "re_host"

@@ -63,3 +63,36 @@ def unpaid_bookings(request=None, page=None):
         support_seeker=user,
         status=BookingStatus.PENDING,
     ).select_related("meeting")
+
+
+def host_meetings(request=None, page=None):
+    """The signed-in peer's own meetings (the host dashboard feed)."""
+    return my_meetings(request=request, page=page)
+
+
+def host_requests(request=None, page=None):
+    """Booking requests made against the signed-in peer's meetings."""
+    from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
+
+    user = getattr(request, "user", None)
+    if user is None or not getattr(user, "is_authenticated", False):
+        return MeetingRequest.objects.none()
+    return (
+        MeetingRequest.objects.filter(meeting__peer=user)
+        .select_related("meeting", "support_seeker")
+        .order_by("-created_at")
+    )
+
+
+def host_refunds(request=None, page=None):
+    """Refund requests raised against the signed-in peer's meetings."""
+    from neuromancers_network.meetings.models import RefundRequest  # noqa: PLC0415
+
+    user = getattr(request, "user", None)
+    if user is None or not getattr(user, "is_authenticated", False):
+        return RefundRequest.objects.none()
+    return (
+        RefundRequest.objects.filter(meeting_request__meeting__peer=user)
+        .select_related("meeting_request__meeting", "meeting_request__support_seeker")
+        .order_by("-created_at")
+    )
