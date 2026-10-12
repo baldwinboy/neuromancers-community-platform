@@ -80,3 +80,48 @@ class TestMeetingPredicates:
         request = make_request(rf, UserFactory(), {"pk": meeting.pk})
 
         assert audience.is_meeting_host(request) is False
+
+
+class TestTosAcceptance:
+    def test_needs_acceptance_when_not_accepted(self, rf):
+        request = make_request(rf, UserFactory(accepted_tos=False))
+
+        assert audience.needs_tos_acceptance(request) is True
+
+    def test_no_need_when_already_accepted(self, rf):
+        request = make_request(rf, UserFactory(accepted_tos=True))
+
+        assert audience.needs_tos_acceptance(request) is False
+
+    def test_anonymous_does_not_need(self, rf):
+        request = rf.get("/")
+        request.user = AnonymousUser()
+
+        assert audience.needs_tos_acceptance(request) is False
+
+    def test_queryset_selects_pending_members(self):
+        pending = UserFactory(accepted_tos=False)
+        UserFactory(accepted_tos=True)
+
+        assert list(audience.needs_tos_acceptance_users()) == [pending]
+
+
+class TestAudienceQuerysets:
+    def test_peer_users_matches_only_eligible(self):
+        eligible = make_peer()
+        UserFactory()
+
+        assert list(audience.peer_users()) == [eligible]
+
+    def test_moderator_users_selects_staff_and_superusers(self):
+        staff = UserFactory(staff_state=StaffState.ACTIVE)
+        superuser = UserFactory(is_superuser=True)
+        UserFactory()
+
+        assert set(audience.moderator_users()) == {staff, superuser}
+
+    def test_authenticated_users_excludes_inactive(self):
+        active = UserFactory()
+        UserFactory(is_active=False)
+
+        assert list(audience.authenticated_users()) == [active]

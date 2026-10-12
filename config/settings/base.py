@@ -813,18 +813,27 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
     "authenticated": {
         "label": "Signed-in members",
         "rule": "neuromancers_network.core.audience.is_authenticated",
+        "queryset": "neuromancers_network.core.audience.authenticated_users",
     },
     "peer": {
         "label": "Care providers",
         "rule": "neuromancers_network.core.audience.is_peer",
+        "queryset": "neuromancers_network.core.audience.peer_users",
     },
     "verified_peer": {
         "label": "Verified care providers",
         "rule": "neuromancers_network.core.audience.is_verified_peer",
+        "queryset": "neuromancers_network.core.audience.verified_peer_users",
     },
     "moderator": {
         "label": "Moderators",
         "rule": "neuromancers_network.core.audience.is_moderator",
+        "queryset": "neuromancers_network.core.audience.moderator_users",
+    },
+    "needs_tos_acceptance": {
+        "label": "Members yet to accept the Terms",
+        "rule": "neuromancers_network.core.audience.needs_tos_acceptance",
+        "queryset": ("neuromancers_network.core.audience.needs_tos_acceptance_users"),
     },
     "meeting_host": {
         "label": "Meeting host",
@@ -951,6 +960,10 @@ WAGTAIL_DAISIE_ACTIONS = {
     "profile.save_notification_preferences": {
         "label": _("Save notification preferences"),
         "handler": "neuromancers_network.users.actions.profile_save_notification_preferences",
+    },
+    "accept_tos": {
+        "label": _("Accept Terms and Conditions"),
+        "handler": "neuromancers_network.users.actions.accept_tos",
     },
     # Settings-page sections (rendered by an app template override).
     "settings.account": {

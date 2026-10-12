@@ -82,6 +82,12 @@ def is_authenticated(request: HttpRequest) -> bool:
     return _request_user(request) is not None
 
 
+def needs_tos_acceptance(request: HttpRequest) -> bool:
+    """Signed-in members who have not yet accepted the Terms and Conditions."""
+    user = _request_user(request)
+    return user is not None and not user.accepted_tos
+
+
 def is_moderator(request: HttpRequest) -> bool:
     return _is_moderator(_request_user(request))
 
@@ -156,3 +162,51 @@ def is_bookmark_owner(request: HttpRequest) -> bool:
     if owner_pk is None:
         return is_own_profile(request)
     return str(owner_pk) == str(user.pk)
+
+
+# --- Queryset factories (request-less audiences: campaigns, resets) ----------
+
+
+def authenticated_users():
+    """Active users (the ``authenticated`` audience queryset)."""
+    from neuromancers_network.users.models import User  # noqa: PLC0415
+
+    return User.objects.filter(is_active=True)
+
+
+def peer_users():
+    """Currently eligible care providers."""
+    from neuromancers_network.peers.services import eligible_peer_q  # noqa: PLC0415
+    from neuromancers_network.users.models import User  # noqa: PLC0415
+
+    return User.objects.filter(eligible_peer_q())
+
+
+def verified_peer_users():
+    """Currently eligible, verified care providers."""
+    from neuromancers_network.peers.services import eligible_peer_q  # noqa: PLC0415
+    from neuromancers_network.users.models import User  # noqa: PLC0415
+
+    return User.objects.filter(
+        eligible_peer_q(),
+        peer_profile__is_verified=True,
+    )
+
+
+def moderator_users():
+    """Active staff and superusers."""
+    from django.db.models import Q  # noqa: PLC0415
+
+    from neuromancers_network.users.models import StaffState  # noqa: PLC0415
+    from neuromancers_network.users.models import User  # noqa: PLC0415
+
+    return User.objects.filter(
+        Q(is_superuser=True) | Q(staff_state=StaffState.ACTIVE),
+    )
+
+
+def needs_tos_acceptance_users():
+    """Active members who have not accepted the Terms and Conditions."""
+    from neuromancers_network.users.models import User  # noqa: PLC0415
+
+    return User.objects.filter(is_active=True, accepted_tos=False)

@@ -69,9 +69,19 @@ def profile_save_notification_preferences(request, data):
     return redirect_back(request)
 
 
+def accept_tos(request, data):
+    """Record that the signed-in member has accepted the Terms and Conditions."""
+    user = require_authenticated(request)
+    if not user.accepted_tos:
+        user.accepted_tos = True
+        user.save(update_fields=["accepted_tos"])
+    return redirect_back(request)
+
+
 HANDLERS = {
     "profile.edit": profile_edit,
     "profile.save_access_needs": profile_save_access_needs,
     "profile.save_visibility": profile_save_visibility,
     "profile.save_notification_preferences": profile_save_notification_preferences,
+    "accept_tos": accept_tos,
 }
