@@ -400,7 +400,7 @@ ACCOUNT_SIGNUP_FIELDS = [
     "email2*",
     "password1*",
     "password2*",
-    "accept_toc*",
+    "accept_tos*",
 ]
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
