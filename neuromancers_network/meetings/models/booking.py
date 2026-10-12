@@ -50,6 +50,11 @@ class Booking(FSMModelMixin, Timestamped):
         max_length=255,
         blank=True,
     )
+    receipt_url = models.URLField(
+        _("Receipt URL"),
+        max_length=500,
+        blank=True,
+    )
     access_needs = models.TextField(_("Access needs"), blank=True)
 
     class Meta:
@@ -83,6 +88,17 @@ class Booking(FSMModelMixin, Timestamped):
     )
     def refund(self):
         pass
+
+    def record_receipt(self) -> None:
+        """Store the Stripe hosted receipt URL for the paid booking, if any."""
+        from neuromancers_network.payments.services import (  # noqa: PLC0415
+            receipt_url_for,
+        )
+
+        url = receipt_url_for(self.stripe_payment_intent_id)
+        if url and url != self.receipt_url:
+            self.receipt_url = url
+            self.save(update_fields=["receipt_url", "updated_at"])
 
     def compute_total(self) -> Decimal:
         """Compute the booking total from its sessions (falling back to price)."""

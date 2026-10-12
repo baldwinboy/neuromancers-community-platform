@@ -683,6 +683,13 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "queryset": "neuromancers_network.meetings.selectors.user_bookings",
         "select_related": ["meeting"],
     },
+    "payment_history": {
+        "label": _("Payment history"),
+        "model": "meetings.MeetingRequest",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.user_payment_history",
+        "select_related": ["meeting"],
+    },
     "peer_application": {
         "label": _("Peer application"),
         "model": "peers.PeerApplication",

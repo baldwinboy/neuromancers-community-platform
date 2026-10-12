@@ -15,6 +15,7 @@ from neuromancers_network.meetings.models import MeetingRequestStatus
 from neuromancers_network.meetings.models import MeetingType
 from neuromancers_network.meetings.models import PricingType
 from neuromancers_network.meetings.models import RefundStatus
+from neuromancers_network.meetings.selectors import user_payment_history
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.tests.factories import create_meeting
 from neuromancers_network.peers.tests.factories import make_peer
@@ -386,3 +387,45 @@ class TestRefundFlow:
 
         with pytest.raises(ValueError, match="exceeds the amount paid"):
             request.request_refund("Too much", amount="15.00")
+
+
+class TestPaymentHistory:
+    def _request(self, user):
+        request = RequestFactory().get("/")
+        request.user = user
+        return request
+
+    def test_sync_records_receipt_url(self):
+        seeker = UserFactory()
+        booking = create_booking(
+            meeting=create_meeting(peer=make_peer()),
+            seeker=seeker,
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+        meeting_request = booking.sessions.first()
+
+        with patch(
+            "neuromancers_network.payments.services.receipt_url_for",
+            return_value="https://receipt.example/r1",
+        ):
+            meeting_request.sync_payment_from_checkout("cs_x", "pi_x", 1000)
+
+        meeting_request.refresh_from_db()
+        assert meeting_request.receipt_url == "https://receipt.example/r1"
+
+    def test_lists_only_signed_in_members_payments(self):
+        seeker = UserFactory()
+        booking = create_booking(
+            meeting=create_meeting(peer=make_peer()),
+            seeker=seeker,
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+        create_booking(
+            meeting=create_meeting(peer=make_peer()),
+            seeker=UserFactory(),
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+
+        results = user_payment_history(self._request(seeker))
+
+        assert [row.pk for row in results] == [booking.sessions.first().pk]

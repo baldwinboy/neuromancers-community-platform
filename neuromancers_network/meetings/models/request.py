@@ -71,6 +71,11 @@ class MeetingRequest(FSMModelMixin, Timestamped):
         max_length=255,
         blank=True,
     )
+    receipt_url = models.URLField(
+        _("Receipt URL"),
+        max_length=500,
+        blank=True,
+    )
     booking = models.ForeignKey(
         "meetings.Booking",
         on_delete=models.CASCADE,
@@ -328,9 +333,14 @@ class MeetingRequest(FSMModelMixin, Timestamped):
         amount_total: int | None,
     ) -> None:
         """Synchronize local payment fields after checkout completion."""
+        from neuromancers_network.payments.services import (  # noqa: PLC0415
+            receipt_url_for,
+        )
+
         self.stripe_checkout_session_id = session_id
         if payment_intent_id:
             self.stripe_payment_intent_id = payment_intent_id
+            self.receipt_url = receipt_url_for(payment_intent_id) or self.receipt_url
         if amount_total is not None:
             self.price_paid = Decimal(amount_total) / Decimal(100)
         if can_proceed(self.mark_paid):

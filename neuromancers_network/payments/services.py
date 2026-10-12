@@ -115,6 +115,18 @@ def ensure_stripe_account(user) -> StripeAccount:
     return stripe_account
 
 
+def receipt_url_for(payment_intent_id: str) -> str:
+    """Return the Stripe hosted receipt URL for a synced payment intent, if any."""
+    from djstripe.models import Charge as StripeCharge  # noqa: PLC0415
+
+    if not payment_intent_id:
+        return ""
+    charge = StripeCharge.objects.filter(payment_intent_id=payment_intent_id).first()
+    if charge is None:
+        return ""
+    return charge.receipt_url or ""
+
+
 def create_subscription_checkout(profile: PaymentProfile, request) -> str:
     """Create a Stripe Checkout session for the peer subscription plan.
 
