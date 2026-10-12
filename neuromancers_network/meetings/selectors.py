@@ -5,11 +5,12 @@ from __future__ import annotations
 from neuromancers_network.meetings.models import Booking
 from neuromancers_network.meetings.models import Review
 from neuromancers_network.meetings.search import search_meetings
+from neuromancers_network.peers.services import eligible_peer_q
 
 
 def published_meetings(request=None, page=None):
-    """All published meetings (the default meeting feed queryset)."""
-    return search_meetings()
+    """Published meetings from currently eligible peers (the default feed)."""
+    return search_meetings().filter(eligible_peer_q(prefix="peer__"))
 
 
 def my_meetings(request=None, page=None):

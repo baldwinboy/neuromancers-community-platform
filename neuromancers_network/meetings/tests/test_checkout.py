@@ -5,14 +5,15 @@ import pytest
 from django.test import RequestFactory
 
 from neuromancers_network.core.models import StripeSettings
+from neuromancers_network.meetings.models import Booking
 from neuromancers_network.meetings.models import MeetingPriceOption
 from neuromancers_network.meetings.models import MeetingPriceTier
 from neuromancers_network.meetings.models import MeetingRequest
 from neuromancers_network.meetings.models import MeetingRequestStatus
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.tests.factories import create_meeting
+from neuromancers_network.peers.tests.factories import make_peer
 from neuromancers_network.users.tests.factories import AccountFactory
-from neuromancers_network.users.tests.factories import PaymentProfileFactory
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -45,11 +46,18 @@ def configure_stripe(
 
 
 def make_connected_peer():
-    peer = UserFactory()
-    PaymentProfileFactory(
-        user=peer,
-        stripe_connect_account_id=AccountFactory(id=PEER_ACCOUNT_ID),
-    )
+    peer = make_peer()
+    profile = peer.payment_profile
+    profile.stripe_connect_account_id = AccountFactory(id=PEER_ACCOUNT_ID)
+    profile.save(update_fields=["stripe_connect_account_id", "updated_at"])
+    return peer
+
+
+def make_peer_without_connected_account():
+    peer = make_peer()
+    profile = peer.payment_profile
+    profile.stripe_connect_account_id = None
+    profile.save(update_fields=["stripe_connect_account_id", "updated_at"])
     return peer
 
 
@@ -180,11 +188,22 @@ class TestCreateCheckoutSession:
 
     def test_missing_connect_account_raises(self):
         configure_stripe()
-        peer = UserFactory()
-        PaymentProfileFactory(user=peer, stripe_connect_account_id=None)
-        booking = make_booking(peer=peer)
+        booking = make_booking(peer=make_peer_without_connected_account())
 
         with pytest.raises(ValueError, match="no connected Stripe account"):
+            booking.create_checkout_session(RequestFactory().get("/"))
+
+    def test_ineligible_peer_raises(self):
+        configure_stripe()
+        meeting = create_meeting(peer=make_peer(is_approved=False))
+        booking = Booking.objects.create(
+            meeting=meeting,
+            support_seeker=UserFactory(),
+            total_amount=BOOKING_TOTAL,
+            currency="GBP",
+        )
+
+        with pytest.raises(ValueError, match="not currently eligible"):
             booking.create_checkout_session(RequestFactory().get("/"))
 
     def test_not_ready_raises(self):
@@ -221,10 +240,8 @@ class TestCreateRequestCheckoutSession:
 
     def test_missing_connect_account_raises(self):
         configure_stripe()
-        peer = UserFactory()
-        PaymentProfileFactory(user=peer, stripe_connect_account_id=None)
         meeting_request = MeetingRequest.objects.create(
-            meeting=create_meeting(peer=peer),
+            meeting=create_meeting(peer=make_peer_without_connected_account()),
             support_seeker=UserFactory(),
             status=MeetingRequestStatus.PENDING_PAYMENT,
         )

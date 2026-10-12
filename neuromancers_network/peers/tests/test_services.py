@@ -11,9 +11,11 @@ from neuromancers_network.peers.models.settings import PeerRequirementsSettings
 from neuromancers_network.peers.selectors import peer_calendar_events
 from neuromancers_network.peers.services import available_slots
 from neuromancers_network.peers.services import eligibility_failures
+from neuromancers_network.peers.services import eligible_peer_q
 from neuromancers_network.peers.services import is_eligible_peer
 from neuromancers_network.peers.tests.factories import make_availability
 from neuromancers_network.peers.tests.factories import make_peer
+from neuromancers_network.users.models import User
 from neuromancers_network.users.models import UserProfile
 from neuromancers_network.users.tests.factories import UserFactory
 
@@ -32,6 +34,12 @@ class TestEligibility:
 
     def test_full_peer_is_eligible(self):
         assert is_eligible_peer(make_peer()) is True
+
+    def test_eligible_peer_q_matches_only_eligible_users(self):
+        eligible = make_peer()
+        make_peer(is_approved=False)
+
+        assert list(User.objects.filter(eligible_peer_q())) == [eligible]
 
     def test_unapproved_peer_is_not_eligible(self):
         assert is_eligible_peer(make_peer(is_approved=False)) is False

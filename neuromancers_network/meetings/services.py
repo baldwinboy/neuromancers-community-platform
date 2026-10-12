@@ -137,6 +137,10 @@ def create_booking(  # noqa: PLR0913
     from .models import Booking  # noqa: PLC0415
     from .models import MeetingRequest  # noqa: PLC0415
 
+    if not is_eligible_peer(meeting.peer):
+        message = _("This care provider is not currently available for bookings.")
+        raise ValidationError(message)
+
     if access_needs is None:
         access_needs = default_access_needs_for(seeker)
 

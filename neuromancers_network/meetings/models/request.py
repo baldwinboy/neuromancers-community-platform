@@ -245,10 +245,17 @@ class MeetingRequest(FSMModelMixin, Timestamped):
         from neuromancers_network.payments.charges import (  # noqa: PLC0415
             build_charge_plan,
         )
+        from neuromancers_network.peers.services import (  # noqa: PLC0415
+            is_eligible_peer,
+        )
 
         stripe_settings = StripeSettings.load(request)
         if not stripe_settings.secret_key:
             message = "Stripe secret key is not configured"
+            raise ValueError(message)
+
+        if not is_eligible_peer(self.meeting.peer):
+            message = "The care provider is not currently eligible for bookings"
             raise ValueError(message)
 
         if self.status not in {

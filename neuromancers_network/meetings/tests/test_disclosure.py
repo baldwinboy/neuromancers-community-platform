@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.tests.factories import create_meeting
+from neuromancers_network.peers.tests.factories import make_peer
 from neuromancers_network.users.models import UserProfile
 from neuromancers_network.users.tests.factories import UserFactory
 
@@ -15,7 +16,7 @@ pytestmark = pytest.mark.django_db
 
 
 def make_meeting_with_terms(terms=TERMS):
-    meeting = create_meeting(peer=UserFactory())
+    meeting = create_meeting(peer=make_peer())
     meeting.terms = terms
     meeting.save()
     return meeting
@@ -46,7 +47,7 @@ class TestTermsAgreement:
         assert session.terms_accepted_at is not None
 
     def test_meeting_without_terms_needs_no_acceptance(self):
-        meeting = create_meeting(peer=UserFactory())
+        meeting = create_meeting(peer=make_peer())
 
         booking = create_booking(meeting=meeting, seeker=UserFactory())
 
@@ -59,7 +60,7 @@ class TestAccessNeeds:
         UserProfile.objects.create(user=seeker, access_needs=PROFILE_ACCESS_NEEDS)
 
         booking = create_booking(
-            meeting=create_meeting(peer=UserFactory()),
+            meeting=create_meeting(peer=make_peer()),
             seeker=seeker,
         )
 
@@ -70,7 +71,7 @@ class TestAccessNeeds:
         UserProfile.objects.create(user=seeker, access_needs=PROFILE_ACCESS_NEEDS)
 
         booking = create_booking(
-            meeting=create_meeting(peer=UserFactory()),
+            meeting=create_meeting(peer=make_peer()),
             seeker=seeker,
             access_needs=OVERRIDE_ACCESS_NEEDS,
         )

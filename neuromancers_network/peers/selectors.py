@@ -4,11 +4,14 @@ from __future__ import annotations
 
 from neuromancers_network.peers.models.availability import PeerAvailability
 from neuromancers_network.peers.search import search_peers
+from neuromancers_network.peers.services import eligible_peer_q
 
 
 def approved_peers(request=None, page=None):
-    """Approved peer profiles (the default care-provider feed queryset)."""
-    return search_peers().select_related("user")
+    """Currently eligible peer profiles (the default care-provider feed)."""
+    return (
+        search_peers().select_related("user").filter(eligible_peer_q(prefix="user__"))
+    )
 
 
 def my_availability(request=None, page=None):

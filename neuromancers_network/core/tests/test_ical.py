@@ -8,6 +8,7 @@ from neuromancers_network.core.ical import google_calendar_link
 from neuromancers_network.core.ical import outlook_calendar_link
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.tests.factories import create_meeting
+from neuromancers_network.peers.tests.factories import make_peer
 from neuromancers_network.users.tests.factories import UserFactory
 
 SESSION_DURATION = 30
@@ -17,7 +18,7 @@ pytestmark = pytest.mark.django_db
 
 def make_booking_with_session():
     return create_booking(
-        meeting=create_meeting(peer=UserFactory()),
+        meeting=create_meeting(peer=make_peer()),
         seeker=UserFactory(),
         sessions=[
             {

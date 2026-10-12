@@ -7,7 +7,9 @@ from datetime import datetime
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
+from django.db.models import Q
 from django.utils import timezone
+from djstripe.enums import SubscriptionStatus
 
 from neuromancers_network.peers.models.availability import PeerAvailability
 from neuromancers_network.peers.models.choices import AvailabilityOccurrence
@@ -57,6 +59,32 @@ def is_eligible_peer(user: User | None) -> bool:
     if user is None or not getattr(user, "is_authenticated", False):
         return False
     return not eligibility_failures(user)
+
+
+def eligible_peer_q(prefix: str = "") -> Q:
+    """Return a ``Q`` selecting users who meet the peer requirements.
+
+    Mirrors :func:`eligibility_failures` for queryset filtering. *prefix* is
+    prepended to every lookup so callers can filter related models, e.g.
+    ``"peer__"`` from ``Meeting`` or ``"user__"`` from ``PeerProfile``.
+    """
+    requirements = peer_requirements()
+    query = Q(**{f"{prefix}peer_profile__is_approved": True})
+    if requirements.require_kyc:
+        query &= Q(**{f"{prefix}payment_profile__kyc_completed": True})
+    if requirements.require_subscription:
+        query &= Q(
+            **{
+                f"{prefix}payment_profile__peer_subscription__subscription"
+                "__stripe_data__status__in": [
+                    SubscriptionStatus.active,
+                    SubscriptionStatus.trialing,
+                ],
+            },
+        )
+    if requirements.require_verification_to_publish:
+        query &= Q(**{f"{prefix}peer_profile__is_verified": True})
+    return query
 
 
 def _add_months(value: datetime, months: int) -> datetime:

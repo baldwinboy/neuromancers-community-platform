@@ -33,7 +33,7 @@ pytestmark = pytest.mark.django_db
 
 
 def make_booking(**kwargs):
-    meeting = create_meeting(peer=UserFactory())
+    meeting = create_meeting(peer=make_peer())
     seeker = UserFactory()
     booking = create_booking(meeting=meeting, seeker=seeker, **kwargs)
     return booking, meeting, seeker
@@ -59,9 +59,15 @@ class TestCreateBooking:
         assert booking.currency == meeting.currency
         assert booking.access_needs == ACCESS_NEEDS
 
+    def test_ineligible_peer_cannot_be_booked(self):
+        meeting = create_meeting(peer=make_peer(is_approved=False))
+
+        with pytest.raises(ValidationError, match="not currently available"):
+            create_booking(meeting=meeting, seeker=UserFactory())
+
     def test_creates_sessions(self):
         booking = create_booking(
-            meeting=create_meeting(peer=UserFactory()),
+            meeting=create_meeting(peer=make_peer()),
             seeker=UserFactory(),
             sessions=[{"requested_duration_minutes": SESSION_DURATION}],
         )
@@ -71,7 +77,7 @@ class TestCreateBooking:
 
     def test_access_needs_inherited_by_sessions(self):
         booking = create_booking(
-            meeting=create_meeting(peer=UserFactory()),
+            meeting=create_meeting(peer=make_peer()),
             seeker=UserFactory(),
             access_needs=SESSION_ACCESS_NEEDS,
             sessions=[{"requested_duration_minutes": SESSION_DURATION}],
@@ -145,7 +151,7 @@ class TestSessionConstraints:
             )
 
     def test_same_seeker_can_book_same_meeting_twice(self):
-        meeting = create_meeting(peer=UserFactory())
+        meeting = create_meeting(peer=make_peer())
         seeker = UserFactory()
 
         first = create_booking(
@@ -242,7 +248,7 @@ class TestBookingAvailability:
         start = timezone.now() + timedelta(days=2)
 
         booking = create_booking(
-            meeting=create_meeting(peer=UserFactory()),
+            meeting=create_meeting(peer=make_peer()),
             seeker=UserFactory(),
             sessions=[
                 {
@@ -312,7 +318,7 @@ class TestBookingAvailability:
 class TestBookingRequestStatus:
     def test_pay_after_join_is_approved(self):
         booking = create_booking(
-            meeting=create_meeting(peer=UserFactory()),
+            meeting=create_meeting(peer=make_peer()),
             seeker=UserFactory(),
             sessions=[{"requested_duration_minutes": SESSION_DURATION}],
         )
@@ -320,7 +326,7 @@ class TestBookingRequestStatus:
         assert booking.sessions.first().status == MeetingRequestStatus.APPROVED
 
     def test_pay_before_join_awaits_payment(self):
-        meeting = create_meeting(peer=UserFactory())
+        meeting = create_meeting(peer=make_peer())
         meeting.approval_policy = ApprovalPolicy.PAY_BEFORE_JOIN
         meeting.save()
 
@@ -333,7 +339,7 @@ class TestBookingRequestStatus:
         assert booking.sessions.first().status == MeetingRequestStatus.PENDING_PAYMENT
 
     def test_approval_required_awaits_approval(self):
-        meeting = create_meeting(peer=UserFactory())
+        meeting = create_meeting(peer=make_peer())
         meeting.approval_policy = ApprovalPolicy.APPROVAL_REQUIRED
         meeting.save()
 
