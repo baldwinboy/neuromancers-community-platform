@@ -115,90 +115,130 @@ class Booking(FSMModelMixin, Timestamped):
         return total
 
     def create_checkout_session(self, request):
-        """Create a Checkout Session for this booking via the charge strategy."""
-        from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
-        from neuromancers_network.payments.charges import (  # noqa: PLC0415
-            build_charge_plan,
-        )
-        from neuromancers_network.peers.services import (  # noqa: PLC0415
-            is_eligible_peer,
-        )
+        """Create a Checkout Session for this booking (one per peer in a cart)."""
+        return create_checkout_session_for_bookings([self], request)
 
-        stripe_settings = StripeSettings.load(request)
-        if not stripe_settings.is_ready:
-            message = "Stripe is not configured"
-            raise ValueError(message)
 
-        if not is_eligible_peer(self.meeting.peer):
-            message = "The care provider is not currently eligible for bookings"
-            raise ValueError(message)
+def _line_item(meeting, amount_minor: int) -> dict:
+    return {
+        "price_data": {
+            "currency": meeting.currency.lower(),
+            "product_data": {"name": meeting.title},
+            "unit_amount": amount_minor,
+        },
+        "quantity": 1,
+    }
 
-        peer_profile = getattr(self.meeting.peer, "payment_profile", None)
-        destination = (
-            peer_profile.stripe_connect_account_id_id
-            if peer_profile is not None
-            else None
-        )
 
+def _group_by_peer(bookings) -> dict:
+    grouped: dict[int, list[Booking]] = {}
+    for booking in bookings:
+        grouped.setdefault(booking.meeting.peer_id, []).append(booking)
+    return grouped
+
+
+def _peer_session_kwargs(peer_bookings, request, stripe_settings, adaptive_pricing):
+    """Build Checkout kwargs for one peer's group of bookings."""
+    from neuromancers_network.payments.charges import build_charge_plan  # noqa: PLC0415
+    from neuromancers_network.peers.services import is_eligible_peer  # noqa: PLC0415
+
+    meeting = peer_bookings[0].meeting
+    if not is_eligible_peer(meeting.peer):
+        message = "The care provider is not currently eligible for bookings"
+        raise ValueError(message)
+
+    line_items = []
+    total_minor = 0
+    for booking in peer_bookings:
         amount = (
-            self.total_amount if self.total_amount is not None else self.compute_total()
+            booking.total_amount
+            if booking.total_amount is not None
+            else booking.compute_total()
         )
         if not amount or amount <= 0:
             message = "Booking has no amount to charge"
             raise ValueError(message)
-
         amount_minor = int(amount * 100)
-        plan = build_charge_plan(
-            amount_minor=amount_minor,
-            destination=destination,
-            stripe_settings=stripe_settings,
+        total_minor += amount_minor
+        booking.total_amount = amount
+        line_items.append(_line_item(meeting, amount_minor))
+
+    peer_profile = getattr(meeting.peer, "payment_profile", None)
+    destination = (
+        peer_profile.stripe_connect_account_id_id if peer_profile is not None else None
+    )
+    plan = build_charge_plan(
+        amount_minor=total_minor,
+        destination=destination,
+        stripe_settings=stripe_settings,
+    )
+
+    session_kwargs = {
+        "mode": "payment",
+        "adaptive_pricing": adaptive_pricing,
+        "success_url": request.build_absolute_uri("/pay/success/"),
+        "cancel_url": request.build_absolute_uri("/pay/cancelled/"),
+        "line_items": line_items,
+        "metadata": {
+            "booking_ids": ",".join(str(booking.pk) for booking in peer_bookings),
+        },
+    }
+    if plan.payment_intent_data:
+        session_kwargs["payment_intent_data"] = plan.payment_intent_data
+    if plan.automatic_tax:
+        session_kwargs["automatic_tax"] = plan.automatic_tax
+    if plan.stripe_account:
+        session_kwargs["stripe_account"] = plan.stripe_account
+    return session_kwargs
+
+
+def create_checkout_session_for_bookings(bookings, request) -> str:
+    """Create one Checkout Session per peer for *bookings*; return the first URL.
+
+    Bookings are grouped by care provider; each group becomes a single session
+    on that provider's connected account (per the charge strategy). Every
+    booking stores the resulting session id.
+    """
+    from neuromancers_network.core.models import LocalizationSettings  # noqa: PLC0415
+    from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
+
+    bookings = list(bookings)
+    if not bookings:
+        message = "No bookings to pay for"
+        raise ValueError(message)
+
+    stripe_settings = StripeSettings.load(request)
+    if not stripe_settings.is_ready:
+        message = "Stripe is not configured"
+        raise ValueError(message)
+
+    adaptive_pricing = None
+    if LocalizationSettings.load(request).exchange_rate_source == "stripe":
+        adaptive_pricing = {"enabled": True}
+
+    stripe.api_key = stripe_settings.secret_key
+    first_url = None
+    for peer_bookings in _group_by_peer(bookings).values():
+        session_kwargs = _peer_session_kwargs(
+            peer_bookings,
+            request,
+            stripe_settings,
+            adaptive_pricing,
         )
-
-        from neuromancers_network.core.models import (  # noqa: PLC0415
-            LocalizationSettings,
-        )
-
-        adaptive_pricing = None
-        if LocalizationSettings.load(request).exchange_rate_source == "stripe":
-            adaptive_pricing = {"enabled": True}
-
-        session_kwargs = {
-            "mode": "payment",
-            "adaptive_pricing": adaptive_pricing,
-            "success_url": request.build_absolute_uri("/pay/success/"),
-            "cancel_url": request.build_absolute_uri("/pay/cancelled/"),
-            "line_items": [
-                {
-                    "price_data": {
-                        "currency": self.meeting.currency.lower(),
-                        "product_data": {"name": self.meeting.title},
-                        "unit_amount": amount_minor,
-                    },
-                    "quantity": 1,
-                },
-            ],
-            "metadata": {"booking_id": str(self.pk)},
-        }
-        if plan.payment_intent_data:
-            session_kwargs["payment_intent_data"] = plan.payment_intent_data
-        if plan.automatic_tax:
-            session_kwargs["automatic_tax"] = plan.automatic_tax
-        if plan.stripe_account:
-            session_kwargs["stripe_account"] = plan.stripe_account
-
-        stripe.api_key = stripe_settings.secret_key
         session = stripe.checkout.Session.create(**session_kwargs)
         StripeSession.sync_from_stripe_data(
             session,
             api_key=stripe_settings.secret_key,
         )
-        self.stripe_checkout_session_id = session.id
-        self.total_amount = amount
-        self.save(
-            update_fields=[
-                "stripe_checkout_session_id",
-                "total_amount",
-                "updated_at",
-            ],
-        )
-        return session.url
+        for booking in peer_bookings:
+            booking.stripe_checkout_session_id = session.id
+            booking.save(
+                update_fields=[
+                    "stripe_checkout_session_id",
+                    "total_amount",
+                    "updated_at",
+                ],
+            )
+        if first_url is None:
+            first_url = session.url
+    return first_url

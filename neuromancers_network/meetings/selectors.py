@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from neuromancers_network.meetings.models import Booking
+from neuromancers_network.meetings.models import BookingStatus
 from neuromancers_network.meetings.models import MeetingRequest
 from neuromancers_network.meetings.models import Review
 from neuromancers_network.meetings.search import search_meetings
@@ -51,3 +52,14 @@ def user_payment_history(request=None, page=None):
         .select_related("meeting")
         .order_by("-created_at")
     )
+
+
+def unpaid_bookings(request=None, page=None):
+    """The signed-in member's unpaid bookings (the cart feed)."""
+    user = getattr(request, "user", None)
+    if user is None or not getattr(user, "is_authenticated", False):
+        return Booking.objects.none()
+    return Booking.objects.filter(
+        support_seeker=user,
+        status=BookingStatus.PENDING,
+    ).select_related("meeting")

@@ -5,6 +5,7 @@ import pytest
 from django.test import RequestFactory
 
 from neuromancers_network.core.models import StripeSettings
+from neuromancers_network.meetings.actions import bookings_checkout_many
 from neuromancers_network.meetings.models import ApprovalPolicy
 from neuromancers_network.meetings.models import Booking
 from neuromancers_network.meetings.models import Meeting
@@ -15,6 +16,9 @@ from neuromancers_network.meetings.models import MeetingRequestStatus
 from neuromancers_network.meetings.models import MeetingType
 from neuromancers_network.meetings.models import PricingType
 from neuromancers_network.meetings.models import RefundStatus
+from neuromancers_network.meetings.models.booking import (
+    create_checkout_session_for_bookings,
+)
 from neuromancers_network.meetings.selectors import user_payment_history
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.tests.factories import create_meeting
@@ -32,10 +36,14 @@ BOOKING_TOTAL = Decimal("20.00")
 APPLICATION_FEE_PERCENT = 10
 EXPECTED_APPLICATION_FEE_MINOR = 200
 SESSION_DURATION = 30
+LONGER_SESSION_DURATION = 60
 TIER_PRICE = Decimal("15.00")
 PAID_TOTAL = Decimal("10.00")
 EXPECTED_REQUEST_FEE_MINOR = 250
 EXPECTED_PARTIAL_REFUND_MINOR = 500
+EXPECTED_LINE_ITEM_COUNT = 2
+EXPECTED_PEER_SESSION_COUNT = 2
+HTTP_REDIRECT = 302
 
 
 def configure_stripe(
@@ -64,8 +72,8 @@ def _peer_with_account(account_id):
     return peer
 
 
-def make_connected_peer():
-    return _peer_with_account(PEER_ACCOUNT_ID)
+def make_connected_peer(account_id=PEER_ACCOUNT_ID):
+    return _peer_with_account(account_id)
 
 
 def make_peer_with_account():
@@ -429,3 +437,112 @@ class TestPaymentHistory:
         results = user_payment_history(self._request(seeker))
 
         assert [row.pk for row in results] == [booking.sessions.first().pk]
+
+
+class TestCartCheckout:
+    def test_groups_multiple_bookings_per_peer_into_one_session(self):
+        configure_stripe()
+        meeting = create_meeting(peer=make_connected_peer())
+        seeker = UserFactory()
+        first = create_booking(
+            meeting=meeting,
+            seeker=seeker,
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+        second = create_booking(
+            meeting=meeting,
+            seeker=seeker,
+            sessions=[{"requested_duration_minutes": LONGER_SESSION_DURATION}],
+        )
+
+        with (
+            patch(
+                "neuromancers_network.meetings.models.booking.stripe.checkout."
+                "Session.create",
+            ) as create_session,
+            patch(
+                "neuromancers_network.meetings.models.booking."
+                "StripeSession.sync_from_stripe_data",
+            ),
+        ):
+            create_session.return_value = type(
+                "Session",
+                (),
+                {"id": "cs_cart", "url": "https://cart.example"},
+            )()
+            url = create_checkout_session_for_bookings(
+                [first, second],
+                RequestFactory().get("/"),
+            )
+
+        assert url == "https://cart.example"
+        assert create_session.call_count == 1
+        assert (
+            len(create_session.call_args.kwargs["line_items"])
+            == EXPECTED_LINE_ITEM_COUNT
+        )
+
+    def test_one_session_per_peer(self):
+        configure_stripe()
+        seeker = UserFactory()
+        first = create_booking(
+            meeting=create_meeting(peer=make_connected_peer("acct_p1")),
+            seeker=seeker,
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+        second = create_booking(
+            meeting=create_meeting(peer=make_connected_peer("acct_p2")),
+            seeker=seeker,
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+
+        with (
+            patch(
+                "neuromancers_network.meetings.models.booking.stripe.checkout."
+                "Session.create",
+            ) as create_session,
+            patch(
+                "neuromancers_network.meetings.models.booking."
+                "StripeSession.sync_from_stripe_data",
+            ),
+        ):
+            create_session.return_value = type(
+                "Session",
+                (),
+                {"id": "cs", "url": "https://cart.example"},
+            )()
+            create_checkout_session_for_bookings(
+                [first, second],
+                RequestFactory().get("/"),
+            )
+
+        assert create_session.call_count == EXPECTED_PEER_SESSION_COUNT
+
+    def test_action_redirects_to_first_session(self):
+        configure_stripe()
+        booking = make_booking()
+        request = RequestFactory().post("/", {})
+        request.user = booking.support_seeker
+
+        with (
+            patch(
+                "neuromancers_network.meetings.models.booking.stripe.checkout."
+                "Session.create",
+            ) as create_session,
+            patch(
+                "neuromancers_network.meetings.models.booking."
+                "StripeSession.sync_from_stripe_data",
+            ),
+        ):
+            create_session.return_value = type(
+                "Session",
+                (),
+                {"id": "cs_many", "url": "https://cart.example"},
+            )()
+            response = bookings_checkout_many(
+                request,
+                {"bookings": [booking.pk]},
+            )
+
+        assert response.status_code == HTTP_REDIRECT
+        assert response.url == "https://cart.example"

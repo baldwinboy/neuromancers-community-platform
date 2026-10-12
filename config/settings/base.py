@@ -690,6 +690,13 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "queryset": "neuromancers_network.meetings.selectors.user_payment_history",
         "select_related": ["meeting"],
     },
+    "unpaid_booking": {
+        "label": _("Unpaid booking"),
+        "model": "meetings.Booking",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.unpaid_bookings",
+        "select_related": ["meeting"],
+    },
     "peer_application": {
         "label": _("Peer application"),
         "model": "peers.PeerApplication",
@@ -931,6 +938,10 @@ WAGTAIL_DAISIE_ACTIONS = {
     "bookings.checkout": {
         "label": _("Book and pay"),
         "handler": "neuromancers_network.meetings.actions.bookings_checkout",
+    },
+    "bookings.checkout_many": {
+        "label": _("Pay for selected bookings"),
+        "handler": "neuromancers_network.meetings.actions.bookings_checkout_many",
     },
     "bookings.request": {
         "label": _("Request booking"),

@@ -11,8 +11,12 @@ from neuromancers_network.core.actions import as_list
 from neuromancers_network.core.actions import redirect_back
 from neuromancers_network.core.actions import require_authenticated
 from neuromancers_network.meetings.models import Booking
+from neuromancers_network.meetings.models import BookingStatus
 from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingRequest
+from neuromancers_network.meetings.models.booking import (
+    create_checkout_session_for_bookings,
+)
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.services import create_meeting
 from neuromancers_network.meetings.services import default_terms_for
@@ -168,6 +172,23 @@ def bookings_checkout(request, data):
     return redirect(checkout_url)
 
 
+def bookings_checkout_many(request, data):
+    """Create one Checkout Session per peer for the selected unpaid bookings."""
+    user = require_authenticated(request)
+    ids = as_list(data, "bookings") or as_list(data, "booking_ids")
+    if not ids:
+        ids = as_list(data, "booking")
+    bookings = Booking.objects.filter(
+        pk__in=ids,
+        support_seeker=user,
+        status=BookingStatus.PENDING,
+    )
+    if not bookings.exists():
+        message = "No unpaid bookings were selected"
+        raise PermissionDenied(message)
+    return redirect(create_checkout_session_for_bookings(bookings, request))
+
+
 def bookings_request_refund(request, data):
     """Raise a refund request against one of the seeker's paid sessions."""
     user = require_authenticated(request)
@@ -195,5 +216,6 @@ HANDLERS = {
     "meetings.apply_terms_template": meetings_apply_terms_template,
     "bookings.request": bookings_request,
     "bookings.checkout": bookings_checkout,
+    "bookings.checkout_many": bookings_checkout_many,
     "bookings.request_refund": bookings_request_refund,
 }
