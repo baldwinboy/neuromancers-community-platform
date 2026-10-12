@@ -202,7 +202,10 @@ class RefundRequestFormPage(DaisieFormPage):
         ).first()
         if meeting_request is None:
             return None
-        meeting_request.request_refund(data.get("reason", ""))
+        meeting_request.request_refund(
+            data.get("reason", ""),
+            amount=data.get("amount") or None,
+        )
         return meeting_request
 
 

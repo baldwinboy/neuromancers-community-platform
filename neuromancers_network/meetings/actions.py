@@ -147,7 +147,10 @@ def bookings_request_refund(request, data):
     if meeting_request.support_seeker_id != user.pk and not user.is_moderator:
         message = "You cannot request a refund for this booking"
         raise PermissionDenied(message)
-    meeting_request.request_refund(data.get("reason", ""))
+    meeting_request.request_refund(
+        data.get("reason", ""),
+        amount=data.get("amount") or None,
+    )
     return redirect_back(request)
 
 

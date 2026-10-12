@@ -70,3 +70,25 @@ def build_charge_plan(
         payment_intent_data={"application_fee_amount": application_fee_amount},
         automatic_tax=automatic_tax,
     )
+
+
+def build_refund_kwargs(
+    *,
+    stripe_settings: StripeSettings,
+    destination: str | None,
+) -> dict:
+    """Resolve Stripe Refund parameters for the configured charge type.
+
+    Direct charges refund on the connected account; destination charges reverse
+    the transfer. Raises ``ValueError`` when a direct refund has no connected
+    account.
+    """
+    charge_type = stripe_settings.charge_type
+    if charge_type == StripeSettings.ChargeType.DIRECT:
+        if not destination:
+            message = "Peer has no connected Stripe account"
+            raise ValueError(message)
+        return {"stripe_account": destination, "refund_application_fee": True}
+    if charge_type == StripeSettings.ChargeType.DESTINATION:
+        return {"reverse_transfer": True, "refund_application_fee": True}
+    return {}

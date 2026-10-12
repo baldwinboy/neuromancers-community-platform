@@ -337,7 +337,7 @@ class MeetingRequest(FSMModelMixin, Timestamped):
             self.mark_paid()
         self.save(validate=False)
 
-    def request_refund(self, reason: str):
+    def request_refund(self, reason: str, amount=None):
         """Create a refund request for this meeting request."""
         from neuromancers_network.meetings.models import RefundRequest  # noqa: PLC0415
 
@@ -346,7 +346,7 @@ class MeetingRequest(FSMModelMixin, Timestamped):
             defaults={"reason": reason},
         )
         refund_request.reason = reason
-        refund_request.request_refund()
+        refund_request.request_refund(amount=amount)
         refund_request.save()
         return refund_request
 
