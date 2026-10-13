@@ -315,6 +315,25 @@ class UnpublishMeetingBulkAction(ConfirmBulkAction):
         return unpublished, 0
 
 
+class DeleteMeetingBulkAction(ConfirmBulkAction):
+    models = [Meeting]
+    display_name = _("Delete")
+    action_type = "delete"
+    aria_label = _("Delete selected meetings")
+    icon = "bin"
+    confirm_message = _("Delete the selected meetings? This cannot be undone.")
+    action_button_text = _("Yes, delete")
+    no_action_button_text = _("No, go back")
+
+    @classmethod
+    def execute_action(cls, objects, **kwargs):
+        deleted = 0
+        for meeting in objects:
+            meeting.delete()
+            deleted += 1
+        return deleted, 0
+
+
 class ArchiveMeetingBulkAction(ConfirmBulkAction):
     models = [Meeting]
     display_name = _("Archive")
@@ -427,6 +446,7 @@ class UnpublishReviewBulkAction(ConfirmBulkAction):
 for action_class in [
     PublishMeetingBulkAction,
     UnpublishMeetingBulkAction,
+    DeleteMeetingBulkAction,
     ArchiveMeetingBulkAction,
     ApproveRefundBulkAction,
     RejectRefundBulkAction,

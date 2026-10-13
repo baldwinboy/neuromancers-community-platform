@@ -17,6 +17,7 @@ from neuromancers_network.meetings.actions import meetings_delete
 from neuromancers_network.meetings.actions import refunds_approve
 from neuromancers_network.meetings.forms_pages import MeetingEditFormPage
 from neuromancers_network.meetings.models import ApprovalPolicy
+from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingPriceOption
 from neuromancers_network.meetings.models import MeetingPriceTier
 from neuromancers_network.meetings.models import MeetingRequestStatus
@@ -27,9 +28,12 @@ from neuromancers_network.meetings.models import RefundRequest
 from neuromancers_network.meetings.models import RefundStatus
 from neuromancers_network.meetings.selectors import my_meetings
 from neuromancers_network.meetings.services import apply_duration_tiers
+from neuromancers_network.meetings.services import cancel_and_refund_for_peer
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.services import create_meeting
+from neuromancers_network.meetings.services import delete_all
 from neuromancers_network.meetings.services import publish_meeting
+from neuromancers_network.meetings.services import unpublish_all
 from neuromancers_network.meetings.tests.factories import create_meeting as make_meeting
 from neuromancers_network.meetings.tier_fields import DurationTiersField
 from neuromancers_network.peers.tests.factories import make_peer
@@ -398,3 +402,47 @@ class TestHostActions:
         refund.refresh_from_db()
         assert refund.status == RefundStatus.APPROVED
         assert refund.stripe_refund_id == "re_host"
+
+
+class TestBulkMeetingServices:
+    def test_unpublish_all_only_published_of_peer(self):
+        peer = make_peer()
+        published = make_meeting(peer=peer, title="A", status=MeetingStatus.PUBLISHED)
+        draft = make_meeting(peer=peer, title="B", status=MeetingStatus.DRAFT)
+        other = make_meeting(
+            peer=make_peer(),
+            title="C",
+            status=MeetingStatus.PUBLISHED,
+        )
+
+        count = unpublish_all(peer)
+
+        published.refresh_from_db()
+        draft.refresh_from_db()
+        other.refresh_from_db()
+        assert count == 1
+        assert published.status == MeetingStatus.DRAFT
+        assert draft.status == MeetingStatus.DRAFT
+        assert other.status == MeetingStatus.PUBLISHED
+
+    def test_delete_all_scoped_to_peer(self):
+        peer = make_peer()
+        make_meeting(peer=peer, title="A")
+        make_meeting(peer=peer, title="B")
+        make_meeting(peer=make_peer(), title="C")
+
+        deleted = delete_all(peer)
+
+        assert deleted == 2  # noqa: PLR2004
+        assert not Meeting.objects.filter(peer=peer).exists()
+
+    def test_cancel_and_refund_peer_bookings(self):
+        peer = make_peer()
+        paid = _paid_request(peer, refund_requires_approval=True)
+
+        cancelled = cancel_and_refund_for_peer(peer)
+
+        paid.refresh_from_db()
+        assert cancelled == 1
+        assert paid.status == MeetingRequestStatus.CANCELLED
+        assert RefundRequest.objects.filter(meeting_request=paid).exists()

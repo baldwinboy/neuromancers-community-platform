@@ -83,6 +83,18 @@ def _unpublish_meetings(user) -> None:
         meeting.save(validate=False, update_fields=["status", "updated_at"])
 
 
+def _cancel_bookings_for_peer(user) -> None:
+    """Cancel the departing peer's active bookings and refund paid sessions."""
+    from neuromancers_network.meetings.services import (  # noqa: PLC0415
+        cancel_and_refund_for_peer,
+    )
+
+    try:
+        cancel_and_refund_for_peer(user)
+    except Exception:
+        logger.exception("Failed to cancel bookings for user %s", user.pk)
+
+
 def _set_calendar_token_active(user, *, active: bool) -> None:
     token = getattr(user, "calendar_feed_token", None)
     if token is not None and token.is_active != active:
@@ -105,6 +117,7 @@ def deactivate_account(user, *, actor=None, request=None, reason: str = "") -> N
     user.save(update_fields=["is_active", "deactivated_at", "deactivation_reason"])
 
     _unpublish_meetings(user)
+    _cancel_bookings_for_peer(user)
     _set_calendar_token_active(user, active=False)
 
     _announce(

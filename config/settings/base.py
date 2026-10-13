@@ -974,6 +974,14 @@ WAGTAIL_DAISIE_ACTIONS = {
         "label": _("Delete meeting"),
         "handler": "neuromancers_network.meetings.actions.meetings_delete",
     },
+    "meetings.unpublish_all": {
+        "label": _("Unpublish all meetings"),
+        "handler": "neuromancers_network.meetings.actions.meetings_unpublish_all",
+    },
+    "meetings.delete_all": {
+        "label": _("Delete all meetings"),
+        "handler": "neuromancers_network.meetings.actions.meetings_delete_all",
+    },
     "meetings.restore_default_terms": {
         "label": _("Restore default terms"),
         "handler": "neuromancers_network.meetings.actions.meetings_restore_default_terms",

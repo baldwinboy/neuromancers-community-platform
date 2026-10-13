@@ -379,6 +379,32 @@ def emit_meeting_published(sender, instance, name, source, target, **kwargs):
         logger.exception("Failed to emit peer_published_meeting event")
 
 
+# --- Meeting: unpublished (published -> draft) ------------------------------
+
+
+def emit_meeting_unpublished(sender, instance, name, source, target, **kwargs):
+    if name != "unpublish":
+        return
+    try:
+        emit(
+            "meeting_unpublished",
+            payload={
+                "actor_user_id": user_id(instance.peer),
+                "recipient_user_ids": [user_id(instance.peer)],
+                "object_type": "meeting",
+                "object_id": instance.pk,
+                "meta": {
+                    "meeting_id": instance.pk,
+                    "meeting_title": instance.title,
+                    "peer_user_id": user_id(instance.peer),
+                },
+            },
+            event_ref=f"meeting.{instance.pk}.unpublished",
+        )
+    except Exception:
+        logger.exception("Failed to emit meeting_unpublished event")
+
+
 # --- Payments (dj-stripe invoices) ------------------------------------------
 
 PAYMENT_EVENTS = [
@@ -432,6 +458,7 @@ post_transition.connect(emit_refund_transition, sender=RefundRequest)
 post_save.connect(emit_review_created, sender=Review)
 post_transition.connect(emit_meeting_cancelled, sender=Meeting)
 post_transition.connect(emit_meeting_published, sender=Meeting)
+post_transition.connect(emit_meeting_unpublished, sender=Meeting)
 
 # Peer profile / application (plain-field state changes)
 pre_save.connect(_stash_pre_state, sender=PeerProfile)

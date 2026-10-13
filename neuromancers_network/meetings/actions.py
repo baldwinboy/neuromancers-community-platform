@@ -23,7 +23,9 @@ from neuromancers_network.meetings.models.booking import (
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.services import create_meeting
 from neuromancers_network.meetings.services import default_terms_for
+from neuromancers_network.meetings.services import delete_all
 from neuromancers_network.meetings.services import publish_meeting
+from neuromancers_network.meetings.services import unpublish_all
 
 _ALLOWED_MEETING_FIELDS = {
     "title",
@@ -126,6 +128,20 @@ def meetings_delete(request, data):
     user = require_authenticated(request)
     meeting = _owned_meeting(user, data)
     meeting.delete()
+    return redirect_back(request)
+
+
+def meetings_unpublish_all(request, data):
+    """Unpublish every published meeting owned by the signed-in peer."""
+    user = require_authenticated(request)
+    unpublish_all(user)
+    return redirect_back(request)
+
+
+def meetings_delete_all(request, data):
+    """Delete every meeting owned by the signed-in peer."""
+    user = require_authenticated(request)
+    delete_all(user)
     return redirect_back(request)
 
 
@@ -299,8 +315,10 @@ HANDLERS = {
     "meetings.create": meetings_create,
     "meetings.publish": meetings_publish,
     "meetings.unpublish": meetings_unpublish,
+    "meetings.unpublish_all": meetings_unpublish_all,
     "meetings.archive": meetings_archive,
     "meetings.delete": meetings_delete,
+    "meetings.delete_all": meetings_delete_all,
     "meetings.restore_default_terms": meetings_restore_default_terms,
     "meetings.apply_terms_template": meetings_apply_terms_template,
     "bookings.request": bookings_request,

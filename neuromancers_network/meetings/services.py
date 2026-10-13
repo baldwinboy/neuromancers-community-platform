@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from datetime import timedelta
 from decimal import Decimal
@@ -12,6 +13,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.translation import gettext_lazy as _
+from django_fsm import can_proceed
 
 from neuromancers_network.peers.services import is_eligible_peer
 from neuromancers_network.taxonomy.validators import validate_allowed_tags
@@ -22,6 +24,8 @@ if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser
 
     from .models import Meeting
+
+logger = logging.getLogger(__name__)
 
 
 def default_terms_for(peer: AbstractBaseUser) -> str:
@@ -69,6 +73,69 @@ def publish_meeting(meeting: Meeting) -> Meeting:
     meeting.publish()
     meeting.save(validate=False, update_fields=["status", "updated_at"])
     return meeting
+
+
+def unpublish_all(peer) -> int:
+    """Unpublish every currently published meeting owned by *peer*."""
+    from .models import Meeting  # noqa: PLC0415
+    from .models import MeetingStatus  # noqa: PLC0415
+
+    unpublished = 0
+    meetings = Meeting.objects.filter(peer=peer, status=MeetingStatus.PUBLISHED)
+    for meeting in meetings:
+        meeting.unpublish()
+        meeting.save(validate=False, update_fields=["status", "updated_at"])
+        unpublished += 1
+    return unpublished
+
+
+def delete_all(peer) -> int:
+    """Delete every meeting owned by *peer*. Returns the number deleted."""
+    from .models import Meeting  # noqa: PLC0415
+
+    meetings = Meeting.objects.filter(peer=peer)
+    deleted = meetings.count()
+    meetings.delete()
+    return deleted
+
+
+def cancel_and_refund_for_peer(peer) -> int:
+    """Cancel a peer's active bookings and request refunds for paid sessions.
+
+    Used when a peer withdraws (deactivation/deletion). Refunds follow the
+    meeting's approval policy (auto-issued or left pending for review); a Stripe
+    failure is logged and never blocks the cancellation. Cancelling emits the
+    existing ``booking_cancelled`` notification to the seeker.
+    """
+    from .models import MeetingRequest  # noqa: PLC0415
+    from .models import MeetingRequestStatus  # noqa: PLC0415
+
+    active = (
+        MeetingRequest.objects.filter(meeting__peer=peer)
+        .exclude(
+            status__in=[
+                MeetingRequestStatus.CANCELLED,
+                MeetingRequestStatus.COMPLETED,
+                MeetingRequestStatus.REJECTED,
+            ],
+        )
+        .select_related("meeting")
+    )
+    cancelled = 0
+    for request in active:
+        if request.status == MeetingRequestStatus.PAID:
+            try:
+                request.request_refund("Care provider is no longer available")
+            except Exception:
+                logger.exception(
+                    "Failed to request refund for meeting request %s",
+                    request.pk,
+                )
+        if can_proceed(request.cancel):
+            request.cancel()
+            request.save(validate=False, update_fields=["status", "updated_at"])
+            cancelled += 1
+    return cancelled
 
 
 def default_access_needs_for(seeker: AbstractBaseUser) -> str:
