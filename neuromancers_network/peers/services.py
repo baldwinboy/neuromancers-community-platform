@@ -31,6 +31,9 @@ def eligibility_failures(user: AbstractBaseUser) -> list[str]:
     """Return the reasons *user* is not (yet) an eligible peer."""
     failures: list[str] = []
 
+    if not getattr(user, "is_active", True):
+        failures.append("deactivated")
+
     profile = getattr(user, "peer_profile", None)
     if profile is None or not profile.is_approved:
         failures.append("not_approved")
@@ -70,6 +73,7 @@ def eligible_peer_q(prefix: str = "") -> Q:
     """
     requirements = peer_requirements()
     query = Q(**{f"{prefix}peer_profile__is_approved": True})
+    query &= Q(**{f"{prefix}is_active": True})
     if requirements.require_kyc:
         query &= Q(**{f"{prefix}payment_profile__kyc_completed": True})
     if requirements.require_subscription:

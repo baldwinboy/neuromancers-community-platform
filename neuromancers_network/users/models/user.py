@@ -35,6 +35,17 @@ class User(FSMModelMixin, index.Indexed, AbstractUser):
         blank=True,
         help_text=_("When the member last changed their primary email address."),
     )
+    deactivated_at = models.DateTimeField(
+        _("Deactivated at"),
+        null=True,
+        blank=True,
+        help_text=_("When the member deactivated their account."),
+    )
+    deactivation_reason = models.TextField(
+        _("Deactivation reason"),
+        blank=True,
+        help_text=_("Optional reason recorded when the account was deactivated."),
+    )
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
 
@@ -111,6 +122,10 @@ class User(FSMModelMixin, index.Indexed, AbstractUser):
     @property
     def is_moderator(self) -> bool:
         return bool(self.is_staff or self.is_superuser)
+
+    @property
+    def is_deactivated(self) -> bool:
+        return self.deactivated_at is not None
 
     @property
     def is_peer(self) -> bool:

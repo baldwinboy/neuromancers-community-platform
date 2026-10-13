@@ -89,6 +89,12 @@ def needs_tos_acceptance(request: HttpRequest) -> bool:
     return user is not None and not user.accepted_tos
 
 
+def is_deactivated(request: HttpRequest) -> bool:
+    """Signed-in members whose account is deactivated."""
+    user = _request_user(request)
+    return user is not None and bool(getattr(user, "is_deactivated", False))
+
+
 def is_moderator(request: HttpRequest) -> bool:
     return _is_moderator(_request_user(request))
 
@@ -213,3 +219,10 @@ def needs_tos_acceptance_users():
     from django.contrib.auth import get_user_model  # noqa: PLC0415
 
     return get_user_model().objects.filter(is_active=True, accepted_tos=False)
+
+
+def deactivated_users():
+    """Members whose account is deactivated."""
+    from django.contrib.auth import get_user_model  # noqa: PLC0415
+
+    return get_user_model().objects.filter(deactivated_at__isnull=False)

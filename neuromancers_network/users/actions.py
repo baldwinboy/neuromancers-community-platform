@@ -78,10 +78,53 @@ def accept_tos(request, data):
     return redirect_back(request)
 
 
+def _lifecycle_target(actor, data):
+    """Return the user to act on: the actor, or a moderator-chosen target."""
+    from django.contrib.auth import get_user_model  # noqa: PLC0415
+
+    target = None
+    if hasattr(data, "get"):
+        target = data.get("user") or data.get("user_id") or data.get("target")
+    if not target or str(target) == str(actor.pk):
+        return actor
+    if not actor.is_moderator:
+        message = "You cannot manage this account"
+        raise PermissionDenied(message)
+    user_model = get_user_model()
+    user = user_model.objects.filter(pk=target).first()
+    if user is None:
+        message = "Unknown account"
+        raise PermissionDenied(message)
+    return user
+
+
+def account_deactivate(request, data):
+    """Deactivate the member's own account, or a target as a moderator."""
+    from neuromancers_network.users.services import deactivate_account  # noqa: PLC0415
+
+    actor = require_authenticated(request)
+    target = _lifecycle_target(actor, data)
+    reason = data.get("reason", "") if hasattr(data, "get") else ""
+    deactivate_account(target, actor=actor, request=request, reason=reason)
+    return redirect_back(request)
+
+
+def account_reactivate(request, data):
+    """Reactivate the member's own account, or a target as a moderator."""
+    from neuromancers_network.users.services import reactivate_account  # noqa: PLC0415
+
+    actor = require_authenticated(request)
+    target = _lifecycle_target(actor, data)
+    reactivate_account(target, actor=actor, request=request)
+    return redirect_back(request)
+
+
 HANDLERS = {
     "profile.edit": profile_edit,
     "profile.save_access_needs": profile_save_access_needs,
     "profile.save_visibility": profile_save_visibility,
     "profile.save_notification_preferences": profile_save_notification_preferences,
     "accept_tos": accept_tos,
+    "account.deactivate": account_deactivate,
+    "account.reactivate": account_reactivate,
 }

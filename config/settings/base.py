@@ -890,6 +890,11 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
         "rule": "neuromancers_network.core.audience.needs_tos_acceptance",
         "queryset": ("neuromancers_network.core.audience.needs_tos_acceptance_users"),
     },
+    "deactivated": {
+        "label": "Deactivated members",
+        "rule": "neuromancers_network.core.audience.is_deactivated",
+        "queryset": "neuromancers_network.core.audience.deactivated_users",
+    },
     "meeting_host": {
         "label": "Meeting host",
         "rule": "neuromancers_network.core.audience.is_meeting_host",
@@ -1063,6 +1068,14 @@ WAGTAIL_DAISIE_ACTIONS = {
     "accept_tos": {
         "label": _("Accept Terms and Conditions"),
         "handler": "neuromancers_network.users.actions.accept_tos",
+    },
+    "account.deactivate": {
+        "label": _("Deactivate account"),
+        "handler": "neuromancers_network.users.actions.account_deactivate",
+    },
+    "account.reactivate": {
+        "label": _("Reactivate account"),
+        "handler": "neuromancers_network.users.actions.account_reactivate",
     },
     # Settings-page sections (rendered by an app template override).
     "settings.account": {
