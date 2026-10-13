@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+from neuromancers_network.moderation.visibility import exclude_hidden
+from neuromancers_network.moderation.visibility import is_blocked_pair
 from neuromancers_network.peers.models.availability import PeerAvailability
 from neuromancers_network.peers.search import search_peers
 from neuromancers_network.peers.services import eligible_peer_q
+from neuromancers_network.peers.services import is_eligible_peer
 
 
 def approved_peers(request=None, page=None):
     """Currently eligible peer profiles (the default care-provider feed)."""
-    return (
+    queryset = (
         search_peers().select_related("user").filter(eligible_peer_q(prefix="user__"))
     )
+    return exclude_hidden(queryset, getattr(request, "user", None), owner_field="user")
 
 
 def my_availability(request=None, page=None):
@@ -61,6 +65,9 @@ def peer_calendar_events(request=None, page=None):
     viewer_id = getattr(viewer, "pk", None)
     if viewer_id == owner.pk:
         return queryset
+
+    if is_blocked_pair(viewer, owner) or not is_eligible_peer(owner):
+        return CalendarEvent.objects.none()
 
     profile = getattr(owner, "user_profile", None)
     if profile is None or not profile.show_calendar:

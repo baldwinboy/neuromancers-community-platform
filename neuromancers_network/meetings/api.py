@@ -4,6 +4,8 @@ from ninja import Router
 
 from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.search import search_meetings
+from neuromancers_network.moderation.visibility import exclude_hidden
+from neuromancers_network.peers.services import eligible_peer_q
 
 router = Router(tags=["meetings"])
 
@@ -47,11 +49,17 @@ def search_meetings_endpoint(
     country_codes = [
         code.strip() for code in countries.split(",") if code.strip()
     ] or None
-    return search_meetings(
+    queryset = search_meetings(
         languages=lang_codes,
         tags=tag_names,
         countries=country_codes,
-    ).prefetch_related(
+    ).filter(eligible_peer_q(prefix="peer__"))
+    queryset = exclude_hidden(
+        queryset,
+        getattr(request, "user", None),
+        owner_field="peer",
+    )
+    return queryset.prefetch_related(
         "languages",
         "tags",  # type: ignore[misc]
     )

@@ -217,6 +217,14 @@ def create_booking(  # noqa: PLR0913
         message = _("This care provider is not currently available for bookings.")
         raise ValidationError(message)
 
+    from neuromancers_network.moderation.visibility import (  # noqa: PLC0415
+        is_blocked_pair,
+    )
+
+    if is_blocked_pair(seeker, meeting.peer):
+        message = _("This care provider is not available for bookings.")
+        raise ValidationError(message)
+
     if access_needs is None:
         access_needs = default_access_needs_for(seeker)
 

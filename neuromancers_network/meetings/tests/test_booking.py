@@ -13,6 +13,7 @@ from neuromancers_network.meetings.models import MeetingType
 from neuromancers_network.meetings.models import PricingType
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.tests.factories import create_meeting
+from neuromancers_network.moderation.models import UserBlock
 from neuromancers_network.peers.models import CalendarEvent
 from neuromancers_network.peers.tests.factories import make_availability
 from neuromancers_network.peers.tests.factories import make_peer
@@ -65,6 +66,15 @@ class TestCreateBooking:
 
         with pytest.raises(ValidationError, match="not currently available"):
             create_booking(meeting=meeting, seeker=UserFactory())
+
+    def test_blocked_seeker_cannot_book_peer(self):
+        peer = make_peer()
+        meeting = create_meeting(peer=peer)
+        seeker = UserFactory()
+        UserBlock.objects.create(blocker=seeker, blocked=peer)
+
+        with pytest.raises(ValidationError, match="not available"):
+            create_booking(meeting=meeting, seeker=seeker)
 
     def test_creates_sessions(self):
         booking = create_booking(

@@ -150,6 +150,32 @@ def register_stripe_admin_urls():
     ]
 
 
+@hooks.register("before_serve_page")
+def hide_inaccessible_detail_pages(page, request, args, kwargs):
+    """Return the daisIE 404 for a detail page whose source is not viewable.
+
+    Generated detail pages stay ``live`` after their source is unpublished, a
+    plan lapses, or a block is placed (the bridge only ever publishes), so the
+    visibility rule is re-applied per request rather than trusted from page
+    state. Non-detail pages (no ``source``) are left untouched.
+    """
+    specific = getattr(page, "specific", page)
+    source = getattr(specific, "source", None)
+    if source is None:
+        return None
+
+    from neuromancers_network.moderation.visibility import (  # noqa: PLC0415
+        viewer_can_view_source,
+    )
+
+    if viewer_can_view_source(source, getattr(request, "user", None)):
+        return None
+
+    from wagtail_daisIE.errors.handlers import render_error_page  # noqa: PLC0415
+
+    return render_error_page(request, 404)
+
+
 # Prevent pages from being created with reserved routes
 @hooks.register("before_create_page")
 def prevent_reserved_routes_before_create_page(request, parent_page):

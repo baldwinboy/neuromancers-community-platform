@@ -72,9 +72,13 @@ def unblock_user(blocker, blocked, *, request=None) -> None:
 
 
 def blocked_user_ids(user) -> set[int]:
-    """IDs of the members *user* has blocked (for viewer-scoped filtering)."""
-    if user is None or not getattr(user, "is_authenticated", False):
-        return set()
-    return set(
-        UserBlock.objects.filter(blocker=user).values_list("blocked_id", flat=True),
+    """IDs hidden from *user* by a pairwise block (symmetric).
+
+    Thin alias for :func:`neuromancers_network.moderation.visibility.hidden_user_ids`;
+    a block hides each party's content from the other.
+    """
+    from neuromancers_network.moderation.visibility import (  # noqa: PLC0415
+        hidden_user_ids,
     )
+
+    return hidden_user_ids(user)

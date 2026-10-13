@@ -2,8 +2,10 @@ from ninja import ModelSchema
 from ninja import Query
 from ninja import Router
 
+from neuromancers_network.moderation.visibility import exclude_hidden
 from neuromancers_network.peers.models import PeerProfile
 from neuromancers_network.peers.search import search_peers
+from neuromancers_network.peers.services import eligible_peer_q
 
 router = Router(tags=["peers"])
 
@@ -50,11 +52,17 @@ def search_peers_endpoint(
     country_codes = [
         code.strip() for code in countries.split(",") if code.strip()
     ] or None
-    return search_peers(
+    queryset = search_peers(
         languages=lang_codes,
         tags=tag_names,
         countries=country_codes,
-    ).prefetch_related(
+    ).filter(eligible_peer_q(prefix="user__"))
+    queryset = exclude_hidden(
+        queryset,
+        getattr(request, "user", None),
+        owner_field="user",
+    )
+    return queryset.prefetch_related(
         "languages",
         "tags",  # type: ignore[misc]
         "user",

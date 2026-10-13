@@ -7,12 +7,14 @@ from neuromancers_network.meetings.models import BookingStatus
 from neuromancers_network.meetings.models import MeetingRequest
 from neuromancers_network.meetings.models import Review
 from neuromancers_network.meetings.search import search_meetings
+from neuromancers_network.moderation.visibility import exclude_hidden
 from neuromancers_network.peers.services import eligible_peer_q
 
 
 def published_meetings(request=None, page=None):
     """Published meetings from currently eligible peers (the default feed)."""
-    return search_meetings().filter(eligible_peer_q(prefix="peer__"))
+    queryset = search_meetings().filter(eligible_peer_q(prefix="peer__"))
+    return exclude_hidden(queryset, getattr(request, "user", None), owner_field="peer")
 
 
 def my_meetings(request=None, page=None):
@@ -30,8 +32,15 @@ def my_meetings(request=None, page=None):
 
 
 def published_reviews(request=None, page=None):
-    """Published reviews, with their peer prefetched."""
-    return Review.objects.filter(is_published=True).select_related("peer", "reviewer")
+    """Published reviews from eligible peers, minus block-hidden parties."""
+    queryset = (
+        Review.objects.filter(is_published=True)
+        .filter(eligible_peer_q(prefix="peer__"))
+        .select_related("peer", "reviewer")
+    )
+    viewer = getattr(request, "user", None)
+    queryset = exclude_hidden(queryset, viewer, owner_field="peer")
+    return exclude_hidden(queryset, viewer, owner_field="reviewer")
 
 
 def user_bookings(request=None, page=None):
