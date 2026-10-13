@@ -63,12 +63,3 @@ def data_export_request(request, data):
     user = require_authenticated(request)
     request_data_export(user)
     return redirect_back(request)
-
-
-HANDLERS = {
-    "account.delete_request": account_delete_request,
-    "account.delete_cancel": account_delete_cancel,
-    "user.block": user_block,
-    "user.unblock": user_unblock,
-    "data.export_request": data_export_request,
-}

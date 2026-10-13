@@ -164,15 +164,3 @@ def availability_delete(request, data):
         raise PermissionDenied(message)
     window.delete()
     return redirect_back(request)
-
-
-HANDLERS = {
-    "peers.apply": peers_apply,
-    "peer.connect_stripe": peer_connect_stripe,
-    "peer.subscribe": peer_subscribe,
-    "peer.open_stripe_dashboard": peer_open_stripe_dashboard,
-    "peer.accept_provider_agreement": peer_accept_provider_agreement,
-    "peer.stripe_disconnect": peer_stripe_disconnect,
-    "availability.create": availability_create,
-    "availability.delete": availability_delete,
-}

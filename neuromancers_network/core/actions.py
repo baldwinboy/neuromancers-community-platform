@@ -78,9 +78,3 @@ def calendar_rotate_token(request, data):
     token.is_active = True
     token.save()
     return redirect_back(request)
-
-
-HANDLERS = {
-    "calendar.revoke_token": calendar_revoke_token,
-    "calendar.rotate_token": calendar_rotate_token,
-}

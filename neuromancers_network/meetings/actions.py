@@ -309,25 +309,3 @@ def bookings_request_refund(request, data):
         amount=data.get("amount") or None,
     )
     return redirect_back(request)
-
-
-HANDLERS = {
-    "meetings.create": meetings_create,
-    "meetings.publish": meetings_publish,
-    "meetings.unpublish": meetings_unpublish,
-    "meetings.unpublish_all": meetings_unpublish_all,
-    "meetings.archive": meetings_archive,
-    "meetings.delete": meetings_delete,
-    "meetings.delete_all": meetings_delete_all,
-    "meetings.restore_default_terms": meetings_restore_default_terms,
-    "meetings.apply_terms_template": meetings_apply_terms_template,
-    "bookings.request": bookings_request,
-    "bookings.checkout": bookings_checkout,
-    "bookings.checkout_many": bookings_checkout_many,
-    "bookings.approve": bookings_approve,
-    "bookings.reject": bookings_reject,
-    "bookings.revoke": bookings_revoke,
-    "bookings.request_refund": bookings_request_refund,
-    "refunds.approve": refunds_approve,
-    "refunds.reject": refunds_reject,
-}

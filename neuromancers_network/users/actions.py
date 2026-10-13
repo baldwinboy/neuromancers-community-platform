@@ -136,16 +136,3 @@ def account_revoke_other_sessions(request, data):
     current = getattr(getattr(request, "session", None), "session_key", None)
     revoke_sessions(user, keep_current=current)
     return redirect_back(request)
-
-
-HANDLERS = {
-    "profile.edit": profile_edit,
-    "profile.save_access_needs": profile_save_access_needs,
-    "profile.save_visibility": profile_save_visibility,
-    "profile.save_notification_preferences": profile_save_notification_preferences,
-    "accept_tos": accept_tos,
-    "account.deactivate": account_deactivate,
-    "account.reactivate": account_reactivate,
-    "account.revoke_sessions": account_revoke_sessions,
-    "account.revoke_other_sessions": account_revoke_other_sessions,
-}

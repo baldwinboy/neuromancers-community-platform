@@ -5,8 +5,10 @@ from __future__ import annotations
 import json
 
 from django import forms
+from django.urls import reverse
 from wagtail.admin.panels import FieldPanel
 from wagtail.admin.panels import Panel
+from wagtail.admin.ui.components import Component
 
 
 def stripe_price_choices() -> list[tuple[str, str]]:
@@ -63,3 +65,14 @@ class SendTestEmailPanel(Panel):
 
     class BoundPanel(Panel.BoundPanel):
         template_name = "wagtailadmin/panels/send_test_email.html"
+
+
+class HelpGuidePanel(Component):
+    """Dashboard panel linking to the staff-only admin help guide."""
+
+    name = "help_guide"
+    order = 150
+    template_name = "core/help_panel.html"
+
+    def get_context_data(self, parent_context):
+        return {"help_url": reverse("help_guide")}

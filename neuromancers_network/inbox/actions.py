@@ -36,10 +36,3 @@ def notifications_delete(request, data):
     notification = _owned(request, data)
     notification.soft_delete()
     return redirect_back(request)
-
-
-HANDLERS = {
-    "notifications.mark_read": notifications_mark_read,
-    "notifications.mark_all_read": notifications_mark_all_read,
-    "notifications.delete": notifications_delete,
-}

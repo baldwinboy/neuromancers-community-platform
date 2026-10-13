@@ -886,6 +886,10 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
         "rule": "neuromancers_network.core.audience.is_verified_peer",
         "queryset": "neuromancers_network.core.audience.verified_peer_users",
     },
+    "peer_owner": {
+        "label": "Care providers viewing their own profile",
+        "rule": "neuromancers_network.core.audience.is_peer_owner",
+    },
     "moderator": {
         "label": "Moderators",
         "rule": "neuromancers_network.core.audience.is_moderator",

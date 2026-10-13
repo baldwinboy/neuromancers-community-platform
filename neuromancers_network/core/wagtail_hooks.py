@@ -1,7 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.urls import path
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
+from wagtail.admin.menu import MenuItem
 from wagtail.admin.viewsets.base import ViewSet
 from wagtail.admin.viewsets.base import ViewSetGroup
 from wagtail.snippets.models import register_snippet
@@ -11,7 +13,9 @@ from wagtail.snippets.views.snippets import SnippetViewSetGroup
 from neuromancers_network.core.models import GlossaryTerm
 from neuromancers_network.core.models import HelpArticle
 from neuromancers_network.core.models import HelpCategory
+from neuromancers_network.core.panels import HelpGuidePanel
 from neuromancers_network.core.views.email import SendTestEmailView
+from neuromancers_network.core.views.help import HelpGuideView
 from neuromancers_network.core.views.stripe import StripeSyncView
 from neuromancers_network.core.views.stripe import StripeWebhookView
 from neuromancers_network.core.views.tos import ResetTosView
@@ -142,12 +146,29 @@ register_snippet(HelpViewSetGroup)
 
 
 @hooks.register("register_admin_urls")
-def register_stripe_admin_urls():
+def register_core_admin_urls():
     return [
         path("stripe/sync/", StripeSyncView.as_view(), name="stripe_sync"),
         path("stripe/webhook/", StripeWebhookView.as_view(), name="stripe_webhook"),
         path("email/test/", SendTestEmailView.as_view(), name="send_test_email"),
+        path("help/", HelpGuideView.as_view(), name="help_guide"),
     ]
+
+
+@hooks.register("register_help_menu_item")
+def register_help_guide_menu_item():
+    return MenuItem(
+        _("Admin Guide"),
+        reverse("help_guide"),
+        name="admin-guide",
+        icon_name="help",
+        order=1000,
+    )
+
+
+@hooks.register("construct_homepage_panels")
+def add_help_guide_panel(request, panels):
+    panels.append(HelpGuidePanel())
 
 
 @hooks.register("before_serve_page")

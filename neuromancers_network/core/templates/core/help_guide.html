@@ -1,0 +1,48 @@
+{% extends "wagtailadmin/generic/base.html" %}
+
+{% load i18n wagtailcore_tags %}
+
+{% block main_content %}
+  <p class="w-mb-8">
+    {% trans "How the NEUROMANCERS Network works, for every audience. Each section describes the people it is about." %}
+  </p>
+  {% for group in help_groups %}
+    <section class="w-mb-10">
+      <h2 class="w-h2">{{ group.category.name }}</h2>
+      {% if group.category.description %}
+        <p class="w-text-text-meta">{{ group.category.description }}</p>
+      {% endif %}
+      {% for article in group.articles %}
+        <article class="w-mb-8" id="article-{{ article.slug }}">
+          <h3 class="w-h3">{{ article.title }}</h3>
+          {% if article.summary %}
+            <p class="w-text-text-meta">{{ article.summary }}</p>
+          {% endif %}
+          {% for block in article.steps %}
+            {% include_block block %}
+          {% endfor %}
+          {% for block in article.body %}
+            {% include_block block %}
+          {% endfor %}
+        </article>
+      {% empty %}
+        <p class="w-text-text-meta">{% trans "No articles yet." %}</p>
+      {% endfor %}
+    </section>
+  {% empty %}
+    <p class="w-text-text-meta">{% trans "No help content has been published yet." %}</p>
+  {% endfor %}
+  {% if glossary_terms %}
+    <section class="w-mb-10">
+      <h2 class="w-h2">{% trans "Glossary" %}</h2>
+      <dl>
+        {% for term in glossary_terms %}
+          <dt><strong>{{ term.term }}</strong></dt>
+          <dd>
+            {{ term.definition }}
+          </dd>
+        {% endfor %}
+      </dl>
+    </section>
+  {% endif %}
+{% endblock %}

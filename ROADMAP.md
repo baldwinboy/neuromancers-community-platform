@@ -50,7 +50,7 @@ Seed commands must additionally be proven idempotent by running them twice.
 - Register the daisIE 3.3 attachment and autocomplete form-field types (confirm exact keys from `wagtail_daisIE.forms.registry`).
 
 ### 1.2 `seed_help_guide` (Phase 10)
-- New `core/help_seed.py` — pure builders (categories, articles, glossary) for unit testing.
+- New `core/help_seed.yaml` (content) + `core/help_seed.py` (loader/validator): load and shape the catalogue; malformed data fails loudly.
 - New `core/management/commands/seed_help_guide.py` — idempotent `get_or_create`; **never clobbers admin edits**.
 - Seeds the five categories, ~55 articles (including per-audience Feature indexes and the Tigris/pricing articles) and the glossary (catalogue in §6).
 - Idempotency proven by running twice.

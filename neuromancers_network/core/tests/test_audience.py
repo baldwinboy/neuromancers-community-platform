@@ -43,6 +43,40 @@ class TestBasicPredicates:
         assert audience.is_moderator(make_request(rf, UserFactory())) is False
 
 
+class TestPeerOwner:
+    def test_anonymous(self, rf):
+        request = rf.get("/")
+        request.user = AnonymousUser()
+
+        assert audience.is_peer_owner(request) is False
+
+    def test_non_peer_viewing_own_profile(self, rf):
+        user = UserFactory()
+        request = make_request(rf, user, {"username": user.username})
+
+        assert audience.is_peer_owner(request) is False
+
+    def test_peer_viewing_own_profile(self, rf):
+        peer = make_peer()
+        request = make_request(rf, peer, {"username": peer.username})
+
+        assert audience.is_peer_owner(request) is True
+
+    def test_peer_viewing_other_profile(self, rf):
+        peer = make_peer()
+        other = UserFactory()
+        request = make_request(rf, peer, {"username": other.username})
+
+        assert audience.is_peer_owner(request) is False
+
+    def test_moderator_viewing_other_profile(self, rf):
+        staff = UserFactory(staff_state=StaffState.ACTIVE)
+        other = UserFactory()
+        request = make_request(rf, staff, {"username": other.username})
+
+        assert audience.is_peer_owner(request) is False
+
+
 class TestOwnProfile:
     def test_own_profile(self, rf, user):
         request = make_request(rf, user, {"username": user.username})

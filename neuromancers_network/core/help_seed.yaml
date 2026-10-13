@@ -1,0 +1,1309 @@
+# Starter catalogue for the staff-facing Admin Guide.
+#
+# Loaded by `manage.py seed_help_guide` (idempotent; admin edits are never
+# clobbered unless --force is passed). Content is grouped by audience: each
+# article's `audience` records who the article is about.
+#
+# body entries:  {type: header|text|rich_text, text: "..."}
+# step entries:  {text: "...", callout: "..."}
+
+categories:
+  - name: Administrators — Getting started
+    slug: administrators-getting-started
+    description: Setting up the site, its look, its settings and its content.
+    icon: cog
+    sort_order: 1
+  - name: Administrators — Moderation & operations
+    slug: administrators-moderation-operations
+    description: Reviewing people and content, and running the platform day to day.
+    icon: warning
+    sort_order: 2
+  - name: Care providers
+    slug: care-providers
+    description: For the people who offer support on the network.
+    icon: group
+    sort_order: 3
+  - name: Care seekers
+    slug: care-seekers
+    description: For the people who look for and book support.
+    icon: user
+    sort_order: 4
+  - name: Developers & operators
+    slug: developers-operators
+    description: Storage, infrastructure, integrations and running costs.
+    icon: code
+    sort_order: 5
+
+articles:
+  - title: Your admin role and the Operations menu
+    slug: your-admin-role-and-the-operations-menu
+    category: administrators-getting-started
+    kind: reference
+    audience: admin
+    summary: Reaching the Wagtail admin; what each Operations menu group does.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The admin is where you run the network. Sign in with your staff account, then open the panel at <code>/cms/</code>. Everything you manage lives here: people, meetings, money, settings and content.</p>
+      - type: header
+        text: The Operations menu
+      - type: rich_text
+        text: |-
+          <ul><li><strong>Profiles</strong> &mdash; care-provider applications, peer profiles, member profiles and notification preferences.</li><li><strong>Meetings</strong> &mdash; meetings, bookings, reviews and refunds.</li><li><strong>Filters</strong> &mdash; tag groups, allowed tags, languages and countries.</li><li><strong>Read-only</strong> &mdash; webhook records you can look at but not change.</li><li><strong>Moderation</strong> &mdash; support tickets, deletions, exports and bans.</li></ul>
+    steps: []
+    sort_order: 1
+    is_published: true
+
+  - title: Setting up your site and domain
+    slug: setting-up-your-site-and-domain
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: Configure the Wagtail Site, root/home page and reserved routes.
+    body:
+      - type: rich_text
+        text: |-
+          <p>A <strong>Site</strong> tells Wagtail which home page answers for which domain. There is one default site. Open <strong>Settings &rarr; Sites</strong> to see it.</p>
+      - type: rich_text
+        text: |-
+          <p>The home page sits at the top of your page tree. If you ever need a new home page, make it a child of the root and set it as the site's root page.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Reserved routes</strong> are slugs that no one may use for a page, such as system paths. If someone tries to use a reserved slug, the admin blocks it and explains why.</p>
+    steps:
+      - text: Check the home page exists in the page tree.
+      - text: Open Settings, then Sites, and confirm the default site.
+      - text: Point the site at your home page.
+      - text: Review the reserved routes and save.
+    sort_order: 2
+    is_published: true
+
+  - title: Choosing and building a theme
+    slug: choosing-and-building-a-theme
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: "DaisyUITheme: colours, radii, sizes, effects, background, fonts; default/light/dark."
+    body:
+      - type: rich_text
+        text: |-
+          <p>A <strong>DaisyUITheme</strong> is the site's colour and type system. You can have several, but only one is the default and only one can be the dark-mode theme.</p>
+      - type: rich_text
+        text: |-
+          <p>Edit a theme to set its <strong>colours</strong>, <strong>corner radii</strong>, <strong>sizes</strong>, <strong>effects</strong> and <strong>background</strong>. Font families are part of the theme too.</p>
+      - type: rich_text
+        text: |-
+          <p>Themes show up wherever you choose a page or menu theme. A page can override the site default so a single page feels different.</p>
+    steps:
+      - text: Open the theme snippet.
+      - text: Set the colours, radii, sizes, effects and fonts.
+      - text: Mark one theme as the default.
+      - text: Add a separate theme for dark mode.
+    sort_order: 3
+    is_published: true
+
+  - title: Building navigation and the footer
+    slug: building-navigation-and-the-footer
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: "DaisyUIMenu (Main navigation / Footer): items, branding, search, theme."
+    body:
+      - type: rich_text
+        text: |-
+          <p><strong>DaisyUIMenu</strong> snippets build the site's navigation and footer. The platform ships two: <strong>Main navigation</strong> (a top bar) and <strong>Footer</strong>.</p>
+      - type: rich_text
+        text: |-
+          <p>Each menu has a <strong>body</strong> of items. You can nest items into drop-downs and link to pages or web addresses.</p>
+      - type: rich_text
+        text: |-
+          <p>Menus can show a <strong>branding</strong> block, a <strong>search</strong> box and a <strong>theme toggle</strong>. You can style the menu and its items separately from the rest of the site.</p>
+    steps:
+      - text: Open the Main navigation or Footer menu snippet.
+      - text: Add items to the menu body.
+      - text: Set the branding block.
+      - text: Choose the search and theme options and save.
+    sort_order: 4
+    is_published: true
+
+  - title: Designing the homepage
+    slug: designing-the-homepage
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: The home hero and page content blocks.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The home page is built from <strong>blocks</strong>, the same building blocks used on every other page. Add, drag and delete them in the page editor.</p>
+      - type: rich_text
+        text: |-
+          <p>Most home pages start with a <strong>hero</strong>: a large banner with a heading, some text and one or more buttons.</p>
+      - type: rich_text
+        text: |-
+          <p>Below the hero, add sections for what you want to show &mdash; such as featured care providers or a list of meeting types. The <strong>DaisyUI Editor Guide</strong> in the admin explains every block.</p>
+    steps:
+      - text: Open the home page in the admin.
+      - text: Add a hero block and write its heading and buttons.
+      - text: Add the content sections you want below the hero.
+      - text: Preview and publish.
+    sort_order: 5
+    is_published: true
+
+  - title: Configuring email delivery (SMTP)
+    slug: configuring-email-delivery-smtp
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: EmailSettings host/port/credentials/TLS and sending a test email.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The platform sends email for sign-ups, bookings, reminders and notices. <strong>EmailSettings</strong> holds the mail server details: <strong>host</strong>, <strong>port</strong>, <strong>username</strong>, <strong>password</strong>, and the <strong>from</strong> address.</p>
+      - type: rich_text
+        text: |-
+          <p>Turn on <strong>TLS</strong> or <strong>SSL</strong> if your mail provider requires it. Most providers use TLS on port 587.</p>
+      - type: rich_text
+        text: |-
+          <p>When the settings are filled in, use the <strong>Send test email</strong> button to send yourself a message. If it does not arrive, re-check the host, port and password.</p>
+    steps:
+      - text: Fill in the mail server host, port, username and password.
+      - text: Set the default from address and choose TLS or SSL.
+      - text: Save the settings.
+      - text: Send a test email and check that it arrives.
+    sort_order: 6
+    is_published: true
+
+  - title: Configuring Stripe and payouts
+    slug: configuring-stripe-and-payouts
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: "StripeSettings: keys, webhook secret, Connect, charge type, application fee, tax; the webhook endpoint."
+    body:
+      - type: rich_text
+        text: |-
+          <p><strong>StripeSettings</strong> connects the platform to Stripe. It is split into three groups and an operations panel.</p>
+      - type: header
+        text: API keys
+      - type: rich_text
+        text: |-
+          <p>The <strong>publishable key</strong>, the <strong>secret key</strong>, and the <strong>webhook secret</strong>. The platform is not ready until the publishable and secret keys are filled in. The webhook secret is filled in for you when you create the endpoint (below).</p>
+      - type: header
+        text: Connect
+      - type: rich_text
+        text: |-
+          <p>How money reaches care providers:</p><ul><li><strong>Charge type.</strong> <em>Direct</em> makes the care provider the merchant of record; <em>Destination</em> and <em>Separate</em> are fallbacks that route the money through the platform instead.</li><li><strong>Connect country.</strong> A two-letter code used for new Express accounts (default <code>GB</code>).</li><li><strong>Client ID.</strong> The Stripe Connect client ID.</li><li><strong>Application fee (%).</strong> The platform's share of each payment, from 1 to 100 (default 15).</li><li><strong>Onboarding redirect / refresh URLs.</strong> Where a provider lands after they finish Stripe onboarding, and where they go if the onboarding link has expired or was already used.</li></ul>
+      - type: header
+        text: Compliance
+      - type: rich_text
+        text: |-
+          <ul><li><strong>Tax mode.</strong> <em>Stripe Tax</em> collects tax automatically on checkout; <em>Off</em> disables it.</li><li><strong>Allow partial refunds.</strong> Lets providers and admins refund part of a payment.</li><li><strong>Subscriptions enabled.</strong> Shows the provider subscribe button.</li></ul>
+      - type: header
+        text: Stripe operations
+      - type: rich_text
+        text: |-
+          <p>This panel has two buttons: <strong>Sync Stripe models</strong> (pull the latest records from Stripe) and <strong>Create webhook endpoint</strong> (register the platform's webhook and save its secret). The webhook keeps payments, subscriptions and refunds in sync &mdash; create it once after the keys are in.</p>
+    steps:
+      - text: Add the publishable and secret API keys.
+      - text: "Set the Connect options: charge type, country, client ID, application fee and onboarding URLs."
+      - text: "Choose the compliance options: tax mode, partial refunds and subscriptions."
+      - text: Create the webhook endpoint, then sync the Stripe models.
+    sort_order: 7
+    is_published: true
+
+  - title: Configuring platform pricing and fees
+    slug: configuring-platform-pricing-and-fees
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: Plan price IDs (PeerRequirementsSettings), application fee, meeting pricing, tax mode, display currency.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Pricing has four parts. The <strong>care-provider plan prices</strong> (on <strong>PeerRequirementsSettings</strong>) are the Stripe prices a provider subscribes to.</p>
+      - type: rich_text
+        text: |-
+          <p>The <strong>application fee</strong> (on <strong>StripeSettings</strong>) is the platform's share of each booking. <strong>Meeting pricing</strong> is set by providers when they publish a meeting &mdash; fixed, sliding-scale or by duration.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Tax</strong> is either handled by Stripe Tax or switched off. The <strong>display currency</strong> lives with your localization settings and controls how prices are shown to members.</p>
+    steps:
+      - text: Add the care-provider plan prices on PeerRequirementsSettings.
+      - text: Set the application fee percentage on StripeSettings.
+      - text: Choose the tax mode.
+      - text: Set the display currency in the localization settings.
+    sort_order: 8
+    is_published: true
+
+  - title: Configuring meeting providers
+    slug: configuring-meeting-providers
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: "IntegrationSettings: Whereby/Daily, room prefix, GetPronto API key."
+    body:
+      - type: rich_text
+        text: |-
+          <p>Meetings happen in a video room. <strong>IntegrationSettings</strong> chooses the provider &mdash; <strong>Whereby</strong> or <strong>Daily</strong> &mdash; and sets the <strong>room prefix</strong> used when room links are created.</p>
+      - type: rich_text
+        text: |-
+          <p>If you use <strong>GetPronto</strong>, add its <strong>API key</strong>. Keys for Whereby and Daily go here too when those providers need them.</p>
+      - type: rich_text
+        text: |-
+          <p>Room links are created automatically for meetings, so members get a working link without any manual setup.</p>
+    steps:
+      - text: Open IntegrationSettings.
+      - text: Choose Whereby or Daily as the meeting provider.
+      - text: Set the room prefix and add any API keys.
+      - text: Save.
+    sort_order: 9
+    is_published: true
+
+  - title: Setting care-provider requirements
+    slug: setting-care-provider-requirements
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: "PeerRequirementsSettings: subscription/KYC/verification gates and plan price IDs."
+    body:
+      - type: rich_text
+        text: |-
+          <p><strong>PeerRequirementsSettings</strong> decides what a care provider must have before they are eligible and their content is visible.</p>
+      - type: rich_text
+        text: |-
+          <p>The three gates are a <strong>paid subscription</strong>, <strong>identity (KYC) checks</strong>, and <strong>profile verification</strong>. Turn each one on or off.</p>
+      - type: rich_text
+        text: |-
+          <p>Provider <strong>plan prices</strong> live here too. When a gate is on, a provider who does not meet it is hidden until they do. Changing a gate affects existing providers immediately.</p>
+    steps:
+      - text: Open PeerRequirementsSettings.
+      - text: Turn the subscription, KYC and verification gates on or off.
+      - text: Add the plan price IDs.
+      - text: Save, then review the effect on existing providers.
+    sort_order: 10
+    is_published: true
+
+  - title: Managing taxonomies
+    slug: managing-taxonomies
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: Languages, countries, tag groups and allowed tags.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Taxonomies are the lists used for search and filters. <strong>Languages</strong> and <strong>Countries</strong> let members and providers say what they offer and where.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Tag groups</strong> organise tags into families, and <strong>allowed tags</strong> are the tags members may pick. Keeping tags inside groups makes search cleaner.</p>
+      - type: rich_text
+        text: |-
+          <p>All four live in the <strong>Filters</strong> area of the Operations menu.</p>
+    steps:
+      - text: Add the languages you support.
+      - text: Add the countries you serve.
+      - text: Create tag groups.
+      - text: List the allowed tags inside each group.
+    sort_order: 11
+    is_published: true
+
+  - title: Localization and display currency
+    slug: localization-and-display-currency
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: "LocalizationSettings: languages, switcher behaviour, currency/exchange-rate source."
+    body:
+      - type: rich_text
+        text: |-
+          <p><strong>LocalizationSettings</strong> controls language and money. Turn localization on to offer more than one language, and pick the <strong>default language</strong>.</p>
+      - type: rich_text
+        text: |-
+          <p>The <strong>language switcher</strong> can be a dropdown, inline links or a sidebar. You can also detect a visitor's browser language and, if you prefer, force the default.</p>
+      - type: rich_text
+        text: |-
+          <p>The <strong>display currency</strong> is what members see. Exchange rates come from Stripe, from manual rates, or a fixed rate.</p>
+    steps:
+      - text: Turn localization on.
+      - text: Pick the languages to offer and the default.
+      - text: Choose the switcher style.
+      - text: Set the display currency and the exchange-rate source.
+    sort_order: 12
+    is_published: true
+
+  - title: Account, moderation and ban settings
+    slug: account-moderation-and-ban-settings
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: AccountSettings cooldowns/grace, ModerationSettings blocklist, BanSettings email/IP.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Three settings groups protect accounts and keep names clean. <strong>AccountSettings</strong> sets cooldowns for changing a username or email, the deletion <strong>grace</strong> period, and the re-registration cooldown.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>ModerationSettings</strong> holds the <strong>username blocklist</strong>. You can treat it as plain text or regular expressions, and choose whether it matches case.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>BanSettings</strong> controls email and IP bans, including whether IP bans are enforced and how long ban and audit records are kept.</p>
+    steps:
+      - text: Set the username and email change cooldowns.
+      - text: Set the deletion grace period and re-registration cooldown.
+      - text: Edit the username blocklist and its matching options.
+      - text: Set the ban and audit retention.
+    sort_order: 13
+    is_published: true
+
+  - title: Notification defaults and event types
+    slug: notification-defaults-and-event-types
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: NotificationSettings, bridges, audiences and campaigns.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Members get notices through the internal inbox and by email. <strong>NotificationSettings</strong> decides two things: which <strong>event types</strong> start switched off, and which events are <strong>transactional</strong> (always sent, no opt-out).</p>
+      - type: rich_text
+        text: |-
+          <p>Each event type has a <strong>bridge</strong> that renders it with an email template. Bridges and templates are chosen in the admin.</p>
+      - type: rich_text
+        text: |-
+          <p>You can group members into <strong>audiences</strong> and send <strong>campaigns</strong> to them. Some audiences are lists you build by hand; others follow a rule, such as signed-in members.</p>
+    steps:
+      - text: Choose which event types are off by default.
+      - text: Mark the transactional event types.
+      - text: Review the bridges for each event type.
+      - text: Build audiences and send campaigns.
+    sort_order: 14
+    is_published: true
+
+  - title: Designing error pages
+    slug: designing-error-pages
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: ErrorPage snippets for 400/401/403/404/429/500.
+    body:
+      - type: rich_text
+        text: |-
+          <p>When something goes wrong, the visitor sees an <strong>error page</strong>. There is one snippet per status code. Edit a snippet to write a friendly message and add the same content blocks you use on any page &mdash; for example a button back to the home page.</p>
+      - type: header
+        text: What each code means
+      - type: rich_text
+        text: |-
+          <ul><li><strong>400 &mdash; Bad request.</strong> The request did not make sense, usually a broken link or a form that sent something the server could not read.</li><li><strong>401 &mdash; Not authorised.</strong> The visitor needs to sign in to see this, and has not.</li><li><strong>403 &mdash; Forbidden.</strong> The visitor is signed in but is not allowed to see this. This is also what a visitor sees when content is limited to an audience they are not in.</li><li><strong>404 &mdash; Page not found.</strong> There is no page at that address. This also covers content that has been unpublished or hidden.</li><li><strong>429 &mdash; Too many requests.</strong> The visitor is sending requests too quickly and has been asked to slow down.</li><li><strong>500 &mdash; Something went wrong.</strong> An unexpected problem on the server.</li></ul>
+      - type: rich_text
+        text: |-
+          <p>Each error page can be switched on or off, so you can design them one at a time. A visitor only ever sees one page per error type.</p>
+    steps:
+      - text: Open the error-page snippet.
+      - text: Pick the status code to design.
+      - text: Write the message and add content blocks.
+      - text: Mark it active.
+    sort_order: 15
+    is_published: true
+
+  - title: Designing authentication pages and emails
+    slug: designing-authentication-pages-and-emails
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: Authentication pages and Authentication emails.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Sign-in, sign-up, password and other account screens come from the accounts system. <strong>Authentication pages</strong> let you give any of them your own design.</p>
+      - type: rich_text
+        text: |-
+          <p>Each entry matches one <strong>account screen</strong> to a page whose look you want to reuse. The account screens are: <strong>Sign in, Sign up, Sign out, Account inactive, Email addresses, Change password, Set password, Reset password</strong>, plus the screens that confirm a password reset. You can set the theme, background, and header and footer menus for the screen.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Authentication emails</strong> do the same for the emails these screens send, such as a password-reset message. Each entry matches an account email to one of your <strong>email templates</strong>.</p>
+      - type: rich_text
+        text: |-
+          <p>Both live in the admin: authentication pages under the design menu and authentication emails under the email menu. No code changes are needed.</p>
+    steps:
+      - text: Open Authentication pages in the design menu.
+      - text: Choose the account screen to match.
+      - text: Design the page and pick its theme and menus.
+      - text: Add an Authentication email and choose its email template.
+    sort_order: 16
+    is_published: true
+
+  - title: Building feeds and reusable blocks
+    slug: building-feeds-and-reusable-blocks
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: Feed snippets, ReusableBlock, email reusable content.
+    body:
+      - type: rich_text
+        text: |-
+          <p>A <strong>Feed</strong> lists records from a model &mdash; meetings, care providers, bookings and more. Name it, choose the <strong>source</strong>, and set the <strong>card</strong> each item uses.</p>
+      - type: rich_text
+        text: |-
+          <p>Feeds can carry <strong>filters</strong> so visitors can narrow the list, and you can choose the layout, columns and page size. Place a feed on a page like any other block.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>ReusableBlock</strong> saves a group of blocks once and reuses it anywhere it changes in one place. Email templates have their own reusable content.</p>
+    steps:
+      - text: Create a feed and pick its source model.
+      - text: Set the card each item uses.
+      - text: Add any filters and choose the layout.
+      - text: Save, then place the feed on a page as a block.
+    sort_order: 17
+    is_published: true
+
+  - title: Publishing Terms and Help content
+    slug: publishing-terms-and-help-content
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: The TOS page/audience and the help categories, articles and glossary.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Members must accept the <strong>Terms and Conditions</strong>. Write the Terms as a page, then gate it with the <strong>needs-to-accept-the-Terms</strong> audience so only people who have not accepted see it.</p>
+      - type: rich_text
+        text: |-
+          <p>The <strong>Admin Guide</strong> is built from <strong>categories</strong>, <strong>articles</strong> and a <strong>glossary</strong>. Categories group articles; each article has a short summary, a longer body and, for how-tos, numbered steps.</p>
+      - type: rich_text
+        text: |-
+          <p>Use the seeder to load the starter catalogue, then edit anything you like. Re-running the seeder never overwrites your edits.</p>
+    steps:
+      - text: Write the Terms and Conditions page.
+      - text: Gate it with the needs-to-accept-the-Terms audience.
+      - text: Add help categories.
+      - text: Write articles and glossary terms, then publish.
+    sort_order: 18
+    is_published: true
+
+  - title: Feature index for administrators (setup)
+    slug: feature-index-for-administrators-setup
+    category: administrators-getting-started
+    kind: reference
+    audience: admin
+    summary: Every admin setup feature and where to find it.
+    body:
+      - type: rich_text
+        text: |-
+          <p><strong>Settings</strong> &mdash; email (SMTP), Stripe and payouts, meeting providers, localization and currency, account rules, moderation, notifications, care-provider requirements, and bans.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Design and theme snippets</strong> &mdash; themes, menus, error pages, authentication pages and emails, icons and favicon.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Content snippets</strong> &mdash; reusable blocks, feeds, email templates and reusable email content.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Members and messaging</strong> &mdash; audiences, notifications and campaigns.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Taxonomies</strong> &mdash; languages, countries, tag groups and allowed tags.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Help</strong> &mdash; categories, articles and glossary terms.</p>
+    steps: []
+    sort_order: 19
+    is_published: true
+
+  - title: Reviewing peer applications
+    slug: reviewing-peer-applications
+    category: administrators-moderation-operations
+    kind: howto
+    audience: admin
+    summary: Approving/rejecting applications and the resulting profile state.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Care providers apply before they can offer meetings. Each application appears in <strong>Profiles &rarr; Peer applications</strong> with the applicant and their reason. Approving an application marks the peer profile as approved, which is the first requirement for a provider to become eligible. Rejecting leaves the profile unapproved. You can approve or reject several at once with the bulk actions. Approval does not by itself make a provider visible; the other care-provider requirements still apply.</p>
+    steps:
+      - text: Open the applications queue.
+      - text: Review the reason given by the applicant.
+      - text: Approve or reject the application.
+      - text: Confirm the peer profile now shows the expected state.
+    sort_order: 1
+    is_published: true
+
+  - title: Managing members and profiles
+    slug: managing-members-and-profiles
+    category: administrators-moderation-operations
+    kind: howto
+    audience: admin
+    summary: Editing member profiles and visibility; member operations.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Every member has a <strong>member profile</strong>; care providers also have a <strong>peer profile</strong>. Use the member profile to set a member's <strong>visibility</strong> and their <strong>access needs</strong>, and to mark whether access needs are shared with providers. Peer profiles hold the provider's bio, terms and approval state. Member operations (like resetting Terms acceptance) are available as bulk actions on the list.</p>
+    steps:
+      - text: Open Members and find the member.
+      - text: Edit their profile details and visibility.
+      - text: Save.
+    sort_order: 2
+    is_published: true
+
+  - title: Handling support and report tickets
+    slug: handling-support-and-report-tickets
+    category: administrators-moderation-operations
+    kind: howto
+    audience: admin
+    summary: Working the support queue, assignment and resolution.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Support and report tickets arrive in one queue. Each ticket has a kind (for example a report or a help request) and a status. Open a ticket to read it, record what you did, and resolve it. Resolving a report notifies the people involved where the notice rules allow.</p>
+    steps:
+      - text: Open Moderation, then Support tickets.
+      - text: Pick a ticket and read it.
+      - text: Record your response or the action taken.
+      - text: Resolve the ticket.
+    sort_order: 3
+    is_published: true
+
+  - title: Username moderation and bans
+    slug: username-moderation-and-bans
+    category: administrators-moderation-operations
+    kind: howto
+    audience: admin
+    summary: The username blocklist and applying email/IP bans.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The <strong>username blocklist</strong> stops disallowed names at sign-up. You can list names as plain text or as patterns, and choose whether matching ignores case. <strong>Bans</strong> block an email address or an IP address from returning. Ban settings also control whether IP bans are enforced and how long ban and audit records are kept. Lifting a ban reverses it.</p>
+    steps:
+      - text: Edit the username blocklist and its matching options.
+      - text: Add an email or IP ban.
+      - text: Review the retention settings for bans and audit records.
+    sort_order: 4
+    is_published: true
+
+  - title: Resetting Terms acceptance
+    slug: resetting-terms-acceptance
+    category: administrators-moderation-operations
+    kind: howto
+    audience: admin
+    summary: The single bulk-action path and audience-wide reset.
+    body:
+      - type: rich_text
+        text: |-
+          <p>When the Terms change, members must accept them again. Reset acceptance from the member list: filter to the people you want (for example, everyone who has already accepted), select them, and run the <strong>Reset Terms acceptance</strong> bulk action. On their next visit those members are asked to accept the Terms before continuing. There is one path for this so the result is always predictable.</p>
+    steps:
+      - text: Open Members and filter to the group you want.
+      - text: Select all matching members.
+      - text: Run the Reset Terms acceptance action.
+      - text: Confirm the change.
+    sort_order: 5
+    is_published: true
+
+  - title: Data exports and deletion requests
+    slug: data-exports-and-deletion-requests
+    category: administrators-moderation-operations
+    kind: howto
+    audience: admin
+    summary: Fulfilling exports and processing/undoing deletions.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Members can ask for a copy of their data and can ask for their account to be deleted. Export requests produce a file the member downloads; you can see request status in the admin. Deletion requests run after a grace period, during which the member (or you) can cancel them. If a deletion is cancelled, the account is reactivated. Processing a deletion anonymises the account rather than removing financial records.</p>
+    steps:
+      - text: Open Moderation and review pending export or deletion requests.
+      - text: Fulfil or process the request.
+      - text: Confirm the outcome and, for a deletion, that the account is anonymised.
+    sort_order: 6
+    is_published: true
+
+  - title: Overseeing bookings, refunds and meetings
+    slug: overseeing-bookings-refunds-and-meetings
+    category: administrators-moderation-operations
+    kind: howto
+    audience: admin
+    summary: Inspecting and acting on bookings, refunds and meetings.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The <strong>Meetings</strong> area lists meetings, bookings, reviews and refunds. From here you can approve or reject a booking, revoke a booking, and approve or reject a refund request. You can also unpublish or archive meetings, or unpublish and delete all of a provider's meetings in one step. Providers normally run their own bookings; the admin view is for oversight and for stepping in when needed.</p>
+    steps:
+      - text: Open Meetings and inspect the record.
+      - text: Act on it (approve, reject, revoke or refund).
+      - text: Confirm the result on the record.
+    sort_order: 7
+    is_published: true
+
+  - title: Visibility and enforcement rules
+    slug: visibility-and-enforcement-rules
+    category: administrators-moderation-operations
+    kind: reference
+    audience: admin
+    summary: How deactivated/blocked/paused-plan and unpublished content is hidden.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Content is hidden by a small set of rules applied everywhere &mdash; search, feeds and detail pages &mdash; so the two never disagree.</p>
+      - type: rich_text
+        text: |-
+          <p>A provider's content is visible only while the provider is <strong>eligible</strong>: approved, with an active plan, and meeting the KYC and verification gates. Deactivating an account, pausing or ending a plan, or failing a gate hides that provider's content. Content that has been <strong>unpublished</strong> is not served. When two members have <strong>blocked</strong> each other, each is hidden from the other. The owner of a record and moderators can always see it.</p>
+    steps: []
+    sort_order: 8
+    is_published: true
+
+  - title: Feature index for operations
+    slug: feature-index-for-operations
+    category: administrators-moderation-operations
+    kind: reference
+    audience: admin
+    summary: Every moderation/operations feature and where to find it.
+    body:
+      - type: rich_text
+        text: |-
+          <p><strong>Profiles</strong> &mdash; peer applications, peer profiles, member profiles, notification preferences and the Terms reset.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Meetings</strong> &mdash; meetings, bookings, reviews and refunds.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Filters</strong> &mdash; tag groups, allowed tags, languages and countries.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Read-only</strong> &mdash; webhook records.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Moderation</strong> &mdash; support tickets, account deletions, data exports, and email and IP bans.</p>
+    steps: []
+    sort_order: 9
+    is_published: true
+
+  - title: Becoming a care provider
+    slug: becoming-a-care-provider
+    category: care-providers
+    kind: howto
+    audience: peer
+    summary: Applying, moderation approval and the provider agreement.
+    body:
+      - type: rich_text
+        text: |-
+          <p>To offer support, apply to be a care provider. After a moderator approves your application, accept the <strong>provider agreement</strong>. You then connect Stripe and start a plan. Once you meet the platform's requirements you become eligible and your content can appear in search and feeds.</p>
+    steps:
+      - text: Apply to be a care provider.
+      - text: Wait for a moderator to approve your application.
+      - text: Accept the provider agreement.
+      - text: Connect Stripe to receive payouts.
+    sort_order: 1
+    is_published: true
+
+  - title: Connecting Stripe (Express + KYC)
+    slug: connecting-stripe-express-kyc
+    category: care-providers
+    kind: howto
+    audience: peer
+    summary: Connect onboarding and identity (KYC) verification.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Payouts run through <strong>Stripe Express</strong>. Connecting starts an onboarding flow where you enter your details and verify your identity (KYC). When onboarding and the identity checks are complete, your payment profile is marked ready. If an onboarding link expires, you are sent back to start it again. You can leave and return to onboarding at any time.</p>
+    steps:
+      - text: Open your provider settings.
+      - text: Connect Stripe and complete the onboarding flow.
+      - text: Finish the identity (KYC) checks.
+    sort_order: 2
+    is_published: true
+
+  - title: "Your plan: start, pause, end, restart"
+    slug: your-plan-start-pause-end-restart
+    category: care-providers
+    kind: howto
+    audience: peer
+    summary: Subscription lifecycle controls and their effect on eligibility/visibility.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Care providers subscribe to a <strong>plan</strong>. Starting a plan opens Stripe checkout. When the plan is active you are eligible, subject to the other requirements. You can <strong>pause</strong> a plan &mdash; unused time is credited and usage to date is billed &mdash; and <strong>resume</strong> it later. You can <strong>cancel</strong> at the end of the period or immediately; cancelling removes eligibility and hides your content. Restarting a plan starts a fresh checkout.</p>
+      - type: rich_text
+        text: |-
+          <p><em>Note: pausing and resuming ship with the subscription-lifecycle work; this article is published ahead of that feature.</em></p>
+    steps:
+      - text: Start a plan with Stripe checkout.
+      - text: Pause or resume the plan when needed.
+      - text: End the plan at the period end, or immediately.
+      - text: Restart with a new checkout.
+    sort_order: 3
+    is_published: true
+
+  - title: Creating and publishing a meeting
+    slug: creating-and-publishing-a-meeting
+    category: care-providers
+    kind: howto
+    audience: peer
+    summary: 1:1 vs group meetings, terms, scheduling and recurrence.
+    body:
+      - type: rich_text
+        text: |-
+          <p>A meeting is what members book. Choose <strong>one-to-one</strong> or <strong>group</strong>. Write the terms members must accept, set how it is priced, and add a schedule. Group meetings can repeat on a schedule. A meeting must be <strong>published</strong> before members can find and book it. Room links are created for you.</p>
+    steps:
+      - text: Create a meeting.
+      - text: Choose one-to-one or group.
+      - text: Set the terms and the price.
+      - text: Add a schedule, then publish.
+    sort_order: 4
+    is_published: true
+
+  - title: Pricing your meetings
+    slug: pricing-your-meetings
+    category: care-providers
+    kind: reference
+    audience: peer
+    summary: Fixed, sliding-scale and duration-tier pricing, and currency.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Meetings support three pricing shapes: a <strong>fixed</strong> price, a <strong>sliding scale</strong> where you set a range, and <strong>duration tiers</strong> where the price depends on length. Prices are stored with a currency. The platform's <strong>application fee</strong> is taken from each payment, and tax is handled by the platform's tax setting. The currency members see follows the site's display-currency setting.</p>
+    steps: []
+    sort_order: 5
+    is_published: true
+
+  - title: Managing meetings
+    slug: managing-meetings
+    category: care-providers
+    kind: howto
+    audience: peer
+    summary: Unpublish, archive, delete, and the unpublish/delete-all controls.
+    body:
+      - type: rich_text
+        text: |-
+          <p>You can <strong>unpublish</strong> a meeting to hide it without deleting it, <strong>archive</strong> it to set it aside, or <strong>delete</strong> it. There are also <strong>unpublish all</strong> and <strong>delete all</strong> controls for when you want to clear your listings at once. Unpublishing or deleting prevents new bookings but keeps existing bookings and records valid.</p>
+    steps:
+      - text: Open your meetings.
+      - text: Unpublish, archive or delete a single meeting.
+      - text: Or use unpublish all / delete all for everything.
+    sort_order: 6
+    is_published: true
+
+  - title: Setting your availability
+    slug: setting-your-availability
+    category: care-providers
+    kind: howto
+    audience: peer
+    summary: One-off and recurring availability windows and 1:1 slot booking.
+    body:
+      - type: rich_text
+        text: |-
+          <p><strong>Availability windows</strong> tell the platform when you can take one-to-one sessions. Add a window with a start and end, and mark whether it repeats. Members can only book one-to-one slots inside your availability. You can remove a window at any time; existing bookings are unaffected. Your diary and calendar feed reflect availability and bookings.</p>
+    steps:
+      - text: Add an availability window.
+      - text: Set the start and end.
+      - text: Choose whether it repeats.
+      - text: Save.
+    sort_order: 7
+    is_published: true
+
+  - title: Host dashboard
+    slug: host-dashboard
+    category: care-providers
+    kind: howto
+    audience: peer
+    summary: Booking requests, approve/reject, refunds and the host feeds.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The <strong>host dashboard</strong> gathers your meeting requests, upcoming bookings and refunds. Approve or reject requests according to your meeting's policy, and act on refund requests when the platform requires approval. The host feeds show upcoming sessions, open requests and refunds so you can see everything in one place.</p>
+    steps:
+      - text: Open your host dashboard.
+      - text: Review and approve or reject requests.
+      - text: Handle refund requests.
+      - text: Use the host feeds to keep track.
+    sort_order: 8
+    is_published: true
+
+  - title: Express dashboard & disconnecting Stripe
+    slug: express-dashboard-and-disconnecting-stripe
+    category: care-providers
+    kind: howto
+    audience: peer
+    summary: Opening the Express dashboard and the effect of disconnecting.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The <strong>Express dashboard</strong> is Stripe's own view of your payouts, balance and account details; open it from your provider settings. <strong>Disconnecting</strong> removes your connected Stripe account and marks your payment profile as not ready, which removes eligibility and hides your content until you reconnect.</p>
+    steps:
+      - text: Open the Express dashboard from your provider settings.
+      - text: Manage your payouts there.
+      - text: Disconnect Stripe when you are finished with the platform.
+    sort_order: 9
+    is_published: true
+
+  - title: Feature index for care providers
+    slug: feature-index-for-care-providers
+    category: care-providers
+    kind: reference
+    audience: peer
+    summary: Every provider feature and where to find it.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Apply and accept the provider agreement; connect Stripe and open the Express dashboard; start, pause, resume or cancel your plan; create, price, publish and manage meetings; set availability windows; use the host dashboard for requests, bookings and refunds; and view your diary and calendar feed.</p>
+    steps: []
+    sort_order: 10
+    is_published: true
+
+  - title: Creating your account
+    slug: creating-your-account
+    category: care-seekers
+    kind: howto
+    audience: seeker
+    summary: Username, email, name, date of birth and Terms acceptance; verification.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Sign up with a <strong>username</strong> and <strong>email</strong>, and add your <strong>name</strong> and <strong>date of birth</strong>. You verify your email, then accept the <strong>Terms and Conditions</strong> before you can use the site. Usernames are checked against a blocklist at sign-up. You can change your username or email later, subject to a cooldown.</p>
+    steps:
+      - text: Sign up.
+      - text: Add your details.
+      - text: Verify your email.
+      - text: Accept the Terms and Conditions.
+    sort_order: 1
+    is_published: true
+
+  - title: Finding a care provider
+    slug: finding-a-care-provider
+    category: care-seekers
+    kind: howto
+    audience: seeker
+    summary: The search page, filters and how hidden/blocked content is excluded.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The <strong>search</strong> page lists care providers you can see. Filter by things like language or country to narrow the list. Providers who are not eligible, whose content is unpublished, or who have blocked you (or whom you have blocked) do not appear. Open a provider to see their profile and their meetings.</p>
+    steps:
+      - text: Open search.
+      - text: Apply filters to narrow the list.
+      - text: Open a provider's profile.
+      - text: Choose a meeting to book.
+    sort_order: 2
+    is_published: true
+
+  - title: Booking a session
+    slug: booking-a-session
+    category: care-seekers
+    kind: howto
+    audience: seeker
+    summary: Requesting a meeting, approval policies, duration/price and terms.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Open a meeting and choose the option you want, such as a duration tier or a one-to-one slot inside the provider's availability. Accept the meeting's <strong>terms</strong> and send your request. Some meetings are approved automatically and some need the provider to approve first. You are told which applies before you request.</p>
+    steps:
+      - text: Open a meeting.
+      - text: Choose the duration or slot you want.
+      - text: Accept the terms.
+      - text: Send the request.
+    sort_order: 3
+    is_published: true
+
+  - title: Paying for a booking
+    slug: paying-for-a-booking
+    category: care-seekers
+    kind: howto
+    audience: seeker
+    summary: Stripe checkout, the unpaid-bookings cart and payment history.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Bookings that need payment collect in an <strong>unpaid-bookings cart</strong>. Open checkout to pay for them together through <strong>Stripe</strong>. Once paid, your booking is confirmed and appears in your upcoming sessions with a receipt. Your payment history lists what you have paid.</p>
+    steps:
+      - text: Add bookings to the cart.
+      - text: Open checkout.
+      - text: Pay with Stripe.
+      - text: Check your payment history.
+    sort_order: 4
+    is_published: true
+
+  - title: Managing your bookings & sessions
+    slug: managing-your-bookings-and-sessions
+    category: care-seekers
+    kind: howto
+    audience: seeker
+    summary: Upcoming/paid bookings, cancelling and joining group meetings.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Your bookings list shows requests and confirmed sessions. You can cancel a booking where the meeting allows it. For <strong>group</strong> meetings you join from the meeting's link at the scheduled time. Cancellations and the provider's decisions are reflected in your list and inbox.</p>
+    steps:
+      - text: Open your bookings.
+      - text: View your upcoming sessions.
+      - text: Cancel a booking if you need to.
+      - text: Join a group session from its link.
+    sort_order: 5
+    is_published: true
+
+  - title: Requesting a refund
+    slug: requesting-a-refund
+    category: care-seekers
+    kind: howto
+    audience: seeker
+    summary: Refund policy and approval-required refunds.
+    body:
+      - type: rich_text
+        text: |-
+          <p>If you cannot attend, or a session did not happen, you can request a refund from the booking. Some refunds are settled automatically and some need a provider or moderator to approve; you are told which applies. If approved, the refund is issued through <strong>Stripe</strong> and appears in your payment history.</p>
+    steps:
+      - text: Open the booking.
+      - text: Request a refund and give a reason.
+      - text: Wait for the decision.
+    sort_order: 6
+    is_published: true
+
+  - title: Leaving a review
+    slug: leaving-a-review
+    category: care-seekers
+    kind: howto
+    audience: seeker
+    summary: Reviewing a completed session and where reviews appear.
+    body:
+      - type: rich_text
+        text: |-
+          <p>After a session is completed you can leave a <strong>review</strong> with a rating and a comment. Reviews appear on the provider's profile where they are published. Reviews help other care seekers choose, so they are only allowed after a real completed session.</p>
+    steps:
+      - text: Open the completed session.
+      - text: Leave a rating and a comment.
+      - text: Submit.
+    sort_order: 7
+    is_published: true
+
+  - title: Your inbox & notifications
+    slug: your-inbox-and-notifications
+    category: care-seekers
+    kind: howto
+    audience: seeker
+    summary: How inbox events arrive, marking read and opt-outs.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Notices about bookings, payments, reminders and account changes arrive in your <strong>inbox</strong>, and some also go by email. Inbox items can be marked read or deleted. You can switch off non-essential notices in your notification preferences; important messages such as payment and account notices are always sent.</p>
+    steps:
+      - text: Open your inbox.
+      - text: Read your notices.
+      - text: Mark them read or delete them.
+      - text: Set your opt-outs in notification preferences.
+    sort_order: 8
+    is_published: true
+
+  - title: Your diary & calendar feed
+    slug: your-diary-and-calendar-feed
+    category: care-seekers
+    kind: howto
+    audience: seeker
+    summary: The diary page and the read-only ICS feed, including token rotation.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Your <strong>diary</strong> shows your sessions and availability. It also offers a read-only <strong>ICS</strong> feed you can add to your own calendar. The feed uses a private <strong>calendar token</strong> in its link; you can <strong>rotate</strong> the token to get a new link or <strong>revoke</strong> it to switch the feed off. Treat the link as a secret, since anyone with it can read your feed.</p>
+    steps:
+      - text: Open your diary.
+      - text: Copy the calendar feed link.
+      - text: Add it to your calendar.
+      - text: Rotate or revoke the token if needed.
+    sort_order: 9
+    is_published: true
+
+  - title: Feature index for care seekers
+    slug: feature-index-for-care-seekers
+    category: care-seekers
+    kind: reference
+    audience: seeker
+    summary: Every member feature and where to find it.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Create your account and accept the Terms; search and filter providers; book, pay for and manage sessions; request refunds; leave reviews; your inbox and notification preferences; and your diary and calendar feed.</p>
+    steps: []
+    sort_order: 10
+    is_published: true
+
+  - title: Object storage with Tigris
+    slug: object-storage-with-tigris
+    category: developers-operators
+    kind: reference
+    audience: developer
+    summary: Media/public bucket, private backups + exports, env vars, custom domain, S3 compatibility.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Files are stored in <strong>Tigris</strong>, an S3-compatible object store. There are two buckets: a <strong>public media</strong> bucket for things that are safe to serve directly (such as avatars and images), and a <strong>private backups</strong> bucket.</p>
+      - type: rich_text
+        text: |-
+          <p>The public bucket is configured with the <code>DJANGO_AWS_*</code> variables and reached through the custom domain (<code>AWS_S3_CUSTOM_DOMAIN</code>). The private bucket uses the root <code>AWS_*</code> variables. Data <strong>exports</strong> are written to a private <code>exports/</code> prefix, never to the public bucket. Because the API is S3-compatible, the standard Django storage backend works unchanged.</p>
+    steps: []
+    sort_order: 1
+    is_published: true
+
+  - title: Storage, backups and data retention (overview)
+    slug: storage-backups-and-data-retention
+    category: developers-operators
+    kind: reference
+    audience: developer
+    summary: What is stored where (Tigris media vs private backups/exports) and the retention windows.
+    body:
+      - type: rich_text
+        text: |-
+          <p><strong>Media</strong> (public) holds images and documents that are safe to publish and is served over the custom domain. <strong>Backups and exports</strong> are private. Database and media <strong>backups</strong> are kept for <code>RETENTION_DAYS</code> (default 30) before older copies are removed by the maintenance script. Member <strong>data exports</strong> are available for 48 hours, then purged. Nothing in the private store is ever served publicly.</p>
+    steps: []
+    sort_order: 2
+    is_published: true
+
+  - title: Infrastructure and running costs
+    slug: infrastructure-and-running-costs
+    category: developers-operators
+    kind: reference
+    audience: developer
+    summary: Hetzner host; Tigris storage/egress; Stripe fees; DNS/Coolify/Tailscale; what drives the bill.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The platform runs on a <strong>Hetzner</strong> host, deployed through <strong>Coolify</strong>, reached over <strong>Tailscale</strong>, with DNS on <strong>Cloudflare</strong>.</p>
+      - type: rich_text
+        text: |-
+          <p>Running costs come from four places. <strong>Hosting</strong> (Hetzner) is the fixed monthly server cost. <strong>Storage</strong> (Tigris) charges for stored data and requests; egress is zero, the Standard tier is about $0.02/GB with a free 5 GB allowance, and requests are billed as Class A and Class B operations. <strong>Payments</strong> (Stripe) charge per transaction plus the platform's application fee. <strong>DNS/CDN, Coolify and Tailscale</strong> add little or nothing at this scale. The main levers on the bill are stored data, traffic and payment volume.</p>
+    steps: []
+    sort_order: 3
+    is_published: true
+
+  - title: Stripe, Connect and Express explained
+    slug: stripe-connect-and-express-explained
+    category: developers-operators
+    kind: reference
+    audience: developer
+    summary: Payments, payouts and the platform/connected-account model.
+    body:
+      - type: rich_text
+        text: |-
+          <p><strong>Stripe</strong> processes payments. <strong>Stripe Connect</strong> lets the platform route money to care providers, each of whom has a <strong>connected account</strong>. <strong>Express</strong> is the lightweight connected-account type used here: Stripe handles onboarding and KYC, and the provider gets a small <strong>Express dashboard</strong> for payouts. The platform takes an <strong>application fee</strong> on each payment. Which party is the merchant of record depends on the configured <strong>charge type</strong> (direct, destination, or separate charges and transfers).</p>
+    steps: []
+    sort_order: 4
+    is_published: true
+
+  - title: "Video providers: Whereby, GetPronto, Daily"
+    slug: video-providers-whereby-getpronto-daily
+    category: developers-operators
+    kind: reference
+    audience: developer
+    summary: Meeting-room providers and how links are generated.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Meetings happen in a video room provided by an integration. <strong>Whereby</strong> and <strong>Daily</strong> are the selectable providers, and <strong>GetPronto</strong> can be used for its API. A <strong>room prefix</strong> is applied to generated room names. When a meeting is created the platform builds its room link automatically, so members receive a working join link without manual setup.</p>
+    steps: []
+    sort_order: 5
+    is_published: true
+
+  - title: The platform stack
+    slug: the-platform-stack
+    category: developers-operators
+    kind: reference
+    audience: developer
+    summary: Django, Wagtail, daisIE, and the surrounding environment, repository, deployment, IaC, Ansible, GitHub, Coolify, secrets, Hetzner, Tailscale, Cloudflare, DNS.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The application is <strong>Django</strong> with <strong>Wagtail</strong> for the admin and page authoring, extended by the in-house <strong>daisIE</strong> toolkit for design blocks, feeds, forms, menus and notifications. The <strong>repository</strong> is on <strong>GitHub</strong>, and changes deploy through <strong>Coolify</strong> to a <strong>Hetzner</strong> host. <strong>Ansible</strong> manages infrastructure as code (<strong>IaC</strong>). <strong>Secrets</strong> are stored in a secret manager and injected as environment variables. <strong>Tailscale</strong> provides private networking to the host, and <strong>Cloudflare</strong> provides <strong>DNS</strong>.</p>
+    steps: []
+    sort_order: 6
+    is_published: true
+
+  - title: "Webhooks, API keys, OAuth, KYC"
+    slug: webhooks-api-keys-oauth-kyc
+    category: developers-operators
+    kind: reference
+    audience: developer
+    summary: The integration concepts underpinning payments and identity.
+    body:
+      - type: rich_text
+        text: |-
+          <p>An <strong>API key</strong> authenticates a server-to-server call. A <strong>webhook</strong> lets a provider (such as Stripe) notify the platform when something happens &mdash; for example a payment or a subscription change &mdash; by posting to a URL the platform has registered. <strong>OAuth</strong> is a way to grant access without sharing a password. <strong>KYC</strong> (know your customer) is the identity verification Stripe runs for connected accounts. Together these keep payments and identity in sync without manual work.</p>
+    steps: []
+    sort_order: 7
+    is_published: true
+
+  - title: "Taxonomy: tag groups, allowed tags, languages, countries"
+    slug: taxonomy-overview
+    category: developers-operators
+    kind: reference
+    audience: developer
+    summary: How filters and tagging are structured.
+    body:
+      - type: rich_text
+        text: |-
+          <p>A <strong>tag group</strong> organises <strong>allowed tags</strong> into a family. Only allowed tags may be applied, which keeps filtering predictable. <strong>Languages</strong> and <strong>Countries</strong> are separate taxonomies used for provider and search filters. All four are managed in the admin's Filters area and drive the search and feed filters across the site.</p>
+    steps: []
+    sort_order: 8
+    is_published: true
+
+  - title: Glossary
+    slug: glossary
+    category: developers-operators
+    kind: reference
+    audience: developer
+    summary: The glossary terms used across the platform.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The platform's key terms are defined in the glossary section of this guide. Each term has a short, plain-language definition.</p>
+    steps: []
+    sort_order: 9
+    is_published: true
+
+glossary:
+  - term: Stripe
+    definition: "The company that processes card payments for the site."
+    aliases: ""
+  - term: Stripe Connect
+    definition: "Stripe's system for paying money out to many care providers."
+    aliases: ""
+  - term: Express dashboard
+    definition: "The small Stripe dashboard a provider uses to see payouts and account details."
+    aliases: ""
+  - term: payment profile
+    definition: "The record linking a member to their Stripe customer and connected account."
+    aliases: ""
+  - term: subscription
+    definition: "A recurring payment for a care provider's plan."
+    aliases: ""
+  - term: plan pause/resume/cancel
+    definition: "Pausing, resuming or stopping a provider's subscription."
+    aliases: ""
+  - term: application fee
+    definition: "The share of each payment the platform keeps."
+    aliases: ""
+  - term: peer plan price
+    definition: "The Stripe price a care provider subscribes to."
+    aliases: ""
+  - term: Whereby
+    definition: "A video-room provider."
+    aliases: ""
+  - term: GetPronto
+    definition: "An API used alongside the meeting providers."
+    aliases: ""
+  - term: Daily
+    definition: "A video-room provider."
+    aliases: ""
+  - term: Tigris
+    definition: "The S3-compatible object storage service used for files."
+    aliases: ""
+  - term: object storage bucket
+    definition: "A container for files in object storage."
+    aliases: ""
+  - term: egress
+    definition: "Data leaving storage when it is downloaded; Tigris charges none."
+    aliases: ""
+  - term: retention
+    definition: "How long data is kept before it is deleted."
+    aliases: ""
+  - term: Project
+    definition: "A related group of code and configuration."
+    aliases: ""
+  - term: Platform
+    definition: "The whole running site."
+    aliases: ""
+  - term: Django
+    definition: "The Python web framework the site is built on."
+    aliases: ""
+  - term: Wagtail
+    definition: "The content-management system used for the admin and pages."
+    aliases: ""
+  - term: daisIE
+    definition: "The in-house toolkit that adds design blocks, feeds, forms and notifications."
+    aliases: ""
+  - term: Environment
+    definition: "A place the site runs, such as development, test or production."
+    aliases: ""
+  - term: Repository
+    definition: "Where the code is stored and versioned."
+    aliases: ""
+  - term: Deployment
+    definition: "Publishing a new version of the site."
+    aliases: ""
+  - term: IaC
+    definition: "Infrastructure as code; managing servers from files."
+    aliases: ""
+  - term: Ansible
+    definition: "The tool used to manage infrastructure as code."
+    aliases: ""
+  - term: GitHub
+    definition: "The service hosting the code repository."
+    aliases: ""
+  - term: Coolify
+    definition: "The tool that deploys and runs the site on the server."
+    aliases: ""
+  - term: Secrets
+    definition: "Passwords and keys kept out of the code."
+    aliases: ""
+  - term: Hetzner
+    definition: "The hosting company running the server."
+    aliases: ""
+  - term: Tailscale
+    definition: "The private network used to reach the server."
+    aliases: ""
+  - term: Cloudflare
+    definition: "The service providing DNS and protection."
+    aliases: ""
+  - term: DNS
+    definition: "The system that maps domain names to servers."
+    aliases: ""
+  - term: API key
+    definition: "A secret string that authenticates a service."
+    aliases: ""
+  - term: webhook
+    definition: "An automatic message from one service to another when something happens."
+    aliases: ""
+  - term: OAuth
+    definition: "A way to grant access without sharing a password."
+    aliases: ""
+  - term: KYC
+    definition: "Identity verification required for payments (know your customer)."
+    aliases: ""
+  - term: ICS
+    definition: "The calendar-file format used by the read-only calendar feed."
+    aliases: ""
+  - term: tag group
+    definition: "A family that organises tags."
+    aliases: ""
+  - term: allowed tag
+    definition: "A tag members are permitted to use."
+    aliases: ""
+  - term: taxonomy
+    definition: "A structured list used for filters."
+    aliases: ""
+  - term: feed
+    definition: "A reusable list of records shown on a page."
+    aliases: ""
+  - term: audience
+    definition: "A named group of people used to show content to some visitors only."
+    aliases: ""
+  - term: reserved route
+    definition: "A slug that pages are not allowed to use."
+    aliases: ""
+  - term: deactivation
+    definition: "Turning an account off while keeping it."
+    aliases: ""
+  - term: deletion/anonymisation
+    definition: "Removing an account and erasing its personal details while keeping financial records."
+    aliases: ""
+  - term: blocking
+    definition: "One member hiding another."
+    aliases: ""
+  - term: ban
+    definition: "A platform-wide block of an email address or IP address."
+    aliases: ""
+  - term: data export
+    definition: "A copy of a member's own data."
+    aliases: ""
+  - term: session
+    definition: "A signed-in period, or a booked meeting."
+    aliases: ""
+  - term: calendar token
+    definition: "The private key in a calendar feed link."
+    aliases: ""
+  - term: provider agreement
+    definition: "The terms a care provider accepts."
+    aliases: ""

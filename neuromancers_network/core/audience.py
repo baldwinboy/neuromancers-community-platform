@@ -114,10 +114,8 @@ def is_verified_peer(request: HttpRequest) -> bool:
 
 
 def is_peer_owner(request: HttpRequest) -> bool:
-    user = _request_user(request)
-    if user is None:
-        return False
-    return _is_moderator(user) or is_eligible_peer(user)
+    """An eligible care provider (or moderator) viewing their own profile."""
+    return is_peer(request) and is_own_profile(request)
 
 
 def is_meeting_host(request: HttpRequest) -> bool:
