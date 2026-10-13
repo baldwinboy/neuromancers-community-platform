@@ -211,6 +211,8 @@ MIDDLEWARE = [
 MIDDLEWARE.append("django_htmx.middleware.HtmxMiddleware")
 # Admin-authored arbitrary CSS.
 MIDDLEWARE.append("wagtail_daisIE.middleware.ArbitraryCSSMiddleware")
+# IP-ban enforcement (shadow mode until enabled in Ban Settings).
+MIDDLEWARE.append("neuromancers_network.moderation.middleware.BanMiddleware")
 
 # STATIC
 # ------------------------------------------------------------------------------

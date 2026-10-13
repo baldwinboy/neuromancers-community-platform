@@ -48,6 +48,7 @@ class HomePage(ReservedSlugPage):
         "meetings.RefundRequestFormPage",
         "meetings.ReviewFormPage",
         "users.ProfileEditFormPage",
+        "moderation.SupportFormPage",
     ]
 
 
