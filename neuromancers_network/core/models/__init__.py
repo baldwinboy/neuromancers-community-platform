@@ -1,3 +1,4 @@
+from .audit import AccountAuditLog
 from .base import Timestamped
 from .calendar import CalendarFeedToken
 from .help import GlossaryTerm
@@ -13,6 +14,7 @@ from .settings import NotificationSettings
 from .settings import StripeSettings
 
 __all__ = [
+    "AccountAuditLog",
     "CalendarFeedToken",
     "EmailSettings",
     "GlossaryTerm",
