@@ -23,6 +23,18 @@ class User(FSMModelMixin, index.Indexed, AbstractUser):
         default=False,
         help_text=_("Whether the user has accepted the terms of service."),
     )
+    username_changed_at = models.DateTimeField(
+        _("Username changed at"),
+        null=True,
+        blank=True,
+        help_text=_("When the member last changed their username."),
+    )
+    email_changed_at = models.DateTimeField(
+        _("Email changed at"),
+        null=True,
+        blank=True,
+        help_text=_("When the member last changed their primary email address."),
+    )
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
 

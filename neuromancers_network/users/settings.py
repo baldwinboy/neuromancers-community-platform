@@ -24,7 +24,9 @@ from neuromancers_network.inbox.models import NotificationEventType
 from neuromancers_network.inbox.models import NotificationPreference
 from neuromancers_network.taxonomy.models import Country
 from neuromancers_network.taxonomy.models import Language
+from neuromancers_network.users.cooldown import ensure_username_change_allowed
 from neuromancers_network.users.models import UserProfile
+from neuromancers_network.users.services import record_username_change
 from neuromancers_network.users.validators import validate_username_not_blocked
 
 User = get_user_model()
@@ -51,12 +53,25 @@ class AccountForm(forms.ModelForm):
         fields = ("name", "username", "date_of_birth")
         widgets = {"date_of_birth": forms.DateInput(attrs={"type": "date"})}
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_username = self.instance.username
+
     def clean_username(self):
         value = self.cleaned_data["username"].lower()
         if User.objects.filter(username=value).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError(_("A user with that username already exists."))
         validate_username_not_blocked(value)
+        if value != self._original_username:
+            ensure_username_change_allowed(self.instance)
         return value
+
+    def save(self, commit=True):  # noqa: FBT002 - required ModelForm signature
+        user = super().save(commit=commit)
+        new_username = self.cleaned_data.get("username")
+        if commit and new_username and new_username != self._original_username:
+            record_username_change(user, self._original_username)
+        return user
 
 
 class ProfileForm(forms.ModelForm):

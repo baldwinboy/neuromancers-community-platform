@@ -6,6 +6,7 @@ from .help import HelpArticle
 from .help import HelpCategory
 from .pages import HomePage
 from .pages import StandardPage
+from .settings import AccountSettings
 from .settings import EmailSettings
 from .settings import IntegrationSettings
 from .settings import LocalizationSettings
@@ -15,6 +16,7 @@ from .settings import StripeSettings
 
 __all__ = [
     "AccountAuditLog",
+    "AccountSettings",
     "CalendarFeedToken",
     "EmailSettings",
     "GlossaryTerm",

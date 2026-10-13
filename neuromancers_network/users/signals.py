@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import logging
 
+from allauth.account.signals import email_changed
 from django.db.models.signals import post_save
 from django.db.models.signals import pre_delete
+from django.utils import timezone
 from django_fsm.signals import post_transition
 
+from neuromancers_network.core.audit import record_audit
 from neuromancers_network.inbox.events import emit
 from neuromancers_network.inbox.payloads import account_lifecycle_payload
+from neuromancers_network.inbox.payloads import identity_change_payload
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +64,53 @@ def emit_account_degraded(sender, instance, name, **kwargs):
     )
 
 
+def handle_email_changed(
+    sender,
+    request=None,
+    user=None,
+    from_email_address=None,
+    to_email_address=None,
+    **kwargs,
+):
+    """Stamp the email cooldown, emit the bus event and write an audit row.
+
+    allauth emits ``email_changed`` even for the first (signup) address, where
+    there is no previous primary. Treat that as "email set", not "email
+    changed", so the cooldown does not apply to brand-new members.
+    """
+    if user is None or from_email_address is None:
+        return
+    user.email_changed_at = timezone.now()
+    user.save(update_fields=["email_changed_at"])
+    old_email = getattr(from_email_address, "email", None)
+    new_email = getattr(to_email_address, "email", None)
+    try:
+        emit(
+            "email_changed",
+            payload=identity_change_payload(
+                user,
+                field="email",
+                actor=user,
+                recipients=[user],
+            ),
+            event_ref=(
+                f"user.{user.pk}.email_changed.{user.email_changed_at.isoformat()}"
+            ),
+        )
+    except Exception:
+        logger.exception("Failed to emit email_changed for user %s", user.pk)
+    try:
+        record_audit(
+            action="account.email_change",
+            actor=user,
+            user=user,
+            request=request,
+            changes={"email": [old_email, new_email]},
+        )
+    except Exception:
+        logger.exception("Failed to audit email change for user %s", user.pk)
+
+
 def connect_signals():
     from neuromancers_network.users.models import User  # noqa: PLC0415
 
@@ -77,4 +128,8 @@ def connect_signals():
         emit_account_degraded,
         sender=User,
         dispatch_uid="users.signals.account_degraded",
+    )
+    email_changed.connect(
+        handle_email_changed,
+        dispatch_uid="users.signals.email_changed",
     )

@@ -1,7 +1,9 @@
+from allauth.account.forms import AddEmailForm as BaseAddEmailForm
 from allauth.account.forms import SignupForm
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from neuromancers_network.users.cooldown import ensure_email_change_allowed
 from neuromancers_network.users.validators import validate_username_not_blocked
 
 
@@ -27,3 +29,12 @@ class UserSignupForm(SignupForm):
         user.accepted_tos = True
         user.save(update_fields=["accepted_tos"])
         return user
+
+
+class AddEmailForm(BaseAddEmailForm):
+    """allauth add-email form with an admin-configurable change cooldown."""
+
+    def clean_email(self) -> str:
+        value = super().clean_email()
+        ensure_email_change_allowed(getattr(self, "user", None))
+        return value

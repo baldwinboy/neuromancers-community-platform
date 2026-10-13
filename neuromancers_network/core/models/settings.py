@@ -432,3 +432,36 @@ class NotificationSettings(BaseGenericSetting):
 
     class Meta:
         verbose_name = _("Notification Settings")
+
+
+@register_setting(icon="user")
+class AccountSettings(BaseGenericSetting):
+    """Admin-controlled cooldowns for member identity changes."""
+
+    username_change_cooldown_days = models.PositiveIntegerField(
+        _("Username change cooldown (days)"),
+        default=30,
+        help_text=_(
+            "Days a member must wait between username changes. Zero disables it.",
+        ),
+    )
+    email_change_cooldown_days = models.PositiveIntegerField(
+        _("Email change cooldown (days)"),
+        default=30,
+        help_text=_(
+            "Days a member must wait between email changes. Zero disables it.",
+        ),
+    )
+
+    panels = [
+        MultiFieldPanel(
+            [
+                FieldPanel("username_change_cooldown_days"),
+                FieldPanel("email_change_cooldown_days"),
+            ],
+            heading=_("Identity change cooldowns"),
+        ),
+    ]
+
+    class Meta:
+        verbose_name = _("Account Settings")

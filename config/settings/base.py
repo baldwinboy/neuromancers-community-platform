@@ -407,7 +407,10 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_ADAPTER = "neuromancers_network.users.adapters.AccountAdapter"
 # https://docs.allauth.org/en/latest/account/forms.html
-ACCOUNT_FORMS = {"signup": "neuromancers_network.users.forms.UserSignupForm"}
+ACCOUNT_FORMS = {
+    "signup": "neuromancers_network.users.forms.UserSignupForm",
+    "add_email": "neuromancers_network.users.forms.AddEmailForm",
+}
 
 # dj-stripe
 # ------------------------------------------------------------------------------
