@@ -1,0 +1,20 @@
+{% extends "wagtailusers/users/create.html" %}
+
+{% load wagtailadmin_tags i18n %}
+
+{% block fields %}
+  {% if form.separate_username_field %}
+    <li>{% formattedfield form.username_field %}</li>
+  {% endif %}
+  <li>{% formattedfield form.email %}</li>
+  <li>{% formattedfield form.name %}</li>
+  <li>{% formattedfield form.date_of_birth %}</li>
+  {% block extra_fields %}
+  {% endblock extra_fields %}
+  {% if form.password1 %}
+    <li>{% formattedfield form.password1 %}</li>
+  {% endif %}
+  {% if form.password2 %}
+    <li>{% formattedfield form.password2 %}</li>
+  {% endif %}
+{% endblock %}

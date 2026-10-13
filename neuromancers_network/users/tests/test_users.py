@@ -2,11 +2,16 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+from django.apps import apps
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.test import RequestFactory
 from djstripe.enums import SubscriptionStatus
 
 from neuromancers_network.inbox.models import Notification
 from neuromancers_network.inbox.models import NotificationEventLog
 from neuromancers_network.users.avatar import confirm_upload
+from neuromancers_network.users.forms import UserCreationForm
+from neuromancers_network.users.forms import UserEditForm
 from neuromancers_network.users.forms import UserSignupForm
 from neuromancers_network.users.models import UserProfile
 from neuromancers_network.users.tests.factories import PaymentProfileFactory
@@ -17,6 +22,7 @@ from neuromancers_network.users.tests.factories import UserFactory
 pytestmark = pytest.mark.django_db
 
 VALID_PASSWORD = "s3cret-Passw0rd!"  # noqa: S105
+BIRTH_DATE = "1990-01-02"
 
 
 def signup_data(**overrides):
@@ -26,10 +32,19 @@ def signup_data(**overrides):
         "email2": "newcomer@example.com",
         "password1": VALID_PASSWORD,
         "password2": VALID_PASSWORD,
-        "accept_tos": True,
+        "name": "New Comer",
+        "date_of_birth": BIRTH_DATE,
+        "accepted_tos": True,
     }
     data.update(overrides)
     return data
+
+
+def signup_request():
+    """A request carrying a session (allauth's signup save reads it)."""
+    request = RequestFactory().get("/")
+    SessionMiddleware(lambda r: None).process_request(request)
+    return request
 
 
 def make_peer(
@@ -52,11 +67,70 @@ def make_peer(
 
 
 class TestUserSignupForm:
-    def test_accept_tos_is_required(self):
-        form = UserSignupForm(data=signup_data(accept_tos=False))
+    def test_accepted_tos_is_required(self):
+        form = UserSignupForm(data=signup_data(accepted_tos=False))
 
         assert not form.is_valid()
-        assert "accept_tos" in form.errors
+        assert "accepted_tos" in form.errors
+
+    def test_name_and_date_of_birth_are_required(self):
+        form = UserSignupForm(data=signup_data(name="", date_of_birth=""))
+
+        assert not form.is_valid()
+        assert "name" in form.errors
+        assert "date_of_birth" in form.errors
+
+    def test_save_persists_profile_fields(self):
+        form = UserSignupForm(data=signup_data())
+        assert form.is_valid(), form.errors
+
+        user = form.save(signup_request())
+
+        assert user.name == "New Comer"
+        assert user.date_of_birth.isoformat() == BIRTH_DATE
+        assert user.accepted_tos is True
+
+
+class TestGetFullName:
+    def test_returns_name(self):
+        assert UserFactory(name="Ada Lovelace").get_full_name() == "Ada Lovelace"
+
+    def test_blank_when_name_empty(self):
+        assert UserFactory(name="").get_full_name() == ""
+
+
+class TestAdminUserForms:
+    def test_custom_app_config_registers_project_viewset(self):
+        config = apps.get_app_config("wagtailusers")
+        assert config.user_viewset == "neuromancers_network.users.viewsets.UserViewSet"
+
+    @pytest.mark.parametrize("form_class", [UserCreationForm, UserEditForm])
+    def test_forms_use_name_not_first_last(self, form_class):
+        form = form_class()
+
+        assert "name" in form.fields
+        assert "date_of_birth" in form.fields
+        assert "first_name" not in form.fields
+        assert "last_name" not in form.fields
+
+    def test_edit_form_saves_name_and_date_of_birth(self):
+        user = UserFactory(name="Old Name")
+        form = UserEditForm(
+            data={
+                "username": user.username,
+                "email": user.email,
+                "name": "Grace Hopper",
+                "date_of_birth": "1906-12-09",
+                "is_active": True,
+            },
+            instance=user,
+        )
+        assert form.is_valid(), form.errors
+
+        form.save()
+        user.refresh_from_db()
+        assert user.name == "Grace Hopper"
+        assert user.date_of_birth.isoformat() == "1906-12-09"
 
 
 class TestIsPeer:

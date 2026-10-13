@@ -95,6 +95,18 @@ class User(FSMModelMixin, index.Indexed, AbstractUser):
     def display_name(self) -> str:
         return self.name or self.username
 
+    def get_full_name(self) -> str:
+        """Return the member's full name.
+
+        ``first_name``/``last_name`` are removed (set to ``None``) in favour of
+        ``name``; overriding this avoids the inherited implementation rendering
+        ``"None None"`` in the Wagtail admin and elsewhere.
+        """
+        return self.name or ""
+
+    def get_short_name(self) -> str:
+        return self.name or ""
+
     def get_absolute_url(self) -> str:
         from django.contrib.contenttypes.models import ContentType  # noqa: PLC0415
 

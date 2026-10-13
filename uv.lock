@@ -1817,7 +1817,7 @@ requires-dist = [
     { name = "rules", specifier = ">=3.5" },
     { name = "sentry-sdk", specifier = "==2.71.0" },
     { name = "wagtail", specifier = ">=8.0,<8.1" },
-    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.1.0" },
+    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.3.0" },
     { name = "whitenoise", specifier = "==6.12.0" },
 ]
 
@@ -2884,7 +2884,7 @@ wheels = [
 
 [[package]]
 name = "wagtail-daisie"
-version = "3.1.0"
+version = "3.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cssutils" },
@@ -2892,12 +2892,14 @@ dependencies = [
     { name = "django-colorfield" },
     { name = "django-htmx" },
     { name = "lxml" },
+    { name = "markdown-it-py" },
+    { name = "mdit-py-plugins" },
     { name = "mjml-python" },
     { name = "wagtail" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/57/ebe1112a751abb80556741d2c292bd11ecd8d98a2c01ce91b44d1afc69d0/wagtail_daisie-3.1.0.tar.gz", hash = "sha256:70be3218fc9ae991e6d4b26abbc9f7e4983deba6a3f4af1987f3fffb7e7722bb", size = 345198, upload-time = "2026-10-09T22:39:30.191Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/51/4d/c741efd7a7b35146081e0e0526da4b22b5972245a6a1641d2e5064fb6705/wagtail_daisie-3.3.0.tar.gz", hash = "sha256:a9b89c7ea0967f4d84016f93dba8cc1763712f6e8b140a139dbd34205e46aab5", size = 366989, upload-time = "2026-10-13T19:18:17.476Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/75/7c1f8806b472b66fb356b752a437c722ec87485b0dbae6096d35560eec5d/wagtail_daisie-3.1.0-py3-none-any.whl", hash = "sha256:92f1538bcd2da8e9e9bf0b466f44e4d06d4d9595852a77f7da22f81a8f5eba4c", size = 511138, upload-time = "2026-10-09T22:39:28.455Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/ff/121e8d8e0b1092ff9c5d4f9e73c6409af658ef2dafe6dd701f56d1c1b2c2/wagtail_daisie-3.3.0-py3-none-any.whl", hash = "sha256:be9c5a4170f7a5e7fcc96484e69fb57d25176cc35007f33943248c7059c26ee0", size = 545018, upload-time = "2026-10-13T19:18:15.511Z" },
 ]
 
 [package.optional-dependencies]

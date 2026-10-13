@@ -103,7 +103,7 @@ WAGTAIL_APPS = [
     "wagtail.contrib.table_block",
     "wagtail.embeds",
     "wagtail.sites",
-    "wagtail.users",
+    "config.apps.CustomUsersAppConfig",
     "wagtail.snippets",
     "wagtail.documents",
     "wagtail.images",
@@ -397,13 +397,10 @@ ACCOUNT_CHANGE_EMAIL = True
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_SIGNUP_FIELDS = [
     "username*",
-    "name*",
-    "date_of_birth*",
     "email*",
     "email2*",
     "password1*",
     "password2*",
-    "accept_tos*",
 ]
 # https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
