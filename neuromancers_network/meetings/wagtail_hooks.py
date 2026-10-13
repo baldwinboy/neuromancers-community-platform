@@ -13,9 +13,11 @@ from wagtail.admin.panels import InlinePanel
 from wagtail.admin.panels import MultiFieldPanel
 from wagtail.admin.panels import ObjectList
 from wagtail.admin.viewsets.model import ModelViewSet
+from wagtail.snippets.views.snippets import SnippetViewSet
 from wagtail.snippets.views.snippets import SnippetViewSetGroup
 
 from neuromancers_network.core.bulk_actions import ConfirmBulkAction
+from neuromancers_network.core.views.viewset import HiddenFromSnippetIndexMixin
 from neuromancers_network.meetings.forms import MeetingAdminForm
 from neuromancers_network.meetings.forms import PricingTypeSelect
 from neuromancers_network.meetings.models import Booking
@@ -42,7 +44,7 @@ class MeetingFilterSet(WagtailFilterSet):
         ]
 
 
-class MeetingViewSet(ModelViewSet):
+class MeetingViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     model = Meeting
     icon = "calendar-alt"
     menu_label = _("All meetings")
@@ -217,7 +219,7 @@ class MeetingPriceTierViewSet(ModelViewSet):
     list_per_page = 50
 
 
-class ReviewViewSet(ModelViewSet):
+class ReviewViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     model = Review
     icon = "pick"
     menu_label = _("Reviews")
@@ -225,11 +227,15 @@ class ReviewViewSet(ModelViewSet):
     menu_order = 4
     list_display = ["peer", "reviewer", "rating", "is_published", "created_at"]
     search_fields = ["comment", "peer__username", "reviewer__username"]
-    form_fields = ["rating", "comment", "is_published"]
+    panels = [
+        FieldPanel("rating"),
+        FieldPanel("comment"),
+        FieldPanel("is_published"),
+    ]
     list_per_page = 50
 
 
-class RefundRequestViewSet(ModelViewSet):
+class RefundRequestViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     model = RefundRequest
     icon = "rotate"
     menu_label = _("Refund requests")
@@ -237,7 +243,11 @@ class RefundRequestViewSet(ModelViewSet):
     menu_order = 5
     list_display = ["meeting_request", "status", "created_at"]
     search_fields = ["reason", "meeting_request__meeting__title"]
-    form_fields = ["meeting_request", "reason", "peer_response"]
+    panels = [
+        FieldPanel("meeting_request"),
+        FieldPanel("reason"),
+        FieldPanel("peer_response"),
+    ]
     list_per_page = 50
 
 

@@ -7,9 +7,10 @@ from wagtail.admin.panels import FieldPanel
 from wagtail.admin.panels import FieldRowPanel
 from wagtail.admin.panels import MultiFieldPanel
 from wagtail.admin.panels import ObjectList
-from wagtail.admin.viewsets.model import ModelViewSet
+from wagtail.snippets.views.snippets import SnippetViewSet
 
 from neuromancers_network.core.bulk_actions import ConfirmBulkAction
+from neuromancers_network.core.views.viewset import HiddenFromSnippetIndexMixin
 from neuromancers_network.peers.forms import PeerProfileAdminForm
 from neuromancers_network.peers.models import PeerApplication
 from neuromancers_network.peers.models import PeerProfile
@@ -28,7 +29,7 @@ class PeerProfileFilterSet(WagtailFilterSet):
         fields = ["is_approved", "is_verified", "countries", "languages"]
 
 
-class PeerApplicationViewSet(ModelViewSet):
+class PeerApplicationViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     model = PeerApplication
     icon = "form"
     menu_label = _("Peer applications")
@@ -44,18 +45,18 @@ class PeerApplicationViewSet(ModelViewSet):
     ]
     search_fields = ["user__username", "user__name", "reason"]
     filterset_class = PeerApplicationFilterSet
-    form_fields = [
-        "user",
-        "reason",
-        "is_approved",
-        "status",
-        "reviewed_by",
-        "reviewed_at",
+    panels = [
+        FieldPanel("user"),
+        FieldPanel("reason"),
+        FieldPanel("is_approved"),
+        FieldPanel("status"),
+        FieldPanel("reviewed_by"),
+        FieldPanel("reviewed_at"),
     ]
     list_per_page = 50
 
 
-class PeerProfileViewSet(ModelViewSet):
+class PeerProfileViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     model = PeerProfile
     icon = "group"
     menu_label = _("Peer profiles")
@@ -104,7 +105,7 @@ class PeerProfileViewSet(ModelViewSet):
     )
 
 
-class UserProfileViewSet(ModelViewSet):
+class UserProfileViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     model = UserProfile
     icon = "user"
     menu_label = _("Member profiles")
@@ -112,7 +113,12 @@ class UserProfileViewSet(ModelViewSet):
     menu_order = 3
     list_display = ["user", "visibility", "access_needs_visible_to_peer"]
     search_fields = ["user__username", "user__name"]
-    form_fields = ["visibility", "access_needs", "access_needs_visible_to_peer"]
+    panels = [
+        FieldPanel("user"),
+        FieldPanel("visibility"),
+        FieldPanel("access_needs"),
+        FieldPanel("access_needs_visible_to_peer"),
+    ]
     list_per_page = 50
 
 

@@ -5,14 +5,12 @@ from __future__ import annotations
 import logging
 
 from django.utils.translation import gettext_lazy as _
-from wagtail.snippets.models import register_snippet
 
 from .subscriber import EventSubscriber
 
 logger = logging.getLogger(__name__)
 
 
-@register_snippet
 class DaisieBridgeSubscriber(EventSubscriber):
     """Forward a recorded inbox event to the configured daisIE email bridge.
 
@@ -22,8 +20,8 @@ class DaisieBridgeSubscriber(EventSubscriber):
     """
 
     class Meta(EventSubscriber.Meta):
-        verbose_name = _("Daisie email bridge")
-        verbose_name_plural = _("Daisie email bridges")
+        verbose_name = _("Email notification")
+        verbose_name_plural = _("Email notifications")
 
     def handle_event(self, log_entry):
         from wagtail_daisIE.notifications.bridges import (  # noqa: PLC0415

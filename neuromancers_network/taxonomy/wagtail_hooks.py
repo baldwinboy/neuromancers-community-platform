@@ -15,6 +15,7 @@ from wagtail.snippets.views.snippets import SnippetViewSet
 from wagtail.snippets.views.snippets import SnippetViewSetGroup
 
 from neuromancers_network.core.bulk_actions import SetActiveBulkAction
+from neuromancers_network.core.views.viewset import HiddenFromSnippetIndexMixin
 from neuromancers_network.taxonomy.models import AllowedTag
 from neuromancers_network.taxonomy.models import Country
 from neuromancers_network.taxonomy.models import Language
@@ -108,7 +109,7 @@ class LanguageIndexView(RegistryIndexView):
     load_registry_url_name = "taxonomy_load_languages"
 
 
-class AllowedTagViewSet(SnippetViewSet):
+class AllowedTagViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     model = AllowedTag
     icon = "radio-full"
     menu_label = _("Tags")
@@ -129,7 +130,7 @@ class AllowedTagViewSet(SnippetViewSet):
     add_to_admin_menu = False
 
 
-class TagGroupViewSet(SnippetViewSet):
+class TagGroupViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     model = TagGroup
     icon = "dots-horizontal"
     menu_label = _("Tag groups")
@@ -147,7 +148,7 @@ class TagGroupViewSet(SnippetViewSet):
     ]
 
 
-class CountryViewSet(SnippetViewSet):
+class CountryViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     model = Country
     icon = "site"
     menu_label = _("Countries")
@@ -157,7 +158,7 @@ class CountryViewSet(SnippetViewSet):
     list_per_page = 50
 
 
-class LanguageViewSet(SnippetViewSet):
+class LanguageViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     model = Language
     icon = "globe"
     menu_label = _("Languages")
