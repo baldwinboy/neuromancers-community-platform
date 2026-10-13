@@ -660,6 +660,12 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "source": "request.user",
         "queryset": "neuromancers_network.peers.selectors.my_availability",
     },
+    "blocked_user": {
+        "label": _("Blocked member"),
+        "model": "users.User",
+        "source": "request.user",
+        "queryset": "neuromancers_network.moderation.selectors.blocked_users",
+    },
     "calendar_event": {
         "label": _("Calendar event"),
         "model": "peers.CalendarEvent",
@@ -1093,6 +1099,14 @@ WAGTAIL_DAISIE_ACTIONS = {
     "account.delete_cancel": {
         "label": _("Cancel account deletion"),
         "handler": "neuromancers_network.moderation.actions.account_delete_cancel",
+    },
+    "user.block": {
+        "label": _("Block member"),
+        "handler": "neuromancers_network.moderation.actions.user_block",
+    },
+    "user.unblock": {
+        "label": _("Unblock member"),
+        "handler": "neuromancers_network.moderation.actions.user_unblock",
     },
     # Settings-page sections (rendered by an app template override).
     "settings.account": {

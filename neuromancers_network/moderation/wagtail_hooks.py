@@ -12,6 +12,7 @@ from wagtail.snippets.views.snippets import SnippetViewSetGroup
 from neuromancers_network.core.bulk_actions import ConfirmBulkAction
 from neuromancers_network.core.views.viewset import HiddenFromSnippetIndexMixin
 from neuromancers_network.moderation.models import AccountDeletionRequest
+from neuromancers_network.moderation.models import UserBlock
 from neuromancers_network.moderation.services import purge_account
 
 
@@ -66,12 +67,28 @@ class PurgeAccountsBulkAction(ConfirmBulkAction):
         return purged, 0
 
 
+class UserBlockViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
+    model = UserBlock
+    icon = "no"
+    menu_label = _("Member blocks")
+    menu_name = "member_blocks"
+    menu_order = 2
+    list_display = ["blocker", "blocked", "created_at"]
+    search_fields = ["blocker__username", "blocked__username"]
+    panels = [
+        FieldPanel("blocker"),
+        FieldPanel("blocked"),
+        FieldPanel("reason"),
+    ]
+    list_per_page = 50
+
+
 class ModerationOperationsViewSetGroup(SnippetViewSetGroup):
     menu_label = _("Moderation")
     menu_name = "operations_moderation"
     menu_icon = "warning"
     menu_order = 5
-    items = (AccountDeletionRequestViewSet,)
+    items = (AccountDeletionRequestViewSet, UserBlockViewSet)
     add_to_admin_menu = False
 
 
