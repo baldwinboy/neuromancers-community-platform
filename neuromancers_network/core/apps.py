@@ -16,10 +16,15 @@ class CoreConfig(AppConfig):
         """
         from neuromancers_network.core.models import LocalizationSettings
         from neuromancers_network.core.models import ModerationSettings
+        from neuromancers_network.core.models import NotificationSettings
         from neuromancers_network.core.models import StripeSettings
         from neuromancers_network.users.validators import bust_blocked_usernames_cache
 
         from . import signals
+        from .forms import NotificationSettingsForm
+
+        # Set after app loading to avoid a core.models <-> core.forms cycle.
+        NotificationSettings.base_form_class = NotificationSettingsForm
 
         post_save.connect(
             signals.update_dj_stripe_keys,

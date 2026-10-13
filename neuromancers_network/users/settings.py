@@ -20,7 +20,7 @@ from wagtail_daisIE.widgets import DaisieAutocompleteSelectMultiple
 
 from neuromancers_network.core.actions import redirect_back
 from neuromancers_network.core.actions import require_authenticated
-from neuromancers_network.inbox.models import NotificationEventType
+from neuromancers_network.inbox.forms import EventTypeMultipleChoiceField
 from neuromancers_network.inbox.models import NotificationPreference
 from neuromancers_network.taxonomy.models import Country
 from neuromancers_network.taxonomy.models import Language
@@ -102,11 +102,8 @@ class PrivacyForm(forms.ModelForm):
 
 
 class NotificationForm(forms.Form):
-    disabled_event_types = forms.MultipleChoiceField(
-        required=False,
+    disabled_event_types = EventTypeMultipleChoiceField(
         label=_("Notifications to turn off"),
-        choices=NotificationEventType.choices,
-        widget=forms.CheckboxSelectMultiple,
     )
 
     def __init__(self, *args, profile=None, **kwargs):

@@ -1,10 +1,12 @@
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
 from wagtail.admin.panels import FieldPanel
+from wagtail.admin.panels import ObjectList
 from wagtail.admin.viewsets.model import ModelViewSet
 from wagtail.snippets.views.snippets import SnippetViewSet
 
 from neuromancers_network.core.views.viewset import HiddenFromSnippetIndexMixin
+from neuromancers_network.inbox.forms import NotificationPreferenceAdminForm
 from neuromancers_network.inbox.models import NotificationPreference
 from neuromancers_network.inbox.models.daisie_bridge import DaisieBridgeSubscriber
 
@@ -15,9 +17,12 @@ class NotificationPreferenceViewSet(ModelViewSet):
     menu_label = _("Notification preferences")
     menu_name = "notification_preferences"
     menu_order = 4
-    list_display = ["user", "disabled_event_types", "updated_at"]
+    list_display = ["user", "disabled_event_types_display", "updated_at"]
     search_fields = ["user__username", "user__name"]
-    form_fields = ["user", "disabled_event_types"]
+    edit_handler = ObjectList(
+        [FieldPanel("user"), FieldPanel("disabled_event_types")],
+        base_form_class=NotificationPreferenceAdminForm,
+    )
     list_per_page = 50
 
 

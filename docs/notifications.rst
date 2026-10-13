@@ -102,9 +102,11 @@ events and are idempotent:
 Administration
 ---------------------------------------------------------------------
 
-* Operations → **Notification preferences** manages per-member opt-outs.
-* Settings → **Email Settings** includes a **Send test email** panel
-  (``/cms/email/test/``).
+* Operations → **Notification preferences** manages per-member opt-outs
+  with a flat checkbox list of event types (no raw JSON).
+* Settings → **Notification Settings** and Settings → **Email Settings** use
+  the same checkbox lists for the admin-level defaults and the test-email
+  panel (``/cms/email/test/``).
 
 Where the tests cover this
 ---------------------------------------------------------------------
