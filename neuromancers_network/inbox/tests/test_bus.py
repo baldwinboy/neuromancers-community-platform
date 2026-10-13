@@ -4,6 +4,7 @@ import neuromancers_network.inbox.events as events_module
 from neuromancers_network.inbox.events import emit
 from neuromancers_network.inbox.models import Notification
 from neuromancers_network.inbox.models import NotificationEventLog
+from neuromancers_network.inbox.models import NotificationEventType
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -116,3 +117,55 @@ class TestNotificationPersistence:
         emit("review_created", payload={})
 
         assert Notification.objects.count() == 0
+
+    def test_skip_in_app_records_event_only(self):
+        user = UserFactory()
+        # Creating the user emits account_created (with an in-app row); clear it
+        # so we assert only on the deletion event below.
+        Notification.objects.all().delete()
+
+        emit(
+            "account_deleted",
+            payload={"recipient_user_ids": [user.pk], "skip_in_app": True},
+            event_ref="user.1.deleted",
+        )
+
+        assert not Notification.objects.filter(
+            recipient=user,
+            event_type="account_deleted",
+        ).exists()
+        assert NotificationEventLog.objects.filter(
+            event_type="account_deleted",
+        ).exists()
+
+
+class TestEventVocabulary:
+    def test_every_event_type_is_accepted(self):
+        for event_type in NotificationEventType.values:
+            log_entry = emit(event_type, payload={})
+            assert log_entry.event_type == event_type
+
+    def test_new_account_lifecycle_events_exist(self):
+        expected = {
+            "account_deactivated",
+            "account_reactivated",
+            "account_deletion_scheduled",
+            "account_deletion_cancelled",
+            "email_changed",
+            "username_changed",
+            "user_blocked",
+            "user_unblocked",
+            "ip_banned",
+            "ip_unbanned",
+            "email_banned",
+            "email_unbanned",
+            "report_created",
+            "report_resolved",
+            "data_export_requested",
+            "data_export_ready",
+            "meeting_unpublished",
+            "meetings_unpublished",
+            "meetings_deleted",
+        }
+
+        assert expected <= set(NotificationEventType.values)

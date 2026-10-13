@@ -9,6 +9,10 @@ TRANSACTIONAL_EVENT_TYPES = frozenset(
     {
         "account_created",
         "account_deleted",
+        "account_deactivated",
+        "account_reactivated",
+        "account_deletion_scheduled",
+        "account_deletion_cancelled",
         "booking_paid",
         "booking_cancelled",
         "refund_approved",
@@ -18,6 +22,12 @@ TRANSACTIONAL_EVENT_TYPES = frozenset(
         "subscription_cancelled",
         "payment_succeeded",
         "payment_failed",
+        "ip_banned",
+        "ip_unbanned",
+        "email_banned",
+        "email_unbanned",
+        "report_resolved",
+        "data_export_ready",
     },
 )
 

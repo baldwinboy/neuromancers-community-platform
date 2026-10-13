@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from neuromancers_network.core.models.base import Timestamped
 
-from .event_type import NotificationEventType
+from .event_type import notification_event_choices
 
 
 class Notification(Timestamped):
@@ -19,7 +19,7 @@ class Notification(Timestamped):
     event_type = models.CharField(
         _("Event type"),
         max_length=50,
-        choices=NotificationEventType.choices,
+        choices=notification_event_choices,
         db_index=True,
     )
     title = models.CharField(_("Title"), max_length=255, blank=True)

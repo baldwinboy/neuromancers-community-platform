@@ -4,6 +4,8 @@ from unittest.mock import patch
 import pytest
 from djstripe.enums import SubscriptionStatus
 
+from neuromancers_network.inbox.models import Notification
+from neuromancers_network.inbox.models import NotificationEventLog
 from neuromancers_network.users.avatar import confirm_upload
 from neuromancers_network.users.forms import UserSignupForm
 from neuromancers_network.users.models import UserProfile
@@ -144,3 +146,19 @@ class TestAvatarUpload:
         profile.refresh_from_db()
         assert profile.profile_picture_getpronto_id == "new-file"
         assert profile.profile_picture_url == "https://img.example/new"
+
+
+class TestAccountDeletedEvent:
+    def test_delete_emits_event_without_in_app_notification(self):
+        user = UserFactory()
+        user_pk = user.pk
+
+        user.delete()
+
+        log = NotificationEventLog.objects.get(
+            event_type="account_deleted",
+            event_ref=f"user.{user_pk}.deleted",
+        )
+        assert log.payload["skip_in_app"] is True
+        assert log.payload["recipient_user_ids"] == [user_pk]
+        assert not Notification.objects.filter(recipient_id=user_pk).exists()

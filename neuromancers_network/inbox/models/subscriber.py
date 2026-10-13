@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from neuromancers_network.core.models.base import Timestamped
 from neuromancers_network.inbox.registry import register_subscriber_model
 
-from .event_type import NotificationEventType
+from .event_type import notification_event_choices
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class EventSubscriber(Timestamped):
     event_type = models.CharField(
         _("Event type"),
         max_length=50,
-        choices=NotificationEventType.choices,
+        choices=notification_event_choices,
         help_text=_("The event this subscriber reacts to."),
     )
     is_active = models.BooleanField(

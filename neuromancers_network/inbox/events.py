@@ -82,6 +82,8 @@ def persist_notifications(log_entry) -> None:
     from .services import should_notify  # noqa: PLC0415
 
     payload = log_entry.payload or {}
+    if payload.get("skip_in_app"):
+        return
     ids = [pk for pk in (payload.get("recipient_user_ids") or []) if pk is not None]
     if not ids:
         return
