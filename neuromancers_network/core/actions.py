@@ -52,3 +52,35 @@ def redirect_back(request) -> HttpResponseRedirect:
     ):
         target = "/"
     return HttpResponseRedirect(target)
+
+
+def calendar_revoke_token(request, data):
+    """Deactivate the signed-in member's read-only calendar feed token."""
+    user = require_authenticated(request)
+    token = getattr(user, "calendar_feed_token", None)
+    if token is not None and token.is_active:
+        token.is_active = False
+        token.save(update_fields=["is_active", "updated_at"])
+    return redirect_back(request)
+
+
+def calendar_rotate_token(request, data):
+    """Issue a fresh calendar feed token for the signed-in member."""
+    import uuid  # noqa: PLC0415
+
+    from neuromancers_network.core.models import CalendarFeedToken  # noqa: PLC0415
+
+    user = require_authenticated(request)
+    token = getattr(user, "calendar_feed_token", None)
+    if token is None:
+        token = CalendarFeedToken(user=user)
+    token.token = uuid.uuid4()
+    token.is_active = True
+    token.save()
+    return redirect_back(request)
+
+
+HANDLERS = {
+    "calendar.revoke_token": calendar_revoke_token,
+    "calendar.rotate_token": calendar_rotate_token,
+}

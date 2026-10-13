@@ -1094,6 +1094,22 @@ WAGTAIL_DAISIE_ACTIONS = {
         "label": _("Reactivate account"),
         "handler": "neuromancers_network.users.actions.account_reactivate",
     },
+    "account.revoke_sessions": {
+        "label": _("Sign out everywhere"),
+        "handler": "neuromancers_network.users.actions.account_revoke_sessions",
+    },
+    "account.revoke_other_sessions": {
+        "label": _("Sign out other devices"),
+        "handler": "neuromancers_network.users.actions.account_revoke_other_sessions",
+    },
+    "calendar.revoke_token": {
+        "label": _("Revoke calendar feed"),
+        "handler": "neuromancers_network.core.actions.calendar_revoke_token",
+    },
+    "calendar.rotate_token": {
+        "label": _("Rotate calendar feed"),
+        "handler": "neuromancers_network.core.actions.calendar_rotate_token",
+    },
     "account.delete_request": {
         "label": _("Delete my account"),
         "handler": "neuromancers_network.moderation.actions.account_delete_request",
@@ -1109,6 +1125,10 @@ WAGTAIL_DAISIE_ACTIONS = {
     "user.unblock": {
         "label": _("Unblock member"),
         "handler": "neuromancers_network.moderation.actions.user_unblock",
+    },
+    "data.export_request": {
+        "label": _("Request my data"),
+        "handler": "neuromancers_network.moderation.actions.data_export_request",
     },
     # Settings-page sections (rendered by an app template override).
     "settings.account": {

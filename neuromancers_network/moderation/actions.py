@@ -9,6 +9,7 @@ from neuromancers_network.core.actions import redirect_back
 from neuromancers_network.core.actions import require_authenticated
 from neuromancers_network.moderation.blocking import block_user
 from neuromancers_network.moderation.blocking import unblock_user
+from neuromancers_network.moderation.export import request_data_export
 from neuromancers_network.moderation.services import cancel_account_deletion
 from neuromancers_network.moderation.services import request_account_deletion
 
@@ -57,9 +58,17 @@ def user_unblock(request, data):
     return redirect_back(request)
 
 
+def data_export_request(request, data):
+    """Queue a copy of the signed-in member's data."""
+    user = require_authenticated(request)
+    request_data_export(user)
+    return redirect_back(request)
+
+
 HANDLERS = {
     "account.delete_request": account_delete_request,
     "account.delete_cancel": account_delete_cancel,
     "user.block": user_block,
     "user.unblock": user_unblock,
+    "data.export_request": data_export_request,
 }
