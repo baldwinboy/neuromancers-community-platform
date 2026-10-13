@@ -946,6 +946,21 @@ WAGTAIL_DAISIE_FORM_FIELD_TYPES = {
         "css": "file-input w-full",
         "is_upload": True,
         "handler": "neuromancers_network.users.avatar.store_image",
+        "validators": ["neuromancers_network.core.validators.validate_image"],
+    },
+    "attachments": {
+        "label": _("Attachments"),
+        "display": "attachments",
+        "multiple": True,
+        "is_upload": True,
+        "handler": "neuromancers_network.core.uploads.store_document",
+    },
+    "autocomplete": {
+        "label": _("Autocomplete"),
+        "field": "django.forms.MultipleChoiceField",
+        "widget": "wagtail_daisIE.widgets.DaisieAutocompleteSelectMultiple",
+        "choices": "neuromancers_network.taxonomy.selectors.tag_choices",
+        "css": "select w-full",
     },
     "duration_tiers": {
         "label": _("Duration tiers"),
