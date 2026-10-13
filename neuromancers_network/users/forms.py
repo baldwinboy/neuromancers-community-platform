@@ -3,6 +3,7 @@ from allauth.account.forms import SignupForm
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from neuromancers_network.moderation.identity import is_identity_blocked
 from neuromancers_network.users.cooldown import ensure_email_change_allowed
 from neuromancers_network.users.validators import validate_username_not_blocked
 
@@ -22,7 +23,17 @@ class UserSignupForm(SignupForm):
     def clean_username(self) -> str:
         username = super().clean_username()
         validate_username_not_blocked(username)
+        if is_identity_blocked(username=username):
+            raise forms.ValidationError(_("This username is not available."))
         return username
+
+    def clean_email(self) -> str:
+        email = super().clean_email()
+        if is_identity_blocked(email=email):
+            raise forms.ValidationError(
+                _("This email address cannot be used to sign up."),
+            )
+        return email
 
     def save(self, request):
         user = super().save(request)

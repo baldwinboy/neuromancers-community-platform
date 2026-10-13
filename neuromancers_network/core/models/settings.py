@@ -452,6 +452,20 @@ class AccountSettings(BaseGenericSetting):
             "Days a member must wait between email changes. Zero disables it.",
         ),
     )
+    account_deletion_grace_days = models.PositiveIntegerField(
+        _("Account deletion grace period (days)"),
+        default=14,
+        help_text=_(
+            "Days a member has to cancel a deletion request before it is purged.",
+        ),
+    )
+    reregistration_cooldown_days = models.PositiveIntegerField(
+        _("Re-registration cooldown (days)"),
+        default=180,
+        help_text=_(
+            "Days a deleted member's email/username stay blocked from re-use.",
+        ),
+    )
 
     panels = [
         MultiFieldPanel(
@@ -460,6 +474,13 @@ class AccountSettings(BaseGenericSetting):
                 FieldPanel("email_change_cooldown_days"),
             ],
             heading=_("Identity change cooldowns"),
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("account_deletion_grace_days"),
+                FieldPanel("reregistration_cooldown_days"),
+            ],
+            heading=_("Account deletion"),
         ),
     ]
 

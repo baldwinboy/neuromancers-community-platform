@@ -17,6 +17,9 @@ from neuromancers_network.core.views.stripe import StripeWebhookView
 from neuromancers_network.core.views.tos import ResetTosView
 from neuromancers_network.inbox.wagtail_hooks import NotificationPreferenceViewSet
 from neuromancers_network.meetings.wagtail_hooks import MeetingOperationsViewSetGroup
+from neuromancers_network.moderation.wagtail_hooks import (
+    ModerationOperationsViewSetGroup,
+)
 from neuromancers_network.payments.wagtail_hooks import StripeWebhookEndpointViewSet
 from neuromancers_network.peers.wagtail_hooks import PeerApplicationViewSet
 from neuromancers_network.peers.wagtail_hooks import PeerProfileViewSet
@@ -84,6 +87,7 @@ class OperationsViewSetGroup(SnippetViewSetGroup):
         MeetingOperationsViewSetGroup,
         FiltersOperationsViewSetGroup,
         ReadOnlyOperationsViewSetGroup,
+        ModerationOperationsViewSetGroup,
     )
 
 

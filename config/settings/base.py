@@ -137,6 +137,7 @@ LOCAL_APPS = [
     "neuromancers_network.payments",
     "neuromancers_network.taxonomy",
     "neuromancers_network.inbox",
+    "neuromancers_network.moderation",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = [
@@ -1076,6 +1077,14 @@ WAGTAIL_DAISIE_ACTIONS = {
     "account.reactivate": {
         "label": _("Reactivate account"),
         "handler": "neuromancers_network.users.actions.account_reactivate",
+    },
+    "account.delete_request": {
+        "label": _("Delete my account"),
+        "handler": "neuromancers_network.moderation.actions.account_delete_request",
+    },
+    "account.delete_cancel": {
+        "label": _("Cancel account deletion"),
+        "handler": "neuromancers_network.moderation.actions.account_delete_cancel",
     },
     # Settings-page sections (rendered by an app template override).
     "settings.account": {
