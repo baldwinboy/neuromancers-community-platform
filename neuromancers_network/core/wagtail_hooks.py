@@ -167,7 +167,7 @@ def hide_inaccessible_detail_pages(page, request, args, kwargs):
 
 # Prevent pages from being created with reserved routes
 @hooks.register("before_create_page")
-def prevent_reserved_routes_before_create_page(request, parent_page):
+def prevent_reserved_routes_before_create_page(request, parent_page, page):
     return prevent_reserved_routes(request, parent_page=parent_page)
 
 
