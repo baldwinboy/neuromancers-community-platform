@@ -47,6 +47,12 @@ See [Operator Guide — First deployment](operator-guide.md#first-deployment) fo
 - `CELERY_FLOWER_PASSWORD`
 - `WEB_CONCURRENCY`
 - `GATUS_DISCORD_WEBHOOK_URL`
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_S3_BUCKET_NAME`
+- `AWS_REGION`
+- `AWS_ENDPOINT_URL_S3`
+- `RETENTION_DAYS`
 
 ## Notes
 
@@ -54,4 +60,5 @@ See [Operator Guide — First deployment](operator-guide.md#first-deployment) fo
 - Keep key names identical across Bitwarden and application settings where possible.
 - Coolify does not need to store every runtime variable individually if containers resolve them directly from Bitwarden.
 - `GATUS_DISCORD_WEBHOOK_URL` is consumed by the `gatus` service in `docker-compose.coolify.yml` and must be present in Coolify even though it is not pushed by Ansible.
+- The root `AWS_*` keys and `RETENTION_DAYS` back the **private** backups bucket and the `exports` storage alias for member data exports — not the public media bucket. See [Storage architecture](storage.md).
 - If a new runtime variable is introduced in application settings, add it here and update deploy preflight validation and runtime bootstrap logic.

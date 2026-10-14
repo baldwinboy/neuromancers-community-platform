@@ -99,6 +99,8 @@ bws run -- 'ansible-playbook infra/playbooks/site.yml --inventory infra/inventor
 - `WEB_CONCURRENCY`
 - `HETZNER_SSH_PUBLIC_KEY`
 
+The root `AWS_*` keys and `RETENTION_DAYS` above back the private backups bucket and the `exports` storage alias used for member data exports (see [Storage architecture](storage.md)). They are distinct from the `DJANGO_AWS_*` public-media credentials.
+
 ## Rotation procedure
 
 1. Rotate secret in source provider.

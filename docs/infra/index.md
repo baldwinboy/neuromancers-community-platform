@@ -10,6 +10,8 @@ titlesonly:
 operator-guide
 secrets-runbook
 coolify-env-mapping
+storage
+pricing
 deployment-pipeline
 secure-domain-plan
 rollback-plan
