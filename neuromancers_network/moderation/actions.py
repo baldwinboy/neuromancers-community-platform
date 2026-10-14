@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
@@ -61,5 +62,8 @@ def user_unblock(request, data):
 def data_export_request(request, data):
     """Queue a copy of the signed-in member's data."""
     user = require_authenticated(request)
-    request_data_export(user)
+    try:
+        request_data_export(user)
+    except ValueError as exc:
+        messages.error(request, str(exc))
     return redirect_back(request)

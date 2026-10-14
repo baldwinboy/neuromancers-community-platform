@@ -1,6 +1,7 @@
 from celery import shared_task
 
 from neuromancers_network.moderation.export import build_export_file
+from neuromancers_network.moderation.export import sweep_data_exports as sweep_exports
 from neuromancers_network.moderation.models import DataExportRequest
 from neuromancers_network.moderation.services import purge_due_accounts
 
@@ -18,3 +19,9 @@ def build_data_export(export_id: int) -> None:
     if export_request is None:
         return
     build_export_file(export_request)
+
+
+@shared_task
+def sweep_data_exports() -> int:
+    """Retry stale data exports and purge expired ones."""
+    return sweep_exports()

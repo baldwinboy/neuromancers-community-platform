@@ -134,6 +134,22 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
+    # Private data exports: the private backups bucket, under an ``exports/``
+    # prefix, never the public media bucket. Credentials are the root ``AWS_*``
+    # backup credentials, not the ``DJANGO_AWS_*`` media ones.
+    "exports": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": env("AWS_S3_BUCKET_NAME", default=None),
+            "access_key": env("AWS_ACCESS_KEY_ID", default=None),
+            "secret_key": env("AWS_SECRET_ACCESS_KEY", default=None),
+            "endpoint_url": env("AWS_ENDPOINT_URL_S3", default=None),
+            "region_name": env("AWS_REGION", default=None),
+            "location": "exports",
+            "file_overwrite": False,
+            "querystring_auth": True,
+        },
+    },
 }
 MEDIA_URL = f"https://{aws_s3_domain}/media/"
 WAGTAILIMAGES_RENDITION_STORAGE = "storages.backends.s3.S3Storage"

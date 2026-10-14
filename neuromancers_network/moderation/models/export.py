@@ -30,9 +30,11 @@ class DataExportRequest(Timestamped):
     file = models.FileField(
         _("File"),
         upload_to="exports/",
+        storage="exports",
         blank=True,
     )
     completed_at = models.DateTimeField(_("Completed at"), null=True, blank=True)
+    expires_at = models.DateTimeField(_("Expires at"), null=True, blank=True)
     error = models.TextField(_("Error"), blank=True)
 
     class Meta:

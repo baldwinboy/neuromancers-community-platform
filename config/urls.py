@@ -7,6 +7,7 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from neuromancers_network.core.views.calendar import CalendarFeedView
+from neuromancers_network.moderation.views import DataExportDownloadView
 
 from .api import api
 
@@ -18,6 +19,12 @@ urlpatterns = [
     path("documents/", include(wagtaildocs_urls)),
     # API base url
     path("api/", api.urls),
+    # Private data-export download (signed, owner/staff only)
+    path(
+        "exports/<int:pk>/<str:token>/",
+        DataExportDownloadView.as_view(),
+        name="data_export_download",
+    ),
     # Wagtail DaisIE
     path("daisie/", include("wagtail_daisIE.dynamic.urls")),
     # DaisIE notifications (newsletter subscribe/unsubscribe)

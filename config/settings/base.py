@@ -235,6 +235,27 @@ MEDIA_ROOT = str(APPS_DIR / "media")
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = "/media/"
 
+# STORAGES
+# ------------------------------------------------------------------------------
+# Private data exports use a dedicated storage so they never land in the public
+# media bucket. Development and tests use the local filesystem; production maps
+# the ``exports`` alias onto the private backups bucket (see production.py).
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+    "exports": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": str(APPS_DIR / "exports"),
+            "base_url": "/exports/",
+        },
+    },
+}
+
 # TEMPLATES
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#templates
