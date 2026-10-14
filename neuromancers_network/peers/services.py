@@ -86,6 +86,12 @@ def eligible_peer_q(prefix: str = "") -> Q:
                 ],
             },
         )
+        # A paused plan keeps its ``active`` status, so exclude it explicitly.
+        query &= Q(
+            **{
+                f"{prefix}payment_profile__peer_subscription__paused_at__isnull": True,
+            },
+        )
     if requirements.require_verification_to_publish:
         query &= Q(**{f"{prefix}peer_profile__is_verified": True})
     return query

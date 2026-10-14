@@ -45,6 +45,8 @@ class NotificationEventType(models.TextChoices):
     # Subscriptions
     SUBSCRIPTION_CREATED = "subscription_created", _("Subscription created")
     SUBSCRIPTION_CANCELLED = "subscription_cancelled", _("Subscription cancelled")
+    SUBSCRIPTION_PAUSED = "subscription_paused", _("Subscription paused")
+    SUBSCRIPTION_RESUMED = "subscription_resumed", _("Subscription resumed")
 
     # Payments
     PAYMENT_REMINDER_DUE = "payment_reminder_due", _("Payment reminder due")

@@ -26,8 +26,8 @@ Seed commands must additionally be proven idempotent by running them twice.
 
 | Area | Decision |
 |---|---|
-| Subscription lifecycle | **Option 1** — bump `stripe`/`dj-stripe` to versions exposing `stripe.Subscription.pause` and the `customer.subscription.paused`/`resumed` events. Expose **both** cancel-at-period-end and immediate cancel. Restart = fresh checkout; resume = `/resume`. |
-| Pause semantics | Stripe-recommended defaults: credit unused time from now, bill outstanding usage through now, `invoicing_behavior=pending_invoice_item`; resume with `payment_behavior=resume_on_payment_success`, `billing_cycle_anchor=now`, `proration_behavior=create_prorations`. |
+| Subscription lifecycle | **Option 1** — no newer `stripe` release exposes `stripe.Subscription.pause`, so pause uses `modify(pause_collection=…)` (status unchanged, tracked via `PeerSubscription.paused_at`) and resume uses `Subscription.resume`. Expose **both** cancel-at-period-end and immediate cancel. Restart = fresh checkout; resume = `Subscription.resume`. |
+| Pause semantics | Pause via `pause_collection={"behavior": "void"}`; resume with `billing_cycle_anchor="now"`, `proration_behavior="create_prorations"`. |
 | Export storage | Private **`exports/` prefix in the existing backups bucket** (root `AWS_*`, Tigris); `FileSystemStorage` for dev/test. Never the public media bucket. |
 | Export delivery | Emailed **signed, short-lived download link** (no attachments — daisIE emails support HTML alternatives only). |
 | Export format | **ZIP of CSVs** (stdlib `zipfile`+`csv`, per-table `.iterator()`, `SpooledTemporaryFile`). |
@@ -76,15 +76,16 @@ Seed commands must additionally be proven idempotent by running them twice.
 
 ## 2. Subscription lifecycle extras (peer plan controls)
 
-- **Dependency:** bump `stripe`/`dj-stripe` for `stripe.Subscription.pause` + `customer.subscription.paused`/`resumed`.
+- **Dependency:** no bump needed — `stripe==15.6.1` (latest) has `Subscription.resume` and `modify(pause_collection=…)`, but **no** `stripe.Subscription.pause`. Pause therefore uses `modify(pause_collection=…)`, which leaves the subscription status unchanged; resume uses `Subscription.resume`.
 - **Services** (`payments/services.py`):
-  - `pause_subscription(profile)` → `/pause` with the Stripe-recommended `bill_for` defaults.
-  - `resume_subscription(profile)` → `/resume` (`resume_on_payment_success`, `billing_cycle_anchor=now`, `create_prorations`).
-  - `cancel_subscription(profile, *, at_period_end)` → `sub.cancel(at_period_end=…)` (both modes).
+  - `pause_subscription(profile)` → `modify(pause_collection={"behavior": "void"})`.
+  - `resume_subscription(profile)` → `Subscription.resume(…, billing_cycle_anchor="now", proration_behavior="create_prorations")`.
+  - `cancel_subscription(profile, *, at_period_end)` → `modify(cancel_at_period_end=True)` or `cancel()` (both modes).
+- **State:** `PeerSubscription.paused_at` (additive field) tracks pause, since the Stripe status does not change.
 - **Actions** (`peers/actions.py`): `peer.subscription_pause|resume|cancel` + labels + `WAGTAIL_DAISIE_ACTIONS`; dashboard buttons.
-- **Webhooks** (`peers/signals.py`): handle `paused`/`resumed` — keep the `PeerSubscription` row, call `enforce_subscription_lapse` on pause, emit new events.
-- **Events:** add `subscription_paused`, `subscription_resumed` to the event keys + bridges.
-- **Eligibility:** unchanged (`paused` already excluded).
+- **Webhooks** (`peers/signals.py`): on `customer.subscription.updated` (and `paused`/`resumed`) detect the `pause_collection` flag, set `paused_at`, call `enforce_subscription_lapse` on pause.
+- **Events:** add `subscription_paused`, `subscription_resumed` to the event keys + bridges (emitted on the `paused_at` transition).
+- **Eligibility:** paused plans are excluded explicitly (`has_active_subscription` and `eligible_peer_q` skip `paused_at`).
 - **Tests:** services (mocked Stripe), actions, webhook transitions, eligibility.
 
 ---

@@ -20,6 +20,8 @@ TRANSACTIONAL_EVENT_TYPES = frozenset(
         "refund_refunded",
         "subscription_created",
         "subscription_cancelled",
+        "subscription_paused",
+        "subscription_resumed",
         "payment_succeeded",
         "payment_failed",
         "ip_banned",

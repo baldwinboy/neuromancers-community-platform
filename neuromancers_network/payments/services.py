@@ -191,6 +191,65 @@ def create_subscription_checkout(profile: PaymentProfile, request) -> str:
     return url
 
 
+def _peer_subscription_id(profile: PaymentProfile) -> str:
+    peer_subscription = getattr(profile, "peer_subscription", None)
+    subscription_id = (
+        peer_subscription.subscription_id if peer_subscription is not None else ""
+    )
+    if not subscription_id:
+        message = "Payment profile has no peer subscription"
+        raise ValueError(message)
+    return subscription_id
+
+
+def pause_subscription(profile: PaymentProfile) -> None:
+    """Pause collection on the peer's subscription.
+
+    The Stripe status is left unchanged (as Stripe documents), so eligibility is
+    tracked by the local ``PeerSubscription.paused_at`` flag.
+    """
+    stripe_settings = StripeSettings.load()
+    if not stripe_settings.secret_key:
+        message = "Stripe secret key is not configured"
+        raise ValueError(message)
+
+    stripe.api_key = stripe_settings.secret_key
+    stripe.Subscription.modify(
+        _peer_subscription_id(profile),
+        pause_collection={"behavior": "void"},
+    )
+
+
+def resume_subscription(profile: PaymentProfile) -> None:
+    """Resume a paused subscription, resetting the billing cycle anchor."""
+    stripe_settings = StripeSettings.load()
+    if not stripe_settings.secret_key:
+        message = "Stripe secret key is not configured"
+        raise ValueError(message)
+
+    stripe.api_key = stripe_settings.secret_key
+    stripe.Subscription.resume(
+        _peer_subscription_id(profile),
+        billing_cycle_anchor="now",
+        proration_behavior="create_prorations",
+    )
+
+
+def cancel_subscription(profile: PaymentProfile, *, at_period_end: bool) -> None:
+    """Cancel the peer's subscription immediately or at the period end."""
+    stripe_settings = StripeSettings.load()
+    if not stripe_settings.secret_key:
+        message = "Stripe secret key is not configured"
+        raise ValueError(message)
+
+    subscription_id = _peer_subscription_id(profile)
+    stripe.api_key = stripe_settings.secret_key
+    if at_period_end:
+        stripe.Subscription.modify(subscription_id, cancel_at_period_end=True)
+    else:
+        stripe.Subscription.cancel(subscription_id)
+
+
 def create_express_dashboard_link(profile: PaymentProfile) -> str:
     """Create a Stripe Express dashboard login link for *profile*."""
     stripe_settings = StripeSettings.load()

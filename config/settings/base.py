@@ -848,6 +848,8 @@ _NOTIFICATION_EVENT_KEYS = [
     "review_created",
     "subscription_created",
     "subscription_cancelled",
+    "subscription_paused",
+    "subscription_resumed",
     "payment_succeeded",
     "payment_failed",
     "payment_reminder_due",
@@ -1069,6 +1071,18 @@ WAGTAIL_DAISIE_ACTIONS = {
     "peer.subscribe": {
         "label": _("Subscribe as a care provider"),
         "handler": "neuromancers_network.peers.actions.peer_subscribe",
+    },
+    "peer.subscription_pause": {
+        "label": _("Pause plan"),
+        "handler": "neuromancers_network.peers.actions.peer_subscription_pause",
+    },
+    "peer.subscription_resume": {
+        "label": _("Resume plan"),
+        "handler": "neuromancers_network.peers.actions.peer_subscription_resume",
+    },
+    "peer.subscription_cancel": {
+        "label": _("Cancel plan"),
+        "handler": "neuromancers_network.peers.actions.peer_subscription_cancel",
     },
     "peer.open_stripe_dashboard": {
         "label": _("Open Stripe dashboard"),

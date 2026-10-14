@@ -11,6 +11,7 @@ import logging
 from django.db import DatabaseError
 from django.db.models.signals import post_delete
 from django.db.models.signals import post_save
+from django.utils import timezone
 from djstripe.event_handlers import djstripe_receiver
 from djstripe.models import Subscription as StripeSubscription
 
@@ -25,6 +26,8 @@ SUBSCRIPTION_EVENTS = [
     "customer.subscription.created",
     "customer.subscription.updated",
     "customer.subscription.deleted",
+    "customer.subscription.paused",
+    "customer.subscription.resumed",
 ]
 
 
@@ -82,14 +85,32 @@ def sync_peer_subscription(sender, event, **kwargs):
             _safe(enforce_subscription_lapse, payment_profile)
         return
 
+    # Pausing collection leaves the Stripe status unchanged, so pause state is
+    # tracked separately from the status.
+    paused = bool(data.get("pause_collection"))
+    now = timezone.now()
+
     if existing is None:
         PeerSubscription.objects.create(
             payment_profile=payment_profile,
             subscription=stripe_subscription,
+            paused_at=now if paused else None,
         )
-    elif existing.subscription_id != stripe_subscription.pk:
+        return
+
+    updates: list[str] = []
+    if existing.subscription_id != stripe_subscription.pk:
         existing.subscription = stripe_subscription
-        existing.save(update_fields=["subscription", "updated_at"])
+        updates.append("subscription")
+    if paused and existing.paused_at is None:
+        existing.paused_at = now
+        updates.append("paused_at")
+        _safe(enforce_subscription_lapse, payment_profile)
+    elif not paused and existing.paused_at is not None:
+        existing.paused_at = None
+        updates.append("paused_at")
+    if updates:
+        existing.save(update_fields=[*updates, "updated_at"])
 
 
 # --- Calendar event sync ----------------------------------------------------

@@ -49,6 +49,7 @@ dependencies = [
   "redis==8.1.0",
   "rules>=3.5",
   "sentry-sdk==2.71.0",
+  "stripe>=15.6.1",
   "wagtail>=8.0,<8.1",
   "wagtail-daisie[allauth,allauth-emails,blocks,notifications]==3.4.0",
   "whitenoise==6.12.0",

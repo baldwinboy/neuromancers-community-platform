@@ -43,9 +43,15 @@ class PaymentProfile(Timestamped):
 
     @property
     def has_active_subscription(self) -> bool:
-        """Whether the user currently subscribes to an active peer plan."""
+        """Whether the user currently subscribes to an active peer plan.
+
+        A paused subscription keeps its ``active`` status, so the pause flag is
+        checked explicitly.
+        """
         peer_subscription = getattr(self, "peer_subscription", None)
         if peer_subscription is None:
+            return False
+        if peer_subscription.paused_at is not None:
             return False
         return peer_subscription.subscription.status in (
             SubscriptionStatus.active,

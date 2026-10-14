@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.dateparse import parse_datetime
 
+from neuromancers_network.core.actions import as_bool
 from neuromancers_network.core.actions import redirect_back
 from neuromancers_network.core.actions import require_authenticated
 from neuromancers_network.payments.services import ensure_payment_profile
@@ -116,6 +117,56 @@ def peer_stripe_disconnect(request, data):
         message = "No connected Stripe account to disconnect"
         raise PermissionDenied(message)
     disconnect_stripe_account(payment_profile)
+    return redirect_back(request)
+
+
+def _payment_profile_or_denied(user):
+    profile = getattr(user, "payment_profile", None)
+    if profile is None:
+        message = "No payment profile for this user"
+        raise PermissionDenied(message)
+    return profile
+
+
+def peer_subscription_pause(request, data):
+    """Pause collection on the signed-in provider's subscription."""
+    from neuromancers_network.payments.services import (  # noqa: PLC0415
+        pause_subscription,
+    )
+
+    user = require_authenticated(request)
+    _require_provider_agreement(user)
+    pause_subscription(_payment_profile_or_denied(user))
+    return redirect_back(request)
+
+
+def peer_subscription_resume(request, data):
+    """Resume a paused subscription for the signed-in provider."""
+    from neuromancers_network.payments.services import (  # noqa: PLC0415
+        resume_subscription,
+    )
+
+    user = require_authenticated(request)
+    _require_provider_agreement(user)
+    resume_subscription(_payment_profile_or_denied(user))
+    return redirect_back(request)
+
+
+def peer_subscription_cancel(request, data):
+    """Cancel the provider's subscription, at the period end by default."""
+    from neuromancers_network.payments.services import (  # noqa: PLC0415
+        cancel_subscription,
+    )
+
+    user = require_authenticated(request)
+    _require_provider_agreement(user)
+    at_period_end = True
+    if hasattr(data, "get"):
+        at_period_end = as_bool(data.get("at_period_end", True))
+    cancel_subscription(
+        _payment_profile_or_denied(user),
+        at_period_end=at_period_end,
+    )
     return redirect_back(request)
 
 

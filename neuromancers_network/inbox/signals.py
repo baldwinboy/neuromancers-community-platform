@@ -37,6 +37,7 @@ _EVENT_SNAPSHOT_SPEC = {
     PeerProfile: ("is_approved",),
     PeerApplication: ("status",),
     StripeSubscription: ("stripe_data",),
+    PeerSubscription: ("paused_at",),
 }
 
 # Stashed pre-save values, keyed by (model class id, object pk). A module-level
@@ -272,6 +273,39 @@ def emit_subscription_created(sender, instance, created, **kwargs):
         logger.exception("Failed to emit subscription_created event")
 
 
+def emit_subscription_pause_changed(sender, instance, created, **kwargs):
+    if created:
+        return
+    previous = _drop_pre_state(instance)
+    if "paused_at" not in previous:
+        return
+    was_paused = previous.get("paused_at") is not None
+    is_paused = instance.paused_at is not None
+    if was_paused == is_paused:
+        return
+    user = instance.payment_profile.user
+    event_type = "subscription_paused" if is_paused else "subscription_resumed"
+    try:
+        emit(
+            event_type,
+            payload={
+                "actor_user_id": user_id(user),
+                "recipient_user_ids": [user_id(user)],
+                "object_type": "peersubscription",
+                "object_id": instance.pk,
+                "meta": {
+                    "peer_subscription_id": instance.pk,
+                    "subscription_id": instance.subscription_id,
+                    "peer_user_id": user_id(user),
+                    "paused": is_paused,
+                },
+            },
+            event_ref=f"peersubscription.{instance.pk}.{event_type}",
+        )
+    except Exception:
+        logger.exception("Failed to emit %s event", event_type)
+
+
 def emit_subscription_cancelled(sender, instance, created, **kwargs):
     if created:
         return
@@ -468,5 +502,7 @@ post_save.connect(emit_peer_application_changed, sender=PeerApplication)
 
 # PeerSubscription + djstripe Subscription
 post_save.connect(emit_subscription_created, sender=PeerSubscription)
+pre_save.connect(_stash_pre_state, sender=PeerSubscription)
+post_save.connect(emit_subscription_pause_changed, sender=PeerSubscription)
 pre_save.connect(_stash_pre_state, sender=StripeSubscription)
 post_save.connect(emit_subscription_cancelled, sender=StripeSubscription)
