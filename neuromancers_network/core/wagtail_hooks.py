@@ -1,10 +1,8 @@
-from django.contrib.auth import get_user_model
 from django.urls import path
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
 from wagtail.admin.menu import MenuItem
-from wagtail.admin.viewsets.base import ViewSet
 from wagtail.admin.viewsets.base import ViewSetGroup
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import SnippetViewSet
@@ -18,7 +16,6 @@ from neuromancers_network.core.views.email import SendTestEmailView
 from neuromancers_network.core.views.help import HelpGuideView
 from neuromancers_network.core.views.stripe import StripeSyncView
 from neuromancers_network.core.views.stripe import StripeWebhookView
-from neuromancers_network.core.views.tos import ResetTosView
 from neuromancers_network.inbox.wagtail_hooks import NotificationPreferenceViewSet
 from neuromancers_network.meetings.wagtail_hooks import MeetingOperationsViewSetGroup
 from neuromancers_network.moderation.wagtail_hooks import (
@@ -32,8 +29,6 @@ from neuromancers_network.taxonomy.wagtail_hooks import FiltersOperationsViewSet
 
 from .utils import prevent_reserved_routes
 
-User = get_user_model()
-
 
 # Change the order of the `Help` menu item
 @hooks.register("construct_main_menu")
@@ -42,19 +37,6 @@ def reorder_menu_items(request, menu_items):
         if item.name == "help":
             item.order = 210
             break
-
-
-class ResetTosViewSet(ViewSet):
-    menu_label = _("Reset Terms acceptance")
-    menu_name = "reset_tos"
-    menu_icon = "warning"
-    menu_order = 5
-    name = "reset-tos"
-
-    def get_urlpatterns(self):
-        return [
-            path("", ResetTosView.as_view(), name="index"),
-        ]
 
 
 class ProfileOperationsViewSetGroup(ViewSetGroup):
@@ -67,7 +49,6 @@ class ProfileOperationsViewSetGroup(ViewSetGroup):
         PeerProfileViewSet,
         UserProfileViewSet,
         NotificationPreferenceViewSet,
-        ResetTosViewSet,
     )
     add_to_admin_menu = False
 

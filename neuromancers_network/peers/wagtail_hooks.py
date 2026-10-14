@@ -29,6 +29,12 @@ class PeerProfileFilterSet(WagtailFilterSet):
         fields = ["is_approved", "is_verified", "countries", "languages"]
 
 
+class UserProfileFilterSet(WagtailFilterSet):
+    class Meta:
+        model = UserProfile
+        fields = ["user__accepted_tos", "visibility"]
+
+
 class PeerApplicationViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     model = PeerApplication
     icon = "form"
@@ -113,6 +119,7 @@ class UserProfileViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     menu_order = 3
     list_display = ["user", "visibility", "access_needs_visible_to_peer"]
     search_fields = ["user__username", "user__name"]
+    filterset_class = UserProfileFilterSet
     panels = [
         FieldPanel("user"),
         FieldPanel("visibility"),
@@ -211,6 +218,16 @@ class ResetTosBulkAction(ConfirmBulkAction):
     confirm_message = _("Require the selected members to accept the Terms again?")
     action_button_text = _("Yes, reset")
     no_action_button_text = _("No, go back")
+
+    def get_all_objects_in_listing_query(self, parent_id):
+        """Honour the listing filters so select-all reproduces the filter."""
+        queryset = UserProfile.objects.all()
+        filterset_class = UserProfileViewSet.filterset_class
+        if filterset_class is not None:
+            filterset = filterset_class(data=self.request.GET, queryset=queryset)
+            if filterset.is_valid():
+                queryset = filterset.qs
+        return queryset.values_list("pk", flat=True)
 
     @classmethod
     def execute_action(cls, objects, **kwargs):
