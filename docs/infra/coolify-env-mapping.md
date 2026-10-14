@@ -52,7 +52,15 @@ See [Operator Guide — First deployment](operator-guide.md#first-deployment) fo
 - `AWS_S3_BUCKET_NAME`
 - `AWS_REGION`
 - `AWS_ENDPOINT_URL_S3`
+
+## Server-only keys (not container environment)
+
+These are used by the server-side backup cron (`infra/scripts/backup.sh`), not by
+the application container, so they do **not** need to be in the Coolify
+application environment:
+
 - `RETENTION_DAYS`
+- `AWS_ENDPOINT_URL_IAM`
 
 ## Notes
 
@@ -60,5 +68,5 @@ See [Operator Guide — First deployment](operator-guide.md#first-deployment) fo
 - Keep key names identical across Bitwarden and application settings where possible.
 - Coolify does not need to store every runtime variable individually if containers resolve them directly from Bitwarden.
 - `GATUS_DISCORD_WEBHOOK_URL` is consumed by the `gatus` service in `docker-compose.coolify.yml` and must be present in Coolify even though it is not pushed by Ansible.
-- The root `AWS_*` keys and `RETENTION_DAYS` back the **private** backups bucket and the `exports` storage alias for member data exports — not the public media bucket. See [Storage architecture](storage.md).
+- The container `AWS_*` keys (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET_NAME`, `AWS_REGION`, `AWS_ENDPOINT_URL_S3`) back the **private** `exports` storage alias for member data exports — not the public media bucket (which uses `DJANGO_AWS_*`). `AWS_REGION` is required for the exports S3 client.
 - If a new runtime variable is introduced in application settings, add it here and update deploy preflight validation and runtime bootstrap logic.

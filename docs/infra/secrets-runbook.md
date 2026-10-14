@@ -24,6 +24,8 @@ After Ansible creates the Coolify application for the first time, a developer mu
 
 The Ansible playbook refreshes only Bitwarden secrets whose keys already exist in Coolify. The seven keys listed above are always pushed; any other new key must be added in Coolify first.
 
+When member data exports are enabled, the root `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET_NAME`, `AWS_REGION` and `AWS_ENDPOINT_URL_S3` keys must be added here too (in addition to the `DJANGO_AWS_*` media keys), because the container reads them for the private `exports` storage alias. `RETENTION_DAYS` and `AWS_ENDPOINT_URL_IAM` are server-only and do not belong in the Coolify application environment.
+
 ## Bitwarden CLI constraints
 
 - `bws secret list` returns a JSON array of objects.
@@ -99,7 +101,7 @@ bws run -- 'ansible-playbook infra/playbooks/site.yml --inventory infra/inventor
 - `WEB_CONCURRENCY`
 - `HETZNER_SSH_PUBLIC_KEY`
 
-The root `AWS_*` keys and `RETENTION_DAYS` above back the private backups bucket and the `exports` storage alias used for member data exports (see [Storage architecture](storage.md)). They are distinct from the `DJANGO_AWS_*` public-media credentials.
+The root `AWS_*` keys back the private `exports` storage alias for member data exports, distinct from the `DJANGO_AWS_*` public-media credentials. The application container needs `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET_NAME`, `AWS_REGION` and `AWS_ENDPOINT_URL_S3`. `RETENTION_DAYS` and `AWS_ENDPOINT_URL_IAM` are used only by the server-side backup cron (`infra/scripts/backup.sh`), not the container. See [Storage architecture](storage.md).
 
 ## Rotation procedure
 
