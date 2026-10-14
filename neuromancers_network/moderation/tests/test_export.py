@@ -8,6 +8,7 @@ from datetime import timedelta
 from http import HTTPStatus
 
 import pytest
+from django.core.files.storage import FileSystemStorage
 from django.urls import reverse
 from django.utils import timezone
 
@@ -23,15 +24,13 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def export_storage(settings, tmp_path):
-    settings.STORAGES = {
-        **settings.STORAGES,
-        "exports": {
-            "BACKEND": "django.core.files.storage.FileSystemStorage",
-            "OPTIONS": {"location": str(tmp_path), "base_url": "/exports/"},
-        },
-    }
-    return tmp_path
+def export_storage(tmp_path):
+    """Point the export field's storage at a temp dir (it is fixed at import)."""
+    field = DataExportRequest._meta.get_field("file")  # noqa: SLF001
+    original = field.storage
+    field.storage = FileSystemStorage(location=str(tmp_path))
+    yield tmp_path
+    field.storage = original
 
 
 @pytest.fixture

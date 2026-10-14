@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from neuromancers_network.core.models.base import Timestamped
+from neuromancers_network.core.storage import ExportsStorage
 
 
 class ExportStatus(models.TextChoices):
@@ -30,7 +31,7 @@ class DataExportRequest(Timestamped):
     file = models.FileField(
         _("File"),
         upload_to="exports/",
-        storage="exports",
+        storage=ExportsStorage(),
         blank=True,
     )
     completed_at = models.DateTimeField(_("Completed at"), null=True, blank=True)

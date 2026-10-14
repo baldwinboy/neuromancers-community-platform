@@ -2,6 +2,8 @@
 
 from django.db import migrations, models
 
+from neuromancers_network.core.storage import ExportsStorage
+
 
 class Migration(migrations.Migration):
 
@@ -18,6 +20,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='dataexportrequest',
             name='file',
-            field=models.FileField(blank=True, storage='exports', upload_to='exports/', verbose_name='File'),
+            field=models.FileField(blank=True, storage=ExportsStorage(), upload_to='exports/', verbose_name='File'),
         ),
     ]
