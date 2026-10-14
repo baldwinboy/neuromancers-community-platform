@@ -1819,7 +1819,7 @@ requires-dist = [
     { name = "rules", specifier = ">=3.5" },
     { name = "sentry-sdk", specifier = "==2.71.0" },
     { name = "wagtail", specifier = ">=8.0,<8.1" },
-    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.3.0" },
+    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.4.0" },
     { name = "whitenoise", specifier = "==6.12.0" },
 ]
 
@@ -2886,7 +2886,7 @@ wheels = [
 
 [[package]]
 name = "wagtail-daisie"
-version = "3.3.0"
+version = "3.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cssutils" },
@@ -2899,9 +2899,9 @@ dependencies = [
     { name = "mjml-python" },
     { name = "wagtail" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/51/4d/c741efd7a7b35146081e0e0526da4b22b5972245a6a1641d2e5064fb6705/wagtail_daisie-3.3.0.tar.gz", hash = "sha256:a9b89c7ea0967f4d84016f93dba8cc1763712f6e8b140a139dbd34205e46aab5", size = 366989, upload-time = "2026-10-13T19:18:17.476Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/40/d2/a61e0b5a5e31f8ccc8f6b4d43c424df2accfa0b9b6e7cef664a1d44de449/wagtail_daisie-3.4.0.tar.gz", hash = "sha256:80553a6918564133cef1173ce497e2826764aa05d23808dbe8375740e2c6b068", size = 370127, upload-time = "2026-10-13T23:06:13.434Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c4/ff/121e8d8e0b1092ff9c5d4f9e73c6409af658ef2dafe6dd701f56d1c1b2c2/wagtail_daisie-3.3.0-py3-none-any.whl", hash = "sha256:be9c5a4170f7a5e7fcc96484e69fb57d25176cc35007f33943248c7059c26ee0", size = 545018, upload-time = "2026-10-13T19:18:15.511Z" },
+    { url = "https://files.pythonhosted.org/packages/3c/ab/c7369dd017c4546136074b26e9a380494ec4d92880b526009a448d5b8309/wagtail_daisie-3.4.0-py3-none-any.whl", hash = "sha256:bc2e4332e2194d57c88fbd9ea01cb49b1f8eaed7639a092d59723f9e60d8dca4", size = 549305, upload-time = "2026-10-13T23:06:11.641Z" },
 ]
 
 [package.optional-dependencies]
