@@ -52,6 +52,7 @@ class HelpStepBlock(DaisieStructBlock):
     class Meta:
         icon = "list-ul"
         label = _("Step")
+        template = "core/blocks/help_step.html"
 
 
 class HelpStepsBlock(DaisieStreamBlock):

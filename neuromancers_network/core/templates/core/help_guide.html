@@ -3,46 +3,93 @@
 {% load i18n wagtailcore_tags %}
 
 {% block main_content %}
-  <p class="w-mb-8">
-    {% trans "How the NEUROMANCERS Network works, for every audience. Each section describes the people it is about." %}
-  </p>
-  {% for group in help_groups %}
-    <section class="w-mb-10">
-      <h2 class="w-h2">{{ group.category.name }}</h2>
-      {% if group.category.description %}
-        <p class="w-text-text-meta">{{ group.category.description }}</p>
-      {% endif %}
-      {% for article in group.articles %}
-        <article class="w-mb-8" id="article-{{ article.slug }}">
-          <h3 class="w-h3">{{ article.title }}</h3>
-          {% if article.summary %}
-            <p class="w-text-text-meta">{{ article.summary }}</p>
-          {% endif %}
-          {% for block in article.steps %}
-            {% include_block block %}
-          {% endfor %}
-          {% for block in article.body %}
-            {% include_block block %}
-          {% endfor %}
-        </article>
-      {% empty %}
-        <p class="w-text-text-meta">{% trans "No articles yet." %}</p>
+  <div class="w-pt-6"
+       data-controller="w-tabs"
+       data-action="popstate@window->w-tabs#select"
+       data-w-tabs-use-location-value="true">
+    <p class="w-text-text-meta w-mb-8">
+      {% trans "How the NEUROMANCERS Network works, for every audience. Each section describes the people it is about." %}
+    </p>
+    <div role="tablist"
+         class="w-tabs__list w-mb-6"
+         data-action="keydown.right->w-tabs#selectNext keydown.left->w-tabs#selectPrevious keydown.home->w-tabs#selectFirst keydown.end->w-tabs#selectLast">
+      {% for group in help_groups %}
+        <a id="tab-label-{{ group.category.slug }}"
+           href="#tab-{{ group.category.slug }}"
+           role="tab"
+           class="w-tabs__tab"
+           data-w-tabs-target="trigger"
+           data-action="w-tabs#select:prevent">{{ group.category.name }}</a>
       {% endfor %}
-    </section>
-  {% empty %}
-    <p class="w-text-text-meta">{% trans "No help content has been published yet." %}</p>
-  {% endfor %}
-  {% if glossary_terms %}
-    <section class="w-mb-10">
-      <h2 class="w-h2">{% trans "Glossary" %}</h2>
-      <dl>
-        {% for term in glossary_terms %}
-          <dt><strong>{{ term.term }}</strong></dt>
-          <dd>
-            {{ term.definition }}
-          </dd>
+      {% if glossary_terms %}
+        <a id="tab-label-glossary"
+           href="#tab-glossary"
+           role="tab"
+           class="w-tabs__tab"
+           data-w-tabs-target="trigger"
+           data-action="w-tabs#select:prevent">{% trans "Glossary" %}</a>
+      {% endif %}
+    </div>
+    {% for group in help_groups %}
+      <section id="tab-{{ group.category.slug }}"
+               role="tabpanel"
+               hidden
+               class="w-tabs__panel"
+               data-w-tabs-target="panel"
+               aria-labelledby="tab-label-{{ group.category.slug }}"
+               data-action="w-focus:focus->w-tabs#selectInside">
+        <h2 class="w-h2">{{ group.category.name }}</h2>
+        {% if group.category.description %}
+          <p class="w-text-text-meta">{{ group.category.description }}</p>
+        {% endif %}
+        {% for article in group.articles %}
+          <article class="w-mb-8 w-ml-3" id="article-{{ article.slug }}">
+            <div class="w-panel__header">
+              <h3 class="w-panel__heading">
+                {{ article.title }}
+                {% if article.kind %}<span class="w-badge">{{ article.get_kind_display }}</span>{% endif %}
+                {% if article.audience %}<span class="w-badge">{{ article.get_audience_display }}</span>{% endif %}
+              </h3>
+              <div class="w-panel__divider"></div>
+            </div>
+            <div class="w-panel__content w-pl-5">
+              {% if article.summary %}<p class="w-text-text-meta">{{ article.summary }}</p>{% endif %}
+              {% if article.steps %}
+                <ol class="w-list-none w-pl-0 w-space-y-3">
+                  {% for block in article.steps %}
+                    <li class="w-border w-rounded w-p-3">{% include_block block with index=forloop.counter %}</li>
+                  {% endfor %}
+                </ol>
+              {% endif %}
+              {% for block in article.body %}
+                {% include_block block %}
+              {% endfor %}
+            </div>
+          </article>
+        {% empty %}
+          <p class="w-text-text-meta">{% trans "No articles yet." %}</p>
         {% endfor %}
-      </dl>
-    </section>
-  {% endif %}
+      </section>
+    {% empty %}
+      <p class="w-text-text-meta">{% trans "No help content has been published yet." %}</p>
+    {% endfor %}
+    {% if glossary_terms %}
+      <section id="tab-glossary"
+               role="tabpanel"
+               hidden
+               class="w-tabs__panel"
+               data-w-tabs-target="panel"
+               aria-labelledby="tab-label-glossary">
+        <h2 class="w-h2">{% trans "Glossary" %}</h2>
+        <div class="w-grid w-grid-cols-1 w-gap-4 sm:w-grid-cols-2 md:w-grid-cols-3">
+          {% for term in glossary_terms %}
+            <div class="w-panel w-border w-rounded w-p-3">
+              <h3 class="w-panel__heading">{{ term.term }}</h3>
+              <div class="w-panel__content w-w-text-meta w-pl-3">{{ term.definition }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  </div>
 {% endblock %}

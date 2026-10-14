@@ -7,4 +7,7 @@ set -o nounset
 
 python manage.py migrate
 python manage.py ensure_superuser
+python /app/manage.py seed_help_guide
+python /app/manage.py seed_pages
+python /app/manage.py seed_account_selfservice
 exec python manage.py runserver_plus 0.0.0.0:8000

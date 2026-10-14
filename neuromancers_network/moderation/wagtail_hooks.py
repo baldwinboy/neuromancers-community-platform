@@ -77,7 +77,7 @@ class PurgeAccountsBulkAction(ConfirmBulkAction):
 
 class UserBlockViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     model = UserBlock
-    icon = "no"
+    icon = "lock"
     menu_label = _("Member blocks")
     menu_name = "member_blocks"
     menu_order = 2

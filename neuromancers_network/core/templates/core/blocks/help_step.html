@@ -1,0 +1,13 @@
+{% load wagtailimages_tags %}
+
+<div class="w-flex w-gap-3">
+  {% if index %}<span class="w-text-text-status-label" aria-hidden="true">{{ index }}</span>{% endif %}
+  <div class="w-grow">
+    <p class="w-mb-0">{{ value.text }}</p>
+    {% if value.callout %}<div class="w-panel w-bg-surface-info-panel w-p-2 w-rounded w-mt-2">{{ value.callout }}</div>{% endif %}
+    {% if value.image %}
+      {% image value.image width-800 as img %}
+      <img {{ img.attrs }} alt="" class="w-rounded w-mt-2" loading="lazy" />
+    {% endif %}
+  </div>
+</div>

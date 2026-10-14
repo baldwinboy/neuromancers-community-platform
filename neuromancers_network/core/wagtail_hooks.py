@@ -1,8 +1,6 @@
 from django.urls import path
-from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
-from wagtail.admin.menu import MenuItem
 from wagtail.admin.viewsets.base import ViewSetGroup
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import SnippetViewSet
@@ -79,26 +77,26 @@ class OperationsViewSetGroup(SnippetViewSetGroup):
 register_snippet(OperationsViewSetGroup)
 
 
-class HelpArticleViewSet(SnippetViewSet):
-    model = HelpArticle
-    icon = "doc-full"
-    menu_label = _("Articles")
-    menu_name = "help_articles"
-    menu_order = 1
-    list_display = ["title", "category", "kind", "audience", "is_published"]
-    search_fields = ["title", "summary"]
-    list_per_page = 50
-    add_to_admin_menu = False
-
-
 class HelpCategoryViewSet(SnippetViewSet):
     model = HelpCategory
     icon = "folder"
     menu_label = _("Categories")
     menu_name = "help_categories"
-    menu_order = 2
+    menu_order = 1
     list_display = ["name", "sort_order", "is_active"]
     search_fields = ["name"]
+    list_per_page = 50
+    add_to_admin_menu = False
+
+
+class HelpArticleViewSet(SnippetViewSet):
+    model = HelpArticle
+    icon = "doc-full"
+    menu_label = _("Articles")
+    menu_name = "help_articles"
+    menu_order = 2
+    list_display = ["title", "category", "kind", "audience", "is_published"]
+    search_fields = ["title", "summary"]
     list_per_page = 50
     add_to_admin_menu = False
 
@@ -120,7 +118,7 @@ class HelpViewSetGroup(SnippetViewSetGroup):
     menu_name = "admin_help"
     menu_icon = "help"
     menu_hook = "register_help_menu_item"
-    items = (HelpArticleViewSet, HelpCategoryViewSet, GlossaryTermViewSet)
+    items = (HelpCategoryViewSet, HelpArticleViewSet, GlossaryTermViewSet)
 
 
 register_snippet(HelpViewSetGroup)
@@ -134,17 +132,6 @@ def register_core_admin_urls():
         path("email/test/", SendTestEmailView.as_view(), name="send_test_email"),
         path("help/", HelpGuideView.as_view(), name="help_guide"),
     ]
-
-
-@hooks.register("register_help_menu_item")
-def register_help_guide_menu_item():
-    return MenuItem(
-        _("Admin Guide"),
-        reverse("help_guide"),
-        name="admin-guide",
-        icon_name="help",
-        order=1000,
-    )
 
 
 @hooks.register("construct_homepage_panels")
