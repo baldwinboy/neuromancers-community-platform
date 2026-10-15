@@ -1,14 +1,24 @@
-# NEUROMANCERS Network — Roadmap (remaining work)
+# NEUROMANCERS Network — Roadmap
 
-> Status: Phases 1–7, the user-safety/moderation program, WS-G (access guard + pairwise blocks), and the account/signup hardening are implemented and committed. This section covers remaining seeding, exposure, docs, cleanup, lifecycle, storage (Tigris) and pricing work.
+> Status: prior work committed. This roadmap is the ordered, step-by-step path to
+> bring the platform to full functionality. It begins with a blocking
+> correctness/security phase, then the planned feature work (A–D).
 
-## Cross-cutting principles (unchanged)
+## Principles
 
-- App code owns models, selectors, services, actions, form-field types and registries. **All UI is authored in the Wagtail admin.**
-- **Reuse, don't re-implement**: `search_*`, `create_booking`, `sync_meeting_durations`, daisIE context models/filters/actions, the Stripe/dj-stripe plumbing, the inbox event bus, and the daisIE form pages.
-- **Additive schema only**; one committed migration per change; `makemigrations --check` stays clean.
-- Signal-driven writes are failure-isolated; tests affirm pure behaviour, not event/audit wiring.
-- Every phase ends with the verification block, a **review pause**, and one reviewable commit.
+- App code owns models, selectors, services, actions, registries; **all UI is
+  authored in the Wagtail admin**.
+- **Reuse, don't re-implement** (`search_*`, `create_booking`, daisIE context
+  models/filters/actions/blocks, Stripe/dj-stripe, inbox bus, daisIE form pages).
+- **Production-grade only**: KISS, DRY, SOLID, YAGNI. No speculative abstraction.
+- **No regressions**: every fix/feature ships with tests; `makemigrations
+  --check` stays clean; additive schema only.
+- **Bug fixes are test-first**: reproduce with a failing test, then fix.
+- Failures are explicit and logged with context; no silent fallbacks.
+- Long-running/environment-sensitive commands are **handovers** owned by the human
+  or CI (`docker`, long `just` recipes, `uv sync/lock`, full `pytest`,
+  `manage.py migrate/collectstatic/loaddata/rebuild_index/update_index`,
+  `ansible-playbook`, `clientele` regen).
 
 ## Verification (run after each change)
 
@@ -18,221 +28,645 @@ just manage check
 just pytest
 ```
 
-Seed commands must additionally be proven idempotent by running them twice.
+Seeds must be proven idempotent (run twice).
 
----
-
-## 0. Locked decisions
+## Locked decisions
 
 | Area | Decision |
 |---|---|
-| Subscription lifecycle | **Option 1** — no newer `stripe` release exposes `stripe.Subscription.pause`, so pause uses `modify(pause_collection=…)` (status unchanged, tracked via `PeerSubscription.paused_at`) and resume uses `Subscription.resume`. Expose **both** cancel-at-period-end and immediate cancel. Restart = fresh checkout; resume = `Subscription.resume`. |
-| Pause semantics | Pause via `pause_collection={"behavior": "void"}`; resume with `billing_cycle_anchor="now"`, `proration_behavior="create_prorations"`. |
-| Export storage | Private **`exports/` prefix in the existing backups bucket** (root `AWS_*`, Tigris); `FileSystemStorage` for dev/test. Never the public media bucket. |
-| Export delivery | Emailed **signed, short-lived download link** (no attachments — daisIE emails support HTML alternatives only). |
-| Export format | **ZIP of CSVs** (stdlib `zipfile`+`csv`, per-table `.iterator()`, `SpooledTemporaryFile`). |
-| Export limits | **One active export per member + 24 h cooldown**; TTL **48 h**; explicit `expires_at` field. |
-| Export maintenance | `sweep_data_exports` (retry stale `PENDING`/`PROCESSING`; purge expired) + `purge_due_account_deletions`, both scheduled via `django_celery_beat`. |
-| TOS reset | Keep **only** `ResetTosBulkAction`; add `UserProfileFilterSet`; override `get_all_objects_in_listing_query` to honour the listing query; delete Path A. |
-| WS8 registration | Register `is_peer_owner`; delete the dead per-app `HANDLERS` dicts; register daisIE 3.3 attachment/autocomplete form-field types. |
-| Storage (Tigris) | **Tigris** (S3-compatible, `t3.storage.dev`) for media (public bucket) and backups/exports (private bucket). Scope here is **documentation + private `exports/` wiring only**. |
-| Pricing | Scope is **both**: platform pricing configuration (admin) and infrastructure running costs (developer/operator). |
-| Help guide | Staff-only reader (admin support reference) documenting **every** audience’s features. Category 1 targets admins, the first users. |
-| Phases | A (Help + registration) → B (Pages) → C (Account self-service + subscription) → D (TOS + export + storage/pricing docs). Review pause between each. |
+| Detail pages | `on_delete: "page"`; unresolvable source ⇒ 404; non-navigable `ModelDetailTemplate` for private records. |
+| Peer profiles | `PeerIndexPage` admin-created; peer pages not under `/u/`. |
+| Tag/user-profile visibility | Unchanged (inactive tag 404s incl. moderators; profile = active + visibility + blocks). |
+| Search | Single project-contributed search block; merge meetings + peers + pages; index `StandardPage`; admin-authored only. |
+| Feed scoping | `booking` seeker-scoped; add `host_booking`; page-aware querysets; `?page=` across AJAX. |
+| Two-party access | Detail pages **and** feeds; viewer+page+status+date; participant-only; moderators allowed. |
+| Date filters | Both `created_at` and session time. |
+| Join windowing | `IntegrationSettings.joining_lead_minutes`; audience rules; server-enforced endpoint. |
+| Join links | Transient (not persisted): Whereby cached property (`GET /meetings/{id}?fields=[hostRoomUrl]`); Daily private rooms + tokens. |
+| Attendance | `host_attended`/`viewer_attended` from provider webhooks (idempotent). |
+| Analytics | New `analytics` app; ledger-first; fee from `charge.application_fee_amount`; currency per-currency **and** converted. |
+| Secrets | Fernet-encrypted DB fields; KEK = `DJANGO_SECRET_KEY`; all integration secrets encrypted. |
+| Charts | `wagtailcharts` (Wagtail 8 compatible) with DaisyUI-theme-bridged colours + custom colours; server-computed data. |
+| Consent | Code/persistence only; admins author the policy page and banner UX; no seeded legal text. |
+| Developer docs | Authored prose under `docs/platform/`. |
+| Review state | `ReviewStatus` (`PENDING_APPROVAL`/`PUBLISHED`/`HIDDEN`); `is_published` retired; moderator unpublish = peer hide = `HIDDEN`. |
+| Review policy | `PeerProfile.reviews_require_approval` default `False`; peer toggles default public. |
+| Help content | Code-owned; container start runs `seed_help_guide --force` (admin edits to seeded rows are overwritten on deploy). |
 
 ---
 
-## 1. Exposure, seeding, docs (WS8)
+## Phase 0 — Correctness & security remediation (blocking)
 
-### 1.1 Register remaining extension points
-- Add `is_peer_owner` (`core/audience.py`) to `WAGTAIL_DAISIE_AUDIENCE_RULES`.
-- Remove the dead per-app `HANDLERS` dicts (`users`, `moderation`, `core`, `inbox`, `meetings`, `peers` actions): no consumer; daisIE resolves handlers from settings only.
-- Register the daisIE 3.3 attachment and autocomplete form-field types (confirm exact keys from `wagtail_daisIE.forms.registry`).
+Fix before feature work. Every item: failing test → fix → green; no behaviour
+regression. Order within a group is the recommended execution order.
 
-### 1.2 `seed_help_guide` (Phase 10)
-- New `core/help_seed.yaml` (content) + `core/help_seed.py` (loader/validator): load and shape the catalogue; malformed data fails loudly.
-- New `core/management/commands/seed_help_guide.py` — idempotent `get_or_create`; **never clobbers admin edits**.
-- Seeds the five categories, ~55 articles (including per-audience Feature indexes and the Tigris/pricing articles) and the glossary (catalogue in §6).
-- Idempotency proven by running twice.
+### 0.1 Commerce & payments (critical)
+- [ ] **Booking never marks its child `MeetingRequest`s paid** — `meetings/signals.py:56-63`, `meetings/models/booking.py:195-244`. Refunds/join/payment-history permanently broken. Mark all sessions paid on `Booking.mark_paid` (idempotent); one source of truth for refunds.
+- [ ] **Multi-booking checkout marks only the first booking paid** — `meetings/signals.py:56-63`. Mark every booking sharing the session id.
+- [ ] **Multi-peer cart only opens the first peer's checkout** — `meetings/models/booking.py:221-244`, `meetings/actions.py:194-208`. Restrict to one peer, or serve all session URLs.
+- [ ] **`MeetingRequest` 1:1 checkout lacks `adaptive_pricing`** — `meetings/models/request.py:270-320` (see B4).
+- [ ] **Partial-refund cap truncation + advertised-price fallback** — `meetings/models/refund.py:124-128`. Use `_to_minor_units(price_paid)`; reject when absent.
+- [ ] **`compute_total` charges £0 for missing tier price** — `meetings/models/booking.py:103-115`. Raise instead of `or Decimal("0")`.
+- [ ] **`price_for` silently falls back to base price** — `meetings/models/meeting.py:425-434`. Return `None` for missing duration-tier price; enforce price invariants.
+- [ ] **Mixed currencies collapsed in a peer cart** — `meetings/models/booking.py:140-164`. Group by `(peer, currency)`; reject cross-currency.
+- [ ] **`adaptive_pricing=None` sent unconditionally** — `meetings/models/booking.py:176-185`. Include only when enabled.
+- [ ] **Refund not concurrency-safe** — `meetings/models/refund.py:56-69`. `select_for_update` + idempotency key.
+- [ ] **SEPARATE charge type never pays the peer / refunds don't reverse** — `payments/charges.py:46-51,87-94`. Implement transfers or remove the mode.
+- [ ] **Checkout success/cancel URLs unroutable** — `payments/services.py:183-184`, `booking.py:179-180`, `request.py:298-299`. Add `/pay/success/` + `/pay/cancelled/` views.
+- [ ] **Application fee banker's rounding** — `payments/charges.py:37-38`. Use `Decimal` half-up.
 
-### 1.3 `seed_pages` (Phase 11 + Phase 8)
-- New `core/management/commands/seed_pages.py`; `--force` overwrites bodies, otherwise only fills empty. Runs after `core/0003_seed_chrome`.
-- **Signed-in pages** — `StandardPage` + audience block (`authenticated`) for `/settings`, `/diary`, `/inbox`, `/meetings`, `/dashboard`, `/search`; **reconcile** the `/search`, `/dashboard`, `/settings` pages already created by `0003` as dedicated models (do not duplicate).
-- **Feed snippets** seeded by name: `meetings-published`, `bookings-upcoming`, `unpaid-bookings`, `notifications-user`, optional `reviews-published`, plus host feeds (`host_meeting`, `host_request`, `host_refund`).
-- **Home chrome** — seed the home `hero` and the Main navigation / Footer `DaisyUIMenu` bodies.
-- **Phase 8 remainder** — seed a `StandardPage` blog index + post detail, and a `DaisieFormPage` contact form (topics via a small choice list/taxonomy; may need a small page subclass → additive migration, or reuse `moderation.SupportFormPage`).
-- Idempotent `get_or_create` for feeds/menus; run twice.
+### 0.2 Meetings lifecycle & scheduled tasks
+- [ ] **`generate_recurring_group_meetings` non-idempotent / duplicates / constraint crash** — `meetings/tasks.py:85-141`, `meetings/models/meeting.py:199-205`. Series FK, `get_or_create` on `(rule, scheduled_at)`, filter `status=PUBLISHED`, fix advance + title.
+- [ ] **`mark_completed_sessions` never scheduled; completes at start; ignores group** — `meetings/tasks.py:51-66`, `migrations/0003_periodic_tasks.py`. Schedule; complete after `start+duration`; cover group.
+- [ ] **Group capacity unenforced; `is_fully_booked` wrong model/status** — `meetings/models/meeting.py:401-410`, `meetings/services.py:197-269`. Enforce under lock against non-cancelled bookings.
+- [ ] **Meeting delete cascades bookings/refunds with no cancel/refund/notify** — `meetings/services.py:92-99`, `meetings/actions.py:127-145`. Cancel+refund+emit before delete.
+- [ ] **`Meeting.save()` full_clean blocks edits within 30 min of start** — `meetings/models/meeting.py:216-220,303-313`. Apply future rule only on schedule change/publish.
+- [ ] **Inbox reminder tasks unscheduled; skip groups; no status filter** — `inbox/tasks.py:26-163`. Schedule; cover group bookings; filter status.
+- [ ] **Calendar events for unapproved/non-live; not removed on cancel** — `peers/calendar.py:81-119`. Materialise only APPROVED/PAID + PUBLISHED; remove on exit.
+- [ ] **ICS feed includes cancelled/refunded** — `core/views/calendar.py:21-25`, `core/ical.py:35-45`. Filter to active statuses.
+- [ ] Low: rejected refunds unraisable (`refund.py:56-59`); `archive` dead-end (`meeting.py:289-295`); `updated_at` not bumped on link writes; hardcoded "30 minutes" drift.
 
-### 1.4 `seed_account_selfservice` (§2)
-- New `core/management/` package + `seed_account_selfservice.py` (idempotent; `--force`).
-- Seeds the settings/self-service page bodies (Tabs + Action/ActionForm blocks) driving deactivate/reactivate, delete request/cancel, block/unblock, data export, session revoke, calendar token rotate/revoke.
-- Seeds the moderation/support pages, the account feeds, and the subscription controls (§2).
+### 0.3 Accounts, identity & privacy
+- [ ] **Reactivate doesn't cancel pending deletion ⇒ active users purged** — `users/services.py:139-166`, `moderation/services.py:127-145,245-256`. Cancel on reactivate; guard `is_active` in purge.
+- [ ] **KYC ignores outstanding requirements (dict vs `getattr`)** — `payments/models/profile.py:111-136`. Read dict keys; normalise.
+- [ ] **API PATCH bypasses username cooldown/blocklist/audit/uniqueness** — `users/api/views.py:38-53`. Route through `AccountForm`/validators.
+- [ ] **Purge doesn't cancel Stripe subscription (billing after deletion)** — `moderation/services.py:148-159,209-228`. Cancel subscription on purge.
+- [ ] **Anonymisation residual PII/privilege** — `moderation/services.py:162-206`. Scrub payment customer, `deactivation_reason`, staff flags; include `updated_at`; idempotent.
+- [ ] **`purge_due_accounts` no error isolation/transaction** — `moderation/services.py:245-256`.
+- [ ] **Signup quarantine emits `account_created`/email before deactivation** — `users/forms.py:51-79`. Set inactive before save/emission.
+- [ ] Low: `active_session_keys` unbounded; `DeletedIdentity` never swept.
 
-### 1.5 Schedule background tasks
-- New data migration in the owning app mirroring `meetings/migrations/0003_periodic_tasks.py`.
-- Schedules `purge_due_account_deletions` and `sweep_data_exports` via `django_celery_beat`, with a reverse that deletes the `PeriodicTask` rows.
+### 0.4 Integrations (Stripe & providers) hardening
+- [ ] **Stripe disconnect deletes account possibly billing/with balance** — `payments/services.py:133-155`, `peers/actions.py:108-120`. Cancel subscription; guard balance; clean error.
+- [ ] **`subscription_enabled` + provider agreement not enforced on subscribe** — `peers/actions.py:59-67`. Enforce; dead toggle.
+- [ ] **Approved peer application can't be rejected via status** — `peers/models/application.py:45-52`. Derive status from transitions.
+- [ ] **Remote calls: no idempotency/timeout/transaction** — `payments/services.py:51-118`, `users/avatar.py:30-40`. Idempotency keys, timeouts, don't hold transactions open.
+- [ ] **`peer_connect_stripe` trusts request refresh/return URLs** — `peers/actions.py:49-56`. Use configured URLs / allowlist.
+- [ ] **Pause/resume state webhook-only; bogus event names** — `peers/services.py:205-250`, `peers/signals.py:25-31`. Set local state on action; fix event list.
+- [ ] **Subscription lapse not enforced on `past_due`/`unpaid`** — `peers/signals.py:78-113`.
+- [ ] **Unbounded recurrence expansion loop (DoS)** — `peers/services.py:151-190`, `peers/calendar.py:57-78`. Clamp start; iterate lazily.
+- [ ] **Dead settings** (`subscription_enabled`, `connect_country`, `onboarding_*`, `client_id`, `SubscriptionInterval`) — wire or remove.
+- [ ] Low: stale in-memory `webhook_secret` (`payments/services.py:300-302`); `stripe_connect_account` `DoesNotExist` → 500 (`payments/services.py:88-91`); `default_terms_updated_at` `update_fields` mismatch (`peers/models/profile.py:108-117`).
 
----
-
-## 2. Subscription lifecycle extras (peer plan controls)
-
-- **Dependency:** no bump needed — `stripe==15.6.1` (latest) has `Subscription.resume` and `modify(pause_collection=…)`, but **no** `stripe.Subscription.pause`. Pause therefore uses `modify(pause_collection=…)`, which leaves the subscription status unchanged; resume uses `Subscription.resume`.
-- **Services** (`payments/services.py`):
-  - `pause_subscription(profile)` → `modify(pause_collection={"behavior": "void"})`.
-  - `resume_subscription(profile)` → `Subscription.resume(…, billing_cycle_anchor="now", proration_behavior="create_prorations")`.
-  - `cancel_subscription(profile, *, at_period_end)` → `modify(cancel_at_period_end=True)` or `cancel()` (both modes).
-- **State:** `PeerSubscription.paused_at` (additive field) tracks pause, since the Stripe status does not change.
-- **Actions** (`peers/actions.py`): `peer.subscription_pause|resume|cancel` + labels + `WAGTAIL_DAISIE_ACTIONS`; dashboard buttons.
-- **Webhooks** (`peers/signals.py`): on `customer.subscription.updated` (and `paused`/`resumed`) detect the `pause_collection` flag, set `paused_at`, call `enforce_subscription_lapse` on pause.
-- **Events:** add `subscription_paused`, `subscription_resumed` to the event keys + bridges (emitted on the `paused_at` transition).
-- **Eligibility:** paused plans are excluded explicitly (`has_active_subscription` and `eligible_peer_q` skip `paused_at`).
-- **Tests:** services (mocked Stripe), actions, webhook transitions, eligibility.
-
----
-
-## 3. Data export redesign (on Tigris)
-
-- **Storage:** `STORAGES["exports"]` on the private Tigris backups bucket/creds under an `exports/` prefix (`FileSystemStorage` for dev/test); `DataExportRequest.file` uses it; add `expires_at` (additive migration).
-- **Builder:** `build_export_file` → **ZIP of CSVs** over `.iterator()`; set `completed_at`/`expires_at`; emit `data_export_ready` with `download_url`.
-- **Download:** signed, owner/staff-only view streaming `FileResponse(export.file.open("rb"))`.
-- **Limits:** reject if a `PENDING`/`PROCESSING` export exists or a `READY` export completed within 24 h; rate-limited.
-- **Maintenance:** `sweep_data_exports` retries stale jobs and purges past `expires_at` (48 h).
-- **Tests:** ZIP contents, signed-url auth, cooldown, expiry/sweep.
-
----
-
-## 4. Cleanup — consolidate the TOS reset
-
-- Keep only `ResetTosBulkAction`; add `UserProfileFilterSet` (≥ `accepted_tos`, optionally `visibility`/group); override `get_all_objects_in_listing_query` so filter + select-all reproduces audience-wide reset.
-- Delete Path A: `core/views/tos.py`, `ResetTosForm`, `AudienceSelectMultiple`, `audience_choices`, `users_for_audiences`, `ResetTosViewSet` + admin URL + `wagtailadmin/tos/reset.html`, orphan `__pycache__/test_tos_reset*.pyc`.
-- Keep the `needs_tos_acceptance` audience rule and queryset.
-
----
-
-## 5. Admin Help guide reader (Phase 9)
-
-- New `core/views/help.py` + `core/templates/core/help_guide.html` (staff-only).
-- Renders articles grouped by category; renders `body` (`ContentBlock`) and `steps` (`HelpStepsBlock`); glossary section.
-- Register via `register_admin_urls` (`/cms/help/`), implement `register_help_menu_item`, add a dashboard panel. **No schema change.**
+### 0.5 Admin/feeds correctness
+- [ ] **Email bans case-sensitive (bypass)** — `moderation/banning.py:26-30`. `__iexact` + normalise on save.
+- [ ] **`settings.*` action fallback reads wrong kwarg ⇒ 404** — `users/settings.py:195-202`. Use `kwargs["key"]`.
+- [ ] **`_allowed_page_types` raises `LookupError` ⇒ 500** — `core/selectors.py:13-21`. `try/except` + log.
+- [ ] **Notification idempotency has no DB constraint** — `inbox/events.py:100-108`, `inbox/models/notification.py:28-33`. `UniqueConstraint(["recipient","event_ref"])`.
+- [ ] **`pre_state_store` process-global leak/thread-shared** — `inbox/signals.py:43-72`. `WeakKeyDictionary`; guaranteed cleanup.
+- [ ] **Export sweep unbounded retries** — `moderation/export.py:278-290`, `moderation/tasks.py:24-27`. Attempt counter → terminal FAILED.
+- [ ] **Bulk ticket reject emits `report_resolved`** — `moderation/wagtail_hooks.py:155-188`. Distinct event/status.
+- [ ] **`SupportFormPage` ignores model mapping / never sets `subject_user`** — `moderation/forms_pages.py:30-46`.
+- [ ] Low: export download 302 vs 403 (`moderation/views.py:31-36`); dead calendar link helpers (`core/ical.py:50-75`); localization middleware default (`core/middleware.py:30-34`); `tag_choices` ignores inactive group (`taxonomy/selectors.py:45-50`); string-literals-vs-enums (`meetings/tasks.py:21,24`, `inbox/tasks.py:35`); dead/duplicated code (`request.py:247-348`, `_MEETING_FIELDS`, `MeetingPriceTier.is_default`, selector aliasing).
 
 ---
 
-## 6. Help content catalogue
+## Phase A — Data access patterns
 
-Admin-facing support reference (reader is staff-only); each article’s `audience` records **who the article is about**.
+Goal: every detail page resolves its own model instance from URL path parameters;
+search is fully admin-authored; two-party records (requests/bookings/refunds) are
+scoped and reachable per the UX flows; meeting join is time-boxed and
+provider-aware. All bugs below were found by static review (`REASONED`) — each is
+fixed **test-first** (failing test → fix → green), no regressions.
 
-**Five categories:** 1 Administrators — Getting started `[admin]` · 2 Administrators — Moderation & operations `[admin]` · 3 Care providers `[peer]` · 4 Care seekers `[seeker]` · 5 Developers & operators `[developer]`.
+Dependencies: A3 depends on Phase 0.1/0.2; A4 depends on B0 (secret storage).
 
-### 6.0 Setup surfaces these map to
-Settings models: `StripeSettings`, `EmailSettings`, `IntegrationSettings`, `LocalizationSettings`, `ModerationSettings`, `NotificationSettings`, `AccountSettings` (`core/models/settings.py`), `PeerRequirementsSettings`, `BanSettings`. Snippets: `DaisyUITheme`, `DaisyUIMenu`, `ReusableBlock`, `ErrorPage`, `DaisyUIIconSource`, `DaisyUIFavicon`, `Feed`, `EmailTemplate`, `EmailReusableBlock`, `Audience`, `EmailCampaign`, `AllauthPageOverride`, `AllauthEmailOverride`, `Language`, `Country`, `TagGroup`, `AllowedTag`. Storage: Tigris (env-driven).
+### A1 — Detail-page instance resolution
 
-### Category 1 — Administrators: Getting started `[admin]`
-| Article | Kind | Summary |
-|---|---|---|
-| Your admin role and the Operations menu | reference | Reaching the Wagtail admin; what each Operations menu group does. |
-| Setting up your site and domain | howto | Configure the Wagtail `Site`, root/home page and reserved routes. |
-| Choosing and building a theme | howto | `DaisyUITheme`: colours, radii, sizes, effects, background, fonts; default/light/dark. |
-| Building navigation and the footer | howto | `DaisyUIMenu` (Main navigation / Footer): items, branding, search, theme. |
-| Designing the homepage | howto | The home `hero` and page content blocks. |
-| Configuring email delivery (SMTP) | howto | `EmailSettings` host/port/credentials/TLS and sending a test email. |
-| Configuring Stripe and payouts | howto | `StripeSettings`: keys, webhook secret, Connect, charge type, application fee, tax; the webhook endpoint. |
-| Configuring platform pricing and fees | howto | Plan price IDs (`PeerRequirementsSettings`), application fee, meeting pricing, tax mode, display currency. |
-| Configuring meeting providers | howto | `IntegrationSettings`: Whereby/Daily, room prefix, GetPronto API key. |
-| Setting care-provider requirements | howto | `PeerRequirementsSettings`: subscription/KYC/verification gates and plan price IDs. |
-| Managing taxonomies | howto | Languages, countries, tag groups and allowed tags. |
-| Localization and display currency | howto | `LocalizationSettings`: languages, switcher behaviour, currency/exchange-rate source. |
-| Account, moderation and ban settings | howto | `AccountSettings` cooldowns/grace, `ModerationSettings` blocklist, `BanSettings` email/IP. |
-| Notification defaults and event types | howto | `NotificationSettings`, bridges, audiences and campaigns. |
-| Designing error pages | howto | `ErrorPage` snippets for 400/401/403/404/429/500. |
-| Designing account (sign-in) pages and emails | howto | `AllauthPageOverride` / `AllauthEmailOverride`. |
-| Building feeds and reusable blocks | howto | `Feed` snippets, `ReusableBlock`, email reusable content. |
-| Publishing Terms and Help content | howto | The TOS page/audience and the help categories, articles and glossary. |
-| Feature index for administrators (setup) | reference | Every admin setup feature and where to find it. |
+Steps (in order):
+1. [ ] Set `"on_delete": "page"` for `meeting`, `peer_profile`, `review`,
+   `user_profile` (`config/settings/base.py:1225,1237,1249,1261`); `tag` already
+   `"page"`. Deleting a source deletes its page.
+2. [ ] **Bug — orphan detail pages are served (404 bypass).**
+   `hide_inaccessible_detail_pages` returns `None` when `source is None`
+   (`core/wagtail_hooks.py:151-154`), so `unlink`ed/live orphans serve with 200.
+   Detect a detail page structurally (`isinstance(specific, ModelDetailPage)`)
+   and render 404 when `source_object_id` is set but `source is None`.
+3. [ ] **Bug — `_SOURCE_PARAM` is a no-op / misleading.** Set the context models'
+   `lookup_field` to the published param names (`meeting` → `meeting_pk`,
+   `peer_profile` → `peer_pk`, `review` → `review_pk`) so binding actually uses
+   them; keep `_SOURCE_PARAM` as the single source of truth for those names
+   (`core/models/pages.py:17-45`, `config/settings/base.py:653,663,699`).
+4. [ ] **Bug — an owner's unpublished meeting renders an empty context.**
+   Binding uses `published_meetings` (`config/settings/base.py:654`) while the
+   visibility guard lets the owner through, so `{{ meeting }}` is `None` for the
+   owner. Provide an owner-aware queryset for detail-page binding.
+5. [ ] **Bug — `request.daisie_path_params` mutation accumulates** across
+   `get_context` calls (`core/models/pages.py:56-60`). Build a fresh copy; do not
+   leak params across pages/requests.
+6. [ ] **Bug — `get_absolute_url` fallbacks can 404** (`/meetings/<pk>/`,
+   `/peers/<username>/`, `/reviews/<pk>/`, `/u/<username>/`) when the bridge page
+   is absent. Guarantee pages exist (bridge) and make fallbacks safe/covered by
+   tests.
+7. [ ] Add `index.SearchField("bio")` to `UserProfile.search_fields`
+   (`users/models/profile.py:122-129`).
+8. [ ] Tests: per-type context var populated; unrelated URL-sourced models pruned;
+   orphan/unpublished/missing → 404; deleting source deletes page; params not
+   leaked.
 
-### Category 2 — Administrators: Moderation & operations `[admin]`
-| Article | Kind | Summary |
-|---|---|---|
-| Reviewing peer applications | howto | Approving/rejecting applications and the resulting profile state. |
-| Managing members and profiles | howto | Editing member profiles and visibility; member operations. |
-| Handling support and report tickets | howto | Working the support queue, assignment and resolution. |
-| Username moderation and bans | howto | The username blocklist and applying email/IP bans. |
-| Resetting Terms acceptance | howto | The single bulk-action path and audience-wide reset. |
-| Data exports and deletion requests | howto | Fulfilling exports and processing/undoing deletions. |
-| Overseeing bookings, refunds and meetings | howto | Inspecting and acting on bookings, refunds and meetings. |
-| Visibility and enforcement rules | reference | How deactivated/blocked/paused-plan and unpublished content is hidden. |
-| Feature index for operations | reference | Every moderation/operations feature and where to find it. |
+Acceptance: each detail type resolves its instance; no cross-binding; source-less
+⇒ 404; `makemigrations --check` clean.
 
-### Category 3 — Care providers `[peer]`
-| Article | Kind | Summary |
-|---|---|---|
-| Becoming a care provider | howto | Applying, moderation approval and the provider agreement. |
-| Connecting Stripe (Express + KYC) | howto | Connect onboarding and identity (KYC) verification. |
-| Your plan: start, pause, end, restart | howto | Subscription lifecycle controls and their effect on eligibility/visibility. |
-| Creating and publishing a meeting | howto | 1:1 vs group meetings, terms, scheduling and recurrence. |
-| Pricing your meetings | reference | Fixed, sliding-scale and duration-tier pricing, and currency. |
-| Managing meetings | howto | Unpublish, archive, delete, and the unpublish/delete-all controls. |
-| Setting your availability | howto | One-off and recurring availability windows and 1:1 slot booking. |
-| Host dashboard | howto | Booking requests, approve/reject, refunds and the host feeds. |
-| Express dashboard & disconnecting Stripe | howto | Opening the Express dashboard and the effect of disconnecting. |
-| Feature index for care providers | reference | Every provider feature and where to find it. |
+### A2 — Unified, admin-authored search
 
-### Category 4 — Care seekers `[seeker]`
-| Article | Kind | Summary |
-|---|---|---|
-| Creating your account | howto | Username, email, name, date of birth and Terms acceptance; verification. |
-| Finding a care provider | howto | The search page, filters and how hidden/blocked content is excluded. |
-| Booking a session | howto | Requesting a meeting, approval policies, duration/price and terms. |
-| Paying for a booking | howto | Stripe checkout, the unpaid-bookings cart and payment history. |
-| Managing your bookings & sessions | howto | Upcoming/paid bookings, cancelling and joining group meetings. |
-| Requesting a refund | howto | Refund policy and approval-required refunds. |
-| Leaving a review | howto | Reviewing a completed session and where reviews appear. |
-| Your inbox & notifications | howto | How inbox events arrive, marking read and opt-outs. |
-| Your diary & calendar feed | howto | The diary page and the read-only ICS feed, including token rotation. |
-| Feature index for care seekers | reference | Every member feature and where to find it. |
+Steps:
+1. [ ] Index `StandardPage` (title/description/body) and contribute a search block
+   (via `register_content_block`) that merges meetings + peer profiles + pages,
+   with deterministic ordering and pagination.
+2. [ ] **Bug — site search returns nothing / dead code.**
+   `SearchPage.get_context` builds `search_results` (`core/models/pages.py:136-174`)
+   but `core/templates/core/search_page.html` only renders `page.body`, and the
+   seeded page body is empty, so `/search/?query=` is blank. Remove the dead
+   `get_context` and render results through the block (or a real template).
+3. [ ] **Bug — search results cause N+1.** `results = [*meetings, *peers]`
+   (`pages.py:171`) then `get_absolute_url` per row. Batch the page lookups / use
+   `select_related`; cap results.
+4. [ ] **Bug — reserved-slug validation is dead, auto-slug bypass.**
+   `ReservedSlugPage.clean_slug` (`core/models/pages.py:81-89`) is never called by
+   Wagtail; enforcement relies on POST-slug hooks (`core/utils.py:39-62`) which
+   pass when the slug is blank. Implement `clean()` (or slug-field validators) and
+   slugify the title in the hooks when the submitted slug is blank.
+5. [ ] **Bug — `_allowed_page_types` raises `LookupError` ⇒ 500.** `apps.get_model`
+   raises for a bad path (`core/selectors.py:13-21`). Wrap in `try/except
+   LookupError` and log/skip.
+6. [ ] Tests: search renders merged results; visibility respected; reserved slug
+   rejected for auto-generated slugs; bad content-type config does not 500.
 
-### Category 5 — Developers & operators `[developer]`
-| Article | Kind | Summary |
-|---|---|---|
-| Object storage with Tigris | reference | Media/public bucket, private backups + exports, env vars, custom domain, S3 compatibility. |
-| Storage, backups and data retention (overview) | reference | What is stored where (Tigris media vs private backups/exports) and the retention windows. |
-| Infrastructure and running costs | reference | Hetzner host; Tigris storage/egress (zero egress; $0.02/GB Standard; free 5 GB; Class A/B request rates); Stripe fees; DNS/Coolify/Tailscale; what drives the bill. |
-| Stripe, Connect and Express explained | reference | Payments, payouts and the platform/connected-account model. |
-| Video providers: Whereby, GetPronto, Daily | reference | Meeting-room providers and how links are generated. |
-| The platform stack | reference | Django, Wagtail, daisIE, Environment, Repository, Deployment, IaC, Ansible, GitHub, Coolify, Secrets, Hetzner, Tailscale, Cloudflare, DNS. |
-| Webhooks, API keys, OAuth, KYC | reference | The integration concepts underpinning payments and identity. |
-| Taxonomy: tag groups, allowed tags, languages, countries | reference | How filters and tagging are structured. |
-| Glossary | reference | The glossary terms below. |
+Acceptance: `SearchPage` issues no model queries itself; results respect
+visibility; ordering deterministic.
 
-### Glossary terms (seeded `GlossaryTerm`)
-Stripe · Stripe Connect · Express dashboard · payment profile · subscription · plan pause/resume/cancel · application fee · peer plan price · Whereby · GetPronto · Daily · Tigris · object storage bucket · egress · retention · Project · Platform · Django · Wagtail · daisIE · Environment · Repository · Deployment · IaC · Ansible · GitHub · Coolify · Secrets · Hetzner · Tailscale · Cloudflare · DNS · API key · webhook · OAuth · KYC · ICS · tag group · allowed tag · taxonomy · feed · audience · reserved route · deactivation · deletion/anonymisation · blocking · ban · data export · session · calendar token · provider agreement.
+### A3 — Two-party scoping (requests · bookings · refunds)
 
-*(Each term gets a one–two sentence, seventh-grade definition in the seed data.)*
+Steps:
+1. [ ] **Bug — booking/refund detail pages are effectively public.**
+   `source_owner(Booking|RefundRequest)` is `None` and there is no `publish_field`,
+   so `viewer_can_view_source` returns `True` (`moderation/visibility.py:82-99,
+   159-181`). Add `source_participant_ids` (booking ⇒ seeker + `meeting.peer`;
+   refund ⇒ `meeting_request.support_seeker` + `meeting_request.meeting.peer`) and
+   short-circuit: moderator ⇒ True; participant ⇒ True; else deny.
+2. [ ] Add non-navigable `BookingDetailTemplate`/`RefundRequestDetailTemplate`
+   (`ModelDetailTemplate` subclasses under `HomePage`) and
+   `BookingDetailPage`/`RefundRequestDetailPage` (context via
+   `booking_for_viewer`/`refund_for_viewer`).
+3. [ ] Add `publish_field`/`lookup_field`/`title_source`/`slug_source` entries and
+   `on_delete: "page"` for `booking`/`refund_request`.
+4. [ ] Selectors (`meetings/selectors.py`): `viewable_bookings`,
+   `viewable_refunds`, `booking_for_viewer`, `refund_for_viewer`,
+   `bookings_for_context`, `refunds_for_context`, `meeting_requests_for_context`,
+   `user_requests`, `user_refunds`, `host_bookings`; viewer+page scoped; status +
+   date (`created_at` **and** session time) filters.
+5. [ ] **Bug — `refund_request` context model has no queryset** ⇒ `.all()`
+   fallback (`config/settings/base.py:756-760`); add a scoped queryset +
+   `select_related`.
+6. [ ] **Bug — model feeds lose page scope on AJAX.** `feed.html` emits the hidden
+   `page` input only for page-tree feeds (`templates/wagtail_daisIE/blocks/data/
+   feed.html:21`). Emit it whenever `host_page` is present; selectors honour
+   `?page=`.
+7. [ ] Depends on Phase 0.1 (payment propagation) / 0.2 (completion) for correct
+   data.
+8. [ ] Tests: the 12 UX flows return only in-scope rows; stranger ⇒ empty/404;
+   replay-safe; no N+1.
+
+Acceptance: all listed flows work; no cross-user leakage.
+
+### A4 — Meeting join windowing + providers
+
+Steps:
+1. [ ] Add `IntegrationSettings.joining_lead_minutes` (additive migration).
+2. [ ] **Bug — join has no time window.** `MeetingRequest.can_join`
+   (`meetings/models/request.py:162-169`) checks status only. Add audience rules
+   `is_joining_upcoming_meeting_as_host|guest` resolving the target (**Meeting**
+   for group, **MeetingRequest** for 1:1 — current `_meeting` only resolves
+   `Meeting`, `core/audience.py:72-78`), window `start − lead ≤ now ≤ end`.
+3. [ ] Server-enforced join endpoint (re-checks role + window; the button is
+   cosmetic).
+4. [ ] Whereby host link as a cached property (`GET /meetings/{id}?fields=
+   [hostRoomUrl]`); guest = stored `roomUrl`.
+5. [ ] Daily: rooms `privacy: "private"`; extend the vendored client with
+   `POST /meeting-tokens` (owner/non-owner, `nbf`/`exp`, `user_id`); links
+   `room.url?t=<token>`.
+6. [ ] **Bug — provider not captured per session** (only global setting +
+   `provider_room_id`), so minutes-per-provider is impossible. Add a `provider`
+   field at room creation (feeds B6).
+7. [ ] Attendance webhooks (`host_attended`/`viewer_attended`) — depends on B0.
+8. [ ] Tests: window for both roles; endpoint rejects out-of-window/non-
+   participant; token/link mocked.
+
+Acceptance: button visibility matches the window; endpoint enforced; provider
+recorded.
+
+### A5 — Admin guide (identity)
+1. [ ] MeetingRequest-vs-Booking article (request to join vs confirmed purchase).
+2. [ ] **Doc bug** — correct "Video providers: Whereby, GetPronto, Daily"
+   (GetPronto is file upload, not video) (`core/help_seed.yaml:1086-1098`).
+3. [ ] Provider overview (Whereby/Daily/GetPronto/Stripe).
+
+Acceptance: `seed_help_guide` idempotent; articles render.
 
 ---
 
-## 7. Storage & infrastructure (Tigris) — tasks
+## Phase B — Analytics
 
-Scope: **documentation + private `exports/` wiring only** (no new integration).
+Goal: admin-facing metrics (optionally user-facing), fed by idempotent ledgers,
+rendered on an admin dashboard, a contributed chart block, and a read-only API.
+Metric set: users, peers (+verified), meetings, meeting minutes (per provider),
+GBV, platform fee revenue, subscription revenue, AOV, take rate, subscriptions,
+requests/bookings by status + date, refunds (count/value/rate), failed payments,
+reviews/rating, moderation. Scopes: platform (admin), peer, user. Buckets:
+all-time / this month / last month / last 3 months (UTC calendar months).
+Currency: per-currency **and** converted (checkout rate for `stripe`, else
+`LocalizationSettings`). Ledger-first; no rollups. All bugs below are `REASONED` —
+fix test-first, no regressions.
 
-- **Document the storage architecture** in `docs/infra/` and the help guide: public media bucket (`DJANGO_AWS_*`, `AWS_S3_CUSTOM_DOMAIN=t3.storage.dev`) vs private backups bucket (root `AWS_*`); the private `exports/` prefix; `RETENTION_DAYS` (30) for backups; 48 h for exports.
-- **Ensure no PII in the public media bucket.** Audit what lands in `media` (avatars, documents) and confirm exports never do.
-- **Wiring:** add the `exports` alias (§3) using the private backups creds; document the env mapping (`docs/infra/coolify-env-mapping.md`, `docs/infra/secrets-runbook.md`).
-- **Retention review:** confirm backup and export retention windows are documented; no lifecycle-rule automation in scope.
+Dependencies: B0 precedes B1/B6; B1 depends on Phase 0.1/0.2; B4 depends on 0.1;
+B5 depends on 0.2.
 
-## 8. Pricing & fees — tasks
+### B0 — Secure secret storage (prerequisite)
 
-Scope: **both** platform pricing configuration and infrastructure cost.
+Goal: no integration secret is plaintext at rest.
 
-- **Document and verify platform pricing configuration:** peer plan price IDs (`PeerRequirementsSettings.peer_plan_price_ids`), application fee (`StripeSettings.application_fee`), meeting pricing types (fixed/sliding/duration tiers), tax mode, display currency/exchange (`LocalizationSettings`).
-- **Seed the admin pricing article** (§6 Category 1) and the developer cost article (§6 Category 5).
-- **Single cost picture** for operators: Tigris + Hetzner + Stripe (§7–8).
-- No code change expected unless a pricing setting is found unwired (`UNVERIFIED` until audited).
+Steps:
+1. [ ] New `EncryptedCharField`/`EncryptedTextField` (Fernet key derived from
+   `DJANGO_SECRET_KEY` via `hashlib.sha256` → urlsafe base64; fail fast if absent).
+2. [ ] Convert `StripeSettings.secret_key`/`webhook_secret`/`client_id`,
+   `EmailSettings.password`, `IntegrationSettings.*_api_key`, and the new
+   Whereby/Daily webhook secrets (`core/models/settings.py:38-54,161,221-238`).
+3. [ ] Masked admin widget with "leave blank to keep existing".
+4. [ ] Forward-only data migration to encrypt existing rows; document rollback.
+5. [ ] **Bug/risk — settings revisions may persist plaintext.** Spike first:
+   exclude secret fields from revisions (or serialise ciphertext); assert with a test.
+6. [ ] **Risk — `DJANGO_SECRET_KEY` rotation** makes ciphertext unreadable; add a
+   startup warning + runbook note.
+7. [ ] **Bug (0.4) — stale in-memory secret**: `create_webhook_endpoint` updates
+   `webhook_secret` via `.update()` but not the instance
+   (`payments/services.py:300-302`); refresh after write.
+8. [ ] Tests: round-trip, blank-keeps-existing, no plaintext in revisions, migration
+   idempotent.
 
-## 9. Phases, verification and review gates
+Acceptance: no plaintext secret at rest/in revisions/admin; `makemigrations --check` clean.
 
-- **Phase A — Help + registration.** Reader (§5), `seed_help_guide` (§1.2, catalogue §6 incl. Tigris/pricing), extension-point registration (§1.1). Verify: seed twice (no-op); reader renders; gates clean.
-- **Phase B — Pages.** `seed_pages` (§1.3) incl. Blog/Contact. Verify: seed twice; gates clean.
-- **Phase C — Account self-service + subscription.** `seed_account_selfservice` (§1.4), subscription lifecycle (§2), beat migration (§1.5). Verify: tests; seed twice; gates clean.
-- **Phase D — TOS + export + storage/pricing docs.** TOS consolidation (§4), export redesign (§3), Tigris/pricing docs (§7–8), sweep scheduling. Verify: tests; gates clean.
+### B1 — Idempotent ledgers
 
-Each phase: small reviewable diffs → verification block → `just pytest` handover → **pause for review**.
+Goal: replay-safe records; **marketplace revenue and subscription revenue tracked
+in separate ledgers** (combined only for display, see B3).
+
+Steps:
+1. [ ] New `neuromancers_network/analytics/` app. Models:
+   - `TransactionLedger` — **marketplace** money: kind (booking_payment, refund,
+     application_fee, dispute), base/presentment currency + amounts,
+     `exchange_rate`, `fee_amount`, `net_amount`, payer/payee, provider object id,
+     `occurred_at`, unique `idempotency_key`.
+   - `SubscriptionLedger` — **subscription** revenue: kind (subscription_payment,
+     subscription_refund), invoice/subscription id, payer, currency/amounts,
+     `occurred_at`, unique `idempotency_key`.
+   - `SessionLedger` — `meeting_request` OneToOne, `provider`, `minutes`,
+     peer/seeker, `occurred_at`.
+   - `ActivityLedger` — event_type, object_type/id, `occurred_at`, unique.
+2. [ ] Writers via `update_or_create` keyed on provider object id, wired to the
+   existing `meetings/signals.py` receivers.
+3. [ ] **Bug — refund value is never captured.** `handle_charge_refunded`
+   (`meetings/signals.py:95-123`) ignores `refund_data["amount"]` and
+   `RefundRequest` has no amount; record the refund amount in `TransactionLedger`.
+4. [ ] **Subscription revenue (own ledger).** Add
+   `invoice.payment_succeeded`/`invoice.paid` receivers (`peers/signals.py`) →
+   `SubscriptionLedger`.
+5. [ ] **Bug — disputes synced but not recorded** (`meetings/signals.py:125-135`);
+   add `dispute` to `TransactionLedger`.
+6. [ ] **Bug — fee not persisted** (computed at checkout, `payments/charges.py:
+   37-38`); record `fee_amount` from `charge.application_fee_amount` (fallback to
+   the configured percent).
+7. [ ] **Dependency — 0.1 payment propagation and 0.2 completion** must be fixed or
+   ledgers are empty/incorrect.
+8. [ ] `sync_analytics_ledgers` idempotent backfill.
+9. [ ] Tests: replay-safe; fixed-clock determinism.
+
+Acceptance: replay-safe ledgers; `makemigrations --check` clean.
+
+### B2 — Metric definitions
+
+Goal: one pure, testable metric layer.
+
+Steps:
+1. [ ] Pure functions by scope (platform/peer/user) and period (UTC months);
+   documented definitions (GBV, take rate, session minutes, active member/peer,
+   repeat-booking rate, refund rate, published-review rate).
+2. [ ] Currency: per-currency **and** converted.
+3. [ ] **Bug — `convert_amount` cannot convert for `stripe` source** (returns
+   unchanged, `core/currency.py:36-39`); use the B4-persisted checkout rate.
+4. [ ] **Bug — conversion direction/keys ambiguous** (`rates.get(target)` ignores
+   source, `core/currency.py:42-47`); define source→target semantics + validate.
+5. [ ] **Bug — `convert_amount(None)` crashes** (`Decimal(str(None))`); guard
+   `None`/empty.
+6. [ ] **Bug — enum drift** (`meetings/tasks.py:21,24`, `inbox/tasks.py:35`); filter
+   via `TextChoices`.
+7. [ ] Define "active member/peer"; reuse `eligible_peer_q`, `exclude_hidden`,
+   live/public.
+8. [ ] Tests: deterministic outputs; conversion fallback; enum-correct filters.
+
+Acceptance: deterministic metrics; conversion proven.
+
+### B3 — Surfaces
+
+Goal: admin, authored-page and API access to metrics.
+
+Steps:
+1. [ ] Staff-only admin analytics view + homepage panel (`register_admin_urls`/
+   `construct_homepage_panels`; pattern `HelpGuideView`). Revenue shown split
+   (marketplace vs subscription) with a **combined figure as a cached property**.
+2. [ ] Contributed **metric chart block** (`register_content_block`), server data,
+   wagtailcharts frontend, DaisyUI-theme-bridged colours (draftail CALLABLE
+   pattern) + custom colours; audience-gated for user-facing use.
+3. [ ] Read-only django-ninja `/api/analytics/` (staff platform scope; self-scope
+   for members).
+4. [ ] **Risk — `register_content_block` import order** (`wagtail_daisIE/blocks/
+   content.py`); verify load order or extend daisIE's hook.
+5. [ ] **Schema note** — block changes the page `body` StreamField → migration.
+6. [ ] Tests: admin render; block renders metric/period/scope; API authz.
+
+Acceptance: admin view, block, API work; no N+1 on series.
+
+### B4 — Payment currency capture
+
+Goal: every payment records base and presentment amounts + rate.
+
+Steps:
+1. [ ] **Bug — 1:1 checkout lacks adaptive pricing** (`meetings/models/request.py:
+   270-320`).
+2. [ ] **Bug — `adaptive_pricing=None` sent unconditionally**
+   (`meetings/models/booking.py:176-185`).
+3. [ ] **Bug — mixed currencies collapsed in a peer cart**
+   (`meetings/models/booking.py:140-164`).
+4. [ ] **Bug — `compute_total` charges £0 for a missing tier price**
+   (`meetings/models/booking.py:103-115`).
+5. [ ] **Bug — `price_for` silently falls back to base price**
+   (`meetings/models/meeting.py:425-434`).
+6. [ ] **Bug — `sync_payment_from_checkout` stores only presentment**
+   (`meetings/models/request.py:333-345`); persist base GBP + presentment + rate.
+7. [ ] `UNVERIFIED` — confirm the Stripe conversion-rate field (e.g. PaymentIntent
+   `currency_conversion`); store when present, else `LocalizationSettings`.
+8. [ ] Key/value widget for `LocalizationSettings.manual_exchange_rates` (none in
+   `wagtail_daisIE.widgets`).
+9. [ ] **Bug — application fee banker's rounding** (`payments/charges.py:37-38`).
+10. [ ] Tests: base+presentment persisted; converted metrics use Stripe rate with
+    fallback.
+
+Acceptance: both currencies stored; conversion correct.
+
+### B5 — Public exposure + peer controls
+
+Goal: admins publish aggregates; peers control their own exposure (default
+public) **and review publication**; peers may **hide (never delete)** reviews;
+reviewers' reviews publish immediately unless the peer requires approval.
+
+Steps:
+1. [ ] Public aggregates on Meeting/Peer pages (rating, rating count, sessions
+   count, published reviews), audience-gated and block-aware.
+2. [ ] Peer preferences on `PeerProfile` (additive, defaults = public):
+   `show_review_rating`, `show_rating_count`, `show_sessions_count`,
+   `accepts_reviews` (all `True`), and `reviews_require_approval` (`False`).
+3. [ ] **Review state model (single source of truth).** Introduce
+   `ReviewStatus` (`PENDING_APPROVAL`, `PUBLISHED`, `HIDDEN`), indexed, and
+   **retire `Review.is_published`**. Keep `is_live` as a derived property
+   (`status == PUBLISHED`) so `moderation/visibility.py`
+   `publish_field: "is_live"` is unchanged. Data migration maps existing rows to
+   `PUBLISHED`; the `is_published` column drop is a **breaking migration** with a
+   rollback note (reverse-map status → boolean).
+4. [ ] Update callers: `published_reviews` → `status=PUBLISHED`
+   (`meetings/selectors.py:37`); admin `ReviewViewSet` list/panels and the
+   Publish/Unpublish bulk actions → set `status` (`Publish` → `PUBLISHED`,
+   `Unpublish` → `HIDDEN`) (`meetings/wagtail_hooks.py:228-233,407-447`);
+   `inbox/payloads.py:235`.
+5. [ ] **Approval flow.** On creation (`ReviewFormPage`,
+   `meetings/forms_pages.py:225-251`), set `status = PENDING_APPROVAL` when the
+   peer's `reviews_require_approval` is `True`, else `PUBLISHED`.
+6. [ ] **Peer actions.** Register `review.approve` / `review.hide` in
+   `WAGTAIL_DAISIE_ACTIONS` (audience `peer`), authorized to the review's `peer`
+   only, idempotent; expose a peer review list (pending/published/hidden) via the
+   daisIE feed/dashboard pattern. **No delete action** for peers. Both moderator
+   unpublish and peer hide set `HIDDEN` (audit log records the actor).
+7. [ ] **Notifications — extend `NotificationEventType`** (`inbox/models/
+   event_type.py`) with `review_pending_approval`, `review_published`,
+   `review_hidden`; emit on the transitions (peer notified on pending; reviewer on
+   approve/hide). Add bridge mappings/opt-outs.
+8. [ ] **Bug — reviews auto-publish today** (`meetings/models/review.py:33`): fixed
+   by steps 3–5; assert pending reviews never render publicly.
+9. [ ] **Bug — counts must exclude cancelled/refunded and hidden parties**, and now
+   also non-`PUBLISHED` reviews; apply active-status + `exclude_hidden`.
+10. [ ] **Dependency — review creation unreachable until Phase 0.2** (only
+    `MeetingRequestStatus.COMPLETED`, `meetings/forms_pages.py:238-242`;
+    `mark_completed_sessions` unscheduled).
+11. [ ] Tests: policy on → pending until approved; peer approve/hide transitions;
+    peer cannot delete; owner/visitor view honours status + preferences; blocked/
+    unpublished excluded; default-public behaviour.
+
+Acceptance: peers control review publication (approve/hide, hide-only);
+moderator unpublish and peer hide both `HIDDEN`; public surfaces show only
+`PUBLISHED` reviews honouring preferences and blocks; default `False`
+(auto-publish).
+
+### B6 — Provider minutes
+
+Goal: minutes per month per provider (Whereby / Daily), switchable.
+
+Steps:
+1. [ ] **Bug — `provider` not recorded per session**; add a `provider` field at
+   room creation on `Meeting` and `MeetingRequest` (additive).
+2. [ ] Inbound Whereby + Daily webhook endpoints (dashboard-configured; secrets via
+   B0), signature-verified, idempotent; map `provider_room_id` → session; minutes
+   by `provider`.
+3. [ ] **Dependency — `daily` client lacks tokens/webhooks**; extend via
+   `clientele` regen (handover) and set rooms `privacy: "private"`.
+4. [ ] Admin view: switch minutes by provider.
+5. [ ] Tests: mocked webhooks; replay idempotent; switch correct.
+
+Acceptance: minutes-by-provider correct and switchable.
+
+---
+
+## Phase C — Scripts & cookie consent
+
+Goal: admins can add scripts (head/body) and author a cookie policy + consent
+banner; users can consent or decline; non-essential scripts load only after
+consent. Code/persistence only — no seeded legal text; admins own the policy page
+and banner UX. The cookie registry drives both the policy page and the banner
+(single source of truth). Consent is **cookie-only**. CSP is **documented, not
+enforced** in this phase. All bugs below are `REASONED` — fix test-first, no
+regressions.
+
+### C1 — Admin script injection
+Steps:
+1. [ ] Add a `ScriptsSetting` (Wagtail `BaseGenericSetting`) with head/body script
+   entries (name, category, code, placement) + per-script audience gating; render
+   via the unused `{% block extra_head %}` / `{% block extra_body %}`
+   (`templates/base.html:32-33,50-51`).
+2. [ ] Follow the `ArbitraryCSSMiddleware` / arbitrary-CSS pattern
+   (`wagtail_daisIE/middleware.py`) for consistency (DRY): a settings model plus a
+   small render path.
+3. [ ] **Bug — no injection point today** (blocks unused): wire it and cover with a
+   render test.
+4. [ ] **Risk (documented) — no CSP** (no `django-csp`): admin scripts are
+   unconstrained. Document CSP/nonce guidance for C4; gate editing on admin
+   permission and audit changes.
+5. [ ] **Risk (documented) — `X_FRAME_OPTIONS = "DENY"`**
+   (`config/settings/base.py:309`) conflicts with third-party embeds; document
+   per-script guidance.
+6. [ ] Tests: head/body scripts render only when configured, permitted and
+   consented; nothing else renders.
+
+Acceptance: admins can add scripts; nothing renders that is not configured,
+permitted and consented.
+
+### C2 — Cookie registry + policy page
+Steps:
+1. [ ] Add `CookieCategory` (`necessary`/`analytics`/`marketing`) and `Cookie`
+   snippets (name, provider, purpose, duration, category), admin-editable.
+2. [ ] Policy page = an **admin-authored `StandardPage`** fed by the registry via a
+   template tag/block; admins author the surrounding copy — no seeded legal text.
+3. [ ] **Bug — undisclosed cookies.** Register the **language** cookie
+   (`core/middleware.py:41`, set by `LocaleMiddleware`) and the **`daisie_theme`**
+   cookie (`theme_persistence.js`, read in `wagtail_daisIE/pages.py:212`), plus
+   session/CSRF as `necessary`.
+4. [ ] **Cross-ref (0.5)** — `LocalizationMiddleware` default-language bug
+   (`core/middleware.py:30-34`) must be fixed so the language cookie behaves
+   deterministically.
+5. [ ] Tests: registry renders on the policy page; categories drive the banner (no
+   drift); session/CSRF marked necessary.
+
+Acceptance: every cookie in use is registered and shown; the policy page is
+admin-owned and registry-driven.
+
+### C3 — Consent banner + persistence (cookie only)
+Steps:
+1. [ ] Admin-authored banner UX; persistence = **a single consent cookie**
+   (categories + policy version + timestamp; JSON, signed/checked) — no
+   server-side record.
+2. [ ] **Bug — non-essential scripts render before consent.** Gate script
+   rendering server-side on the consent cookie so tracking never ships until
+   accepted; essential stays.
+3. [ ] **Bug — no `Vary`.** Add `Vary: Cookie` to consent-dependent responses (or a
+   small middleware) so caches don't serve mixed consent states.
+4. [ ] Support change/withdraw (re-open banner) and policy **versioning** (re-ask
+   after a policy change).
+5. [ ] Accessibility + localization of the banner.
+6. [ ] Tests: decline ⇒ no non-essential script; accept ⇒ scripts render; changing
+   consent updates; version bump re-asks; `Vary: Cookie` present.
+
+Acceptance: consent recorded (cookie) and honoured; declining suppresses
+non-essential scripts; no cross-user cache bleed.
+
+### C4 — CSP & security (documentation only)
+Steps:
+1. [ ] Document `Content-Security-Policy` requirements and nonce support for
+   admin-injected scripts (`extra_head`/`extra_body`) and daisIE inline scripts
+   (`{% daisie_htmx %}` etc.) — **no enforcement this phase**.
+2. [ ] Document `frame-ancestors` vs `X_FRAME_OPTIONS` for embeds.
+3. [ ] `UNVERIFIED (documentation)` — note which daisIE inline scripts would need
+   nonces/hashes if CSP is enforced later.
+4. [ ] No code/tests required; a docs deliverable only.
+
+Acceptance: CSP interaction is documented; enforcement explicitly deferred.
+
+---
+
+Phase C bugs added: undisclosed cookies (language/theme/session/CSRF), missing
+script-injection point, missing `Vary: Cookie`, non-consented script rendering,
+language-middleware cross-ref. CSP and `X_FRAME_OPTIONS` recorded as documented
+risks (not enforced).
+
+## Phase D — Documentation
+
+Goal: authored prose (admin + developer) covering **every feature**, how to use
+it, and where it lives in code, including each provider. Docs are code: the help
+seed must validate and stay idempotent; container start refreshes the admin guide.
+English only. All bugs below are `REASONED` — fix test-first where testable, no
+regressions.
+
+Dependencies: D2's comparison tables need the help-seed `table` body type (A5);
+D1's Stripe article assumes 0.4 wires `connect_country`/`client_id`/
+`onboarding_*`/`subscription_enabled` (make that true in 0.4).
+
+Note: Sphinx already uses `myst_parser` with `.md` in `source_suffix`
+(`docs/conf.py:41-54`); `docs/platform/*.md` builds once added to a toctree. No
+docs-build CI (manual check).
+
+### D1 — Fix drift + refresh admin guides on deploy
+Steps:
+1. [ ] **Bug — Stripe article documents dead settings** (`core/help_seed.yaml:
+   187-212`): keep it describing them as live and **wire them in 0.4**
+   (`connect_country`, `client_id`, `onboarding_redirect_url`,
+   `onboarding_refresh_url`, `subscription_enabled`).
+2. [ ] **Bug — GetPronto mislabeled as a meeting/video provider**
+   (`help_seed.yaml:239-262,1086-1098`); describe it as file upload.
+3. [ ] **Bug — charge-type description** (`help_seed.yaml:187`): correct
+   `Separate` semantics (or fix the code in 0.1).
+4. [ ] **Bug — README boilerplate/command drift** (`README.md:18-22`): use
+   `just manage …` conventions.
+5. [ ] **Bug — `docs/index.rst` toctree** (`docs/index.rst:9-15`): add the platform
+   tree.
+6. [ ] **Bug — `docs/notifications.rst` event list** must match
+   `NotificationEventType` (incl. B5 `review_*`).
+7. [ ] **Bug — `docs/spec/daily.openapi.yaml`** omits meeting tokens; note/regen
+   (A4/B6).
+8. [ ] Verify `docs/infra/pricing.md` against the code; correct as needed.
+9. [ ] **Admin guides are code-owned — refresh on deploy.** Change
+   `compose/production/django/start` and `compose/local/django/start` to run
+   `python /app/manage.py seed_help_guide --force` (currently no `--force`), so a
+   deploy overwrites seeded help rows from `help_seed.yaml`. Document the tradeoff
+   (admin edits to seeded rows are overwritten on deploy; other seeders — pages,
+   account self-service — stay non-force).
+10. [ ] Tests: help-seed validation covers all articles (slug length, category
+    refs, body types).
+
+Acceptance: no stale/dead-setting claims; toctrees complete; seed validates;
+`--force` refresh runs at container start.
+
+### D2 — Admin guide content
+Steps:
+1. [ ] Extend the help-seed loader with a `table` body type (A5) and render it in
+   the reader (`core/help_seed.py:18`, `core/views/help.py`).
+2. [ ] Add/refresh articles for: review approval + peer hide (B5), meeting join
+   windowing (A4), analytics (B3), scripts & cookie consent (C), two-party records
+   (A3), search (A2).
+3. [ ] Add comparison tables: **Stripe charge types** (direct/destination/separate)
+   and **Whereby vs Daily** (host/guest links, tokens, room lifetime, cost).
+4. [ ] Keep seeding idempotent under the non-force path; `--force` is the
+   deploy-refresh path (D1 step 9).
+
+Acceptance: every feature has an admin article; both seed paths validated.
+
+### D3 — Developer platform docs (`docs/platform/`)
+Steps:
+1. [ ] Create the `docs/platform/` `.md` tree and add it to a toctree (root or
+   `docs/platform/index.md`).
+2. [ ] Authored prose: architecture, data model, feature → code-location index,
+   configuration/environment (incl. `DJANGO_SECRET_KEY` as the field-encryption
+   KEK), daisIE usage, analytics ledgers, scripts/consent, and **each provider**
+   (Whereby, Daily, GetPronto, Stripe).
+3. [ ] Cross-link `docs/infra/*` runbooks rather than duplicating (DRY).
+4. [ ] English only.
+
+Acceptance: every feature and provider has a developer entry; no dead links.
+
+### D4 — Validation & tooling
+Steps:
+1. [ ] Manual Sphinx build check with no broken toctrees (handover; **not** added
+   to CI).
+2. [ ] Keep `docs/platform` references consistent across roadmap/help.
+
+Acceptance: docs build clean (manual); drift detectable.
+
+---
+
+Phase D bugs added: dead-setting Stripe article, GetPronto mislabel, charge-type
+error, README drift, missing toctree, notifications event drift, Daily spec gap,
+loader table gap, pricing-doc verification, and failure to refresh admin guides at
+container start.
+
+---
+
+## Review gates
+
+Sequence: **0.1 → 0.6 → A1 → A2 → A3 → A4 → A5 → B0 → B1 → B2 → B3 → B4 → B5 → B6 → C → D.**
+Each unit: failing test → small reviewable diff → verification → `just pytest`
+handover → **pause for review** → one commit. No unit starts before the previous
+is reviewed.
