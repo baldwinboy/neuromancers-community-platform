@@ -28,6 +28,8 @@ from neuromancers_network.peers.actions import peer_connect_stripe
 from neuromancers_network.peers.actions import peer_stripe_disconnect
 from neuromancers_network.peers.actions import peer_subscribe
 from neuromancers_network.peers.models import CalendarEvent
+from neuromancers_network.peers.models import PeerApplication
+from neuromancers_network.peers.models import PeerApplicationStatus
 from neuromancers_network.peers.models import PeerAvailability
 from neuromancers_network.peers.models.profile import PROVIDER_AGREEMENT_VERSION
 from neuromancers_network.peers.models.settings import PeerRequirementsSettings
@@ -404,6 +406,48 @@ class TestAvailabilityActions:
 
         with pytest.raises(PermissionDenied):
             availability_delete(_post(make_peer()), {"target": window.pk})
+
+
+class TestPeerApplicationTransitions:
+    def _application(self):
+        return PeerApplication.objects.create(user=UserFactory(), reason="Help")
+
+    def test_direct_status_rejection_is_honoured(self):
+        application = self._application()
+        application.approve()
+        assert application.is_approved is True
+
+        application.status = PeerApplicationStatus.REJECTED
+        application.save()
+
+        application.refresh_from_db()
+        assert application.status == PeerApplicationStatus.REJECTED
+        assert application.is_approved is False
+
+    def test_rejecting_approved_application_is_refused(self):
+        application = self._application()
+        profile = application.approve()
+
+        with pytest.raises(ValueError, match="approved application"):
+            application.reject()
+
+        application.refresh_from_db()
+        profile.refresh_from_db()
+        assert application.status == PeerApplicationStatus.APPROVED
+        assert application.is_approved is True
+        assert profile.is_approved is True
+
+    def test_approve_from_rejected_is_allowed(self):
+        application = self._application()
+        application.reject()
+
+        profile = application.approve()
+
+        application.refresh_from_db()
+        profile.refresh_from_db()
+        assert application.status == PeerApplicationStatus.APPROVED
+        assert application.is_approved is True
+        assert profile.is_approved is True
 
 
 class TestStripeDisconnectAction:

@@ -43,12 +43,13 @@ class PeerApplication(Timestamped):
         return f"{self.user} ({self.get_status_display()})"
 
     def save(self, *args, **kwargs):
-        # Keep `is_approved` and `status` in sync: approval via either field wins.
-        if self.is_approved or self.status == PeerApplicationStatus.APPROVED:
+        # An explicit terminal status wins; otherwise approval promotes it.
+        if self.status == PeerApplicationStatus.APPROVED:
             self.is_approved = True
-            self.status = PeerApplicationStatus.APPROVED
         elif self.status == PeerApplicationStatus.REJECTED:
             self.is_approved = False
+        elif self.is_approved:
+            self.status = PeerApplicationStatus.APPROVED
         super().save(*args, **kwargs)
 
     def approve(self, reviewer=None):
@@ -71,7 +72,10 @@ class PeerApplication(Timestamped):
         return profile
 
     def reject(self, reviewer=None):
-        """Reject the application."""
+        """Reject a pending application; approved ones must be revoked first."""
+        if self.status == PeerApplicationStatus.APPROVED:
+            message = "An approved application cannot be rejected"
+            raise ValueError(message)
         self.is_approved = False
         self.status = PeerApplicationStatus.REJECTED
         self.reviewed_by = reviewer

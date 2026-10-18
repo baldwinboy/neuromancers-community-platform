@@ -165,9 +165,16 @@ class RejectPeerApplicationBulkAction(ConfirmBulkAction):
 
     @classmethod
     def execute_action(cls, objects, *, reviewer=None, **kwargs):
+        rejected = 0
+        failed = 0
         for application in objects:
-            application.reject(reviewer)
-        return len(objects), 0
+            try:
+                application.reject(reviewer)
+            except ValueError:
+                failed += 1
+                continue
+            rejected += 1
+        return rejected, failed
 
 
 class VerifyPeerBulkAction(ConfirmBulkAction):
