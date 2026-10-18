@@ -285,7 +285,47 @@ and paste the diff for review; apply with `just manage migrate`.)
 **0.1 status:** complete once Unit 5 is green (Units 1–5).
 
 ### 0.2 Meetings lifecycle & scheduled tasks
-- [ ] **`generate_recurring_group_meetings` non-idempotent / duplicates / constraint crash** — `meetings/tasks.py:85-141`, `meetings/models/meeting.py:199-205`. Series FK, `get_or_create` on `(rule, scheduled_at)`, filter `status=PUBLISHED`, fix advance + title.
+
+Ordered units; each is test-first (failing test → fix → green) with handovers.
+
+#### Unit 1 — Recurring series generation
+
+**Status: complete — green.** (`test_recurrence.py` passed; migration `meetings/0008`.)
+
+**Goal.** Generate the next occurrence per recurring series exactly once,
+without advancing the source occurrence or violating title uniqueness.
+
+**Steps**
+1. [x] `meetings/tasks.py` — rewrite `generate_recurring_group_meetings`: series
+   keyed by `(recurrence_rule, peer)`, `status=PUBLISHED` only,
+   `get_or_create` on `(rule, peer, scheduled_at)`, copy M2M relations, no
+   `advance_meeting`, and skip past/too-soon slots via
+   `next_publishable_slot` (lead-time aware).
+2. [x] `meetings/models/recurrence.py` — remove the now-unused
+   `advance_meeting`.
+3. [x] `meetings/models/meeting.py` — constraints: keep published-title
+   uniqueness for non-recurring meetings; add a unique
+   `(recurrence_rule, peer, scheduled_at)` slot constraint for series (allows
+   occurrences to share a title).
+4. [x] `meetings/tests/test_recurrence.py` — generates one future occurrence;
+   idempotent; ignores drafts; respects `max_occurrences`/`end_date`.
+
+**Acceptance.** One occurrence per slot; replays are no-ops; drafts/archived are
+ignored; title constraint no longer crashes recurring generation.
+
+```
+HANDOVER
+Purpose:   Generate + apply the constraint migration, then verify Unit 1.
+Command:   just manage makemigrations meetings
+           just manage migrate
+           just pytest neuromancers_network/meetings/tests/test_recurrence.py -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  migration created + applied; tests pass
+Blocked on: I review the migration, mark Unit 1 complete, and proceed.
+```
+
+#### Remaining 0.2 units
 - [ ] **`mark_completed_sessions` never scheduled; completes at start; ignores group** — `meetings/tasks.py:51-66`, `migrations/0003_periodic_tasks.py`. Schedule; complete after `start+duration`; cover group.
 - [ ] **Group capacity unenforced; `is_fully_booked` wrong model/status** — `meetings/models/meeting.py:401-410`, `meetings/services.py:197-269`. Enforce under lock against non-cancelled bookings.
 - [ ] **Meeting delete cascades bookings/refunds with no cancel/refund/notify** — `meetings/services.py:92-99`, `meetings/actions.py:127-145`. Cancel+refund+emit before delete.

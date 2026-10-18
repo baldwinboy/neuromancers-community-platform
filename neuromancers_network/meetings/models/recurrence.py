@@ -112,12 +112,3 @@ class RecurrenceRule(Timestamped):
             RecurrenceFrequency.MONTHLY: self._next_monthly,
         }
         return dispatch[RecurrenceFrequency(self.frequency)](current_dt)
-
-    def advance_meeting(self, meeting):
-        if meeting.scheduled_at is None:
-            return
-        next_dt = self.compute_next_occurrence(meeting.scheduled_at)
-        if self.end_date and next_dt.date() > self.end_date:
-            return
-        meeting.scheduled_at = next_dt
-        meeting.save(update_fields=["scheduled_at"])

@@ -66,76 +66,105 @@ def mark_completed_sessions():
         session.save(validate=False, update_fields=["status", "updated_at"])
 
 
+def next_publishable_slot(rule, after, *, minimum):
+    """Return the first recurrence slot at or after *minimum*.
+
+    Slots in the past or within the group-meeting lead time are skipped so the
+    generated occurrence always passes ``Meeting.clean()``. Returns ``None`` when
+    the rule has ended.
+    """
+    next_slot = rule.compute_next_occurrence(after)
+    for _ in range(1000):
+        if rule.end_date and next_slot.date() > rule.end_date:
+            return None
+        if next_slot >= minimum:
+            return next_slot
+        next_slot = rule.compute_next_occurrence(next_slot)
+    return None
+
+
 @shared_task
 def generate_recurring_group_meetings():
-    """
-    Look for group meetings with a recurrence_rule whose scheduled_at
-    is in the past and create the next occurrence.
+    """Create the next occurrence for each recurring group-meeting series.
 
-    For each generated meeting a meeting link is created automatically.
-    The source meeting is advanced via ``RecurrenceRule.advance_meeting``
-    so that subsequent task runs compute the correct next slot.
+    A series is the ``(recurrence_rule, peer)`` pair. Generation is keyed on the
+    next publishable slot (unique per rule/peer/slot), so repeated runs are
+    idempotent and the source occurrence is never advanced.
     """
+    from django.db.models import Count  # noqa: PLC0415
+    from django.db.models import Max  # noqa: PLC0415
+
     from .models import Meeting  # noqa: PLC0415
     from .models import MeetingStatus  # noqa: PLC0415
     from .models import MeetingType  # noqa: PLC0415
+    from .models import RecurrenceRule  # noqa: PLC0415
+    from .models.meeting import GROUP_MINIMUM_START_AHEAD_MINUTES  # noqa: PLC0415
 
     now = timezone.now()
-
-    past_group_meetings = Meeting.objects.filter(
-        meeting_type=MeetingType.GROUP,
-        recurrence_rule__isnull=False,
-        scheduled_at__lt=now,
+    minimum = now + timedelta(minutes=GROUP_MINIMUM_START_AHEAD_MINUTES)
+    series = (
+        Meeting.objects.filter(
+            meeting_type=MeetingType.GROUP,
+            status=MeetingStatus.PUBLISHED,
+            recurrence_rule__isnull=False,
+            scheduled_at__isnull=False,
+        )
+        .order_by()
+        .values("recurrence_rule_id", "peer_id")
+        .annotate(last_scheduled=Max("scheduled_at"), occurrences=Count("pk"))
     )
 
-    for meeting in past_group_meetings:
-        rule = meeting.recurrence_rule
-        if not rule:
+    for row in series:
+        if row["last_scheduled"] >= now:
             continue
 
-        existing_count = (
-            Meeting.objects.filter(
-                recurrence_rule=rule,
-                peer=meeting.peer,
-            )
-            .exclude(pk=meeting.pk)
-            .count()
+        rule = RecurrenceRule.objects.filter(pk=row["recurrence_rule_id"]).first()
+        if rule is None:
+            continue
+        if rule.max_occurrences and row["occurrences"] >= rule.max_occurrences:
+            continue
+
+        next_scheduled = next_publishable_slot(
+            rule,
+            row["last_scheduled"],
+            minimum=minimum,
         )
-
-        if rule.max_occurrences and existing_count >= rule.max_occurrences:
-            continue
-
-        if (
-            rule.end_date
-            and meeting.scheduled_at
-            and meeting.scheduled_at.date() >= rule.end_date
-        ):
-            continue
-
-        next_scheduled = rule.compute_next_occurrence(meeting.scheduled_at)
         if next_scheduled is None:
             continue
 
-        if rule.end_date and next_scheduled.date() > rule.end_date:
+        latest = (
+            Meeting.objects.filter(
+                recurrence_rule_id=row["recurrence_rule_id"],
+                peer_id=row["peer_id"],
+                status=MeetingStatus.PUBLISHED,
+            )
+            .order_by("-scheduled_at")
+            .first()
+        )
+        if latest is None:
             continue
 
-        new_meeting = Meeting.objects.create(
-            peer=meeting.peer,
-            title=meeting.title,
-            description=meeting.description,
-            meeting_type=meeting.meeting_type,
-            pricing_type=meeting.pricing_type,
-            price=meeting.price,
-            sliding_scale_min=meeting.sliding_scale_min,
-            sliding_scale_max=meeting.sliding_scale_max,
-            currency=meeting.currency,
-            approval_policy=meeting.approval_policy,
-            max_participants=meeting.max_participants,
+        meeting, created = Meeting.objects.get_or_create(
             recurrence_rule=rule,
+            peer_id=row["peer_id"],
             scheduled_at=next_scheduled,
-            duration_minutes=meeting.duration_minutes,
-            status=MeetingStatus.PUBLISHED,
+            defaults={
+                "title": latest.title,
+                "description": latest.description,
+                "meeting_type": latest.meeting_type,
+                "pricing_type": latest.pricing_type,
+                "price": latest.price,
+                "sliding_scale_min": latest.sliding_scale_min,
+                "sliding_scale_max": latest.sliding_scale_max,
+                "currency": latest.currency,
+                "approval_policy": latest.approval_policy,
+                "max_participants": latest.max_participants,
+                "duration_minutes": latest.duration_minutes,
+                "status": MeetingStatus.PUBLISHED,
+            },
         )
-        new_meeting.languages.set(meeting.languages.all())
-        new_meeting.populate_meeting_link()
-        rule.advance_meeting(meeting)
+        if not created:
+            continue
+        meeting.languages.set(latest.languages.all())
+        meeting.countries.set(latest.countries.all())
+        meeting.tags.set(latest.tags.all())

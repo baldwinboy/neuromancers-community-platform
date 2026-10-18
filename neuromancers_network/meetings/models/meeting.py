@@ -199,8 +199,16 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
         constraints = [
             models.UniqueConstraint(
                 fields=["peer", "title"],
-                condition=models.Q(status=MeetingStatus.PUBLISHED),
+                condition=models.Q(
+                    status=MeetingStatus.PUBLISHED,
+                    recurrence_rule__isnull=True,
+                ),
                 name="%(app_label)s_%(class)s_unique_published_title_per_peer",
+            ),
+            models.UniqueConstraint(
+                fields=["recurrence_rule", "peer", "scheduled_at"],
+                condition=models.Q(recurrence_rule__isnull=False),
+                name="%(app_label)s_%(class)s_unique_recurrence_slot",
             ),
         ]
         indexes = [
