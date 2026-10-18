@@ -12,6 +12,7 @@ from django.db import DatabaseError
 from django.db.models.signals import post_delete
 from django.db.models.signals import post_save
 from django.utils import timezone
+from djstripe.enums import SubscriptionStatus
 from djstripe.event_handlers import djstripe_receiver
 from djstripe.models import Subscription as StripeSubscription
 
@@ -38,6 +39,13 @@ def _peer_plan_price_ids() -> set[str]:
         logger.debug("PeerRequirementsSettings unavailable", exc_info=True)
         return set()
     return set(settings_obj.peer_plan_price_ids or [])
+
+
+def _remove_peer_subscription(existing, payment_profile) -> None:
+    if existing is None:
+        return
+    existing.delete()
+    _safe(enforce_subscription_lapse, payment_profile)
 
 
 def _subscription_price_ids(data: dict) -> set[str]:
@@ -80,9 +88,11 @@ def sync_peer_subscription(sender, event, **kwargs):
     is_peer_plan = bool(_subscription_price_ids(data) & _peer_plan_price_ids())
 
     if removed or not is_peer_plan:
-        if existing is not None:
-            existing.delete()
-            _safe(enforce_subscription_lapse, payment_profile)
+        _remove_peer_subscription(existing, payment_profile)
+        return
+
+    if status in {SubscriptionStatus.past_due, SubscriptionStatus.unpaid}:
+        _safe(enforce_subscription_lapse, payment_profile)
         return
 
     # Pausing collection leaves the Stripe status unchanged, so pause state is

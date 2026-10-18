@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import stripe
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 from djstripe.enums import SubscriptionStatus
 from djstripe.models import Account as StripeAccount
 from djstripe.models import Customer as StripeCustomer
@@ -276,6 +277,18 @@ def _peer_subscription_id(profile: PaymentProfile) -> str:
     return subscription_id
 
 
+def _set_paused(profile: PaymentProfile, *, paused: bool) -> None:
+    peer_subscription = getattr(profile, "peer_subscription", None)
+    if peer_subscription is None:
+        return
+    if paused and peer_subscription.paused_at is None:
+        peer_subscription.paused_at = timezone.now()
+        peer_subscription.save(update_fields=["paused_at", "updated_at"])
+    elif not paused and peer_subscription.paused_at is not None:
+        peer_subscription.paused_at = None
+        peer_subscription.save(update_fields=["paused_at", "updated_at"])
+
+
 def pause_subscription(profile: PaymentProfile) -> None:
     """Pause collection on the peer's subscription.
 
@@ -292,6 +305,7 @@ def pause_subscription(profile: PaymentProfile) -> None:
         _peer_subscription_id(profile),
         pause_collection={"behavior": "void"},
     )
+    _set_paused(profile, paused=True)
 
 
 def resume_subscription(profile: PaymentProfile) -> None:
@@ -307,6 +321,7 @@ def resume_subscription(profile: PaymentProfile) -> None:
         billing_cycle_anchor="now",
         proration_behavior="create_prorations",
     )
+    _set_paused(profile, paused=False)
 
 
 def cancel_subscription(profile: PaymentProfile, *, at_period_end: bool) -> None:

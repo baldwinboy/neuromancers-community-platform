@@ -71,9 +71,14 @@ class TestSubscriptionServices:
 
         assert calls["sub_id"] == profile.peer_subscription.subscription_id
         assert calls["kwargs"]["pause_collection"] == {"behavior": "void"}
+        profile.peer_subscription.refresh_from_db()
+        assert profile.peer_subscription.paused_at is not None
 
     def test_resume_resets_billing_anchor(self, monkeypatch):
         profile = self._profile()
+        peer_subscription = profile.peer_subscription
+        peer_subscription.paused_at = timezone.now()
+        peer_subscription.save(update_fields=["paused_at"])
         calls = {}
         monkeypatch.setattr(
             payment_services.stripe.Subscription,
@@ -85,6 +90,8 @@ class TestSubscriptionServices:
 
         assert calls["kwargs"]["billing_cycle_anchor"] == "now"
         assert calls["kwargs"]["proration_behavior"] == "create_prorations"
+        peer_subscription.refresh_from_db()
+        assert peer_subscription.paused_at is None
 
     def test_cancel_at_period_end_modifies(self, monkeypatch):
         profile = self._profile()
@@ -114,14 +121,14 @@ class TestSubscriptionServices:
 
 
 class TestPauseWebhook:
-    def _event(self, peer, *, pause_collection):
+    def _event(self, peer, *, pause_collection, status="active"):
         return SimpleNamespace(
             type="customer.subscription.updated",
             data={
                 "object": {
                     "id": peer.payment_profile.peer_subscription.subscription_id,
                     "customer": peer.payment_profile.stripe_customer_id_id,
-                    "status": "active",
+                    "status": status,
                     "pause_collection": pause_collection,
                     "items": {"data": [{"price": {"id": "price_test"}}]},
                 },
@@ -156,6 +163,24 @@ class TestPauseWebhook:
         subscription = peer.payment_profile.peer_subscription
         subscription.refresh_from_db()
         assert subscription.paused_at is not None
+        meeting.refresh_from_db()
+        assert meeting.status == MeetingStatus.DRAFT
+
+    @pytest.mark.parametrize("lapsed_status", ["past_due", "unpaid"])
+    def test_updated_lapsed_status_unpublishes(self, monkeypatch, lapsed_status):
+        peer = make_peer()
+        meeting = create_meeting(peer=peer)
+        self._patch_sync(monkeypatch, peer)
+
+        signals.sync_peer_subscription(
+            sender=None,
+            event=self._event(
+                peer,
+                pause_collection=None,
+                status=lapsed_status,
+            ),
+        )
+
         meeting.refresh_from_db()
         assert meeting.status == MeetingStatus.DRAFT
 
