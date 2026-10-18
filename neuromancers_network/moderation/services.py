@@ -251,6 +251,11 @@ def purge_due_accounts(now=None) -> int:
     ).select_related("user")
     purged = 0
     for deletion in due:
+        if deletion.user.is_active:
+            # A reactivated account must never be purged; drop the stale request.
+            deletion.status = DeletionStatus.CANCELLED
+            deletion.save(update_fields=["status", "updated_at"])
+            continue
         purge_account(deletion.user)
         purged += 1
     return purged

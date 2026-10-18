@@ -136,14 +136,35 @@ def deactivate_account(user, *, actor=None, request=None, reason: str = "") -> N
     )
 
 
+def _cancel_pending_deletion(user) -> bool:
+    """Cancel a pending account deletion, returning whether one existed."""
+    from neuromancers_network.moderation.models import (  # noqa: PLC0415
+        AccountDeletionRequest,
+    )
+    from neuromancers_network.moderation.models import DeletionStatus  # noqa: PLC0415
+
+    deletion = AccountDeletionRequest.objects.filter(
+        user=user,
+        status=DeletionStatus.PENDING,
+    ).first()
+    if deletion is None:
+        return False
+    deletion.status = DeletionStatus.CANCELLED
+    deletion.save(update_fields=["status", "updated_at"])
+    return True
+
+
 def reactivate_account(user, *, actor=None, request=None) -> None:
     """Reactivate *user*: restore sign-in and the calendar feed token.
 
+    Cancels any pending deletion so a reactivated account is never purged.
     Meetings stay unpublished; the member republishes them deliberately.
     Idempotent.
     """
     if user is None or user.deactivated_at is None:
         return
+
+    cancelled_deletion = _cancel_pending_deletion(user)
 
     user.is_active = True
     user.deactivated_at = None
@@ -152,6 +173,19 @@ def reactivate_account(user, *, actor=None, request=None) -> None:
 
     _set_calendar_token_active(user, active=True)
 
+    if cancelled_deletion:
+        _announce(
+            "account_deletion_cancelled",
+            "account.deletion.cancel",
+            user,
+            payload=account_lifecycle_payload(
+                user,
+                actor=actor,
+                recipients=[user],
+            ),
+            actor=actor,
+            request=request,
+        )
     _announce(
         "account_reactivated",
         "account.reactivate",

@@ -566,7 +566,37 @@ Blocked on: I mark 0.2 complete and proceed to 0.3.
 ```
 
 ### 0.3 Accounts, identity & privacy
-- [ ] **Reactivate doesn't cancel pending deletion ⇒ active users purged** — `users/services.py:139-166`, `moderation/services.py:127-145,245-256`. Cancel on reactivate; guard `is_active` in purge.
+
+Ordered units; each is test-first (failing test → fix → green) with handovers.
+
+#### Unit 1 — Reactivation vs pending deletion
+
+**Status: complete — green.** (`TestReactivationPreventsPurge` passed.)
+
+**Goal.** A member who reactivates before their deletion deadline must never be
+purged.
+
+**Steps**
+1. [x] `users/services.py` — `reactivate_account` cancels a pending
+   `AccountDeletionRequest` (and announces `account_deletion_cancelled`).
+2. [x] `moderation/services.py` — `purge_due_accounts` skips active users and
+   cancels their stale request (covers legacy rows).
+3. [x] `users/tests/test_deactivation.py` — reactivation cancels; purge skips
+   reactivated/stale-active accounts.
+
+**Acceptance.** No active account is anonymised by the deletion sweep.
+
+```
+HANDOVER
+Purpose:   Verify Unit 1.
+Command:   just pytest neuromancers_network/users/tests/test_deactivation.py::TestReactivationPreventsPurge -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I mark Unit 1 complete and proceed.
+```
+
+#### Remaining 0.3 units
 - [ ] **KYC ignores outstanding requirements (dict vs `getattr`)** — `payments/models/profile.py:111-136`. Read dict keys; normalise.
 - [ ] **API PATCH bypasses username cooldown/blocklist/audit/uniqueness** — `users/api/views.py:38-53`. Route through `AccountForm`/validators.
 - [ ] **Purge doesn't cancel Stripe subscription (billing after deletion)** — `moderation/services.py:148-159,209-228`. Cancel subscription on purge.

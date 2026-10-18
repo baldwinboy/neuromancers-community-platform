@@ -1,6 +1,9 @@
+from datetime import timedelta
+
 import pytest
 from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory
+from django.utils import timezone
 from djstripe.enums import SubscriptionStatus
 
 from neuromancers_network.core.models import AccountAuditLog
@@ -8,6 +11,9 @@ from neuromancers_network.core.models import CalendarFeedToken
 from neuromancers_network.inbox.models import NotificationEventLog
 from neuromancers_network.meetings.models import MeetingStatus
 from neuromancers_network.meetings.tests.factories import create_meeting
+from neuromancers_network.moderation.models import DeletionStatus
+from neuromancers_network.moderation.services import purge_due_accounts
+from neuromancers_network.moderation.services import request_account_deletion
 from neuromancers_network.peers.services import is_eligible_peer
 from neuromancers_network.users.actions import account_deactivate
 from neuromancers_network.users.actions import account_reactivate
@@ -143,3 +149,38 @@ class TestLifecycleActions:
         account_reactivate(_request(actor), {"user": other.pk})
         other.refresh_from_db()
         assert other.is_active is True
+
+
+class TestReactivationPreventsPurge:
+    def test_reactivate_cancels_pending_deletion(self):
+        user = UserFactory()
+        request_account_deletion(user)
+
+        reactivate_account(user)
+
+        user.refresh_from_db()
+        assert user.is_active is True
+        assert user.deletion_request.status == DeletionStatus.CANCELLED
+
+    def test_purge_due_skips_reactivated_account(self):
+        user = UserFactory()
+        request_account_deletion(user)
+        reactivate_account(user)
+
+        purged = purge_due_accounts(now=timezone.now() + timedelta(days=365))
+
+        user.refresh_from_db()
+        assert purged == 0
+        assert not user.username.startswith("deleted-")
+
+    def test_purge_due_cancels_stale_active_request(self):
+        user = UserFactory()
+        deletion = request_account_deletion(user)
+        user.is_active = True
+        user.save(update_fields=["is_active"])
+
+        purged = purge_due_accounts(now=timezone.now() + timedelta(days=365))
+
+        deletion.refresh_from_db()
+        assert purged == 0
+        assert deletion.status == DeletionStatus.CANCELLED
