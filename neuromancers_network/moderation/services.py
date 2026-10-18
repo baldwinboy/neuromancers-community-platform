@@ -299,26 +299,28 @@ def purge_account(user, *, actor=None, request=None) -> None:
 
     _cancel_stripe_subscription(user)
     _disconnect_stripe(user)
-    _anonymize(user)
-    record_deleted_identity(
-        email=original_email,
-        username=original_username,
-        cooldown_days=_reregistration_days(),
-    )
 
-    deletion = AccountDeletionRequest.objects.filter(user=user).first()
-    if deletion is not None:
-        deletion.status = DeletionStatus.COMPLETED
-        deletion.completed_at = timezone.now()
-        deletion.save(update_fields=["status", "completed_at", "updated_at"])
+    with transaction.atomic():
+        _anonymize(user)
+        record_deleted_identity(
+            email=original_email,
+            username=original_username,
+            cooldown_days=_reregistration_days(),
+        )
 
-    _announce(
-        "account_deleted",
-        "account.deletion.purge",
-        user,
-        actor=actor,
-        request=request,
-    )
+        deletion = AccountDeletionRequest.objects.filter(user=user).first()
+        if deletion is not None:
+            deletion.status = DeletionStatus.COMPLETED
+            deletion.completed_at = timezone.now()
+            deletion.save(update_fields=["status", "completed_at", "updated_at"])
+
+        _announce(
+            "account_deleted",
+            "account.deletion.purge",
+            user,
+            actor=actor,
+            request=request,
+        )
 
 
 def purge_due_accounts(now=None) -> int:
@@ -335,13 +337,12 @@ def purge_due_accounts(now=None) -> int:
     purged = 0
     for deletion in due:
         try:
-            with transaction.atomic():
-                if deletion.user.is_active:
-                    # Never purge a reactivated account; drop the stale request.
-                    deletion.status = DeletionStatus.CANCELLED
-                    deletion.save(update_fields=["status", "updated_at"])
-                    continue
-                purge_account(deletion.user)
+            if deletion.user.is_active:
+                # Never purge a reactivated account; drop the stale request.
+                deletion.status = DeletionStatus.CANCELLED
+                deletion.save(update_fields=["status", "updated_at"])
+                continue
+            purge_account(deletion.user)
         except Exception:
             logger.exception(
                 "Failed to purge account deletion %s for user %s",

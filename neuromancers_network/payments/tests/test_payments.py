@@ -104,6 +104,10 @@ class TestEnsureStripeAccount:
         profile.refresh_from_db()
         assert account.id == NEW_ACCOUNT_ID
         assert profile.stripe_connect_account_id_id == NEW_ACCOUNT_ID
+        assert (
+            create_account.call_args.kwargs["idempotency_key"]
+            == f"connect-account:{profile.user.pk}"
+        )
 
     def test_bootstraps_profile_for_new_user(self):
         configure_stripe()
@@ -161,6 +165,9 @@ class TestEnsurePaymentProfile:
         assert profile.user == user
         assert profile.stripe_customer_id_id == "cus_new"
         assert user.payment_profile == profile
+        assert (
+            create_customer.call_args.kwargs["idempotency_key"] == f"customer:{user.pk}"
+        )
 
     def test_requires_stripe_configuration(self):
         user = UserFactory()
@@ -170,6 +177,19 @@ class TestEnsurePaymentProfile:
 
         with pytest.raises(ValueError, match="secret key"):
             ensure_payment_profile(user)
+
+
+class TestStripeClientConfiguration:
+    def test_default_http_client_has_bounded_timeout(self):
+        from neuromancers_network.payments.apps import (  # noqa: PLC0415
+            STRIPE_TIMEOUT_SECONDS,
+        )
+
+        assert stripe.default_http_client is not None
+        assert (
+            stripe.default_http_client._timeout  # noqa: SLF001
+            == STRIPE_TIMEOUT_SECONDS
+        )
 
 
 class TestExpressDashboardLink:

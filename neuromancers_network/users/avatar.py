@@ -14,6 +14,8 @@ from neuromancers_network.core.apis import configure_getpronto
 
 logger = logging.getLogger(__name__)
 
+UPLOAD_TIMEOUT_SECONDS = 20
+
 
 def presign_upload(*, filename, mimetype, size):
     """Request a presigned upload URL and pending id from GetPronto."""
@@ -36,7 +38,10 @@ def _put_bytes(upload_url: str, file, mimetype: str) -> None:
         method="PUT",
         headers={"Content-Type": mimetype},
     )
-    with urllib.request.urlopen(request) as response:  # noqa: S310
+    with urllib.request.urlopen(  # noqa: S310
+        request,
+        timeout=UPLOAD_TIMEOUT_SECONDS,
+    ) as response:
         response.read()
 
 

@@ -260,6 +260,24 @@ class TestAvatarUpload:
         assert profile.profile_picture_url == "https://img.example/new"
 
 
+class TestAvatarUploadTimeout:
+    def test_put_bytes_sets_upload_timeout(self):
+        from neuromancers_network.users.avatar import (  # noqa: PLC0415
+            UPLOAD_TIMEOUT_SECONDS,
+        )
+        from neuromancers_network.users.avatar import _put_bytes  # noqa: PLC0415
+
+        file = SimpleNamespace(seek=lambda _pos: None, read=lambda: b"bytes")
+        with patch(
+            "neuromancers_network.users.avatar.urllib.request.urlopen",
+        ) as urlopen:
+            urlopen.return_value.__enter__.return_value.read.return_value = b""
+            _put_bytes("https://upload.example/object", file, "image/png")
+
+        _args, kwargs = urlopen.call_args
+        assert kwargs["timeout"] == UPLOAD_TIMEOUT_SECONDS
+
+
 class TestAccountDeletedEvent:
     def test_delete_emits_event_without_in_app_notification(self):
         user = UserFactory()

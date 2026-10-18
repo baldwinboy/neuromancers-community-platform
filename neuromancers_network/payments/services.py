@@ -6,6 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import stripe
+from django.core.exceptions import ObjectDoesNotExist
 from djstripe.enums import SubscriptionStatus
 from djstripe.models import Account as StripeAccount
 from djstripe.models import Customer as StripeCustomer
@@ -71,6 +72,7 @@ def ensure_payment_profile(user) -> PaymentProfile:
         email=user.email,
         name=user.name or user.get_username(),
         metadata={"user_id": str(user.pk)},
+        idempotency_key=f"customer:{user.pk}",
     )
     stripe_customer = StripeCustomer.sync_from_stripe_data(
         customer,
@@ -87,7 +89,10 @@ def ensure_stripe_account(user) -> StripeAccount:
     """Return the user's connected account, creating an express account if needed."""
     profile = ensure_payment_profile(user)
     if profile.stripe_connect_account_id_id:
-        existing = profile.stripe_connect_account_id
+        try:
+            existing = profile.stripe_connect_account_id
+        except ObjectDoesNotExist:
+            existing = None
         if existing is not None:
             return existing
 
@@ -109,6 +114,7 @@ def ensure_stripe_account(user) -> StripeAccount:
             "transfers": {"requested": True},
             "card_payments": {"requested": True},
         },
+        idempotency_key=f"connect-account:{user.pk}",
     )
     stripe_account = StripeAccount.sync_from_stripe_data(
         account,
@@ -368,4 +374,5 @@ def create_webhook_endpoint(
     StripeSettings.objects.filter(pk=stripe_settings.pk).update(
         webhook_secret=secret,
     )
+    stripe_settings.refresh_from_db(fields=["webhook_secret"])
     return secret
