@@ -1,0 +1,41 @@
+<form method="get"
+      action="{{ request.path }}"
+      role="search"
+      class="flex flex-wrap gap-2">
+  <input type="search"
+         name="query"
+         value="{{ query }}"
+         placeholder="Search meetings, care providers and pages"
+         class="input input-bordered w-full max-w-md" />
+  <button type="submit" class="btn btn-primary">Search</button>
+</form>
+{% if query %}
+  {% if results %}
+    <ul class="menu mt-4 w-full">
+      {% for result in results %}
+        <li>
+          <a href="{{ result.url }}">
+            <span>{{ result.title }}</span>
+            <span class="badge badge-ghost badge-sm">{{ result.kind }}</span>
+          </a>
+          {% if result.summary %}<p class="text-sm opacity-70">{{ result.summary }}</p>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    {% if page_obj.has_other_pages %}
+      <div class="join mt-4">
+        {% if page_obj.has_previous %}
+          <a class="join-item btn btn-sm"
+             href="?query={{ query|urlencode }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+        <span class="join-item btn btn-sm btn-disabled">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a class="join-item btn btn-sm"
+             href="?query={{ query|urlencode }}&amp;page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% else %}
+    <p class="mt-4">No results for “{{ query }}”.</p>
+  {% endif %}
+{% endif %}

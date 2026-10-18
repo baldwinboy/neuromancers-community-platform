@@ -4,6 +4,7 @@ from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
 from taggit.managers import TaggableManager
 from wagtail.admin.panels import FieldPanel
+from wagtail.search import index
 from wagtail_daisIE.detail_pages.models import ModelDetailPage
 from wagtail_daisIE.pages import StyledPageMixin
 
@@ -83,8 +84,12 @@ class ReservedSlugPage(StyledPageMixin):
     class Meta:
         abstract = True
 
+    def clean(self):
+        super().clean()
+        self.clean_slug()
+
     def clean_slug(self):
-        if is_reserved_route(self.slug):
+        if is_reserved_route((self.slug or "").lower()):
             error_message = display_reserved_routes_error(self.slug)
             if not error_message:
                 return
@@ -131,6 +136,11 @@ class StandardPage(ReservedSlugPage):
         through=StandardPageTag,
         to="taxonomy.AllowedTag",
     )
+    search_fields = [
+        *ReservedSlugPage.search_fields,
+        index.SearchField("search_description"),
+        index.SearchField("body"),
+    ]
 
     content_panels = [*ReservedSlugPage.content_panels, FieldPanel("tags")]
 
@@ -140,43 +150,18 @@ class SearchPage(ReservedSlugPage):
     subpage_types: list[str] = []
 
     def get_context(self, request, *args, **kwargs):
-        from django.db.models import Q  # noqa: PLC0415
-
-        from neuromancers_network.meetings.search import (  # noqa: PLC0415
-            search_meetings,
+        from neuromancers_network.core.search_service import (  # noqa: PLC0415
+            search_site,
         )
-        from neuromancers_network.moderation.visibility import (  # noqa: PLC0415
-            exclude_hidden,
-        )
-        from neuromancers_network.peers.search import search_peers  # noqa: PLC0415
-        from neuromancers_network.peers.services import eligible_peer_q  # noqa: PLC0415
 
         context = super().get_context(request, *args, **kwargs)
-        query = (request.GET.get("query") or "").strip()
-        viewer = getattr(request, "user", None)
-        results = []
-        if query:
-            meetings = (
-                search_meetings()
-                .filter(eligible_peer_q(prefix="peer__"))
-                .filter(
-                    Q(title__icontains=query) | Q(description__icontains=query),
-                )
-            )
-            meetings = exclude_hidden(meetings, viewer, owner_field="peer")
-            peers = (
-                search_peers()
-                .filter(eligible_peer_q(prefix="user__"))
-                .filter(
-                    Q(bio__icontains=query)
-                    | Q(user__name__icontains=query)
-                    | Q(user__username__icontains=query),
-                )
-            )
-            peers = exclude_hidden(peers, viewer, owner_field="user")
-            results = [*meetings, *peers]
-        context["query"] = query
-        context["search_results"] = results
+        context.update(
+            search_site(
+                request.GET.get("query", ""),
+                request=request,
+                page_number=request.GET.get("page", 1),
+            ),
+        )
         return context
 
 

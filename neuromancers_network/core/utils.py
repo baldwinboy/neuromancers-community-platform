@@ -41,8 +41,10 @@ def prevent_reserved_routes(request, page=None, parent_page=None):
     Prevents pages from being created or edited with reserved routes.
     Redirects back to the appropriate page if the slug is reserved.
     """
-    slug = request.POST.get("slug", "").strip().lower()
-    slug = cautious_slugify(slug)
+    slug = request.POST.get("slug", "").strip()
+    if not slug:
+        slug = request.POST.get("title", "")
+    slug = cautious_slugify(slug).lower()
     if not is_reserved_route(slug):
         return None
 

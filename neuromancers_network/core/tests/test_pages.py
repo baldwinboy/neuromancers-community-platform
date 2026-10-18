@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
+from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 from wagtail.models import Page
 
@@ -12,6 +15,7 @@ from neuromancers_network.core.selectors import _allowed_page_types
 from neuromancers_network.core.selectors import all_descendants
 from neuromancers_network.core.selectors import immediate_children
 from neuromancers_network.core.selectors import sitewide_pages
+from neuromancers_network.core.utils import prevent_reserved_routes
 from neuromancers_network.taxonomy.tests.factories import AllowedTagFactory
 
 pytestmark = pytest.mark.django_db
@@ -126,6 +130,28 @@ class TestTagDetailPages:
         tag.delete()
 
         assert not TagDetailPage.objects.filter(source_object_id=tag.pk).exists()
+
+
+class TestReservedSlugValidation:
+    def test_auto_generated_reserved_slug_is_rejected(self, home):
+        page = StandardPage(title="Login")
+
+        with pytest.raises(ValidationError):
+            home.add_child(instance=page)
+
+    def test_blank_slug_uses_the_title_in_the_hook(self):
+        request = RequestFactory().post("/", {"title": "Login", "slug": ""})
+
+        with patch("neuromancers_network.core.utils.messages.error") as error:
+            response = prevent_reserved_routes(request)
+
+        assert error.called
+        assert response is not None
+
+    def test_allowed_title_passes_the_hook(self):
+        request = RequestFactory().post("/", {"title": "About us", "slug": ""})
+
+        assert prevent_reserved_routes(request) is None
 
 
 class TestAllowedPageTypes:

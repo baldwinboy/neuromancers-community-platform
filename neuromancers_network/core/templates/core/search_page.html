@@ -1,1 +1,6 @@
 {% extends "core/standard_page.html" %}
+
+{% block content %}
+  <div class="container mx-auto px-4 py-8">{% include "core/search_results.html" %}</div>
+  {{ block.super }}
+{% endblock content %}
