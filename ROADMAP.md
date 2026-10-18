@@ -444,8 +444,39 @@ Expected:  pass
 Blocked on: I mark Unit 5 complete and proceed.
 ```
 
+#### Unit 6 — Inbox reminders
+
+**Status: complete — green.** (`test_tasks.py` passed; migration `inbox/0006`.)
+
+**Goal.** Payment, session and upcoming-meeting reminders run on a schedule,
+cover group bookings, and only fire for sessions a member can still attend.
+
+**Steps**
+1. [x] `inbox/tasks.py` — payment reminders use the status enum; session
+   reminders use the request start, else the meeting schedule, and filter to
+   approved/paid; upcoming-meeting recipients include active booking seekers
+   (group attendees) plus request seekers, deduped.
+2. [x] `inbox/migrations/0006` — schedule the three tasks every 5 minutes via
+   `django_celery_beat`, with a reverse.
+3. [x] `inbox/tests/test_tasks.py` — group session day reminder; inactive
+   sessions skipped; group booking seeker receives `meeting_upcoming`; payment
+   reminders dedupe.
+
+**Acceptance.** Reminders run, include group attendees, and never remind
+cancelled sessions.
+
+```
+HANDOVER
+Purpose:   Verify Unit 6.
+Command:   just manage migrate
+           just pytest neuromancers_network/inbox/tests/test_tasks.py -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  migration applied; tests pass
+Blocked on: I mark Unit 6 complete and proceed.
+```
+
 #### Remaining 0.2 units
-- [ ] **Inbox reminder tasks unscheduled; skip groups; no status filter** — `inbox/tasks.py:26-163`. Schedule; cover group bookings; filter status.
 - [ ] **Calendar events for unapproved/non-live; not removed on cancel** — `peers/calendar.py:81-119`. Materialise only APPROVED/PAID + PUBLISHED; remove on exit.
 - [ ] **ICS feed includes cancelled/refunded** — `core/views/calendar.py:21-25`, `core/ical.py:35-45`. Filter to active statuses.
 - [ ] Low: rejected refunds unraisable (`refund.py:56-59`); `archive` dead-end (`meeting.py:289-295`); `updated_at` not bumped on link writes; hardcoded "30 minutes" drift.

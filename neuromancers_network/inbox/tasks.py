@@ -27,12 +27,15 @@ SESSION_REMINDER_HOUR_HOURS = 1
 def emit_payment_reminders():
     """Emit ``payment_reminder_due`` for stale pending-payment bookings."""
     from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
+    from neuromancers_network.meetings.models import (  # noqa: PLC0415
+        MeetingRequestStatus,
+    )
 
     now = timezone.now()
     threshold = now - timedelta(hours=PAYMENT_REMINDER_AFTER_HOURS)
 
     requests = MeetingRequest.objects.filter(
-        status="pending_payment",
+        status=MeetingRequestStatus.PENDING_PAYMENT,
         created_at__lte=threshold,
     ).select_related("support_seeker", "meeting", "meeting__peer")
 
@@ -82,20 +85,38 @@ def _emit_session_reminder(session, event_type, suffix):
 
 @shared_task
 def emit_session_reminders():
-    """Emit day-ahead and hour-ahead reminders for upcoming sessions."""
+    """Emit day-ahead and hour-ahead reminders for upcoming sessions.
+
+    Works from the request's start time when set (1:1), otherwise from the
+    meeting's scheduled start (group), and only for sessions the seeker may
+    still attend (approved or paid).
+    """
+    from django.db.models import Q  # noqa: PLC0415
+
     from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
+    from neuromancers_network.meetings.models import (  # noqa: PLC0415
+        MeetingRequestStatus,
+    )
 
     now = timezone.now()
     day_horizon = now + timedelta(hours=SESSION_REMINDER_DAY_HOURS)
     hour_horizon = now + timedelta(hours=SESSION_REMINDER_HOUR_HOURS)
 
     sessions = MeetingRequest.objects.filter(
-        requested_start_time__gt=now,
-        requested_start_time__lte=day_horizon,
+        Q(requested_start_time__gt=now, requested_start_time__lte=day_horizon)
+        | Q(
+            requested_start_time__isnull=True,
+            meeting__scheduled_at__gt=now,
+            meeting__scheduled_at__lte=day_horizon,
+        ),
+        status__in=[
+            MeetingRequestStatus.APPROVED,
+            MeetingRequestStatus.PAID,
+        ],
     ).select_related("support_seeker", "meeting", "meeting__peer")
 
     for session in sessions:
-        start = session.requested_start_time
+        start = session.requested_start_time or session.meeting.scheduled_at
         if start is None:
             continue
         if start <= hour_horizon:
@@ -106,7 +127,13 @@ def emit_session_reminders():
 
 @shared_task
 def emit_upcoming_meetings():
-    """Emit ``meeting_upcoming`` for published meetings starting soon."""
+    """Emit ``meeting_upcoming`` for published meetings starting soon.
+
+    Group attendees are represented by bookings (often without a session
+    request), so recipients are the union of request seekers and active booking
+    seekers, plus the host.
+    """
+    from neuromancers_network.meetings.models import BookingStatus  # noqa: PLC0415
     from neuromancers_network.meetings.models import Meeting  # noqa: PLC0415
     from neuromancers_network.meetings.models import MeetingStatus  # noqa: PLC0415
 
@@ -128,14 +155,21 @@ def emit_upcoming_meetings():
             continue
 
         requests = list(meeting.requests.select_related("support_seeker").all())
-        recipients = [meeting.peer]
-        recipients += [req.support_seeker for req in requests]
-        if not requests:
+        bookings = list(
+            meeting.bookings.filter(
+                status__in=[BookingStatus.PENDING, BookingStatus.PAID],
+            ).select_related("support_seeker"),
+        )
+        seeker_users = {request.support_seeker for request in requests}
+        seeker_users.update(booking.support_seeker for booking in bookings)
+        seekers = sorted(seeker_users, key=lambda user: user.pk)
+        if not seekers:
             continue
 
         from .events import emit  # noqa: PLC0415
         from .payloads import user_id  # noqa: PLC0415
 
+        recipients = [meeting.peer, *seekers]
         emit(
             "meeting_upcoming",
             payload={
@@ -154,9 +188,7 @@ def emit_upcoming_meetings():
                         if meeting.scheduled_at
                         else None
                     ),
-                    "booked_seeker_user_ids": [
-                        user_id(req.support_seeker) for req in requests
-                    ],
+                    "booked_seeker_user_ids": [user_id(user) for user in seekers],
                 },
             },
             event_ref=ref,
