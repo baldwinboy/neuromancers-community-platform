@@ -1,7 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
 
-import stripe
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
@@ -13,7 +12,6 @@ from django_fsm import FSMField
 from django_fsm import FSMModelMixin
 from django_fsm import can_proceed
 from django_fsm import transition
-from djstripe.models import Session as StripeSession
 
 from neuromancers_network.core.models.base import Timestamped
 
@@ -243,93 +241,6 @@ class MeetingRequest(FSMModelMixin, Timestamped):
     )
     def cancel(self):
         pass
-
-    def create_checkout_session(self, request):
-        """Create a Checkout Session for this request via the charge strategy."""
-        from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
-        from neuromancers_network.payments.charges import (  # noqa: PLC0415
-            adaptive_pricing as resolve_adaptive_pricing,
-        )
-        from neuromancers_network.payments.charges import (  # noqa: PLC0415
-            build_charge_plan,
-        )
-        from neuromancers_network.peers.services import (  # noqa: PLC0415
-            is_eligible_peer,
-        )
-
-        stripe_settings = StripeSettings.load(request)
-        if not stripe_settings.secret_key:
-            message = "Stripe secret key is not configured"
-            raise ValueError(message)
-
-        if not is_eligible_peer(self.meeting.peer):
-            message = "The care provider is not currently eligible for bookings"
-            raise ValueError(message)
-
-        if self.status not in {
-            MeetingRequestStatus.APPROVED,
-            MeetingRequestStatus.PENDING_PAYMENT,
-        }:
-            message = "Request is not ready for payment"
-            raise ValueError(message)
-
-        if self.requested_duration_minutes:
-            amount = self.meeting.price_for(self.requested_duration_minutes)
-        else:
-            amount = self.meeting.price
-        if amount is None or amount <= 0:
-            message = "Meeting price is required for checkout"
-            raise ValueError(message)
-
-        currency = self.meeting.currency.lower()
-        amount_minor = int(amount * 100)
-        peer_profile = getattr(self.meeting.peer, "payment_profile", None)
-        destination = (
-            peer_profile.stripe_connect_account_id_id
-            if peer_profile is not None
-            else None
-        )
-        plan = build_charge_plan(
-            amount_minor=amount_minor,
-            destination=destination,
-            stripe_settings=stripe_settings,
-        )
-        adaptive_pricing = resolve_adaptive_pricing(request)
-
-        session_kwargs = {
-            "mode": "payment",
-            "success_url": request.build_absolute_uri("/pay/success/"),
-            "cancel_url": request.build_absolute_uri("/pay/cancelled/"),
-            "line_items": [
-                {
-                    "price_data": {
-                        "currency": currency,
-                        "product_data": {"name": self.meeting.title},
-                        "unit_amount": amount_minor,
-                    },
-                    "quantity": 1,
-                },
-            ],
-            "metadata": {
-                "meeting_request_id": str(self.pk),
-            },
-        }
-        if adaptive_pricing:
-            session_kwargs["adaptive_pricing"] = adaptive_pricing
-        if plan.payment_intent_data:
-            session_kwargs["payment_intent_data"] = plan.payment_intent_data
-        if plan.automatic_tax:
-            session_kwargs["automatic_tax"] = plan.automatic_tax
-        if plan.stripe_account:
-            session_kwargs["stripe_account"] = plan.stripe_account
-
-        stripe.api_key = stripe_settings.secret_key
-        session = stripe.checkout.Session.create(**session_kwargs)
-        StripeSession.sync_from_stripe_data(session, api_key=stripe_settings.secret_key)
-        self.stripe_checkout_session_id = session.id
-        self.__dict__["status"] = MeetingRequestStatus.PENDING_PAYMENT
-        self.save(validate=False)
-        return session.url
 
     def sync_payment_from_checkout(
         self,

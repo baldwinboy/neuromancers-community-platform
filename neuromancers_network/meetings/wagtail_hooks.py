@@ -208,12 +208,11 @@ class MeetingPriceTierViewSet(ModelViewSet):
     menu_label = _("Price tiers")
     menu_name = "price_tiers"
     menu_order = 3
-    list_display = ["meeting", "duration_minutes", "is_default"]
+    list_display = ["meeting", "duration_minutes"]
     search_fields = ["meeting__title"]
     panels = [
         FieldPanel("meeting"),
         FieldPanel("duration_minutes"),
-        FieldPanel("is_default"),
         InlinePanel("options"),
     ]
     list_per_page = 50

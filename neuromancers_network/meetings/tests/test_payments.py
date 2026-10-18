@@ -172,19 +172,6 @@ class TestCreateCheckoutSession:
             booking.create_checkout_session(RequestFactory().get("/"))
 
 
-class TestCreateRequestCheckoutSession:
-    def test_missing_connect_account_raises(self):
-        configure_stripe()
-        meeting_request = MeetingRequest.objects.create(
-            meeting=create_meeting(peer=make_peer_without_connected_account()),
-            support_seeker=UserFactory(),
-            status=MeetingRequestStatus.PENDING_PAYMENT,
-        )
-
-        with pytest.raises(ValueError, match="no connected Stripe account"):
-            meeting_request.create_checkout_session(RequestFactory().get("/"))
-
-
 class TestRefundFlow:
     def test_immediate_refund_issues_connected_account_refund(self):
         configure_stripe()
@@ -704,16 +691,3 @@ class TestPricing:
 
         with pytest.raises(ValueError, match="no amount to charge"):
             booking.compute_total()
-
-    def test_request_checkout_raises_without_tier_price(self):
-        configure_stripe()
-        meeting = self._duration_tier_meeting()
-        meeting_request = MeetingRequest.objects.create(
-            meeting=meeting,
-            support_seeker=UserFactory(),
-            status=MeetingRequestStatus.PENDING_PAYMENT,
-            requested_duration_minutes=SESSION_DURATION,
-        )
-
-        with pytest.raises(ValueError, match="Meeting price is required"):
-            meeting_request.create_checkout_session(RequestFactory().get("/"))

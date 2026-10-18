@@ -28,11 +28,8 @@ class MeetingPriceTier(ClusterableModel):
             MaxValueValidator(MAX_DURATION_MINUTES),
         ],
     )
-    is_default = models.BooleanField(_("Default tier"), default=False)
-
     panels = [
         FieldPanel("duration_minutes"),
-        FieldPanel("is_default"),
         InlinePanel("options"),
     ]
 
