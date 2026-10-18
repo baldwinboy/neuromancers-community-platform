@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 from decimal import Decimal
 from http import HTTPStatus
@@ -35,11 +36,13 @@ from neuromancers_network.peers.models import PeerAvailability
 from neuromancers_network.peers.models.profile import PROVIDER_AGREEMENT_VERSION
 from neuromancers_network.peers.models.settings import PeerRequirementsSettings
 from neuromancers_network.peers.selectors import peer_calendar_events
+from neuromancers_network.peers.services import MAX_RECURRENCE_OCCURRENCES
 from neuromancers_network.peers.services import available_slots
 from neuromancers_network.peers.services import eligibility_failures
 from neuromancers_network.peers.services import eligible_peer_q
 from neuromancers_network.peers.services import enforce_subscription_lapse
 from neuromancers_network.peers.services import is_eligible_peer
+from neuromancers_network.peers.services import window_occurrences
 from neuromancers_network.peers.tests.factories import make_availability
 from neuromancers_network.peers.tests.factories import make_peer
 from neuromancers_network.users.models import UserProfile
@@ -407,6 +410,40 @@ class TestAvailabilityActions:
 
         with pytest.raises(PermissionDenied):
             availability_delete(_post(make_peer()), {"target": window.pk})
+
+
+class TestRecurrenceClamp:
+    def test_expansion_stops_at_the_cap(self, caplog):
+        now = timezone.now()
+        horizon = now + timedelta(days=365 * 10)
+        window = SimpleNamespace(
+            pk=1,
+            start=now,
+            end=now + timedelta(hours=1),
+            occurrence="daily",
+            occurrence_starts_at=now,
+            occurrence_ends_at=horizon,
+        )
+
+        with caplog.at_level(
+            logging.WARNING,
+            logger="neuromancers_network.peers.services",
+        ):
+            occurrences = list(window_occurrences(window, now, horizon))
+
+        assert len(occurrences) == MAX_RECURRENCE_OCCURRENCES
+        assert "Stopped expanding availability window" in caplog.text
+
+
+class TestPeerProfileDefaultTerms:
+    def test_stamp_is_persisted_with_update_fields(self):
+        profile = make_peer().peer_profile
+
+        profile.default_terms = "New terms"
+        profile.save(update_fields=["default_terms"])
+
+        profile.refresh_from_db()
+        assert profile.default_terms_updated_at is not None
 
 
 class TestPeerApplicationTransitions:

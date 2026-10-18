@@ -102,7 +102,11 @@ def ensure_stripe_account(user) -> StripeAccount:
         message = "Stripe secret key is not configured"
         raise ValueError(message)
 
-    country = getattr(getattr(user, "user_profile", None), "country", "") or "GB"
+    country = (
+        getattr(getattr(user, "user_profile", None), "country", "")
+        or stripe_settings.connect_country
+        or "GB"
+    )
 
     stripe.api_key = stripe_settings.secret_key
     account = stripe.Account.create(

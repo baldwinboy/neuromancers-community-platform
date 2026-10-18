@@ -109,6 +109,36 @@ class TestEnsureStripeAccount:
             == f"connect-account:{profile.user.pk}"
         )
 
+    def test_uses_configured_connect_country(self):
+        config = configure_stripe()
+        config.connect_country = "IE"
+        config.save()
+        user = UserFactory()
+
+        with (
+            patch(
+                "neuromancers_network.payments.services.stripe.Customer.create",
+            ) as create_customer,
+            patch(
+                "neuromancers_network.payments.services."
+                "StripeCustomer.sync_from_stripe_data",
+            ) as sync_customer,
+            patch(
+                "neuromancers_network.payments.services.stripe.Account.create",
+            ) as create_account,
+            patch(
+                "neuromancers_network.payments.services."
+                "StripeAccount.sync_from_stripe_data",
+            ) as sync_account,
+        ):
+            create_customer.return_value = {"id": "cus_country"}
+            sync_customer.return_value = CustomerFactory(id="cus_country")
+            create_account.return_value = {"id": NEW_ACCOUNT_ID}
+            sync_account.return_value = AccountFactory(id=NEW_ACCOUNT_ID)
+            ensure_stripe_account(user)
+
+        assert create_account.call_args.kwargs["country"] == "IE"
+
     def test_bootstraps_profile_for_new_user(self):
         configure_stripe()
         user = UserFactory()

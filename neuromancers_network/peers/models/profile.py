@@ -114,6 +114,15 @@ class PeerProfile(index.Indexed, Timestamped):  # type: ignore[django-manager-mi
             )
             if previous is not None and previous != self.default_terms:
                 self.default_terms_updated_at = timezone.now()
+                update_fields = kwargs.get("update_fields")
+                if (
+                    update_fields is not None
+                    and "default_terms_updated_at" not in update_fields
+                ):
+                    kwargs["update_fields"] = [
+                        *update_fields,
+                        "default_terms_updated_at",
+                    ]
         super().save(*args, **kwargs)
 
     def verify(self, reviewer=None):

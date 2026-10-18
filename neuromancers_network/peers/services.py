@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import calendar
+import logging
 from datetime import datetime
 from datetime import timedelta
 from typing import TYPE_CHECKING
@@ -20,6 +21,10 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from django.contrib.auth.models import AbstractBaseUser
+
+logger = logging.getLogger(__name__)
+
+MAX_RECURRENCE_OCCURRENCES = 500
 
 
 def peer_requirements() -> PeerRequirementsSettings:
@@ -169,6 +174,7 @@ def window_occurrences(
     }[window.occurrence]
 
     current = occurrence_start
+    count = 0
     while current <= occurrence_end:
         start = current.replace(
             hour=base_start.hour,
@@ -187,6 +193,14 @@ def window_occurrences(
         if end <= start:
             end += timedelta(days=1)
         yield start, end
+        count += 1
+        if count >= MAX_RECURRENCE_OCCURRENCES:
+            logger.warning(
+                "Stopped expanding availability window %s after %s occurrences",
+                window.pk,
+                MAX_RECURRENCE_OCCURRENCES,
+            )
+            return
         current = _add_months(current, 1) if step is None else current + step
 
 
