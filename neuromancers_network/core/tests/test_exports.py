@@ -8,6 +8,7 @@ from neuromancers_network.core.currency import convert_amount
 from neuromancers_network.core.i18n import bust_localization_cache
 from neuromancers_network.core.ical import build_ics
 from neuromancers_network.core.models import LocalizationSettings
+from neuromancers_network.meetings.models import MeetingRequestStatus
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.tests.factories import create_meeting
 from neuromancers_network.peers.tests.factories import make_peer
@@ -85,3 +86,13 @@ class TestBuildIcs:
 
         assert "SUMMARY:Meeting" in text
         assert f"booking-{booking.pk}-session-{booking.sessions.first().pk}" in text
+
+    def test_excludes_cancelled_sessions(self):
+        booking = make_booking_with_session()
+        session = booking.sessions.first()
+        session.status = MeetingRequestStatus.CANCELLED
+        session.save(validate=False)
+
+        text = build_ics([booking]).decode()
+
+        assert "BEGIN:VEVENT" not in text

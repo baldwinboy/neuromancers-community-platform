@@ -504,8 +504,35 @@ Expected:  pass
 Blocked on: I mark Unit 7 complete and proceed.
 ```
 
+#### Unit 8 — ICS feed filtering
+
+**Status: complete — green.** (`test_calendar_feed.py` + `TestBuildIcs` passed.)
+
+**Goal.** The read-only ICS feed contains only sessions a member can still
+attend, for published meetings.
+
+**Steps**
+1. [x] `core/views/calendar.py` — feed includes only pending/paid bookings for
+   published meetings.
+2. [x] `core/ical.py` — `_session_window` skips sessions that are not
+   approved/paid.
+3. [x] Tests — feed includes an active booking; excludes cancelled bookings and
+   archived meetings; `build_ics` excludes cancelled sessions.
+
+**Acceptance.** Cancelled/refunded bookings, inactive sessions and non-published
+meetings are absent from the feed.
+
+```
+HANDOVER
+Purpose:   Verify Unit 8.
+Command:   just pytest neuromancers_network/core/tests/test_calendar_feed.py neuromancers_network/core/tests/test_exports.py::TestBuildIcs -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I mark Unit 8 complete and proceed to 0.3.
+```
+
 #### Remaining 0.2 units
-- [ ] **ICS feed includes cancelled/refunded** — `core/views/calendar.py:21-25`, `core/ical.py:35-45`. Filter to active statuses.
 - [ ] Low: rejected refunds unraisable (`refund.py:56-59`); `archive` dead-end (`meeting.py:289-295`); `updated_at` not bumped on link writes; hardcoded "30 minutes" drift.
 
 ### 0.3 Accounts, identity & privacy

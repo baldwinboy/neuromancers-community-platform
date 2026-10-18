@@ -18,10 +18,16 @@ class CalendarFeedView(View):
         if feed_token is None:
             raise Http404
 
+        from neuromancers_network.meetings.models import BookingStatus  # noqa: PLC0415
+        from neuromancers_network.meetings.models import MeetingStatus  # noqa: PLC0415
+
         bookings = (
-            feed_token.user.bookings.select_related("meeting")
+            feed_token.user.bookings.filter(
+                status__in=[BookingStatus.PENDING, BookingStatus.PAID],
+                meeting__status=MeetingStatus.PUBLISHED,
+            )
+            .select_related("meeting")
             .prefetch_related("sessions")
-            .all()
         )
         response = HttpResponse(
             build_ics(bookings),

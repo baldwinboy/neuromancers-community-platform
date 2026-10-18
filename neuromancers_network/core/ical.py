@@ -13,8 +13,15 @@ DEFAULT_DURATION_MINUTES = 60
 
 
 def _session_window(booking):
+    from neuromancers_network.meetings.models import (  # noqa: PLC0415
+        MeetingRequestStatus,
+    )
+
     meeting = booking.meeting
+    active = {MeetingRequestStatus.APPROVED, MeetingRequestStatus.PAID}
     for session in booking.sessions.all():
+        if session.status not in active:
+            continue
         start = session.requested_start_time or meeting.scheduled_at
         if start is None:
             continue
