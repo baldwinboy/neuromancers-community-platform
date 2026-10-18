@@ -5,6 +5,7 @@ side-effect that must not break the transaction that caused the event.
 """
 
 import logging
+from weakref import WeakKeyDictionary
 
 from django.db.models.signals import post_save
 from django.db.models.signals import pre_save
@@ -40,9 +41,9 @@ _EVENT_SNAPSHOT_SPEC = {
     PeerSubscription: ("paused_at",),
 }
 
-# Stashed pre-save values, keyed by (model class id, object pk). A module-level
-# store avoids attaching ad-hoc private attributes to Django model instances.
-_pre_state_store: dict[tuple[int, object], dict] = {}
+# Stashed pre-save values, keyed by instance. A weak store drops entries when an
+# instance is collected, so failed saves cannot leak between threads.
+_pre_state_store: WeakKeyDictionary[object, dict] = WeakKeyDictionary()
 
 
 def _read_previous(sender, pk, spec_fields):
@@ -65,11 +66,11 @@ def _stash_pre_state(sender, instance, **kwargs):
         return
     previous = _read_previous(sender, instance.pk, spec_fields)
     if previous is not None:
-        _pre_state_store[(id(sender), instance.pk)] = previous
+        _pre_state_store[instance] = previous
 
 
 def _drop_pre_state(instance) -> dict:
-    return _pre_state_store.pop((id(instance.__class__), instance.pk), {})
+    return _pre_state_store.pop(instance, {})
 
 
 # --- MeetingRequest: booking events ----------------------------------------

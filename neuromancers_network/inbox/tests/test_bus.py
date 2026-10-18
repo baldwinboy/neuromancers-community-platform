@@ -1,4 +1,6 @@
 import pytest
+from django.db import IntegrityError
+from django.db import transaction
 
 import neuromancers_network.inbox.events as events_module
 from neuromancers_network.inbox.events import emit
@@ -8,6 +10,25 @@ from neuromancers_network.inbox.models import NotificationEventType
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
+
+
+class TestNotificationConstraint:
+    def test_rejects_duplicate_recipient_and_event_ref(self):
+        user = UserFactory()
+        Notification.objects.create(
+            recipient=user,
+            event_type="review_created",
+            event_ref="review:1",
+            title="First",
+        )
+
+        with pytest.raises(IntegrityError), transaction.atomic():
+            Notification.objects.create(
+                recipient=user,
+                event_type="review_created",
+                event_ref="review:1",
+                title="Second",
+            )
 
 
 class _Subscriber:

@@ -1,8 +1,11 @@
+import gc
+import weakref
 from unittest.mock import patch
 
 import pytest
 
 from neuromancers_network.core.models import StripeSettings
+from neuromancers_network.inbox import signals
 from neuromancers_network.inbox.models import NotificationEventLog
 from neuromancers_network.meetings.models import ApprovalPolicy
 from neuromancers_network.meetings.models import MeetingRequestStatus
@@ -24,6 +27,24 @@ def events_for(event_type, event_ref):
         event_type=event_type,
         event_ref=event_ref,
     )
+
+
+class TestPreStateStore:
+    def test_does_not_retain_instances(self):
+        application = PeerApplication.objects.create(
+            user=UserFactory(),
+            reason="thread-safety",
+        )
+        reference = weakref.ref(application)
+
+        signals._stash_pre_state(  # noqa: SLF001
+            PeerApplication,
+            application,
+        )
+        del application
+        gc.collect()
+
+        assert reference() is None
 
 
 class TestBookingEvents:

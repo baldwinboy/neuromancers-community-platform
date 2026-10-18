@@ -44,6 +44,13 @@ class Notification(Timestamped):
                 name="inbox_notif_recipient_read",
             ),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["recipient", "event_ref"],
+                condition=~models.Q(event_ref=""),
+                name="inbox_notif_recipient_event_ref_uniq",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.title or self.event_type} → {self.recipient}"
