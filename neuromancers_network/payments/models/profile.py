@@ -122,9 +122,14 @@ class PaymentProfile(Timestamped):
             )
             requirements = requirements or {}
 
-        currently_due = list(getattr(requirements, "currently_due", []) or [])
-        eventually_due = list(getattr(requirements, "eventually_due", []) or [])
-        past_due = list(getattr(requirements, "past_due", []) or [])
+        if isinstance(requirements, dict):
+            currently_due = list(requirements.get("currently_due") or [])
+            eventually_due = list(requirements.get("eventually_due") or [])
+            past_due = list(requirements.get("past_due") or [])
+        else:
+            currently_due = list(getattr(requirements, "currently_due", []) or [])
+            eventually_due = list(getattr(requirements, "eventually_due", []) or [])
+            past_due = list(getattr(requirements, "past_due", []) or [])
 
         completed = bool(
             details_submitted

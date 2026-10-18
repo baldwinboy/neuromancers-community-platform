@@ -596,8 +596,32 @@ Expected:  pass
 Blocked on: I mark Unit 1 complete and proceed.
 ```
 
+#### Unit 2 — KYC requirements
+
+**Status: complete — green.** (`TestAccountUpdatedSignal` passed.)
+
+**Goal.** KYC completion respects Stripe's outstanding requirements.
+
+**Steps**
+1. [x] `payments/models/profile.py` — read `currently_due`/`eventually_due`/
+   `past_due` from the requirements **dict** (with an object fallback).
+2. [x] `payments/tests/test_payments.py` — account with charges/payouts/details
+   complete but `currently_due` non-empty stays incomplete.
+
+**Acceptance.** Outstanding requirements keep `kyc_completed` false; the existing
+fully-onboarded case still passes.
+
+```
+HANDOVER
+Purpose:   Verify Unit 2.
+Command:   just pytest neuromancers_network/payments/tests/test_payments.py::TestAccountUpdatedSignal -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I mark Unit 2 complete and proceed.
+```
+
 #### Remaining 0.3 units
-- [ ] **KYC ignores outstanding requirements (dict vs `getattr`)** — `payments/models/profile.py:111-136`. Read dict keys; normalise.
 - [ ] **API PATCH bypasses username cooldown/blocklist/audit/uniqueness** — `users/api/views.py:38-53`. Route through `AccountForm`/validators.
 - [ ] **Purge doesn't cancel Stripe subscription (billing after deletion)** — `moderation/services.py:148-159,209-228`. Cancel subscription on purge.
 - [ ] **Anonymisation residual PII/privilege** — `moderation/services.py:162-206`. Scrub payment customer, `deactivation_reason`, staff flags; include `updated_at`; idempotent.

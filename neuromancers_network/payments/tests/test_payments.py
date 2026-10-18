@@ -281,3 +281,35 @@ class TestAccountUpdatedSignal:
 
         payment_profile.refresh_from_db()
         assert payment_profile.kyc_completed is False
+
+    def test_incomplete_when_only_requirements_remain(self):
+        account = AccountFactory(id="acct_789")
+        payment_profile = PaymentProfileFactory(
+            stripe_connect_account_id=account,
+            kyc_completed=True,
+        )
+        event = make_event(
+            "acct_789",
+            {
+                "charges_enabled": True,
+                "payouts_enabled": True,
+                "details_submitted": True,
+                "requirements": {
+                    "currently_due": ["individual.verification.document"],
+                    "eventually_due": [],
+                    "past_due": [],
+                },
+            },
+        )
+
+        from neuromancers_network.payments.signals import (  # noqa: PLC0415
+            handle_account_updated,
+        )
+
+        with patch(
+            "neuromancers_network.payments.signals.StripeAccount.sync_from_stripe_data",
+        ):
+            handle_account_updated(sender=None, event=event)
+
+        payment_profile.refresh_from_db()
+        assert payment_profile.kyc_completed is False
