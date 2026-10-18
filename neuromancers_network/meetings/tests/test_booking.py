@@ -473,3 +473,55 @@ class TestAccessNeeds:
         )
 
         assert booking.access_needs == OVERRIDE_ACCESS_NEEDS
+
+
+class TestGroupCapacity:
+    def _meeting(self, *, max_participants=1):
+        return Meeting.objects.create(
+            peer=make_peer(),
+            title="Group capacity",
+            description="Test",
+            meeting_type=MeetingType.GROUP,
+            pricing_type=PricingType.FIXED,
+            price=5,
+            approval_policy=ApprovalPolicy.PAY_AFTER_JOIN,
+            currency="GBP",
+            scheduled_at=timezone.now() + timedelta(days=3),
+            duration_minutes=60,
+            max_participants=max_participants,
+        )
+
+    def test_rejects_booking_when_full(self):
+        meeting = self._meeting()
+        create_booking(meeting=meeting, seeker=UserFactory(), sessions=[])
+
+        with pytest.raises(ValidationError, match="fully booked"):
+            create_booking(meeting=meeting, seeker=UserFactory(), sessions=[])
+
+    def test_cancelled_booking_frees_a_spot(self):
+        meeting = self._meeting()
+        first = create_booking(meeting=meeting, seeker=UserFactory(), sessions=[])
+        first.cancel()
+        first.save(update_fields=["status", "updated_at"])
+
+        second = create_booking(meeting=meeting, seeker=UserFactory(), sessions=[])
+
+        assert second.pk is not None
+
+    def test_is_fully_booked_counts_bookings(self):
+        meeting = self._meeting()
+        assert meeting.is_fully_booked is False
+
+        create_booking(meeting=meeting, seeker=UserFactory(), sessions=[])
+
+        meeting.refresh_from_db()
+        assert meeting.is_fully_booked is True
+        assert meeting.available_spots() == 0
+
+    def test_one_to_one_has_no_capacity_limit(self):
+        meeting = create_meeting(peer=make_peer())
+        create_booking(meeting=meeting, seeker=UserFactory(), sessions=[])
+        create_booking(meeting=meeting, seeker=UserFactory(), sessions=[])
+
+        assert meeting.is_fully_booked is False
+        assert meeting.available_spots() is None

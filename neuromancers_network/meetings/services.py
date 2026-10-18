@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.translation import gettext_lazy as _
@@ -211,6 +212,7 @@ def create_booking(  # noqa: PLR0913
     must accept them with a non-empty snapshot.
     """
     from .models import Booking  # noqa: PLC0415
+    from .models import Meeting as MeetingModel  # noqa: PLC0415
     from .models import MeetingRequest  # noqa: PLC0415
 
     if not is_eligible_peer(meeting.peer):
@@ -243,29 +245,36 @@ def create_booking(  # noqa: PLR0913
     }
     if status is not None:
         booking_kwargs["status"] = status
-    booking = Booking.objects.create(**booking_kwargs)
 
-    for session in sessions or []:
-        requested_start = session.get("requested_start_time")
-        requested_duration = session.get("requested_duration_minutes")
-        _ensure_slot_available(
-            meeting,
-            _coerce_datetime(requested_start),
-            requested_duration,
-        )
-        request = MeetingRequest(
-            meeting=meeting,
-            support_seeker=seeker,
-            booking=booking,
-            requested_start_time=requested_start,
-            requested_duration_minutes=requested_duration,
-            access_needs=session.get("access_needs", access_needs),
-            peer_terms=agreed_terms,
-            terms_accepted=terms_accepted,
-            terms_accepted_at=accepted_at,
-        )
-        request.start()
-        request.save()
+    with transaction.atomic():
+        locked = MeetingModel.objects.select_for_update().get(pk=meeting.pk)
+        if locked.is_fully_booked:
+            message = _("This meeting is fully booked.")
+            raise ValidationError(message)
+        booking_kwargs["meeting"] = locked
+        booking = Booking.objects.create(**booking_kwargs)
+
+        for session in sessions or []:
+            requested_start = session.get("requested_start_time")
+            requested_duration = session.get("requested_duration_minutes")
+            _ensure_slot_available(
+                locked,
+                _coerce_datetime(requested_start),
+                requested_duration,
+            )
+            request = MeetingRequest(
+                meeting=locked,
+                support_seeker=seeker,
+                booking=booking,
+                requested_start_time=requested_start,
+                requested_duration_minutes=requested_duration,
+                access_needs=session.get("access_needs", access_needs),
+                peer_terms=agreed_terms,
+                terms_accepted=terms_accepted,
+                terms_accepted_at=accepted_at,
+            )
+            request.start()
+            request.save()
     return booking
 
 

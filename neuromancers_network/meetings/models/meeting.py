@@ -17,6 +17,7 @@ from wagtail.search import index
 from neuromancers_network.core.models.base import Timestamped
 
 from .choices import ApprovalPolicy
+from .choices import BookingStatus
 from .choices import MeetingRequestStatus
 from .choices import MeetingStatus
 from .choices import MeetingType
@@ -406,16 +407,22 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
         self.provider_room_id = result.room_id
         self.save(validate=False, update_fields=["meeting_link", "provider_room_id"])
 
+    def _active_bookings(self):
+        """Bookings that still occupy a place (pending or paid)."""
+        return self.bookings.filter(
+            status__in=[BookingStatus.PENDING, BookingStatus.PAID],
+        )
+
     @property
     def is_fully_booked(self):
         if self.meeting_type != MeetingType.GROUP or self.max_participants is None:
             return False
-        return self.requests.count() >= self.max_participants
+        return self._active_bookings().count() >= self.max_participants
 
     def available_spots(self):
         if self.meeting_type != MeetingType.GROUP or self.max_participants is None:
             return None
-        return max(0, self.max_participants - self.requests.count())
+        return max(0, self.max_participants - self._active_bookings().count())
 
     def price_options_for(self, duration):
         """Return the price options configured for *duration* minutes."""

@@ -356,8 +356,36 @@ Expected:  migration applied; tests pass
 Blocked on: I mark Unit 2 complete and proceed.
 ```
 
+#### Unit 3 — Group capacity
+
+**Status: complete — green.** (`TestGroupCapacity` passed.)
+
+**Goal.** Enforce `max_participants` for group meetings against active bookings,
+and count the right records in `is_fully_booked`/`available_spots`.
+
+**Steps**
+1. [x] `meetings/models/meeting.py` — capacity counts **pending/paid bookings**
+   (not `MeetingRequest`s); cancelled/refunded bookings free a place.
+2. [x] `meetings/services.py` — `create_booking` locks the meeting
+   (`select_for_update`) and rejects when full.
+3. [x] `meetings/tests/test_booking.py` — full group rejects; cancelled booking
+   frees a spot; `is_fully_booked`/`available_spots` reflect bookings; 1:1 has no
+   limit.
+
+**Acceptance.** Group meetings never exceed capacity under concurrency;
+cancelled/refunded bookings do not occupy places.
+
+```
+HANDOVER
+Purpose:   Verify Unit 3.
+Command:   just pytest neuromancers_network/meetings/tests/test_booking.py::TestGroupCapacity -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I mark Unit 3 complete and proceed.
+```
+
 #### Remaining 0.2 units
-- [ ] **Group capacity unenforced; `is_fully_booked` wrong model/status** — `meetings/models/meeting.py:401-410`, `meetings/services.py:197-269`. Enforce under lock against non-cancelled bookings.
 - [ ] **Meeting delete cascades bookings/refunds with no cancel/refund/notify** — `meetings/services.py:92-99`, `meetings/actions.py:127-145`. Cancel+refund+emit before delete.
 - [ ] **`Meeting.save()` full_clean blocks edits within 30 min of start** — `meetings/models/meeting.py:216-220,303-313`. Apply future rule only on schedule change/publish.
 - [ ] **Inbox reminder tasks unscheduled; skip groups; no status filter** — `inbox/tasks.py:26-163`. Schedule; cover group bookings; filter status.
