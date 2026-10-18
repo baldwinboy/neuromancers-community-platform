@@ -16,3 +16,12 @@ class AccountAdapter(DaisyUIAccountAdapterMixin, DefaultAccountAdapter):
 
     def is_open_for_signup(self, request: HttpRequest) -> bool:
         return getattr(settings, "ACCOUNT_ALLOW_REGISTRATION", True)
+
+    def save_user(self, request, user, form, commit=True):  # noqa: FBT002
+        from neuromancers_network.moderation.banning import (  # noqa: PLC0415
+            email_is_banned,
+        )
+
+        if email_is_banned(getattr(form, "cleaned_data", {}).get("email")):
+            user.is_active = False
+        return super().save_user(request, user, form, commit=commit)

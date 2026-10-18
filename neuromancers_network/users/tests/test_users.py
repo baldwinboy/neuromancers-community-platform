@@ -4,15 +4,18 @@ from unittest.mock import patch
 import pytest
 from django.apps import apps
 from django.contrib.sessions.middleware import SessionMiddleware
+from django.db.models.signals import post_save
 from django.test import RequestFactory
 from djstripe.enums import SubscriptionStatus
 
 from neuromancers_network.inbox.models import Notification
 from neuromancers_network.inbox.models import NotificationEventLog
+from neuromancers_network.moderation.models import EmailBan
 from neuromancers_network.users.avatar import confirm_upload
 from neuromancers_network.users.forms import UserCreationForm
 from neuromancers_network.users.forms import UserEditForm
 from neuromancers_network.users.forms import UserSignupForm
+from neuromancers_network.users.models import User
 from neuromancers_network.users.models import UserProfile
 from neuromancers_network.users.tests.factories import PaymentProfileFactory
 from neuromancers_network.users.tests.factories import PeerProfileFactory
@@ -89,6 +92,41 @@ class TestUserSignupForm:
         assert user.name == "New Comer"
         assert user.date_of_birth.isoformat() == BIRTH_DATE
         assert user.accepted_tos is True
+
+
+class TestUserSignupQuarantine:
+    def test_banned_signup_is_inactive_before_creation_event(self):
+        EmailBan.objects.create(value="banned@example.com")
+        created_states = []
+
+        def capture(sender, instance, created, **kwargs):
+            if created:
+                created_states.append(instance.is_active)
+
+        post_save.connect(
+            capture,
+            sender=User,
+            weak=False,
+            dispatch_uid="users.tests.quarantine_state",
+        )
+        try:
+            form = UserSignupForm(
+                data=signup_data(
+                    email="banned@example.com",
+                    email2="banned@example.com",
+                ),
+            )
+            assert form.is_valid(), form.errors
+            user = form.save(signup_request())
+        finally:
+            post_save.disconnect(
+                sender=User,
+                dispatch_uid="users.tests.quarantine_state",
+            )
+
+        user.refresh_from_db()
+        assert user.is_active is False
+        assert created_states == [False]
 
 
 class TestGetFullName:
