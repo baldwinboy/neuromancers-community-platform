@@ -1,8 +1,11 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 import pytest
 from django.utils import timezone
+from djstripe.enums import SubscriptionStatus
 
+from neuromancers_network.core.models import StripeSettings
 from neuromancers_network.moderation.identity import is_identity_blocked
 from neuromancers_network.moderation.models import AccountDeletionRequest
 from neuromancers_network.moderation.models import DeletedIdentity
@@ -11,6 +14,8 @@ from neuromancers_network.moderation.services import cancel_account_deletion
 from neuromancers_network.moderation.services import purge_account
 from neuromancers_network.moderation.services import purge_due_accounts
 from neuromancers_network.moderation.services import request_account_deletion
+from neuromancers_network.users.tests.factories import PaymentProfileFactory
+from neuromancers_network.users.tests.factories import PeerSubscriptionFactory
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -70,6 +75,28 @@ class TestPurge:
             AccountDeletionRequest.objects.get(user=user).status
             == DeletionStatus.COMPLETED
         )
+
+    def test_cancels_subscription(self):
+        config = StripeSettings.load()
+        config.secret_key = "sk_test_123"  # noqa: S105
+        config.save()
+        user = UserFactory()
+        profile = PaymentProfileFactory(
+            user=user,
+            stripe_connect_account_id=None,
+        )
+        peer_subscription = PeerSubscriptionFactory(
+            payment_profile=profile,
+            subscription__status=SubscriptionStatus.active,
+        )
+        request_account_deletion(user)
+
+        with patch(
+            "neuromancers_network.payments.services.stripe.Subscription.cancel",
+        ) as cancel:
+            purge_account(user)
+
+        cancel.assert_called_once_with(peer_subscription.subscription_id)
 
     def test_keeps_row_for_financial_records(self):
         user = UserFactory()

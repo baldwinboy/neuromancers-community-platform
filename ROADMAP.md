@@ -647,8 +647,32 @@ Expected:  pass
 Blocked on: I mark Unit 3 complete and proceed.
 ```
 
+#### Unit 4 — Cancel subscription on purge
+
+**Status: complete — green.** (`TestPurge::test_cancels_subscription` passed.)
+
+**Goal.** Purging an account stops any recurring billing.
+
+**Steps**
+1. [x] `moderation/services.py` — `_cancel_stripe_subscription` cancels the peer
+   subscription immediately before disconnect/anonymise (skips when none).
+2. [x] `moderation/tests/test_deletion.py` — purge cancels the Stripe
+   subscription for a user who has one.
+
+**Acceptance.** No deleted account keeps an active subscription; users without a
+subscription are unaffected.
+
+```
+HANDOVER
+Purpose:   Verify Unit 4.
+Command:   just pytest neuromancers_network/moderation/tests/test_deletion.py::TestPurge::test_cancels_subscription -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I mark Unit 4 complete and proceed.
+```
+
 #### Remaining 0.3 units
-- [ ] **Purge doesn't cancel Stripe subscription (billing after deletion)** — `moderation/services.py:148-159,209-228`. Cancel subscription on purge.
 - [ ] **Anonymisation residual PII/privilege** — `moderation/services.py:162-206`. Scrub payment customer, `deactivation_reason`, staff flags; include `updated_at`; idempotent.
 - [ ] **`purge_due_accounts` no error isolation/transaction** — `moderation/services.py:245-256`.
 - [ ] **Signup quarantine emits `account_created`/email before deactivation** — `users/forms.py:51-79`. Set inactive before save/emission.

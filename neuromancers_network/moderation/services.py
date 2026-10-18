@@ -145,6 +145,24 @@ def cancel_account_deletion(user, *, actor=None, request=None) -> None:
     )
 
 
+def _cancel_stripe_subscription(user) -> None:
+    """Cancel the peer's platform subscription before the account is erased."""
+    profile = getattr(user, "payment_profile", None)
+    if profile is None:
+        return
+    peer_subscription = getattr(profile, "peer_subscription", None)
+    if peer_subscription is None or not peer_subscription.subscription_id:
+        return
+    from neuromancers_network.payments.services import (  # noqa: PLC0415
+        cancel_subscription,
+    )
+
+    try:
+        cancel_subscription(profile, at_period_end=False)
+    except Exception:
+        logger.exception("Failed to cancel Stripe subscription for user %s", user.pk)
+
+
 def _disconnect_stripe(user) -> None:
     profile = getattr(user, "payment_profile", None)
     if profile is None or not profile.stripe_connect_account_id_id:
@@ -219,6 +237,7 @@ def purge_account(user, *, actor=None, request=None) -> None:
             reason="Account deleted",
         )
 
+    _cancel_stripe_subscription(user)
     _disconnect_stripe(user)
     _anonymize(user)
     record_deleted_identity(
