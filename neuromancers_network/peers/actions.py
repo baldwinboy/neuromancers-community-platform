@@ -65,11 +65,16 @@ def peer_connect_stripe(request, data):
 
 def peer_subscribe(request, data):
     """Start the peer subscription checkout (Stripe test mode)."""
+    from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
     from neuromancers_network.payments.services import (  # noqa: PLC0415
         create_subscription_checkout,
     )
 
     user = require_authenticated(request)
+    if not StripeSettings.load(request).subscription_enabled:
+        message = "Subscriptions are disabled"
+        raise PermissionDenied(message)
+    _require_provider_agreement(user)
     payment_profile = ensure_payment_profile(user)
     return HttpResponseRedirect(create_subscription_checkout(payment_profile, request))
 

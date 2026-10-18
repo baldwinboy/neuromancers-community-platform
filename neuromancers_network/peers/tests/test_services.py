@@ -26,6 +26,7 @@ from neuromancers_network.peers.actions import availability_delete
 from neuromancers_network.peers.actions import peer_accept_provider_agreement
 from neuromancers_network.peers.actions import peer_connect_stripe
 from neuromancers_network.peers.actions import peer_stripe_disconnect
+from neuromancers_network.peers.actions import peer_subscribe
 from neuromancers_network.peers.models import CalendarEvent
 from neuromancers_network.peers.models import PeerAvailability
 from neuromancers_network.peers.models.profile import PROVIDER_AGREEMENT_VERSION
@@ -454,6 +455,57 @@ class TestStripeDisconnectAction:
         delete_account.assert_not_called()
         peer.payment_profile.refresh_from_db()
         assert peer.payment_profile.stripe_connect_account_id_id is not None
+
+
+class TestPeerSubscribe:
+    def test_disabled_setting_blocks_subscribe(self):
+        config = StripeSettings.load()
+        config.subscription_enabled = False
+        config.save()
+        peer = make_peer()
+
+        with pytest.raises(PermissionDenied, match="disabled"):
+            peer_subscribe(_post(peer), {})
+
+    def test_requires_provider_agreement(self):
+        config = StripeSettings.load()
+        config.subscription_enabled = True
+        config.save()
+        peer = make_peer()
+
+        with pytest.raises(PermissionDenied, match="provider agreement"):
+            peer_subscribe(_post(peer), {})
+
+    def test_starts_checkout_when_enabled_and_agreed(self):
+        config = StripeSettings.load()
+        config.subscription_enabled = True
+        config.save()
+        peer = make_peer()
+        profile = peer.peer_profile
+        profile.provider_agreement_accepted_at = timezone.now()
+        profile.provider_agreement_version = PROVIDER_AGREEMENT_VERSION
+        profile.save(
+            update_fields=[
+                "provider_agreement_accepted_at",
+                "provider_agreement_version",
+                "updated_at",
+            ],
+        )
+
+        with (
+            patch(
+                "neuromancers_network.payments.services.create_subscription_checkout",
+                return_value="https://checkout.example/session",
+            ) as checkout,
+            patch(
+                "neuromancers_network.peers.actions.ensure_payment_profile",
+            ),
+        ):
+            response = peer_subscribe(_post(peer), {})
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert response["Location"] == "https://checkout.example/session"
+        checkout.assert_called_once()
 
 
 class TestProviderAgreement:
