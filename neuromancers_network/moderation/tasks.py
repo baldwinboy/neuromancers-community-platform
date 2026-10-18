@@ -2,6 +2,7 @@ from celery import shared_task
 
 from neuromancers_network.moderation.export import build_export_file
 from neuromancers_network.moderation.export import sweep_data_exports as sweep_exports
+from neuromancers_network.moderation.identity import sweep_deleted_identities
 from neuromancers_network.moderation.models import DataExportRequest
 from neuromancers_network.moderation.services import purge_due_accounts
 
@@ -10,6 +11,12 @@ from neuromancers_network.moderation.services import purge_due_accounts
 def purge_due_account_deletions() -> int:
     """Anonymise accounts whose deletion grace period has elapsed."""
     return purge_due_accounts()
+
+
+@shared_task
+def sweep_expired_deleted_identities() -> int:
+    """Delete re-registration cooldown records once they have expired."""
+    return sweep_deleted_identities()
 
 
 @shared_task

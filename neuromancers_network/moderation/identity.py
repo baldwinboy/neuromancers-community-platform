@@ -36,6 +36,15 @@ def record_deleted_identity(
     )
 
 
+def sweep_deleted_identities(now=None) -> int:
+    """Delete cooldown records whose retention window has elapsed."""
+    from .models import DeletedIdentity  # noqa: PLC0415
+
+    now = now or timezone.now()
+    deleted, _ = DeletedIdentity.objects.filter(purge_after__lte=now).delete()
+    return deleted
+
+
 def is_identity_blocked(
     *,
     email: str | None = None,

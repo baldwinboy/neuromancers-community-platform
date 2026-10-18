@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from django.contrib.auth import SESSION_KEY
 from django.contrib.sessions.backends.db import SessionStore
@@ -45,3 +47,22 @@ class TestRevokeSessions:
 
         assert Session.objects.filter(session_key=current).exists()
         assert not Session.objects.filter(session_key=other).exists()
+
+    def test_caps_active_session_keys(self, monkeypatch, caplog):
+        user = UserFactory()
+        cap = 2
+        for _index in range(3):
+            _make_session(user)
+        monkeypatch.setattr(
+            "neuromancers_network.users.sessions.MAX_ACTIVE_SESSION_KEYS",
+            cap,
+        )
+
+        with caplog.at_level(
+            logging.WARNING,
+            logger="neuromancers_network.users.sessions",
+        ):
+            keys = active_session_keys(user)
+
+        assert len(keys) == cap
+        assert "Capped active session keys" in caplog.text

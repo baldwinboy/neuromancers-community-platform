@@ -8,6 +8,7 @@ from djstripe.enums import SubscriptionStatus
 
 from neuromancers_network.core.models import StripeSettings
 from neuromancers_network.moderation.identity import is_identity_blocked
+from neuromancers_network.moderation.identity import sweep_deleted_identities
 from neuromancers_network.moderation.models import AccountDeletionRequest
 from neuromancers_network.moderation.models import DeletedIdentity
 from neuromancers_network.moderation.models import DeletionStatus
@@ -235,6 +236,36 @@ class TestPurgeDueAccountsIsolation:
         assert failed_deletion.status == DeletionStatus.PENDING
         assert "Failed to purge account deletion" in caplog.text
         assert str(failing_user.pk) in caplog.text
+
+
+class TestDeletedIdentitySweep:
+    def test_deletes_only_expired_identities(self):
+        expired = DeletedIdentity.objects.create(
+            email_hash="expired-email",
+            username_hash="expired-user",
+            purge_after=timezone.now() - timedelta(days=1),
+        )
+        retained = DeletedIdentity.objects.create(
+            email_hash="retained-email",
+            username_hash="retained-user",
+            purge_after=timezone.now() + timedelta(days=1),
+        )
+
+        deleted = sweep_deleted_identities()
+
+        assert deleted == 1
+        assert not DeletedIdentity.objects.filter(pk=expired.pk).exists()
+        assert DeletedIdentity.objects.filter(pk=retained.pk).exists()
+
+    def test_sweep_is_idempotent(self):
+        DeletedIdentity.objects.create(
+            email_hash="expired-email",
+            username_hash="expired-user",
+            purge_after=timezone.now() - timedelta(days=1),
+        )
+
+        assert sweep_deleted_identities() == 1
+        assert sweep_deleted_identities() == 0
 
 
 class TestIdentityBlock:

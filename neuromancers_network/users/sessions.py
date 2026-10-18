@@ -2,20 +2,42 @@
 
 from __future__ import annotations
 
+import logging
+
 from django.contrib.auth import SESSION_KEY
 from django.contrib.sessions.models import Session
 from django.utils import timezone
 
+logger = logging.getLogger(__name__)
+
+MAX_ACTIVE_SESSION_KEYS = 100
+
 
 def active_session_keys(user) -> list[str]:
-    """Session keys owned by *user* (decoded from non-expired sessions)."""
+    """Session keys owned by *user*, capped at ``MAX_ACTIVE_SESSION_KEYS``.
+
+    The DB session store has no user index, so keys are found by decoding
+    non-expired rows. Results are streamed and capped; truncation is logged.
+    """
     if user is None or not getattr(user, "is_authenticated", False):
         return []
     keys = []
-    for session in Session.objects.filter(expire_date__gte=timezone.now()):
+    sessions = (
+        Session.objects.filter(expire_date__gte=timezone.now())
+        .order_by("-expire_date")
+        .iterator(chunk_size=500)
+    )
+    for session in sessions:
         data = session.get_decoded()
         if str(data.get(SESSION_KEY)) == str(user.pk):
             keys.append(session.session_key)
+            if len(keys) >= MAX_ACTIVE_SESSION_KEYS:
+                logger.warning(
+                    "Capped active session keys at %s for user %s",
+                    MAX_ACTIVE_SESSION_KEYS,
+                    user.pk,
+                )
+                break
     return keys
 
 
