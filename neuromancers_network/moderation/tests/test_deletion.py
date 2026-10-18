@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -195,6 +196,45 @@ class TestPurge:
         assert purged == 1
         assert due_user.username.startswith("deleted-")
         assert later_user.username != f"deleted-{later_user.pk}"
+
+
+class TestPurgeDueAccountsIsolation:
+    def test_failure_for_one_user_does_not_block_the_rest(self, caplog):
+        failing_user = UserFactory()
+        healthy_user = UserFactory()
+        request_account_deletion(failing_user)
+        request_account_deletion(healthy_user)
+        AccountDeletionRequest.objects.filter(
+            user__in=[failing_user, healthy_user],
+        ).update(scheduled_for=timezone.now() - timedelta(days=1))
+
+        real_purge_account = purge_account
+
+        def flaky_purge(user):
+            if user.pk == failing_user.pk:
+                message = "stripe unavailable"
+                raise RuntimeError(message)
+            real_purge_account(user)
+
+        with (
+            patch(
+                "neuromancers_network.moderation.services.purge_account",
+                side_effect=flaky_purge,
+            ),
+            caplog.at_level(
+                logging.ERROR,
+                logger="neuromancers_network.moderation.services",
+            ),
+        ):
+            purged = purge_due_accounts()
+
+        healthy_user.refresh_from_db()
+        failed_deletion = AccountDeletionRequest.objects.get(user=failing_user)
+        assert purged == 1
+        assert healthy_user.username == f"deleted-{healthy_user.pk}"
+        assert failed_deletion.status == DeletionStatus.PENDING
+        assert "Failed to purge account deletion" in caplog.text
+        assert str(failing_user.pk) in caplog.text
 
 
 class TestIdentityBlock:

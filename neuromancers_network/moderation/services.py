@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from datetime import timedelta
 
+from django.db import transaction
 from django.utils import timezone
 
 from neuromancers_network.core.audit import record_audit
@@ -323,17 +324,30 @@ def purge_account(user, *, actor=None, request=None) -> None:
 def purge_due_accounts(now=None) -> int:
     """Purge every pending deletion whose grace window has elapsed."""
     now = now or timezone.now()
-    due = AccountDeletionRequest.objects.filter(
-        status=DeletionStatus.PENDING,
-        scheduled_for__lte=now,
-    ).select_related("user")
+    due = (
+        AccountDeletionRequest.objects.filter(
+            status=DeletionStatus.PENDING,
+            scheduled_for__lte=now,
+        )
+        .select_related("user")
+        .order_by("scheduled_for", "pk")
+    )
     purged = 0
     for deletion in due:
-        if deletion.user.is_active:
-            # A reactivated account must never be purged; drop the stale request.
-            deletion.status = DeletionStatus.CANCELLED
-            deletion.save(update_fields=["status", "updated_at"])
+        try:
+            with transaction.atomic():
+                if deletion.user.is_active:
+                    # Never purge a reactivated account; drop the stale request.
+                    deletion.status = DeletionStatus.CANCELLED
+                    deletion.save(update_fields=["status", "updated_at"])
+                    continue
+                purge_account(deletion.user)
+        except Exception:
+            logger.exception(
+                "Failed to purge account deletion %s for user %s",
+                deletion.pk,
+                deletion.user_id,
+            )
             continue
-        purge_account(deletion.user)
         purged += 1
     return purged
