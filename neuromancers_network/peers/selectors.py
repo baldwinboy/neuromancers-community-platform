@@ -30,7 +30,7 @@ def _calendar_owner(request):
     from neuromancers_network.peers.models.profile import PeerProfile  # noqa: PLC0415
 
     path_params = getattr(request, "daisie_path_params", None) or {}
-    pk = path_params.get("pk")
+    pk = path_params.get("peer_pk")
     if pk:
         profile = PeerProfile.objects.filter(pk=pk).select_related("user").first()
         if profile is not None:
@@ -90,3 +90,13 @@ def peer_calendar_events(request=None, page=None):
     return queryset.annotate(
         display_title=Case(*whens, default=Value(""), output_field=CharField()),
     )
+
+
+def user_peer_application(request=None, page=None):
+    """The signed-in member's own peer application, if any."""
+    from neuromancers_network.peers.models import PeerApplication  # noqa: PLC0415
+
+    user = getattr(request, "user", None)
+    if user is None or not getattr(user, "is_authenticated", False):
+        return None
+    return PeerApplication.objects.filter(user=user).first()

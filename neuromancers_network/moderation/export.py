@@ -43,6 +43,7 @@ ACCOUNT_FIELDS = [
 PROFILE_FIELDS = [
     "access_needs",
     "access_needs_visible_to_peer",
+    "bio",
     "visibility",
     "country",
     "timezone",

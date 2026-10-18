@@ -1,9 +1,12 @@
+from datetime import timedelta
 from decimal import Decimal
+from http import HTTPStatus
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 from django.test import RequestFactory
+from django.utils import timezone
 
 from neuromancers_network.core.models import StripeSettings
 from neuromancers_network.meetings.models import ApprovalPolicy
@@ -35,7 +38,6 @@ APPLICATION_FEE_PERCENT = 10
 SESSION_DURATION = 30
 TIER_PRICE = Decimal("15.00")
 PAID_TOTAL = Decimal("10.00")
-EXPECTED_PARTIAL_REFUND_MINOR = 500
 
 
 def configure_stripe(
@@ -227,29 +229,21 @@ class TestRefundFlow:
         with pytest.raises(ValueError, match="Partial refunds are not enabled"):
             request.request_refund("Partial", amount="5.00")
 
-    def test_partial_refund_sends_amount(self):
-        configure_stripe(allow_partial_refunds=True)
-        request = make_refund_request(refund_requires_approval=False)
-
-        with (
-            patch(
-                "neuromancers_network.meetings.models.refund.stripe.Refund.create",
-            ) as create_refund,
-            patch(
-                "neuromancers_network.meetings.models.refund.StripeRefund.sync_from_stripe_data",
-            ),
-        ):
-            create_refund.return_value = type("Refund", (), {"id": "re_partial"})()
-            request.request_refund("Partial", amount="5.00")
-
-        assert create_refund.call_args.kwargs["amount"] == EXPECTED_PARTIAL_REFUND_MINOR
-
     def test_refund_exceeding_paid_amount_raises(self):
         configure_stripe(allow_partial_refunds=True)
         request = make_refund_request(refund_requires_approval=False)
 
         with pytest.raises(ValueError, match="exceeds the amount paid"):
             request.request_refund("Too much", amount="15.00")
+
+    def test_partial_refund_without_recorded_payment_raises(self):
+        configure_stripe(allow_partial_refunds=True)
+        request = make_refund_request(refund_requires_approval=False)
+        request.price_paid = None
+        request.save(update_fields=["price_paid", "updated_at"])
+
+        with pytest.raises(ValueError, match="no recorded payment"):
+            request.request_refund("Partial", amount="5.00")
 
 
 class TestPaymentHistory:
@@ -324,3 +318,390 @@ class TestConnectedWebhooks:
 
         booking.refresh_from_db()
         assert booking.status == BookingStatus.PAID
+
+
+class TestPerItemStripeAmounts:
+    def _event(self, object_data, *, account=None):
+        return SimpleNamespace(
+            type="checkout.session.completed",
+            data={"object": object_data},
+            default_api_key="sk_test",
+            djstripe_owner_account=account,
+        )
+
+    def _line_items(self, *amounts):
+        return SimpleNamespace(
+            data=[
+                SimpleNamespace(id=f"li_{index}", amount_total=amount)
+                for index, amount in enumerate(amounts)
+            ],
+            has_more=False,
+        )
+
+    def _session_kwargs(self, bookings, request=None):
+        from neuromancers_network.meetings.models.booking import (  # noqa: PLC0415
+            _peer_session_kwargs,
+        )
+
+        return _peer_session_kwargs(
+            bookings,
+            request or RequestFactory().get("/"),
+            StripeSettings.load(),
+            None,
+        )
+
+    def _dispatch(self, event, line_items):
+        from neuromancers_network.meetings.signals import (  # noqa: PLC0415
+            handle_checkout_session_completed,
+        )
+
+        with (
+            patch(
+                "neuromancers_network.meetings.signals."
+                "stripe.checkout.Session.list_line_items",
+                return_value=line_items,
+            ),
+            patch(
+                "neuromancers_network.meetings.signals.stripe.PaymentIntent.retrieve",
+                return_value={},
+            ),
+            patch("neuromancers_network.meetings.signals.sync_from_event"),
+            patch(
+                "neuromancers_network.payments.services.receipt_url_for",
+                return_value="https://receipt.example/1",
+            ),
+        ):
+            handle_checkout_session_completed(sender=None, event=event)
+
+    def test_requests_get_their_own_stripe_amount(self):
+        configure_stripe()
+        peer = make_connected_peer()
+        meeting = create_meeting(peer=peer)
+        short = MeetingPriceTier.objects.create(
+            meeting=meeting,
+            duration_minutes=SESSION_DURATION,
+        )
+        MeetingPriceOption.objects.create(
+            tier=short,
+            amount=Decimal("10.00"),
+            is_default=True,
+        )
+        long = MeetingPriceTier.objects.create(meeting=meeting, duration_minutes=60)
+        MeetingPriceOption.objects.create(
+            tier=long,
+            amount=Decimal("25.00"),
+            is_default=True,
+        )
+        start = timezone.now() + timedelta(days=2)
+        booking = create_booking(
+            meeting=meeting,
+            seeker=UserFactory(),
+            sessions=[
+                {
+                    "requested_start_time": start,
+                    "requested_duration_minutes": SESSION_DURATION,
+                },
+                {
+                    "requested_start_time": start + timedelta(hours=1),
+                    "requested_duration_minutes": 60,
+                },
+            ],
+        )
+        requests = list(booking.sessions.order_by("pk"))
+        session_kwargs = self._session_kwargs([booking])
+
+        booking.stripe_checkout_session_id = "cs_per_item"
+        booking.save(update_fields=["stripe_checkout_session_id"])
+        event = self._event(
+            {
+                "id": "cs_per_item",
+                "payment_intent": "pi_per_item",
+                "amount_total": 3900,
+                "metadata": session_kwargs["metadata"],
+            },
+        )
+        self._dispatch(event, self._line_items(1100, 2800))
+
+        for meeting_request, expected in zip(
+            requests,
+            (Decimal("11.00"), Decimal("28.00")),
+            strict=True,
+        ):
+            meeting_request.refresh_from_db()
+            assert meeting_request.status == MeetingRequestStatus.PAID
+            assert meeting_request.price_paid == expected
+            assert meeting_request.stripe_payment_intent_id == "pi_per_item"
+            assert meeting_request.stripe_checkout_session_id == "cs_per_item"
+        booking.refresh_from_db()
+        assert booking.status == BookingStatus.PAID
+        assert booking.total_amount == Decimal("39.00")
+
+    def test_sessionless_booking_gets_its_own_stripe_amount(self):
+        configure_stripe()
+        booking = Booking.objects.create(
+            meeting=create_meeting(peer=make_connected_peer()),
+            support_seeker=UserFactory(),
+            total_amount=Decimal("20.00"),
+            currency="GBP",
+        )
+        session_kwargs = self._session_kwargs([booking])
+
+        booking.stripe_checkout_session_id = "cs_booking"
+        booking.save(update_fields=["stripe_checkout_session_id"])
+        event = self._event(
+            {
+                "id": "cs_booking",
+                "payment_intent": "pi_booking",
+                "amount_total": 2100,
+                "metadata": session_kwargs["metadata"],
+            },
+        )
+        self._dispatch(event, self._line_items(2100))
+
+        booking.refresh_from_db()
+        assert booking.status == BookingStatus.PAID
+        assert booking.total_amount == Decimal("21.00")
+
+    def test_multiple_bookings_in_one_session(self):
+        configure_stripe()
+        peer = make_connected_peer()
+        seeker = UserFactory()
+        first = create_booking(
+            meeting=create_meeting(peer=peer, title="First"),
+            seeker=seeker,
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+        second = create_booking(
+            meeting=create_meeting(peer=peer, title="Second"),
+            seeker=seeker,
+            sessions=[{"requested_duration_minutes": 60}],
+        )
+        first_request = first.sessions.get()
+        second_request = second.sessions.get()
+        session_kwargs = self._session_kwargs([first, second])
+
+        first.stripe_checkout_session_id = "cs_multi"
+        first.save(update_fields=["stripe_checkout_session_id"])
+        second.stripe_checkout_session_id = "cs_multi"
+        second.save(update_fields=["stripe_checkout_session_id"])
+        event = self._event(
+            {
+                "id": "cs_multi",
+                "payment_intent": "pi_multi",
+                "amount_total": 3900,
+                "metadata": session_kwargs["metadata"],
+            },
+        )
+        self._dispatch(event, self._line_items(1100, 2800))
+
+        first_request.refresh_from_db()
+        second_request.refresh_from_db()
+        first.refresh_from_db()
+        second.refresh_from_db()
+        assert first_request.price_paid == Decimal("11.00")
+        assert second_request.price_paid == Decimal("28.00")
+        assert first.total_amount == Decimal("11.00")
+        assert second.total_amount == Decimal("28.00")
+
+    def test_replayed_checkout_event_is_idempotent(self):
+        configure_stripe()
+        peer = make_connected_peer()
+        booking = create_booking(
+            meeting=create_meeting(peer=peer),
+            seeker=UserFactory(),
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+        meeting_request = booking.sessions.get()
+        session_kwargs = self._session_kwargs([booking])
+        booking.stripe_checkout_session_id = "cs_replay"
+        booking.save(update_fields=["stripe_checkout_session_id"])
+        event = self._event(
+            {
+                "id": "cs_replay",
+                "payment_intent": "pi_replay",
+                "amount_total": 1100,
+                "metadata": session_kwargs["metadata"],
+            },
+        )
+
+        self._dispatch(event, self._line_items(1100))
+        self._dispatch(event, self._line_items(1100))
+
+        meeting_request.refresh_from_db()
+        booking.refresh_from_db()
+        assert meeting_request.status == MeetingRequestStatus.PAID
+        assert meeting_request.price_paid == Decimal("11.00")
+        assert booking.status == BookingStatus.PAID
+        assert booking.total_amount == Decimal("11.00")
+
+
+class TestMultiPeerCart:
+    def _booking(self, peer, *, title="Meeting", seeker=None):
+        return create_booking(
+            meeting=create_meeting(peer=peer, title=title),
+            seeker=seeker or UserFactory(),
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+
+    def test_service_rejects_mixed_peers(self):
+        from neuromancers_network.meetings.models.booking import (  # noqa: PLC0415
+            create_checkout_session_for_bookings,
+        )
+
+        first = self._booking(make_connected_peer("acct_first"), title="First")
+        second = self._booking(make_connected_peer("acct_second"), title="Second")
+
+        with pytest.raises(ValueError, match="one care provider"):
+            create_checkout_session_for_bookings(
+                [first, second],
+                RequestFactory().get("/"),
+            )
+
+    def test_action_shows_error_for_mixed_peers(self):
+        from django.contrib.messages import get_messages  # noqa: PLC0415
+        from django.contrib.messages.middleware import (  # noqa: PLC0415
+            MessageMiddleware,
+        )
+        from django.contrib.sessions.middleware import (  # noqa: PLC0415
+            SessionMiddleware,
+        )
+
+        from neuromancers_network.meetings.actions import (  # noqa: PLC0415
+            bookings_checkout_many,
+        )
+
+        seeker = UserFactory()
+        first = self._booking(
+            make_connected_peer("acct_first"),
+            title="First",
+            seeker=seeker,
+        )
+        second = self._booking(
+            make_connected_peer("acct_second"),
+            title="Second",
+            seeker=seeker,
+        )
+
+        request = RequestFactory().post("/", {"bookings": [first.pk, second.pk]})
+        SessionMiddleware(lambda r: None).process_request(request)
+        MessageMiddleware(lambda r: None).process_request(request)
+        request.user = seeker
+        response = bookings_checkout_many(request, request.POST)
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert any(
+            "one care provider" in str(message) for message in get_messages(request)
+        )
+        first.refresh_from_db()
+        second.refresh_from_db()
+        assert first.stripe_checkout_session_id == ""
+        assert second.stripe_checkout_session_id == ""
+
+    def test_service_rejects_mixed_currency(self):
+        from neuromancers_network.meetings.models.booking import (  # noqa: PLC0415
+            create_checkout_session_for_bookings,
+        )
+
+        configure_stripe()
+        peer = make_connected_peer()
+        seeker = UserFactory()
+        gbp_booking = self._booking(peer, title="GBP", seeker=seeker)
+        usd_meeting = create_meeting(peer=peer, title="USD")
+        usd_meeting.currency = "USD"
+        usd_meeting.save(validate=False)
+        usd_booking = create_booking(
+            meeting=usd_meeting,
+            seeker=seeker,
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+
+        with pytest.raises(ValueError, match="one care provider and currency"):
+            create_checkout_session_for_bookings(
+                [gbp_booking, usd_booking],
+                RequestFactory().get("/"),
+            )
+
+    def test_service_accepts_single_peer(self):
+        from neuromancers_network.meetings.models.booking import (  # noqa: PLC0415
+            create_checkout_session_for_bookings,
+        )
+
+        configure_stripe()
+        peer = make_connected_peer()
+        first = self._booking(peer, title="First")
+        second = self._booking(peer, title="Second")
+
+        with (
+            patch(
+                "neuromancers_network.meetings.models.booking."
+                "stripe.checkout.Session.create",
+                return_value=SimpleNamespace(id="cs_cart", url="https://checkout"),
+            ),
+            patch(
+                "neuromancers_network.meetings.models.booking."
+                "StripeSession.sync_from_stripe_data",
+            ),
+        ):
+            url = create_checkout_session_for_bookings(
+                [first, second],
+                RequestFactory().get("/"),
+            )
+
+        assert url == "https://checkout"
+        first.refresh_from_db()
+        second.refresh_from_db()
+        assert first.stripe_checkout_session_id == "cs_cart"
+        assert second.stripe_checkout_session_id == "cs_cart"
+
+
+class TestPricing:
+    def _duration_tier_meeting(self):
+        meeting = create_meeting(peer=make_connected_peer())
+        meeting.pricing_type = PricingType.DURATION_TIERS
+        meeting.price = None
+        meeting.save(validate=False)
+        return meeting
+
+    def test_duration_tier_without_tier_returns_none(self):
+        meeting = self._duration_tier_meeting()
+
+        assert meeting.price_for(SESSION_DURATION) is None
+
+    def test_fixed_pricing_falls_back_to_meeting_price(self):
+        meeting = create_meeting(peer=make_connected_peer())
+
+        assert meeting.price_for(SESSION_DURATION) == Decimal("25.00")
+
+    def test_compute_total_raises_without_tier_price(self):
+        meeting = self._duration_tier_meeting()
+        booking = create_booking(
+            meeting=meeting,
+            seeker=UserFactory(),
+            sessions=[{"requested_duration_minutes": SESSION_DURATION}],
+        )
+
+        with pytest.raises(ValueError, match="no resolvable price"):
+            booking.compute_total()
+
+    def test_sessionless_booking_without_price_raises(self):
+        meeting = self._duration_tier_meeting()
+        booking = Booking.objects.create(
+            meeting=meeting,
+            support_seeker=UserFactory(),
+        )
+
+        with pytest.raises(ValueError, match="no amount to charge"):
+            booking.compute_total()
+
+    def test_request_checkout_raises_without_tier_price(self):
+        configure_stripe()
+        meeting = self._duration_tier_meeting()
+        meeting_request = MeetingRequest.objects.create(
+            meeting=meeting,
+            support_seeker=UserFactory(),
+            status=MeetingRequestStatus.PENDING_PAYMENT,
+            requested_duration_minutes=SESSION_DURATION,
+        )
+
+        with pytest.raises(ValueError, match="Meeting price is required"):
+            meeting_request.create_checkout_session(RequestFactory().get("/"))

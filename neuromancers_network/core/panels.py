@@ -21,7 +21,7 @@ def stripe_price_choices() -> list[tuple[str, str]]:
         return []
 
 
-class StripePriceChooserWidget(forms.SelectMultiple):
+class StripePriceChooserWidget(forms.CheckboxSelectMultiple):
     """A multi-select of Stripe Prices that round-trips a JSON list."""
 
     def optgroups(self, name, value, attrs=None):

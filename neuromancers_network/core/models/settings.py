@@ -24,7 +24,6 @@ class StripeSettings(BaseGenericSetting):
     class ChargeType(models.TextChoices):
         DIRECT = "direct", _("Direct charges (peer is merchant of record)")
         DESTINATION = "destination", _("Destination charges")
-        SEPARATE = "separate", _("Separate charges and transfers")
 
     class TaxMode(models.TextChoices):
         STRIPE_TAX = "stripe_tax", _("Stripe Tax")
@@ -84,7 +83,7 @@ class StripeSettings(BaseGenericSetting):
         default=ChargeType.DIRECT,
         help_text=_(
             "How meeting payments are charged. Direct makes the care provider "
-            "the merchant of record; destination and separate are fallbacks.",
+            "the merchant of record; destination routes funds via a transfer.",
         ),
     )
     connect_country = models.CharField(

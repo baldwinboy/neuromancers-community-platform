@@ -20,6 +20,8 @@ def _profile_for(user) -> UserProfile:
 def profile_edit(request, data):
     user = require_authenticated(request)
     profile = _profile_for(user)
+    if "bio" in data:
+        profile.bio = data.get("bio", "")
     if "access_needs" in data:
         profile.access_needs = data.get("access_needs", "")
     if "visibility" in data:

@@ -85,7 +85,7 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ("access_needs", "country", "timezone", "languages")
+        fields = ("bio", "access_needs", "country", "timezone", "languages")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

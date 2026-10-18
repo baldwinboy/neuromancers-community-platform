@@ -55,19 +55,6 @@ class TestBuildChargePlan:
             "transfer_data": {"destination": DESTINATION},
         }
 
-    def test_separate_charge_has_no_fee_or_destination(self):
-        plan = build_charge_plan(
-            amount_minor=AMOUNT_MINOR,
-            destination=DESTINATION,
-            stripe_settings=make_settings(
-                charge_type=StripeSettings.ChargeType.SEPARATE,
-            ),
-        )
-
-        assert plan.stripe_account is None
-        assert plan.payment_intent_data is None
-        assert plan.automatic_tax == {"enabled": True}
-
     def test_tax_disabled_when_off(self):
         plan = build_charge_plan(
             amount_minor=AMOUNT_MINOR,
@@ -85,6 +72,15 @@ class TestBuildChargePlan:
         )
 
         assert plan.payment_intent_data == {"application_fee_amount": 50}
+
+    def test_fee_rounds_half_up(self):
+        plan = build_charge_plan(
+            amount_minor=25,
+            destination=DESTINATION,
+            stripe_settings=make_settings(application_fee=10),
+        )
+
+        assert plan.payment_intent_data == {"application_fee_amount": 3}
 
     def test_fee_defaults_to_zero_when_unset(self):
         plan = build_charge_plan(
@@ -129,16 +125,6 @@ class TestBuildRefundKwargs:
         )
 
         assert kwargs == {"reverse_transfer": True, "refund_application_fee": True}
-
-    def test_separate_refund_has_no_extra_params(self):
-        kwargs = build_refund_kwargs(
-            stripe_settings=make_settings(
-                charge_type=StripeSettings.ChargeType.SEPARATE,
-            ),
-            destination=DESTINATION,
-        )
-
-        assert kwargs == {}
 
     def test_direct_refund_without_destination_raises(self):
         with pytest.raises(ValueError, match="no connected Stripe account"):

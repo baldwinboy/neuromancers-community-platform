@@ -73,7 +73,7 @@ def _meeting(request: HttpRequest) -> Meeting | None:
     from neuromancers_network.meetings.models import Meeting  # noqa: PLC0415
 
     params = _path_params(request)
-    pk = params.get("meeting_pk") or params.get("pk")
+    pk = params.get("meeting_pk")
     if not pk:
         return None
     return Meeting.objects.filter(pk=pk).first()

@@ -703,7 +703,8 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "label": _("Member profile"),
         "model": "users.UserProfile",
         "source": "url",
-        "lookup_field": "user_id",
+        "lookup_field": "user__username",
+        "select_related": ["user"],
     },
     "booking": {
         "label": _("Booking"),
@@ -749,8 +750,7 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
     "peer_application": {
         "label": _("Peer application"),
         "model": "peers.PeerApplication",
-        "source": "url",
-        "lookup_field": "user_id",
+        "source": "neuromancers_network.peers.selectors.user_peer_application",
     },
     "refund_request": {
         "label": _("Refund request"),

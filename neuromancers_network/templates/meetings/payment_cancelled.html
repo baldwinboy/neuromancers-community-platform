@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {% trans "Payment cancelled" %}
+{% endblock title %}
+{% block content %}
+  <section class="mx-auto max-w-2xl py-12">
+    <h1 class="text-3xl font-bold">{% trans "Payment cancelled" %}</h1>
+    <p class="mt-4 text-base-content/80">
+      {% trans "No payment was taken. Your booking is still unpaid and remains in your cart." %}
+    </p>
+  </section>
+{% endblock content %}

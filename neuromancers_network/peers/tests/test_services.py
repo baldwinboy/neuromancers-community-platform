@@ -319,7 +319,7 @@ class TestPeerCalendarEvents:
         request = RequestFactory().get("/")
         request.user = viewer
         if profile is not None:
-            request.daisie_path_params = {"pk": profile.pk}
+            request.daisie_path_params = {"peer_pk": profile.pk}
         return request
 
     def _window(self, peer):

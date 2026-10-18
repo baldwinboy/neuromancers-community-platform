@@ -1,9 +1,11 @@
 from decimal import ROUND_HALF_UP
 from decimal import Decimal
 from decimal import InvalidOperation
+from typing import Any
 
 import stripe
 from django.db import models
+from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField
 from django_fsm import FSMModelMixin
@@ -54,18 +56,28 @@ class RefundRequest(FSMModelMixin, Timestamped):
         return self.meeting_request.meeting.refund_requires_approval
 
     def request_refund(self, amount=None):
-        """Create or process the Stripe refund based on the meeting policy."""
-        if self.status != RefundStatus.PENDING:
-            return self
+        """Create or process the Stripe refund based on the meeting policy.
 
-        if self.needs_approval:
-            self.save(update_fields=["updated_at"])
-            return self
+        Serialised with ``select_for_update`` so two requests cannot both pass the
+        pending check; the Stripe call also carries an idempotency key as a second
+        line of defence.
+        """
+        with transaction.atomic():
+            locked = type(self).objects.select_for_update().get(pk=self.pk)
+            if locked.status != RefundStatus.PENDING:
+                self.refresh_from_db()
+                return self
 
-        refund = self.issue_stripe_refund(amount=amount)
-        self.stripe_refund_id = refund.id
-        self.mark_refunded()
-        self.save(update_fields=["stripe_refund_id", "status", "updated_at"])
+            if locked.needs_approval:
+                locked.save(update_fields=["updated_at"])
+                self.refresh_from_db()
+                return self
+
+            refund = locked.issue_stripe_refund(amount=amount)
+            locked.stripe_refund_id = refund.id
+            locked.mark_refunded()
+            locked.save(update_fields=["stripe_refund_id", "status", "updated_at"])
+            self.refresh_from_db()
         return self
 
     @transition(
@@ -115,17 +127,22 @@ class RefundRequest(FSMModelMixin, Timestamped):
             error_message = "Meeting request has no payment intent to refund"
             raise ValueError(error_message)
 
-        refund_kwargs = {"payment_intent": payment_intent_id}
+        refund_kwargs: dict[str, Any] = {"payment_intent": payment_intent_id}
+        idempotency_key = f"refund:{self.meeting_request_id}"
         if amount is not None:
             if not stripe_settings.allow_partial_refunds:
                 error_message = "Partial refunds are not enabled"
                 raise ValueError(error_message)
             amount_minor = _to_minor_units(amount)
-            paid = self.meeting_request.price_paid or self.meeting_request.meeting.price
-            if paid is not None and amount_minor > int(paid * 100):
+            paid = self.meeting_request.price_paid
+            if paid is None or paid <= 0:
+                error_message = "Meeting request has no recorded payment to refund"
+                raise ValueError(error_message)
+            if amount_minor > _to_minor_units(paid):
                 error_message = "Refund amount exceeds the amount paid"
                 raise ValueError(error_message)
             refund_kwargs["amount"] = amount_minor
+            idempotency_key = f"{idempotency_key}:{amount_minor}"
 
         peer_profile = getattr(
             self.meeting_request.meeting.peer,
@@ -145,6 +162,7 @@ class RefundRequest(FSMModelMixin, Timestamped):
         )
 
         stripe.api_key = stripe_settings.secret_key
+        refund_kwargs["idempotency_key"] = idempotency_key
         refund = stripe.Refund.create(**refund_kwargs)
         StripeRefund.sync_from_stripe_data(refund, api_key=stripe_settings.secret_key)
         return refund

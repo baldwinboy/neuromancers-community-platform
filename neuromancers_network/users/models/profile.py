@@ -27,6 +27,7 @@ class UserProfile(index.Indexed, Timestamped):
         blank=True,
         db_index=True,
     )
+    bio = models.TextField(_("Bio"), blank=True)
     access_needs = models.TextField(
         _("Access needs"),
         blank=True,

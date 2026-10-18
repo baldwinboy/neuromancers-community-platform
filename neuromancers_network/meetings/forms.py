@@ -33,7 +33,7 @@ class PricingTypeSelect(forms.Select):
         if value == PricingType.DURATION_TIERS:
             option["attrs"].update(
                 {
-                    "data-w-rules-target": "show",
+                    "data-w-rules-target": "show enable",
                     "data-w-rules": json.dumps({"meeting_type": ["1:1"]}),
                 },
             )

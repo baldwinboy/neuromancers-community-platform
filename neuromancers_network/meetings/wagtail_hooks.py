@@ -78,7 +78,7 @@ class MeetingViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
                 heading=_("Schedule & capacity"),
                 classname="collapsed",
                 attrs={
-                    "data-w-rules-target": "show",
+                    "data-w-rules-target": "show enable",
                     "data-w-rules": json.dumps(
                         {
                             "meeting_type": ["group"],
@@ -93,7 +93,7 @@ class MeetingViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
                     InlinePanel(
                         "price_tiers",
                         attrs={
-                            "data-w-rules-target": "show",
+                            "data-w-rules-target": "show enable",
                             "data-w-rules": json.dumps(
                                 {
                                     "pricing_type": ["duration_tiers"],
@@ -106,7 +106,7 @@ class MeetingViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
                     FieldPanel(
                         "price",
                         attrs={
-                            "data-w-rules-target": "show",
+                            "data-w-rules-target": "show enable",
                             "data-w-rules": json.dumps(
                                 {
                                     "pricing_type": ["fixed", "per_hour"],
@@ -122,7 +122,7 @@ class MeetingViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
                         ],
                         heading=_("Sliding scale"),
                         attrs={
-                            "data-w-rules-target": "show",
+                            "data-w-rules-target": "show enable",
                             "data-w-rules": json.dumps(
                                 {
                                     "pricing_type": ["sliding_scale"],

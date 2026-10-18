@@ -185,12 +185,14 @@ def _anonymize(user) -> None:
     if profile is not None:
         profile.access_needs = ""
         profile.access_needs_templates = []
+        profile.bio = ""
         profile.profile_picture_url = ""
         profile.profile_picture_getpronto_id = ""
         profile.save(
             update_fields=[
                 "access_needs",
                 "access_needs_templates",
+                "bio",
                 "profile_picture_url",
                 "profile_picture_getpronto_id",
                 "updated_at",

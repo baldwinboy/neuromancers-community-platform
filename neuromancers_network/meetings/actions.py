@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import logging
+
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
+from django.utils.translation import gettext_lazy as _
 from django_fsm import can_proceed
 
 from neuromancers_network.core.actions import as_bool
@@ -26,6 +30,8 @@ from neuromancers_network.meetings.services import default_terms_for
 from neuromancers_network.meetings.services import delete_all
 from neuromancers_network.meetings.services import publish_meeting
 from neuromancers_network.meetings.services import unpublish_all
+
+logger = logging.getLogger(__name__)
 
 _ALLOWED_MEETING_FIELDS = {
     "title",
@@ -197,15 +203,43 @@ def bookings_checkout_many(request, data):
     ids = as_list(data, "bookings") or as_list(data, "booking_ids")
     if not ids:
         ids = as_list(data, "booking")
-    bookings = Booking.objects.filter(
-        pk__in=ids,
-        support_seeker=user,
-        status=BookingStatus.PENDING,
+    bookings = list(
+        Booking.objects.filter(
+            pk__in=ids,
+            support_seeker=user,
+            status=BookingStatus.PENDING,
+        ).select_related("meeting"),
     )
-    if not bookings.exists():
+    if not bookings:
         message = "No unpaid bookings were selected"
         raise PermissionDenied(message)
-    return redirect(create_checkout_session_for_bookings(bookings, request))
+    peer_ids = {booking.meeting.peer_id for booking in bookings}
+    currencies = {booking.meeting.currency.upper() for booking in bookings}
+    if len(peer_ids) > 1:
+        messages.error(
+            request,
+            _("Please pay for bookings from one care provider at a time."),
+        )
+        return redirect_back(request)
+    if len(currencies) > 1:
+        messages.error(
+            request,
+            _("Please pay for bookings in one currency at a time."),
+        )
+        return redirect_back(request)
+    try:
+        checkout_url = create_checkout_session_for_bookings(bookings, request)
+    except ValueError as exc:
+        logger.warning("Could not start checkout for user %s: %s", user.pk, exc)
+        messages.error(
+            request,
+            _(
+                "We could not start checkout for these bookings. "
+                "Please try again or contact support.",
+            ),
+        )
+        return redirect_back(request)
+    return redirect(checkout_url)
 
 
 def _host_request(user, data) -> MeetingRequest:

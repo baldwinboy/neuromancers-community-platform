@@ -248,6 +248,9 @@ class MeetingRequest(FSMModelMixin, Timestamped):
         """Create a Checkout Session for this request via the charge strategy."""
         from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
         from neuromancers_network.payments.charges import (  # noqa: PLC0415
+            adaptive_pricing as resolve_adaptive_pricing,
+        )
+        from neuromancers_network.payments.charges import (  # noqa: PLC0415
             build_charge_plan,
         )
         from neuromancers_network.peers.services import (  # noqa: PLC0415
@@ -270,12 +273,11 @@ class MeetingRequest(FSMModelMixin, Timestamped):
             message = "Request is not ready for payment"
             raise ValueError(message)
 
-        amount = self.meeting.price
         if self.requested_duration_minutes:
-            tier_price = self.meeting.price_for(self.requested_duration_minutes)
-            if tier_price is not None:
-                amount = tier_price
-        if amount is None:
+            amount = self.meeting.price_for(self.requested_duration_minutes)
+        else:
+            amount = self.meeting.price
+        if amount is None or amount <= 0:
             message = "Meeting price is required for checkout"
             raise ValueError(message)
 
@@ -292,6 +294,7 @@ class MeetingRequest(FSMModelMixin, Timestamped):
             destination=destination,
             stripe_settings=stripe_settings,
         )
+        adaptive_pricing = resolve_adaptive_pricing(request)
 
         session_kwargs = {
             "mode": "payment",
@@ -311,6 +314,8 @@ class MeetingRequest(FSMModelMixin, Timestamped):
                 "meeting_request_id": str(self.pk),
             },
         }
+        if adaptive_pricing:
+            session_kwargs["adaptive_pricing"] = adaptive_pricing
         if plan.payment_intent_data:
             session_kwargs["payment_intent_data"] = plan.payment_intent_data
         if plan.automatic_tax:
@@ -355,10 +360,10 @@ class MeetingRequest(FSMModelMixin, Timestamped):
             meeting_request=self,
             defaults={"reason": reason},
         )
-        refund_request.reason = reason
-        refund_request.request_refund(amount=amount)
-        refund_request.save()
-        return refund_request
+        if refund_request.reason != reason:
+            refund_request.reason = reason
+            refund_request.save(update_fields=["reason", "updated_at"])
+        return refund_request.request_refund(amount=amount)
 
     def populate_meeting_link(self):
         """

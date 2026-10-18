@@ -14,6 +14,10 @@
 - **No regressions**: every fix/feature ships with tests; `makemigrations
   --check` stays clean; additive schema only.
 - **Bug fixes are test-first**: reproduce with a failing test, then fix.
+- **Tests assert behaviour, not implementation details**: prefer outcomes
+  (statuses, amounts, errors, guards) over mocked call kwargs, exact metadata
+  strings or internal call counts; pure helpers get no-database tests. Keep
+  DB-backed suites lean (they are the slow ones).
 - Failures are explicit and logged with context; no silent fallbacks.
 - Long-running/environment-sensitive commands are **handovers** owned by the human
   or CI (`docker`, long `just` recipes, `uv sync/lock`, full `pytest`,
@@ -61,19 +65,224 @@ Fix before feature work. Every item: failing test → fix → green; no behaviou
 regression. Order within a group is the recommended execution order.
 
 ### 0.1 Commerce & payments (critical)
-- [ ] **Booking never marks its child `MeetingRequest`s paid** — `meetings/signals.py:56-63`, `meetings/models/booking.py:195-244`. Refunds/join/payment-history permanently broken. Mark all sessions paid on `Booking.mark_paid` (idempotent); one source of truth for refunds.
-- [ ] **Multi-booking checkout marks only the first booking paid** — `meetings/signals.py:56-63`. Mark every booking sharing the session id.
-- [ ] **Multi-peer cart only opens the first peer's checkout** — `meetings/models/booking.py:221-244`, `meetings/actions.py:194-208`. Restrict to one peer, or serve all session URLs.
-- [ ] **`MeetingRequest` 1:1 checkout lacks `adaptive_pricing`** — `meetings/models/request.py:270-320` (see B4).
-- [ ] **Partial-refund cap truncation + advertised-price fallback** — `meetings/models/refund.py:124-128`. Use `_to_minor_units(price_paid)`; reject when absent.
-- [ ] **`compute_total` charges £0 for missing tier price** — `meetings/models/booking.py:103-115`. Raise instead of `or Decimal("0")`.
-- [ ] **`price_for` silently falls back to base price** — `meetings/models/meeting.py:425-434`. Return `None` for missing duration-tier price; enforce price invariants.
-- [ ] **Mixed currencies collapsed in a peer cart** — `meetings/models/booking.py:140-164`. Group by `(peer, currency)`; reject cross-currency.
-- [ ] **`adaptive_pricing=None` sent unconditionally** — `meetings/models/booking.py:176-185`. Include only when enabled.
-- [ ] **Refund not concurrency-safe** — `meetings/models/refund.py:56-69`. `select_for_update` + idempotency key.
-- [ ] **SEPARATE charge type never pays the peer / refunds don't reverse** — `payments/charges.py:46-51,87-94`. Implement transfers or remove the mode.
-- [ ] **Checkout success/cancel URLs unroutable** — `payments/services.py:183-184`, `booking.py:179-180`, `request.py:298-299`. Add `/pay/success/` + `/pay/cancelled/` views.
-- [ ] **Application fee banker's rounding** — `payments/charges.py:37-38`. Use `Decimal` half-up.
+
+Ordered units; each is test-first (failing test → fix → green) with handovers.
+
+#### Unit 1 — Per-request line items + Stripe-calculated amounts (Option A)
+
+**Status: complete — green.** (ruff clean; scoped pytest + gates passed.)
+
+**Goal.** Each `MeetingRequest`/`Booking` records the Stripe-calculated amount for
+that specific item, never the combined Checkout Session total. Fixes "booking
+never marks its child requests paid" and "multi-booking marks only the first".
+
+**Confirmed decisions.**
+- **Option A** — one line item per `MeetingRequest`; session-less (group)
+  `Booking`s remain one line item each.
+- Mapping via ordered `metadata["line_item_refs"]` (`"request:<pk>"` /
+  `"booking:<pk>"`), built in lockstep with `line_items`.
+- Mixed-currency peer cart ⇒ raise a clear `ValueError` (real fix = 0.1 M4
+  grouping by `(peer, currency)`).
+- `price_paid` = actual Stripe line-item `amount_total` (minor → major; includes
+  tax/discount/adaptive pricing), never locally recomputed.
+
+**Steps**
+1. [x] `meetings/models/booking.py`
+   - `_line_item` uses each item's own `meeting` for `currency`/`name` (not
+     `peer_bookings[0].meeting`).
+   - `_peer_session_kwargs`: one line item per `MeetingRequest` (amount
+     `meeting.price_for(requested_duration_minutes)` else `meeting.price`; raise on
+     `None`/`<=0`) and one per session-less `Booking`
+     (`total_amount or compute_total()`); build `line_item_refs` in lockstep;
+     store `metadata["line_item_refs"]` (keep `booking_ids`); sum for
+     `build_charge_plan`; set each `Booking.total_amount` to its local item sum.
+   - Raise `ValueError` when a peer group mixes currencies.
+2. [x] `meetings/signals.py` — on `checkout.session.completed`, retrieve line
+   items once (connected-account key, paginated) and map by index to
+   `line_item_refs`:
+   - `request:<pk>` → `price_paid = amount_total/100`, PI/session id,
+     `receipt_url`; mark `PAID` only `if can_proceed`.
+   - `booking:<pk>` → `total_amount = amount_total/100`; mark `PAID` only
+     `if can_proceed`.
+   - Idempotent; on retrieval failure log with context and leave unpaid (no silent
+     fallback; Stripe retry/reconciliation completes).
+   - Subsumes item 2 (all records in the session marked); item 3 (multi-peer
+     redirect) stays out of scope.
+3. [x] `meetings/tests/test_payments.py`
+   - Two requests + a second booking in one session → per-request `price_paid`
+     equals its own line-item amount; booking totals equal their sums, never the
+     session total.
+   - Session-less group booking → booking line item applied.
+   - Replay idempotent. Patch `stripe.checkout.Session.retrieve`/
+     `list_line_items`, `StripeSession.sync_from_stripe_data`, `receipt_url_for`.
+
+**Acceptance.** Per-item amounts are exact and Stripe-calculated; replay-safe; no
+migration and `makemigrations --check` clean.
+
+```
+HANDOVER
+Purpose:   Confirm the new test fails before the fix.
+Command:   just pytest neuromancers_network/meetings/tests/test_payments.py -k PerItemStripeAmounts -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env (DATABASE_URL)
+Expected:  1 failed (pre-fix)
+Blocked on: I implement; you re-run.
+```
+```
+HANDOVER
+Purpose:   Gates after the fix.
+Command:   just manage makemigrations --check --noinput && just manage check && just pytest neuromancers_network/meetings/tests/test_payments.py -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  no changes detected; check clean; tests pass
+Blocked on: I address failures, then pause for review.
+```
+
+#### Unit 2 — Multi-peer cart restriction
+
+**Status: complete — green.** (ruff clean; `TestMultiPeerCart` passed.)
+
+**Goal.** A cart spanning multiple care providers must not silently create
+unreachable sessions; paying is per provider (Stripe direct charges require one
+account per Checkout Session).
+
+**Decision.** Restrict a cart to one peer and surface a clear user-facing message
+when mixed (rather than serving sequential session URLs).
+
+**Steps**
+1. [x] `meetings/models/booking.py` — `create_checkout_session_for_bookings`
+   raises `ValueError` when the bookings span more than one `peer_id` (defence in
+   depth for non-action callers).
+2. [x] `meetings/actions.py` — `bookings_checkout_many` pre-checks the selected
+   bookings' peer ids; on more than one, `messages.error(...)` and
+   `redirect_back(request)` (never a 500). Keep the empty-selection guard.
+3. [x] `meetings/tests/test_payments.py` — mixed-peer selection redirects with an
+   error and creates no Stripe session; the service raises for a mixed-peer list;
+   single-peer checkout is unchanged.
+
+**Acceptance.** No dangling sessions; mixed carts explain themselves; single-peer
+checkout unchanged.
+
+```
+HANDOVER
+Purpose:   Verify Unit 2.
+Command:   just pytest neuromancers_network/meetings/tests/test_payments.py -k MultiPeerCart -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I address failures.
+```
+
+#### Unit 3 — Pricing correctness
+
+**Status: complete — green.** (ruff clean; `TestComputeTotal` + `TestPricing` passed.)
+
+**Goal.** A missing/unresolvable price must never silently fall back to the base
+price or £0. Applies to duration-tier pricing, 1:1 checkout, and booking totals.
+
+**Steps**
+1. [x] `meetings/models/meeting.py` — `price_for`: for
+   `pricing_type == DURATION_TIERS`, return `None` when no tier/option exists
+   (no `self.price` fallback); keep the fallback for fixed/per-hour/sliding.
+2. [x] `meetings/models/request.py` — `MeetingRequest.create_checkout_session`
+   uses `price_for(requested_duration_minutes)` without the base-price fallback;
+   raise when the amount is `None`/`<=0`.
+3. [x] `meetings/models/booking.py` — `compute_total` reuses `_session_amount`
+   and raises when a session price is unknown; for session-less bookings require
+   a positive `meeting.price` (no `or Decimal("0")`).
+4. [x] `meetings/tests/test_payments.py` — duration-tier with no tier →
+   `price_for` is `None` and `compute_total` raises; fixed pricing still falls
+   back to `meeting.price`; session-less booking with no price raises.
+
+**Acceptance.** No silent £0/wrong-price charges; checkout and totals raise
+`ValueError` for unresolvable prices.
+
+```
+HANDOVER
+Purpose:   Verify Unit 3.
+Command:   just pytest neuromancers_network/meetings/tests/test_payments.py::TestComputeTotal neuromancers_network/meetings/tests/test_payments.py::TestPricing -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I address failures, mark Unit 3 complete, and proceed.
+```
+
+#### Unit 4 — Refund correctness
+
+**Status: complete — green.** (ruff clean; `TestRefundFlow` passed.)
+
+**Goal.** Refund caps use the actual paid amount, and concurrent/duplicate refund
+attempts cannot issue two Stripe refunds.
+
+**Steps**
+1. [x] `meetings/models/refund.py` — partial-refund cap uses
+   `meeting_request.price_paid` + `_to_minor_units` (no advertised-price
+   fallback); raise when no recorded payment.
+2. [x] `meetings/models/refund.py` — `request_refund` serialises with
+   `select_for_update`; `issue_stripe_refund` sends a stable Stripe
+   `idempotency_key` (`refund:<meeting_request_id>[:<amount_minor>]`).
+   `MeetingRequest.request_refund` persists `reason` before processing and no
+   longer performs a redundant stale `save()`.
+3. [x] `meetings/tests/test_payments.py` — partial refund without recorded
+   payment raises; the Stripe call carries the idempotency key; a second request
+   does not re-issue a refund.
+
+**Acceptance.** No refund can exceed the recorded payment; duplicate requests are
+idempotent at Stripe and locally.
+
+```
+HANDOVER
+Purpose:   Verify Unit 4.
+Command:   just pytest neuromancers_network/meetings/tests/test_payments.py::TestRefundFlow -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I proceed to the next remaining 0.1 unit.
+```
+
+#### Unit 5 — Commerce hardening (remaining 0.1)
+
+**Status: complete — green.** (ruff clean; scoped tests + gates passed; tests
+trimmed to behaviour-only, with pure helpers covered by no-DB tests.)
+
+**Goal.** Adaptive pricing on 1:1, conditional `adaptive_pricing`, per-currency
+grouping, retire the broken SEPARATE mode, routable checkout return pages,
+half-up fee rounding; close the Unit 1 test gaps.
+
+**Steps**
+1. [x] 1:1 checkout sends `adaptive_pricing` when the exchange-rate source is
+   Stripe (`meetings/models/request.py`; shared `charges.adaptive_pricing`).
+2. [x] `adaptive_pricing` is only included in Checkout kwargs when enabled
+   (`meetings/models/booking.py`).
+3. [x] Carts are grouped by `(peer, currency)`; the service and action reject
+   mixed peer/currency with clear errors/messages.
+4. [x] `SEPARATE` removed from `StripeSettings.ChargeType`; migration
+   `core/0011` maps `separate` → `direct`; charge/refund helpers use
+   direct/destination only.
+5. [x] Added `/pay/success/` + `/pay/cancelled/` views, templates and routes.
+6. [x] Application fee uses `Decimal` half-up rounding.
+7. [x] Closed Unit 1 test gaps: multiple bookings in one session; replay
+   idempotency; conditional adaptive-pricing key.
+
+**Acceptance.** A cart charges one peer/currency; 1:1 and booking checkouts send
+adaptive pricing only when configured; the retired mode cannot be selected; post-
+payment redirects resolve; fee rounding is half-up.
+
+```
+HANDOVER
+Purpose:   Verify Unit 5 (and the hand-written migration).
+Command:   just manage makemigrations --check --noinput && just manage check
+           just pytest neuromancers_network/meetings/tests/test_payments.py::TestPerItemStripeAmounts neuromancers_network/meetings/tests/test_payments.py::TestCreateRequestCheckoutSession neuromancers_network/meetings/tests/test_payments.py::TestMultiPeerCart neuromancers_network/meetings/tests/test_payment_logic.py -q
+           just pytest neuromancers_network/payments/tests/test_charges.py neuromancers_network/inbox/tests/test_signals.py -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  no changes detected; check clean; tests pass
+Blocked on: I close 0.1 and proceed to 0.2.
+```
+(If `makemigrations --check` reports drift, run `just manage makemigrations core`
+and paste the diff for review; apply with `just manage migrate`.)
+
+**0.1 status:** complete once Unit 5 is green (Units 1–5).
 
 ### 0.2 Meetings lifecycle & scheduled tasks
 - [ ] **`generate_recurring_group_meetings` non-idempotent / duplicates / constraint crash** — `meetings/tasks.py:85-141`, `meetings/models/meeting.py:199-205`. Series FK, `get_or_create` on `(rule, scheduled_at)`, filter `status=PUBLISHED`, fix advance + title.

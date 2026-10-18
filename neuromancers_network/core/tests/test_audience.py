@@ -103,7 +103,7 @@ class TestMeetingPredicates:
     def test_host(self, rf):
         peer = make_peer()
         meeting = create_meeting(peer=peer)
-        request = make_request(rf, peer, {"pk": meeting.pk})
+        request = make_request(rf, peer, {"meeting_pk": meeting.pk})
 
         assert audience.is_meeting_host(request) is True
         assert audience.is_meeting_participant(request) is True
@@ -111,7 +111,7 @@ class TestMeetingPredicates:
     def test_non_host(self, rf):
         peer = make_peer()
         meeting = create_meeting(peer=peer)
-        request = make_request(rf, UserFactory(), {"pk": meeting.pk})
+        request = make_request(rf, UserFactory(), {"meeting_pk": meeting.pk})
 
         assert audience.is_meeting_host(request) is False
 

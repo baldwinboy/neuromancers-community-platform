@@ -7,6 +7,8 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from neuromancers_network.core.views.calendar import CalendarFeedView
+from neuromancers_network.meetings.views import PaymentCancelledView
+from neuromancers_network.meetings.views import PaymentSuccessView
 from neuromancers_network.moderation.views import DataExportDownloadView
 
 from .api import api
@@ -34,6 +36,17 @@ urlpatterns = [
         "calendar/<uuid:token>.ics",
         CalendarFeedView.as_view(),
         name="calendar_feed",
+    ),
+    # Stripe Checkout return pages
+    path(
+        "pay/success/",
+        PaymentSuccessView.as_view(),
+        name="payment_success",
+    ),
+    path(
+        "pay/cancelled/",
+        PaymentCancelledView.as_view(),
+        name="payment_cancelled",
     ),
     # App-owned settings section forms (loaded by the Settings page tabs)
     path("settings/forms/", include("neuromancers_network.users.settings")),

@@ -431,4 +431,6 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
         option = options.filter(is_default=True).first() or options.first()
         if option is not None:
             return option.amount
+        if self.pricing_type == PricingType.DURATION_TIERS:
+            return None
         return self.price

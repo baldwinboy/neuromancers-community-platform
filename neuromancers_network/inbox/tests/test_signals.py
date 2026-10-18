@@ -88,7 +88,7 @@ class TestRefundEvents:
     def test_immediate_refund_emits_requested_and_refunded(self):
         StripeSettings.objects.create(
             secret_key="sk_test_123",  # noqa: S106
-            charge_type=StripeSettings.ChargeType.SEPARATE,
+            charge_type=StripeSettings.ChargeType.DESTINATION,
         )
         meeting = make_meeting(
             UserFactory(),

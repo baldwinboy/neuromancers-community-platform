@@ -10,10 +10,7 @@
   {% endif %}
 {% endblock title %}
 {% block content %}
-  <article class="prose mx-auto max-w-3xl py-8">
-    <h1 class="text-4xl font-bold">{{ page.title }}</h1>
-    {% for block in page.body %}
-      {% include_block block %}
-    {% endfor %}
-  </article>
+  {% for block in page.body %}
+    {% include_block block %}
+  {% endfor %}
 {% endblock content %}

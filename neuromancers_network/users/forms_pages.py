@@ -7,7 +7,7 @@ from modelcluster.fields import ParentalKey
 from wagtail_daisIE.forms.fields import DaisieFormField
 from wagtail_daisIE.forms.models import DaisieFormPage
 
-_PROFILE_FIELDS = ("access_needs", "visibility", "timezone", "country")
+_PROFILE_FIELDS = ("bio", "access_needs", "visibility", "timezone", "country")
 
 
 def _as_list(value) -> list:

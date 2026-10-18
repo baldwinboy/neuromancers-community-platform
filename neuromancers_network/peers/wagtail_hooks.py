@@ -123,6 +123,7 @@ class UserProfileViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     panels = [
         FieldPanel("user"),
         FieldPanel("visibility"),
+        FieldPanel("bio"),
         FieldPanel("access_needs"),
         FieldPanel("access_needs_visible_to_peer"),
     ]
