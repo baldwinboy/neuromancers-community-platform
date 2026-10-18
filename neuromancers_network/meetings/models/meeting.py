@@ -222,11 +222,23 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
     def __str__(self):
         return self.title
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_scheduled_at = self.scheduled_at
+        self._original_status = self.status
+
     def save(self, *args, **kwargs):
         validate = kwargs.pop("validate", True)
         if validate:
             self.full_clean()
         super().save(*args, **kwargs)
+        self._original_scheduled_at = self.scheduled_at
+        self._original_status = self.status
+
+    def refresh_from_db(self, *args, **kwargs):
+        super().refresh_from_db(*args, **kwargs)
+        self._original_scheduled_at = self.scheduled_at
+        self._original_status = self.status
 
     @property
     def requires_approval(self) -> bool:
@@ -314,8 +326,20 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
                 errors["scheduled_at"] = _("Group meetings must have a start time.")
             if not self.duration_minutes:
                 errors["duration_minutes"] = _("Group meetings must have a duration.")
-            if self.scheduled_at and self.scheduled_at < timezone.now() + timedelta(
-                minutes=GROUP_MINIMUM_START_AHEAD_MINUTES,
+            schedule_changed = self._state.adding or self.scheduled_at != getattr(
+                self,
+                "_original_scheduled_at",
+                self.scheduled_at,
+            )
+            publishing = (
+                self.status == MeetingStatus.PUBLISHED
+                and self.status != getattr(self, "_original_status", self.status)
+            )
+            if (
+                self.scheduled_at
+                and (schedule_changed or publishing)
+                and self.scheduled_at
+                < timezone.now() + timedelta(minutes=GROUP_MINIMUM_START_AHEAD_MINUTES)
             ):
                 errors["scheduled_at"] = _(
                     "Group meetings must start at least 30 minutes in the future.",

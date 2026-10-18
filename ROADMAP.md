@@ -415,8 +415,36 @@ Expected:  pass
 Blocked on: I mark Unit 4 complete and proceed.
 ```
 
+#### Unit 5 — Editing near the start time
+
+**Status: complete — green.** (`TestMeetingSchedulingWindow` passed.)
+
+**Goal.** Editing a published group meeting inside the 30-minute window must work;
+the future-start rule applies only when the schedule changes or the meeting is
+published.
+
+**Steps**
+1. [x] `meetings/models/meeting.py` — track the loaded schedule/status
+   (`__init__`, `save`, `refresh_from_db`); `clean()` enforces the lead time only
+   when the schedule changed or the status is moving to published.
+2. [x] `meetings/tests/test_meetings.py` — editing inside the window succeeds;
+   moving the schedule into the window is rejected; publishing inside the window
+   is rejected.
+
+**Acceptance.** Unrelated edits near the start time save; unsafe schedule changes
+and publishes still fail.
+
+```
+HANDOVER
+Purpose:   Verify Unit 5.
+Command:   just pytest neuromancers_network/meetings/tests/test_meetings.py::TestMeetingSchedulingWindow -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I mark Unit 5 complete and proceed.
+```
+
 #### Remaining 0.2 units
-- [ ] **`Meeting.save()` full_clean blocks edits within 30 min of start** — `meetings/models/meeting.py:216-220,303-313`. Apply future rule only on schedule change/publish.
 - [ ] **Inbox reminder tasks unscheduled; skip groups; no status filter** — `inbox/tasks.py:26-163`. Schedule; cover group bookings; filter status.
 - [ ] **Calendar events for unapproved/non-live; not removed on cancel** — `peers/calendar.py:81-119`. Materialise only APPROVED/PAID + PUBLISHED; remove on exit.
 - [ ] **ICS feed includes cancelled/refunded** — `core/views/calendar.py:21-25`, `core/ical.py:35-45`. Filter to active statuses.

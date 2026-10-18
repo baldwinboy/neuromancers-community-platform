@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -503,3 +504,50 @@ class TestMeetingDeletion:
             event_type="booking_cancelled",
             event_ref=f"meetingrequest.{request.pk}.cancel",
         ).exists()
+
+
+class TestMeetingSchedulingWindow:
+    def _group(self, *, scheduled_at):
+        meeting = Meeting(
+            peer=make_peer(),
+            title="Scheduling window",
+            description="Test",
+            meeting_type=MeetingType.GROUP,
+            pricing_type=PricingType.FIXED,
+            price=5,
+            approval_policy=ApprovalPolicy.PAY_AFTER_JOIN,
+            currency="GBP",
+            scheduled_at=scheduled_at,
+            duration_minutes=60,
+            max_participants=5,
+            status=MeetingStatus.DRAFT,
+        )
+        meeting.save(validate=False)
+        return meeting
+
+    def test_editing_within_window_is_allowed(self):
+        meeting = self._group(scheduled_at=timezone.now() + timedelta(days=1))
+        Meeting.objects.filter(pk=meeting.pk).update(
+            scheduled_at=timezone.now() + timedelta(minutes=10),
+        )
+        meeting.refresh_from_db()
+
+        meeting.description = "Updated description"
+        meeting.save()
+
+        meeting.refresh_from_db()
+        assert meeting.description == "Updated description"
+
+    def test_moving_schedule_into_window_is_rejected(self):
+        meeting = self._group(scheduled_at=timezone.now() + timedelta(days=1))
+        meeting.scheduled_at = timezone.now() + timedelta(minutes=10)
+
+        with pytest.raises(ValidationError, match="at least 30 minutes"):
+            meeting.save()
+
+    def test_publishing_within_window_is_rejected(self):
+        meeting = self._group(scheduled_at=timezone.now() + timedelta(minutes=10))
+        meeting.publish()
+
+        with pytest.raises(ValidationError, match="at least 30 minutes"):
+            meeting.save(update_fields=["status", "updated_at"])
