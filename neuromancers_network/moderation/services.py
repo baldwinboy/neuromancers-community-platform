@@ -178,13 +178,20 @@ def _disconnect_stripe(user) -> None:
 
 
 def _anonymize(user) -> None:
-    """Erase direct identifiers, keeping the row for financial records."""
+    """Erase direct identifiers and privilege, keeping the row for records."""
+    from neuromancers_network.users.models.choices import StaffState  # noqa: PLC0415
+
     user.username = f"deleted-{user.pk}"
     user.email = f"deleted-{user.pk}@deleted.invalid"
     user.name = ""
     user.date_of_birth = None
     user.accepted_tos = False
     user.is_active = False
+    user.deactivation_reason = ""
+    user.username_changed_at = None
+    user.email_changed_at = None
+    user.is_superuser = False
+    user.__dict__["staff_state"] = StaffState.INACTIVE
     user.save(
         update_fields=[
             "username",
@@ -193,6 +200,11 @@ def _anonymize(user) -> None:
             "date_of_birth",
             "accepted_tos",
             "is_active",
+            "deactivation_reason",
+            "username_changed_at",
+            "email_changed_at",
+            "is_superuser",
+            "staff_state",
         ],
     )
 
@@ -221,11 +233,58 @@ def _anonymize(user) -> None:
     if peer_profile is not None:
         peer_profile.bio = ""
         peer_profile.default_terms = ""
-        peer_profile.save(update_fields=["bio", "default_terms", "updated_at"])
+        peer_profile.default_terms_updated_at = None
+        peer_profile.terms_templates = []
+        peer_profile.provider_agreement_accepted_at = None
+        peer_profile.provider_agreement_version = ""
+        peer_profile.is_approved = False
+        peer_profile.approved_by = None
+        peer_profile.approved_at = None
+        peer_profile.is_verified = False
+        peer_profile.verified_by = None
+        peer_profile.verified_at = None
+        peer_profile.save(
+            update_fields=[
+                "bio",
+                "default_terms",
+                "default_terms_updated_at",
+                "terms_templates",
+                "provider_agreement_accepted_at",
+                "provider_agreement_version",
+                "is_approved",
+                "approved_by",
+                "approved_at",
+                "is_verified",
+                "verified_by",
+                "verified_at",
+                "updated_at",
+            ],
+        )
+
+    _scrub_payment_customer(user)
+
+
+def _scrub_payment_customer(user) -> None:
+    """Clear PII held on the local dj-stripe customer and payment profile."""
+    payment_profile = getattr(user, "payment_profile", None)
+    if payment_profile is None:
+        return
+    customer = getattr(payment_profile, "stripe_customer_id", None)
+    if customer is not None:
+        data = dict(customer.stripe_data or {})
+        for key in ("name", "email", "phone", "address", "shipping", "description"):
+            data.pop(key, None)
+        customer.email = ""
+        customer.stripe_data = data
+        customer.save(update_fields=["email", "stripe_data"])
+    payment_profile.kyc_completed = False
+    payment_profile.save(update_fields=["kyc_completed", "updated_at"])
 
 
 def purge_account(user, *, actor=None, request=None) -> None:
     """Anonymise *user* now, record a re-registration cooldown and audit it."""
+    if user.username == f"deleted-{user.pk}":
+        return  # already anonymised — never re-hash placeholder identities
     original_email = user.email
     original_username = user.username
 

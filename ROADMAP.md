@@ -672,8 +672,36 @@ Expected:  pass
 Blocked on: I mark Unit 4 complete and proceed.
 ```
 
+#### Unit 5 — Anonymisation completeness
+
+**Status: complete — green.** (`TestPurge` passed.)
+
+**Goal.** Purging erases residual PII and privilege, and is idempotent.
+
+**Steps**
+1. [x] `moderation/services.py` — `_anonymize` also clears
+   `deactivation_reason`, username/email change stamps, superuser/staff state,
+   peer terms/provider agreement/approval/verification, and scrubs the local
+   dj-stripe customer (`email` + `stripe_data` PII); `updated_at` included.
+2. [x] `moderation/services.py` — `purge_account` returns early when the user is
+   already anonymised (no duplicate `DeletedIdentity` rows).
+3. [x] `moderation/tests/test_deletion.py` — residual identity/privilege scrub
+   and idempotency tests.
+
+**Acceptance.** No residual PII/privilege on the user, peer profile or local
+Stripe customer; repeated purges are no-ops.
+
+```
+HANDOVER
+Purpose:   Verify Unit 5.
+Command:   just pytest neuromancers_network/moderation/tests/test_deletion.py::TestPurge -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I mark Unit 5 complete and proceed.
+```
+
 #### Remaining 0.3 units
-- [ ] **Anonymisation residual PII/privilege** — `moderation/services.py:162-206`. Scrub payment customer, `deactivation_reason`, staff flags; include `updated_at`; idempotent.
 - [ ] **`purge_due_accounts` no error isolation/transaction** — `moderation/services.py:245-256`.
 - [ ] **Signup quarantine emits `account_created`/email before deactivation** — `users/forms.py:51-79`. Set inactive before save/emission.
 - [ ] Low: `active_session_keys` unbounded; `DeletedIdentity` never swept.

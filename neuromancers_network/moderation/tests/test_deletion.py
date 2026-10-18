@@ -14,7 +14,10 @@ from neuromancers_network.moderation.services import cancel_account_deletion
 from neuromancers_network.moderation.services import purge_account
 from neuromancers_network.moderation.services import purge_due_accounts
 from neuromancers_network.moderation.services import request_account_deletion
+from neuromancers_network.users.models import UserProfile
+from neuromancers_network.users.models.choices import StaffState
 from neuromancers_network.users.tests.factories import PaymentProfileFactory
+from neuromancers_network.users.tests.factories import PeerProfileFactory
 from neuromancers_network.users.tests.factories import PeerSubscriptionFactory
 from neuromancers_network.users.tests.factories import UserFactory
 
@@ -105,6 +108,76 @@ class TestPurge:
         purge_account(user)
 
         assert type(user).objects.filter(pk=user_pk).exists()
+
+    def test_scrubs_residual_identity_and_privilege(self):
+        moderator = UserFactory(staff_state=StaffState.ACTIVE)
+        user = UserFactory(
+            staff_state=StaffState.ACTIVE,
+            deactivation_reason="personal",
+        )
+        user.username_changed_at = timezone.now()
+        user.email_changed_at = timezone.now()
+        user.save(update_fields=["username_changed_at", "email_changed_at"])
+        UserProfile.objects.update_or_create(
+            user=user,
+            defaults={"access_needs": "needs", "bio": "member bio"},
+        )
+        peer_profile = PeerProfileFactory(user=user)
+        peer_profile.is_approved = True
+        peer_profile.approved_by = moderator
+        peer_profile.approved_at = timezone.now()
+        peer_profile.is_verified = True
+        peer_profile.verified_by = moderator
+        peer_profile.verified_at = timezone.now()
+        peer_profile.provider_agreement_accepted_at = timezone.now()
+        peer_profile.provider_agreement_version = "1"
+        peer_profile.default_terms = "terms"
+        peer_profile.terms_templates = [{"name": "Template", "body": "Body"}]
+        peer_profile.save()
+        payment_profile = PaymentProfileFactory(
+            user=user,
+            stripe_connect_account_id=None,
+        )
+        customer = payment_profile.stripe_customer_id
+        customer.email = "pii@example.com"
+        customer.stripe_data = {
+            **(customer.stripe_data or {}),
+            "name": "PII Name",
+            "address": {"line1": "1 Road"},
+        }
+        customer.save()
+        request_account_deletion(user)
+
+        purge_account(user)
+
+        user.refresh_from_db()
+        peer_profile.refresh_from_db()
+        payment_profile.refresh_from_db()
+        customer.refresh_from_db()
+        assert user.deactivation_reason == ""
+        assert user.username_changed_at is None
+        assert user.email_changed_at is None
+        assert user.is_superuser is False
+        assert user.is_staff is False
+        assert peer_profile.terms_templates == []
+        assert peer_profile.provider_agreement_accepted_at is None
+        assert peer_profile.provider_agreement_version == ""
+        assert peer_profile.is_approved is False
+        assert peer_profile.approved_by is None
+        assert peer_profile.is_verified is False
+        assert peer_profile.verified_by is None
+        assert payment_profile.kyc_completed is False
+        assert customer.email == ""
+        assert "name" not in customer.stripe_data
+        assert "address" not in customer.stripe_data
+
+    def test_purge_is_idempotent(self):
+        user = UserFactory()
+
+        purge_account(user)
+        purge_account(user)
+
+        assert DeletedIdentity.objects.count() == 1
 
     def test_purge_due_accounts_only_purges_due(self):
         due_user = UserFactory()
