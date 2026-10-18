@@ -7,6 +7,7 @@ from __future__ import annotations
 import pytest
 from django.core.management import call_command
 
+from neuromancers_network.core.help_seed import load_help_spec
 from neuromancers_network.core.models import HelpArticle
 from neuromancers_network.core.models import HelpCategory
 
@@ -28,3 +29,15 @@ def test_seed_help_guide_is_idempotent_and_renders_body():
 
     assert HelpArticle.objects.count() == article_count
     assert HelpCategory.objects.count() == category_count
+
+
+def test_identity_articles_exist_and_getpronto_is_not_a_video_provider():
+    spec = load_help_spec()
+    articles = {article["slug"]: article for article in spec["articles"]}
+
+    assert "requests-bookings-and-sessions" in articles
+    assert "provider-overview-whereby-daily-getpronto-stripe" in articles
+
+    video = articles["video-providers-whereby-getpronto-daily"]
+    body = " ".join(entry["value"]["text"] for entry in video["body"])
+    assert "not a video provider" in body

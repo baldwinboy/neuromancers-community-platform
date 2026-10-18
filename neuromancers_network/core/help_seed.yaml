@@ -1083,16 +1083,24 @@ articles:
     sort_order: 4
     is_published: true
 
-  - title: "Video providers: Whereby, GetPronto, Daily"
+  - title: "Meeting providers: Whereby and Daily"
     slug: video-providers-whereby-getpronto-daily
     category: developers-operators
     kind: reference
     audience: developer
-    summary: Meeting-room providers and how links are generated.
+    summary: The two video room providers and how join links are generated.
     body:
       - type: rich_text
         text: |-
-          <p>Meetings happen in a video room provided by an integration. <strong>Whereby</strong> and <strong>Daily</strong> are the selectable providers, and <strong>GetPronto</strong> can be used for its API. A <strong>room prefix</strong> is applied to generated room names. When a meeting is created the platform builds its room link automatically, so members receive a working join link without manual setup.</p>
+          <p>Meetings happen in a video room provided by an integration. <strong>Whereby</strong> and <strong>Daily</strong> are the only selectable meeting providers; choose one in <strong>Integration Settings</strong>. A <strong>room prefix</strong> is applied to generated room names. When a meeting is approaching, the platform creates the room automatically and sends members a working join link.</p>
+      - type: header
+        text: Join links
+      - type: rich_text
+        text: |-
+          <p>Join links only open shortly before the session starts (see <strong>Join window lead</strong> in Integration Settings) and close when the session ends. Hosts receive a host link; guests receive a guest link. Daily rooms are private and each link carries a short-lived meeting token, so a copied link cannot be reused outside its window. Whereby host links are fetched on demand and cached briefly.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>GetPronto</strong> is not a video provider. It handles file and image uploads, such as member avatars and downloaded data exports. See the provider overview for how each integration fits together.</p>
     steps: []
     sort_order: 5
     is_published: true
@@ -1151,6 +1159,69 @@ articles:
           <p>The platform's key terms are defined in the glossary section of this guide. Each term has a short, plain-language definition.</p>
     steps: []
     sort_order: 9
+    is_published: true
+
+  - title: Requests, bookings and sessions
+    slug: requests-bookings-and-sessions
+    category: care-seekers
+    kind: reference
+    audience: seeker
+    summary: How a request to join differs from a confirmed purchase.
+    body:
+      - type: rich_text
+        text: |-
+          <p>There are two ways to arrange support, and they record different things.</p>
+      - type: header
+        text: A booking
+      - type: rich_text
+        text: |-
+          <p>A <strong>booking</strong> is a confirmed purchase of one or more sessions of a meeting. It captures the payment, the total amount and the access needs for that purchase. When you pay for a booking, Stripe processes one line item per session, and the booking shows the amount actually charged.</p>
+      - type: header
+        text: A meeting request
+      - type: rich_text
+        text: |-
+          <p>A <strong>meeting request</strong> is one session within a booking, or a request to join a group meeting. It records the requested start time and duration, the price paid for that specific session, and its own status (pending approval, pending payment, approved, paid, completed or cancelled). Refund requests attach to a meeting request, because a refund is issued for a specific session's payment.</p>
+      - type: header
+        text: Why both exist
+      - type: rich_text
+        text: |-
+          <p>The booking is the purchase; the meeting requests are the individual sessions inside it. A group booking may contain several sessions at different times, each with its own payment record. This separation is what lets the platform refund or complete one session without disturbing the others.</p>
+    steps: []
+    sort_order: 10
+    is_published: true
+
+  - title: "Provider overview: Whereby, Daily, GetPronto and Stripe"
+    slug: provider-overview-whereby-daily-getpronto-stripe
+    category: developers-operators
+    kind: reference
+    audience: developer
+    summary: What each external integration does and where it is configured.
+    body:
+      - type: rich_text
+        text: |-
+          <p>Each integration has one job. Configure them in the Wagtail admin under <strong>Settings</strong>; they are not environment-only secrets.</p>
+      - type: header
+        text: Whereby
+      - type: rich_text
+        text: |-
+          <p>Creates transient video rooms for sessions. Guests join through the stored room URL; hosts join through a host URL fetched from the Whereby API and cached briefly. Choose Whereby as the meeting provider in Integration Settings.</p>
+      - type: header
+        text: Daily
+      - type: rich_text
+        text: |-
+          <p>Creates private, time-boxed video rooms. Every join link includes a short-lived meeting token identifying the member and role, so links cannot be shared outside the join window. Daily is the alternative meeting provider.</p>
+      - type: header
+        text: GetPronto
+      - type: rich_text
+        text: |-
+          <p>Handles file and image storage, including member avatars and uploads attached to forms. GetPronto is <strong>not</strong> a video provider.</p>
+      - type: header
+        text: Stripe
+      - type: rich_text
+        text: |-
+          <p>Processes payments, payouts and subscriptions through Stripe Connect. Providers onboard to an Express connected account, and the platform takes an application fee. Stripe also sends the webhooks that keep payments, refunds and subscriptions in sync.</p>
+    steps: []
+    sort_order: 11
     is_published: true
 
 glossary:
