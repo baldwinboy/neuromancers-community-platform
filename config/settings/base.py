@@ -711,8 +711,8 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "model": "meetings.Booking",
         "source": "url",
         "lookup_field": "pk",
-        "queryset": "neuromancers_network.meetings.selectors.user_bookings",
-        "select_related": ["meeting"],
+        "queryset": "neuromancers_network.meetings.selectors.bookings_for_context",
+        "select_related": ["meeting", "meeting__peer", "support_seeker"],
     },
     "payment_history": {
         "label": _("Payment history"),
@@ -757,6 +757,11 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "model": "meetings.RefundRequest",
         "source": "url",
         "lookup_field": "pk",
+        "queryset": "neuromancers_network.meetings.selectors.refunds_for_context",
+        "select_related": [
+            "meeting_request__meeting",
+            "meeting_request__support_seeker",
+        ],
     },
     "notification_preference": {
         "label": _("Notification preferences"),
@@ -1259,6 +1264,34 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "publish_field": "",
         "title_source": "display_name",
         "slug_source": "username",
+        "on_delete": "page",
+    },
+    "booking": {
+        "label": "Booking",
+        "model": "meetings.Booking",
+        "page_type": "neuromancers_network.core.models.pages.BookingDetailPage",
+        "parent": "neuromancers_network.core.models.pages.HomePage",
+        "template_page": (
+            "neuromancers_network.core.models.pages.BookingDetailTemplate"
+        ),
+        "lookup_field": "pk",
+        "publish_field": "",
+        "title_source": "display_title",
+        "slug_source": "pk",
+        "on_delete": "page",
+    },
+    "refund_request": {
+        "label": "Refund request",
+        "model": "meetings.RefundRequest",
+        "page_type": ("neuromancers_network.core.models.pages.RefundRequestDetailPage"),
+        "parent": "neuromancers_network.core.models.pages.HomePage",
+        "template_page": (
+            "neuromancers_network.core.models.pages.RefundRequestDetailTemplate"
+        ),
+        "lookup_field": "pk",
+        "publish_field": "",
+        "title_source": "display_title",
+        "slug_source": "pk",
         "on_delete": "page",
     },
     "tag": {

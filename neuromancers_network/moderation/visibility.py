@@ -79,6 +79,27 @@ def is_blocked_pair(viewer, owner) -> bool:
     return owner_pk in hidden_user_ids(viewer)
 
 
+def source_participant_ids(source) -> set[int]:
+    """Return the member IDs allowed to see a two-party *source*.
+
+    Bookings are visible to the seeker and the meeting's peer; refund requests
+    to the request's seeker and the meeting's peer. Other sources have none.
+    """
+    if source is None:
+        return set()
+    from neuromancers_network.meetings.models import Booking  # noqa: PLC0415
+    from neuromancers_network.meetings.models import RefundRequest  # noqa: PLC0415
+
+    if isinstance(source, Booking):
+        ids = {source.support_seeker_id, source.meeting.peer_id}
+    elif isinstance(source, RefundRequest):
+        request = source.meeting_request
+        ids = {request.support_seeker_id, request.meeting.peer_id}
+    else:
+        return set()
+    return {pk for pk in ids if pk is not None}
+
+
 def source_owner(source):
     """Return the member who owns *source*, or ``None``.
 
@@ -158,11 +179,14 @@ def viewer_can_view_source(source, viewer) -> bool:  # noqa: PLR0911
     """
     if source is None:
         return True
+    if _is_moderator(viewer):
+        return True
+    participants = source_participant_ids(source)
+    if participants:
+        return _is_authenticated(viewer) and viewer.pk in participants
     owner = source_owner(source)
     if owner is None:
         return source_is_public(source)
-    if _is_moderator(viewer):
-        return True
     if viewer is not None and getattr(viewer, "pk", None) == owner.pk:
         return True
     if not source_is_public(source):

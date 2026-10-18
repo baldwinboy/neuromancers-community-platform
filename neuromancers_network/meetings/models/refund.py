@@ -52,6 +52,10 @@ class RefundRequest(FSMModelMixin, Timestamped):
     peer_response = models.TextField(_("Peer response"), blank=True)
 
     @property
+    def display_title(self) -> str:
+        return f"Refund #{self.pk}"
+
+    @property
     def needs_approval(self) -> bool:
         return self.meeting_request.meeting.refund_requires_approval
 

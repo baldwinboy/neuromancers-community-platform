@@ -18,7 +18,7 @@
             hx-trigger="change, input changed delay:400ms from:find input[type='search']">
         <input type="hidden" name="block" value="{{ block.id }}" />
         <input type="hidden" name="offset" value="0" />
-        {% if page_feed and host_page %}
+        {% if host_page %}
           <input type="hidden" name="page" value="{{ host_page.pk }}" />
         {% endif %}
         {% if page_feed and tag_options %}

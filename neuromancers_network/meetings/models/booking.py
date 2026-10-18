@@ -65,6 +65,10 @@ class Booking(FSMModelMixin, Timestamped):
     def __str__(self):
         return f"Booking #{self.pk} for {self.meeting}"
 
+    @property
+    def display_title(self) -> str:
+        return f"Booking #{self.pk}"
+
     @transition(
         field=status,
         source=BookingStatus.PENDING,

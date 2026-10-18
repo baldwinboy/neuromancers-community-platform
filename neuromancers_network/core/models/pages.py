@@ -6,6 +6,7 @@ from taggit.managers import TaggableManager
 from wagtail.admin.panels import FieldPanel
 from wagtail.search import index
 from wagtail_daisIE.detail_pages.models import ModelDetailPage
+from wagtail_daisIE.detail_pages.models import ModelDetailTemplate
 from wagtail_daisIE.pages import StyledPageMixin
 
 from neuromancers_network.core.models.tag import StandardPageTag
@@ -126,6 +127,8 @@ class HomePage(ReservedSlugPage):
         "meetings.ReviewFormPage",
         "users.ProfileEditFormPage",
         "moderation.SupportFormPage",
+        "core.BookingDetailTemplate",
+        "core.RefundRequestDetailTemplate",
     ]
 
 
@@ -239,6 +242,30 @@ class PeerProfileDetailPage(SourceBoundDetailPage):
 
 class ReviewDetailPage(SourceBoundDetailPage):
     parent_page_types = ["core.ReviewIndexPage"]
+    subpage_types: list[str] = []
+
+
+class BookingDetailTemplate(ModelDetailTemplate):
+    """Shared (non-navigable) design for generated booking pages."""
+
+    parent_page_types = ["core.HomePage"]
+    subpage_types: list[str] = []
+
+
+class RefundRequestDetailTemplate(ModelDetailTemplate):
+    """Shared (non-navigable) design for generated refund pages."""
+
+    parent_page_types = ["core.HomePage"]
+    subpage_types: list[str] = []
+
+
+class BookingDetailPage(SourceBoundDetailPage):
+    parent_page_types: list[str] = []
+    subpage_types: list[str] = []
+
+
+class RefundRequestDetailPage(SourceBoundDetailPage):
+    parent_page_types: list[str] = []
     subpage_types: list[str] = []
 
 
