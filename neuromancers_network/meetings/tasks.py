@@ -1,7 +1,10 @@
+import logging
 from datetime import timedelta
 
 from celery import shared_task
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -50,18 +53,42 @@ def populate_pending_group_meeting_links():
 
 @shared_task
 def mark_completed_sessions():
-    """Mark paid sessions whose start time has passed as completed."""
+    """Mark paid sessions completed once their scheduled end has passed.
+
+    Uses the request's start/duration when set (1:1), otherwise the meeting's
+    scheduled start/duration (group), and only completes after the end time.
+    """
+    from django.db.models import Q  # noqa: PLC0415
+    from django_fsm import can_proceed  # noqa: PLC0415
+
     from .models import MeetingRequest  # noqa: PLC0415
     from .models import MeetingRequestStatus  # noqa: PLC0415
 
     now = timezone.now()
     sessions = MeetingRequest.objects.filter(
+        Q(requested_start_time__lte=now)
+        | Q(
+            requested_start_time__isnull=True,
+            meeting__scheduled_at__lte=now,
+        ),
         status=MeetingRequestStatus.PAID,
-        requested_start_time__isnull=False,
-        requested_start_time__lt=now,
-    )
+    ).select_related("meeting")
 
-    for session in sessions:
+    for session in sessions.iterator():
+        start = session.requested_start_time or session.meeting.scheduled_at
+        duration = (
+            session.requested_duration_minutes or session.meeting.duration_minutes
+        )
+        if start is None or duration is None:
+            logger.warning(
+                "Paid session %s has no start/duration; cannot complete",
+                session.pk,
+            )
+            continue
+        if start + timedelta(minutes=duration) > now:
+            continue
+        if not can_proceed(session.complete):
+            continue
         session.complete()
         session.save(validate=False, update_fields=["status", "updated_at"])
 

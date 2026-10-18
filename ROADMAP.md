@@ -325,8 +325,38 @@ Expected:  migration created + applied; tests pass
 Blocked on: I review the migration, mark Unit 1 complete, and proceed.
 ```
 
+#### Unit 2 — Session completion
+
+**Status: complete — green.** (`test_tasks.py` passed; migration `meetings/0009`.)
+
+**Goal.** Complete paid sessions after their scheduled end, for 1:1 and group
+meetings, on a beat schedule.
+
+**Steps**
+1. [x] `meetings/tasks.py` — `mark_completed_sessions` uses the request's
+   start/duration when set, else the meeting's scheduled start/duration; only
+   completes after `start + duration`; logs paid rows missing schedule data.
+2. [x] `meetings/migrations/0009` — schedule the task every 5 minutes via
+   `django_celery_beat`, with a reverse that deletes it.
+3. [x] `meetings/tests/test_tasks.py` — 1:1 complete after end; in-progress stays
+   paid; group completes from the meeting schedule; unpaid and schedule-less rows
+   untouched.
+
+**Acceptance.** Completion happens after the session ends for both meeting types;
+the task is scheduled; replays are idempotent.
+
+```
+HANDOVER
+Purpose:   Verify Unit 2.
+Command:   just manage migrate
+           just pytest neuromancers_network/meetings/tests/test_tasks.py -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  migration applied; tests pass
+Blocked on: I mark Unit 2 complete and proceed.
+```
+
 #### Remaining 0.2 units
-- [ ] **`mark_completed_sessions` never scheduled; completes at start; ignores group** — `meetings/tasks.py:51-66`, `migrations/0003_periodic_tasks.py`. Schedule; complete after `start+duration`; cover group.
 - [ ] **Group capacity unenforced; `is_fully_booked` wrong model/status** — `meetings/models/meeting.py:401-410`, `meetings/services.py:197-269`. Enforce under lock against non-cancelled bookings.
 - [ ] **Meeting delete cascades bookings/refunds with no cancel/refund/notify** — `meetings/services.py:92-99`, `meetings/actions.py:127-145`. Cancel+refund+emit before delete.
 - [ ] **`Meeting.save()` full_clean blocks edits within 30 min of start** — `meetings/models/meeting.py:216-220,303-313`. Apply future rule only on schedule change/publish.
