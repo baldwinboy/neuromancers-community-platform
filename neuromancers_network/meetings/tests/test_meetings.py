@@ -1,4 +1,5 @@
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -10,6 +11,7 @@ from django.test import RequestFactory
 from django.utils import timezone
 
 from neuromancers_network.core.models import StripeSettings
+from neuromancers_network.inbox.models import NotificationEventLog
 from neuromancers_network.meetings.actions import bookings_approve
 from neuromancers_network.meetings.actions import bookings_revoke
 from neuromancers_network.meetings.actions import meetings_apply_terms_template
@@ -32,6 +34,7 @@ from neuromancers_network.meetings.services import cancel_and_refund_for_peer
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.services import create_meeting
 from neuromancers_network.meetings.services import delete_all
+from neuromancers_network.meetings.services import delete_meeting
 from neuromancers_network.meetings.services import publish_meeting
 from neuromancers_network.meetings.services import unpublish_all
 from neuromancers_network.meetings.tests.factories import create_meeting as make_meeting
@@ -446,3 +449,57 @@ class TestBulkMeetingServices:
         assert cancelled == 1
         assert paid.status == MeetingRequestStatus.CANCELLED
         assert RefundRequest.objects.filter(meeting_request=paid).exists()
+
+
+class TestMeetingDeletion:
+    def test_delete_meeting_cancels_and_notifies(self):
+        peer = make_peer()
+        request = _paid_request(peer, refund_requires_approval=True)
+        meeting = request.meeting
+
+        delete_meeting(meeting)
+
+        assert not Meeting.objects.filter(pk=meeting.pk).exists()
+        assert NotificationEventLog.objects.filter(
+            event_type="booking_cancelled",
+            event_ref=f"meetingrequest.{request.pk}.cancel",
+        ).exists()
+
+    def test_delete_meeting_refunds_paid_request(self):
+        config = StripeSettings.load()
+        config.secret_key = "sk_test_123"  # noqa: S105
+        config.charge_type = StripeSettings.ChargeType.DESTINATION
+        config.save()
+        peer = make_peer()
+        request = _paid_request(peer, refund_requires_approval=False)
+        meeting = request.meeting
+
+        with (
+            patch(
+                "neuromancers_network.meetings.models.refund.stripe.Refund.create",
+            ) as create_refund,
+            patch(
+                "neuromancers_network.meetings.models.refund."
+                "StripeRefund.sync_from_stripe_data",
+            ),
+        ):
+            create_refund.return_value = SimpleNamespace(id="re_delete")
+            delete_meeting(meeting)
+
+        assert not Meeting.objects.filter(pk=meeting.pk).exists()
+        assert NotificationEventLog.objects.filter(
+            event_type="refund_refunded",
+            payload__meta__meeting_request_id=request.pk,
+        ).exists()
+
+    def test_delete_all_cancels_active_requests(self):
+        peer = make_peer()
+        request = _paid_request(peer, refund_requires_approval=True)
+
+        delete_all(peer)
+
+        assert not Meeting.objects.filter(peer=peer).exists()
+        assert NotificationEventLog.objects.filter(
+            event_type="booking_cancelled",
+            event_ref=f"meetingrequest.{request.pk}.cancel",
+        ).exists()

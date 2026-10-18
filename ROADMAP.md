@@ -385,8 +385,37 @@ Expected:  pass
 Blocked on: I mark Unit 3 complete and proceed.
 ```
 
+#### Unit 4 — Meeting deletion
+
+**Status: complete — green.** (`TestMeetingDeletion` passed.)
+
+**Goal.** Deleting a meeting refunds/cancels its active sessions and notifies the
+seekers before the cascade removes the rows.
+
+**Steps**
+1. [x] `meetings/services.py` — shared `_cancel_and_refund_requests`; add
+   `cancel_and_refund_for_meeting`; `delete_meeting` cancels/refunds then deletes;
+   `delete_all` does the same for a peer's meetings.
+2. [x] `meetings/actions.py` — `meetings_delete` uses the service
+   (`meetings_delete_all` already uses `delete_all`).
+3. [x] `meetings/tests/test_meetings.py` — deletion cancels and emits
+   `booking_cancelled`; auto-approved refunds emit `refund_refunded`; bulk delete
+   cancels active requests.
+
+**Acceptance.** No paid session is silently dropped on deletion; cancellation
+notifications are emitted before the rows vanish.
+
+```
+HANDOVER
+Purpose:   Verify Unit 4.
+Command:   just pytest neuromancers_network/meetings/tests/test_meetings.py::TestMeetingDeletion -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I mark Unit 4 complete and proceed.
+```
+
 #### Remaining 0.2 units
-- [ ] **Meeting delete cascades bookings/refunds with no cancel/refund/notify** — `meetings/services.py:92-99`, `meetings/actions.py:127-145`. Cancel+refund+emit before delete.
 - [ ] **`Meeting.save()` full_clean blocks edits within 30 min of start** — `meetings/models/meeting.py:216-220,303-313`. Apply future rule only on schedule change/publish.
 - [ ] **Inbox reminder tasks unscheduled; skip groups; no status filter** — `inbox/tasks.py:26-163`. Schedule; cover group bookings; filter status.
 - [ ] **Calendar events for unapproved/non-live; not removed on cancel** — `peers/calendar.py:81-119`. Materialise only APPROVED/PAID + PUBLISHED; remove on exit.

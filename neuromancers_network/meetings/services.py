@@ -96,37 +96,31 @@ def delete_all(peer) -> int:
 
     meetings = Meeting.objects.filter(peer=peer)
     deleted = meetings.count()
+    cancel_and_refund_for_peer(peer)
     meetings.delete()
     return deleted
 
 
-def cancel_and_refund_for_peer(peer) -> int:
-    """Cancel a peer's active bookings and request refunds for paid sessions.
+def delete_meeting(meeting) -> None:
+    """Cancel/refund a meeting's active sessions, then delete the meeting."""
+    cancel_and_refund_for_meeting(meeting)
+    meeting.delete()
 
-    Used when a peer withdraws (deactivation/deletion). Refunds follow the
-    meeting's approval policy (auto-issued or left pending for review); a Stripe
-    failure is logged and never blocks the cancellation. Cancelling emits the
-    existing ``booking_cancelled`` notification to the seeker.
+
+def _cancel_and_refund_requests(requests, reason: str) -> int:
+    """Cancel active requests, requesting refunds for paid ones.
+
+    Refunds follow the meeting's approval policy (auto-issued or left pending
+    for review); a Stripe failure is logged and never blocks the cancellation.
+    Cancelling emits the existing ``booking_cancelled`` notification.
     """
-    from .models import MeetingRequest  # noqa: PLC0415
     from .models import MeetingRequestStatus  # noqa: PLC0415
 
-    active = (
-        MeetingRequest.objects.filter(meeting__peer=peer)
-        .exclude(
-            status__in=[
-                MeetingRequestStatus.CANCELLED,
-                MeetingRequestStatus.COMPLETED,
-                MeetingRequestStatus.REJECTED,
-            ],
-        )
-        .select_related("meeting")
-    )
     cancelled = 0
-    for request in active:
+    for request in requests:
         if request.status == MeetingRequestStatus.PAID:
             try:
-                request.request_refund("Care provider is no longer available")
+                request.request_refund(reason)
             except Exception:
                 logger.exception(
                     "Failed to request refund for meeting request %s",
@@ -137,6 +131,42 @@ def cancel_and_refund_for_peer(peer) -> int:
             request.save(validate=False, update_fields=["status", "updated_at"])
             cancelled += 1
     return cancelled
+
+
+def _active_requests(**filters):
+    from .models import MeetingRequest  # noqa: PLC0415
+    from .models import MeetingRequestStatus  # noqa: PLC0415
+
+    return (
+        MeetingRequest.objects.filter(**filters)
+        .exclude(
+            status__in=[
+                MeetingRequestStatus.CANCELLED,
+                MeetingRequestStatus.COMPLETED,
+                MeetingRequestStatus.REJECTED,
+            ],
+        )
+        .select_related("meeting")
+    )
+
+
+def cancel_and_refund_for_peer(peer) -> int:
+    """Cancel a peer's active bookings and request refunds for paid sessions.
+
+    Used when a peer withdraws (deactivation/deletion).
+    """
+    return _cancel_and_refund_requests(
+        _active_requests(meeting__peer=peer),
+        "Care provider is no longer available",
+    )
+
+
+def cancel_and_refund_for_meeting(meeting) -> int:
+    """Cancel a meeting's active bookings and request refunds for paid sessions."""
+    return _cancel_and_refund_requests(
+        _active_requests(meeting=meeting),
+        "The meeting was cancelled",
+    )
 
 
 def default_access_needs_for(seeker: AbstractBaseUser) -> str:

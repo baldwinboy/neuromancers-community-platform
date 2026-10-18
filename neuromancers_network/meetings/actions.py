@@ -28,6 +28,7 @@ from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.services import create_meeting
 from neuromancers_network.meetings.services import default_terms_for
 from neuromancers_network.meetings.services import delete_all
+from neuromancers_network.meetings.services import delete_meeting
 from neuromancers_network.meetings.services import publish_meeting
 from neuromancers_network.meetings.services import unpublish_all
 
@@ -133,7 +134,7 @@ def meetings_archive(request, data):
 def meetings_delete(request, data):
     user = require_authenticated(request)
     meeting = _owned_meeting(user, data)
-    meeting.delete()
+    delete_meeting(meeting)
     return redirect_back(request)
 
 
