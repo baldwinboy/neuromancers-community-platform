@@ -621,8 +621,33 @@ Expected:  pass
 Blocked on: I mark Unit 2 complete and proceed.
 ```
 
+#### Unit 3 — API identity updates
+
+**Status: complete — green.** (`users/tests/api/test_views.py` passed.)
+
+**Goal.** The user API applies the same username controls as the settings form.
+
+**Steps**
+1. [x] `users/api/views.py` — `_apply_update` routes PATCH through `AccountForm`
+   (lowercasing, uniqueness, blocklist, cooldown, and `record_username_change`),
+   returning HTTP 400 on validation errors.
+2. [x] `users/tests/api/test_views.py` — normalises the username; rejects
+   duplicates, cooldown changes and blocklisted names.
+
+**Acceptance.** API identity changes cannot bypass cooldown, blocklist,
+uniqueness or change stamping/audit.
+
+```
+HANDOVER
+Purpose:   Verify Unit 3.
+Command:   just pytest neuromancers_network/users/tests/api/test_views.py -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I mark Unit 3 complete and proceed.
+```
+
 #### Remaining 0.3 units
-- [ ] **API PATCH bypasses username cooldown/blocklist/audit/uniqueness** — `users/api/views.py:38-53`. Route through `AccountForm`/validators.
 - [ ] **Purge doesn't cancel Stripe subscription (billing after deletion)** — `moderation/services.py:148-159,209-228`. Cancel subscription on purge.
 - [ ] **Anonymisation residual PII/privilege** — `moderation/services.py:162-206`. Scrub payment customer, `deactivation_reason`, staff flags; include `updated_at`; idempotent.
 - [ ] **`purge_due_accounts` no error isolation/transaction** — `moderation/services.py:245-256`.

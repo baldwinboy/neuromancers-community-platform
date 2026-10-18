@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from django.shortcuts import get_object_or_404
 from ninja import Router
+from ninja.errors import HttpError
 
 from neuromancers_network.users.api.schema import UpdateUserSchema
 from neuromancers_network.users.api.schema import UserSchema
@@ -35,20 +36,30 @@ def retrieve_user(request, username: str):
     return get_object_or_404(users_qs, username=username)
 
 
+def _apply_update(user, data: UpdateUserSchema) -> User:
+    """Apply identity changes through the same controls as the settings form."""
+    from neuromancers_network.users.settings import AccountForm  # noqa: PLC0415
+
+    form = AccountForm(
+        data={
+            "name": data.name,
+            "username": data.username,
+            "date_of_birth": user.date_of_birth,
+        },
+        instance=user,
+    )
+    if not form.is_valid():
+        raise HttpError(400, form.errors.as_text())
+    return form.save()
+
+
 @router.patch("/me/", response=UserSchema)
 def update_current_user(request, data: UpdateUserSchema):
-    user = request.user
-    user.name = data.name
-    user.username = data.username
-    user.save()
-    return user
+    return _apply_update(request.user, data)
 
 
 @router.patch("/{username}/", response=UserSchema)
 def update_user(request, username: str, data: UpdateUserSchema):
     users_qs = _get_users_queryset(request)
     user = get_object_or_404(users_qs, username=username)
-    user.name = data.name
-    user.username = data.username
-    user.save()
-    return user
+    return _apply_update(user, data)
