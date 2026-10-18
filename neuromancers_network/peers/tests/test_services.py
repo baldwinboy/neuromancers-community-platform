@@ -2,6 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 from http import HTTPStatus
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
@@ -550,6 +551,94 @@ class TestPeerSubscribe:
         assert response.status_code == HTTPStatus.FOUND
         assert response["Location"] == "https://checkout.example/session"
         checkout.assert_called_once()
+
+
+class TestConnectStripeRedirects:
+    def _peer_with_agreement(self):
+        peer = make_peer()
+        peer_accept_provider_agreement(_post(peer), {})
+        return peer
+
+    def _link(self):
+        profile = MagicMock()
+        profile.create_stripe_onboarding_link.return_value = SimpleNamespace(
+            url="https://connect.stripe.example/onboard",
+        )
+        return profile
+
+    def test_configured_urls_win_over_request_data(self):
+        config = StripeSettings.load()
+        config.onboarding_redirect_url = "https://app.example/return"
+        config.onboarding_refresh_url = "https://app.example/refresh"
+        config.save()
+        peer = self._peer_with_agreement()
+        profile = self._link()
+
+        with patch(
+            "neuromancers_network.peers.actions.ensure_payment_profile",
+            return_value=profile,
+        ):
+            response = peer_connect_stripe(
+                _post(peer),
+                {
+                    "return_url": "https://evil.example/return",
+                    "refresh_url": "https://evil.example/refresh",
+                },
+            )
+
+        assert response.status_code == HTTPStatus.FOUND
+        profile.create_stripe_onboarding_link.assert_called_once_with(
+            refresh_url="https://app.example/refresh",
+            return_url="https://app.example/return",
+        )
+
+    def test_external_urls_fall_back_to_the_profile(self):
+        config = StripeSettings.load()
+        config.onboarding_redirect_url = ""
+        config.onboarding_refresh_url = ""
+        config.save()
+        peer = self._peer_with_agreement()
+        profile = self._link()
+        fallback = f"http://testserver{peer.get_absolute_url()}"
+
+        with patch(
+            "neuromancers_network.peers.actions.ensure_payment_profile",
+            return_value=profile,
+        ):
+            peer_connect_stripe(
+                _post(peer),
+                {
+                    "return_url": "https://evil.example/return",
+                    "refresh_url": "https://evil.example/refresh",
+                },
+            )
+
+        profile.create_stripe_onboarding_link.assert_called_once_with(
+            refresh_url=fallback,
+            return_url=fallback,
+        )
+
+    def test_same_host_relative_urls_are_accepted(self):
+        config = StripeSettings.load()
+        config.onboarding_redirect_url = ""
+        config.onboarding_refresh_url = ""
+        config.save()
+        peer = self._peer_with_agreement()
+        profile = self._link()
+
+        with patch(
+            "neuromancers_network.peers.actions.ensure_payment_profile",
+            return_value=profile,
+        ):
+            peer_connect_stripe(
+                _post(peer),
+                {"return_url": "/settings/", "refresh_url": "/settings/stripe/"},
+            )
+
+        profile.create_stripe_onboarding_link.assert_called_once_with(
+            refresh_url="http://testserver/settings/stripe/",
+            return_url="http://testserver/settings/",
+        )
 
 
 class TestProviderAgreement:

@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.dateparse import parse_datetime
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 
 from neuromancers_network.core.actions import as_bool
@@ -48,14 +49,38 @@ def peers_apply(request, data):
     return redirect_back(request)
 
 
+def _onboarding_url(request, candidate, fallback):
+    if not candidate:
+        return fallback
+    absolute = request.build_absolute_uri(candidate)
+    if url_has_allowed_host_and_scheme(
+        absolute,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return absolute
+    return fallback
+
+
 def peer_connect_stripe(request, data):
+    from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
+
     user = require_authenticated(request)
     _require_provider_agreement(user)
     payment_profile = ensure_payment_profile(user)
 
+    stripe_settings = StripeSettings.load(request)
     fallback = request.build_absolute_uri(user.get_absolute_url())
-    refresh_url = data.get("refresh_url") or fallback
-    return_url = data.get("return_url") or fallback
+    refresh_url = stripe_settings.onboarding_refresh_url or _onboarding_url(
+        request,
+        data.get("refresh_url"),
+        fallback,
+    )
+    return_url = stripe_settings.onboarding_redirect_url or _onboarding_url(
+        request,
+        data.get("return_url"),
+        fallback,
+    )
     link = payment_profile.create_stripe_onboarding_link(
         refresh_url=refresh_url,
         return_url=return_url,
