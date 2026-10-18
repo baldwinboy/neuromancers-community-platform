@@ -121,7 +121,12 @@ class User(FSMModelMixin, index.Indexed, AbstractUser):
             url = page.get_url()
             if url:
                 return url
-        return f"/u/{self.username}/"
+        index = pages.ProfileIndexPage.objects.live().first()
+        if index is not None:
+            url = index.get_url()
+            if url:
+                return url
+        return "/"
 
     search_fields = [
         index.SearchField("name"),

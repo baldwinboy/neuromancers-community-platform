@@ -148,10 +148,16 @@ def hide_inaccessible_detail_pages(page, request, args, kwargs):
     visibility rule is re-applied per request rather than trusted from page
     state. Non-detail pages (no ``source``) are left untouched.
     """
+    from wagtail_daisIE.detail_pages.models import ModelDetailPage  # noqa: PLC0415
+    from wagtail_daisIE.errors.handlers import render_error_page  # noqa: PLC0415
+
     specific = getattr(page, "specific", page)
-    source = getattr(specific, "source", None)
-    if source is None:
+    if not isinstance(specific, ModelDetailPage):
         return None
+
+    source = specific.source
+    if source is None:
+        return render_error_page(request, 404)
 
     from neuromancers_network.moderation.visibility import (  # noqa: PLC0415
         viewer_can_view_source,
@@ -159,9 +165,6 @@ def hide_inaccessible_detail_pages(page, request, args, kwargs):
 
     if viewer_can_view_source(source, getattr(request, "user", None)):
         return None
-
-    from wagtail_daisIE.errors.handlers import render_error_page  # noqa: PLC0415
-
     return render_error_page(request, 404)
 
 

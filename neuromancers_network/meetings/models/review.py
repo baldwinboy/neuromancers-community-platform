@@ -46,6 +46,9 @@ class Review(Timestamped):
         from neuromancers_network.core.models.pages import (  # noqa: PLC0415
             ReviewDetailPage,
         )
+        from neuromancers_network.core.models.pages import (  # noqa: PLC0415
+            ReviewIndexPage,
+        )
 
         page = ReviewDetailPage.objects.filter(
             source_content_type=ContentType.objects.get_for_model(type(self)),
@@ -56,4 +59,9 @@ class Review(Timestamped):
             url = page.get_url()
             if url:
                 return url
-        return f"/reviews/{self.pk}/"
+        index = ReviewIndexPage.objects.live().first()
+        if index is not None:
+            url = index.get_url()
+            if url:
+                return url
+        return "/"

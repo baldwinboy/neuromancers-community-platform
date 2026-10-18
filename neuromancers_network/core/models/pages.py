@@ -53,20 +53,25 @@ class SourceBoundDetailPage(ModelDetailPage):
             for key, value in self.daisie_source_params().items()
             if value is not None
         }
-        if extra:
-            request.daisie_path_params = {
-                **(getattr(request, "daisie_path_params", None) or {}),
-                **extra,
-            }
+        request.daisie_path_params = dict(extra)
 
         context = super().get_context(request, *args, **kwargs)
 
+        models = get_context_models()
         design = self.get_design_source()
         explicit = set(parse_bindings(self)) | set(parse_bindings(design))
         keep = {self.detail_key, *explicit}
-        for key, config in get_context_models().items():
+        for key, config in models.items():
             if config.source_kind == "url" and key not in keep:
                 context.pop(key, None)
+        config = models.get(self.detail_key)
+        if (
+            self.source is not None
+            and config is not None
+            and config.model is not None
+            and isinstance(self.source, config.model)
+        ):
+            context[self.detail_key] = self.source
         return context
 
 

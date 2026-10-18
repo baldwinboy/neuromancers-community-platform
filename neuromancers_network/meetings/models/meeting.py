@@ -279,6 +279,9 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
         from neuromancers_network.core.models.pages import (  # noqa: PLC0415
             MeetingDetailPage,
         )
+        from neuromancers_network.core.models.pages import (  # noqa: PLC0415
+            MeetingIndexPage,
+        )
 
         page = MeetingDetailPage.objects.filter(
             source_content_type=ContentType.objects.get_for_model(type(self)),
@@ -289,7 +292,12 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
             url = page.get_url()
             if url:
                 return url
-        return f"/meetings/{self.pk}/"
+        index = MeetingIndexPage.objects.live().first()
+        if index is not None:
+            url = index.get_url()
+            if url:
+                return url
+        return "/"
 
     @transition(
         field=status,

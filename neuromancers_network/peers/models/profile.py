@@ -171,6 +171,9 @@ class PeerProfile(index.Indexed, Timestamped):  # type: ignore[django-manager-mi
         from django.contrib.contenttypes.models import ContentType  # noqa: PLC0415
 
         from neuromancers_network.core.models.pages import (  # noqa: PLC0415
+            PeerIndexPage,
+        )
+        from neuromancers_network.core.models.pages import (  # noqa: PLC0415
             PeerProfileDetailPage,
         )
 
@@ -183,4 +186,9 @@ class PeerProfile(index.Indexed, Timestamped):  # type: ignore[django-manager-mi
             url = page.get_url()
             if url:
                 return url
-        return f"/peers/{self.user.username}/"
+        index = PeerIndexPage.objects.live().first()
+        if index is not None:
+            url = index.get_url()
+            if url:
+                return url
+        return "/"

@@ -120,6 +120,7 @@ class UserProfile(index.Indexed, Timestamped):
     )
 
     search_fields = [
+        index.SearchField("bio"),
         index.RelatedFields(
             "user",
             [

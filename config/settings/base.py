@@ -650,7 +650,7 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "label": _("Meeting"),
         "model": "meetings.Meeting",
         "source": "url",
-        "lookup_field": "pk",
+        "lookup_field": "meeting_pk",
         "queryset": "neuromancers_network.meetings.selectors.published_meetings",
         "select_related": ["peer"],
         "prefetch_related": ["languages", "countries", "tags"],
@@ -660,7 +660,7 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "label": _("Care provider"),
         "model": "peers.PeerProfile",
         "source": "url",
-        "lookup_field": "pk",
+        "lookup_field": "peer_pk",
         "queryset": "neuromancers_network.peers.selectors.approved_peers",
         "select_related": ["user"],
         "prefetch_related": ["languages", "countries", "tags"],
@@ -696,7 +696,7 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "label": _("Review"),
         "model": "meetings.Review",
         "source": "url",
-        "lookup_field": "pk",
+        "lookup_field": "review_pk",
         "queryset": "neuromancers_network.meetings.selectors.published_reviews",
     },
     "user_profile": {
@@ -1223,7 +1223,7 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "publish_field": "is_live",
         "title_source": "title",
         "slug_source": "title",
-        "on_delete": "unlink",
+        "on_delete": "page",
     },
     "peer_profile": {
         "label": "Care provider",
@@ -1235,7 +1235,7 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "publish_field": "is_live",
         "title_source": "display_title",
         "slug_source": "username",
-        "on_delete": "unlink",
+        "on_delete": "page",
     },
     "review": {
         "label": "Review",
@@ -1247,7 +1247,7 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "publish_field": "is_live",
         "title_source": "display_title",
         "slug_source": "pk",
-        "on_delete": "unlink",
+        "on_delete": "page",
     },
     "user_profile": {
         "label": "Member profile",
@@ -1259,7 +1259,7 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "publish_field": "",
         "title_source": "display_name",
         "slug_source": "username",
-        "on_delete": "unlink",
+        "on_delete": "page",
     },
     "tag": {
         "label": "Tag",

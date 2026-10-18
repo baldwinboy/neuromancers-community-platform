@@ -129,6 +129,15 @@ class TestUserSignupQuarantine:
         assert created_states == [False]
 
 
+class TestUserProfileSearch:
+    def test_bio_is_indexed(self):
+        field_names = {
+            getattr(field, "field_name", "") for field in UserProfile.search_fields
+        }
+
+        assert "bio" in field_names
+
+
 class TestGetFullName:
     def test_returns_name(self):
         assert UserFactory(name="Ada Lovelace").get_full_name() == "Ada Lovelace"
