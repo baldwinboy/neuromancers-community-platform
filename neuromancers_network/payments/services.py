@@ -6,6 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import stripe
+from djstripe.enums import SubscriptionStatus
 from djstripe.models import Account as StripeAccount
 from djstripe.models import Customer as StripeCustomer
 from djstripe.models import WebhookEndpoint as StripeWebhookEndpoint
@@ -130,8 +131,52 @@ def receipt_url_for(payment_intent_id: str) -> str:
     return charge.receipt_url or ""
 
 
+class StripeBalanceError(ValueError):
+    """A connected account still holds funds and cannot be deleted."""
+
+
+def _balance_minor_units(balance) -> int:
+    total = 0
+    for bucket in ("available", "pending"):
+        for entry in getattr(balance, bucket, None) or []:
+            total += int(entry.get("amount", 0))
+    return total
+
+
+def _cancel_active_subscription(profile: PaymentProfile) -> None:
+    peer_subscription = getattr(profile, "peer_subscription", None)
+    if peer_subscription is None:
+        return
+    subscription_id = peer_subscription.subscription_id
+    if not subscription_id:
+        return
+    try:
+        subscription = stripe.Subscription.retrieve(subscription_id)
+    except stripe.StripeError as exc:
+        logger.exception(
+            "Failed to read the Stripe subscription for profile %s",
+            profile.pk,
+        )
+        message = "Could not read the Stripe subscription"
+        raise ValueError(message) from exc
+    if subscription.status in {
+        SubscriptionStatus.canceled,
+        SubscriptionStatus.incomplete_expired,
+    }:
+        return
+    try:
+        cancel_subscription(profile, at_period_end=False)
+    except stripe.StripeError as exc:
+        logger.exception(
+            "Failed to cancel the Stripe subscription for profile %s",
+            profile.pk,
+        )
+        message = "Could not cancel the Stripe subscription"
+        raise ValueError(message) from exc
+
+
 def disconnect_stripe_account(profile: PaymentProfile) -> None:
-    """Delete the peer's Stripe Express account and unlink the local profile."""
+    """Cancel billing, then delete the peer's Stripe account and unlink it."""
     account_id = profile.stripe_connect_account_id_id
     if not account_id:
         return
@@ -142,7 +187,30 @@ def disconnect_stripe_account(profile: PaymentProfile) -> None:
         raise ValueError(message)
 
     stripe.api_key = stripe_settings.secret_key
-    stripe.Account.delete(account_id)
+    try:
+        balance = stripe.Balance.retrieve(stripe_account=account_id)
+    except stripe.StripeError as exc:
+        logger.exception("Failed to read Stripe balance for account %s", account_id)
+        message = "Could not verify the Stripe account balance"
+        raise ValueError(message) from exc
+
+    if _balance_minor_units(balance) > 0:
+        message = "The Stripe account still holds funds; withdraw them first"
+        raise StripeBalanceError(message)
+
+    _cancel_active_subscription(profile)
+
+    try:
+        stripe.Account.delete(account_id)
+    except stripe.InvalidRequestError as exc:
+        if getattr(exc, "code", None) != "resource_missing":
+            logger.exception("Failed to delete Stripe account %s", account_id)
+            message = "Could not delete the connected Stripe account"
+            raise ValueError(message) from exc
+    except stripe.StripeError as exc:
+        logger.exception("Failed to delete Stripe account %s", account_id)
+        message = "Could not delete the connected Stripe account"
+        raise ValueError(message) from exc
 
     profile.stripe_connect_account_id = None
     profile.kyc_completed = False

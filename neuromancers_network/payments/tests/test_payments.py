@@ -2,9 +2,11 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+import stripe
 from djstripe.enums import SubscriptionStatus
 
 from neuromancers_network.core.models import StripeSettings
+from neuromancers_network.payments.services import StripeBalanceError
 from neuromancers_network.payments.services import create_express_dashboard_link
 from neuromancers_network.payments.services import disconnect_stripe_account
 from neuromancers_network.payments.services import ensure_payment_profile
@@ -179,6 +181,10 @@ class TestExpressDashboardLink:
             create_express_dashboard_link(profile)
 
 
+def empty_balance():
+    return SimpleNamespace(available=[], pending=[])
+
+
 class TestDisconnectStripeAccount:
     def test_deletes_account_and_unlinks_profile(self):
         configure_stripe()
@@ -187,8 +193,14 @@ class TestDisconnectStripeAccount:
             kyc_completed=True,
         )
 
-        with patch(
-            "neuromancers_network.payments.services.stripe.Account.delete",
+        with (
+            patch(
+                "neuromancers_network.payments.services.stripe.Balance.retrieve",
+                return_value=empty_balance(),
+            ),
+            patch(
+                "neuromancers_network.payments.services.stripe.Account.delete",
+            ),
         ):
             disconnect_stripe_account(profile)
 
@@ -205,6 +217,116 @@ class TestDisconnectStripeAccount:
             disconnect_stripe_account(profile)
 
         delete_account.assert_not_called()
+
+    def test_cancels_active_subscription_before_deleting(self):
+        configure_stripe()
+        profile = make_payment_profile()
+        profile.stripe_connect_account_id = AccountFactory(id=EXISTING_ACCOUNT_ID)
+        profile.save(update_fields=["stripe_connect_account_id"])
+        subscription_id = profile.peer_subscription.subscription_id
+
+        remote = SimpleNamespace(status=SubscriptionStatus.active)
+        with (
+            patch(
+                "neuromancers_network.payments.services.stripe.Balance.retrieve",
+                return_value=empty_balance(),
+            ),
+            patch(
+                "neuromancers_network.payments.services.stripe.Subscription.retrieve",
+                return_value=remote,
+            ),
+            patch(
+                "neuromancers_network.payments.services.stripe.Subscription.cancel",
+            ) as cancel,
+            patch(
+                "neuromancers_network.payments.services.stripe.Account.delete",
+            ) as delete_account,
+        ):
+            disconnect_stripe_account(profile)
+
+        cancel.assert_called_once_with(subscription_id)
+        delete_account.assert_called_once_with(EXISTING_ACCOUNT_ID)
+
+    def test_skips_already_canceled_subscription(self):
+        configure_stripe()
+        profile = make_payment_profile(
+            subscription_status=SubscriptionStatus.canceled,
+        )
+        profile.stripe_connect_account_id = AccountFactory(id=EXISTING_ACCOUNT_ID)
+        profile.save(update_fields=["stripe_connect_account_id"])
+
+        remote = SimpleNamespace(status=SubscriptionStatus.canceled)
+        with (
+            patch(
+                "neuromancers_network.payments.services.stripe.Balance.retrieve",
+                return_value=empty_balance(),
+            ),
+            patch(
+                "neuromancers_network.payments.services.stripe.Subscription.retrieve",
+                return_value=remote,
+            ),
+            patch(
+                "neuromancers_network.payments.services.stripe.Subscription.cancel",
+            ) as cancel,
+            patch(
+                "neuromancers_network.payments.services.stripe.Account.delete",
+            ),
+        ):
+            disconnect_stripe_account(profile)
+
+        cancel.assert_not_called()
+
+    def test_blocks_disconnect_when_balance_is_positive(self):
+        configure_stripe()
+        profile = PaymentProfileFactory(
+            stripe_connect_account_id=AccountFactory(id=EXISTING_ACCOUNT_ID),
+        )
+        balance = SimpleNamespace(
+            available=[{"amount": 250, "currency": "gbp"}],
+            pending=[],
+        )
+
+        with (
+            patch(
+                "neuromancers_network.payments.services.stripe.Balance.retrieve",
+                return_value=balance,
+            ),
+            patch(
+                "neuromancers_network.payments.services.stripe.Account.delete",
+            ) as delete_account,
+            pytest.raises(StripeBalanceError, match="funds"),
+        ):
+            disconnect_stripe_account(profile)
+
+        delete_account.assert_not_called()
+        profile.refresh_from_db()
+        assert profile.stripe_connect_account_id_id == EXISTING_ACCOUNT_ID
+
+    def test_unlinks_when_account_is_already_gone(self):
+        configure_stripe()
+        profile = PaymentProfileFactory(
+            stripe_connect_account_id=AccountFactory(id=EXISTING_ACCOUNT_ID),
+        )
+        gone = stripe.InvalidRequestError(
+            "No such account",
+            None,
+            code="resource_missing",
+        )
+
+        with (
+            patch(
+                "neuromancers_network.payments.services.stripe.Balance.retrieve",
+                return_value=empty_balance(),
+            ),
+            patch(
+                "neuromancers_network.payments.services.stripe.Account.delete",
+                side_effect=gone,
+            ),
+        ):
+            disconnect_stripe_account(profile)
+
+        profile.refresh_from_db()
+        assert profile.stripe_connect_account_id_id is None
 
 
 def make_event(account_id: str, account_data: dict | None = None):

@@ -1,13 +1,17 @@
 from datetime import timedelta
 from decimal import Decimal
+from http import HTTPStatus
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory
 from django.utils import timezone
+from djstripe.enums import SubscriptionStatus
 
+from neuromancers_network.core.models import StripeSettings
 from neuromancers_network.meetings.models import ApprovalPolicy
 from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingRequest
@@ -21,6 +25,7 @@ from neuromancers_network.peers.actions import availability_create
 from neuromancers_network.peers.actions import availability_delete
 from neuromancers_network.peers.actions import peer_accept_provider_agreement
 from neuromancers_network.peers.actions import peer_connect_stripe
+from neuromancers_network.peers.actions import peer_stripe_disconnect
 from neuromancers_network.peers.models import CalendarEvent
 from neuromancers_network.peers.models import PeerAvailability
 from neuromancers_network.peers.models.profile import PROVIDER_AGREEMENT_VERSION
@@ -398,6 +403,57 @@ class TestAvailabilityActions:
 
         with pytest.raises(PermissionDenied):
             availability_delete(_post(make_peer()), {"target": window.pk})
+
+
+class TestStripeDisconnectAction:
+    def test_balance_blocks_disconnect_with_message(self):
+        from django.contrib.messages import get_messages  # noqa: PLC0415
+        from django.contrib.messages.middleware import (  # noqa: PLC0415
+            MessageMiddleware,
+        )
+        from django.contrib.sessions.middleware import (  # noqa: PLC0415
+            SessionMiddleware,
+        )
+
+        config = StripeSettings.load()
+        config.secret_key = "sk_test_123"  # noqa: S105
+        config.save()
+        peer = make_peer()
+        request = RequestFactory().post("/", {})
+        SessionMiddleware(lambda r: None).process_request(request)
+        MessageMiddleware(lambda r: None).process_request(request)
+        request.user = peer
+        balance = SimpleNamespace(
+            available=[{"amount": 100, "currency": "gbp"}],
+            pending=[],
+        )
+        remote = SimpleNamespace(status=SubscriptionStatus.active)
+
+        with (
+            patch(
+                "neuromancers_network.payments.services.stripe.Balance.retrieve",
+                return_value=balance,
+            ),
+            patch(
+                "neuromancers_network.payments.services.stripe.Subscription.retrieve",
+                return_value=remote,
+            ),
+            patch(
+                "neuromancers_network.payments.services.stripe.Subscription.cancel",
+            ),
+            patch(
+                "neuromancers_network.payments.services.stripe.Account.delete",
+            ) as delete_account,
+        ):
+            response = peer_stripe_disconnect(request, request.POST)
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert any(
+            "remaining funds" in str(message) for message in get_messages(request)
+        )
+        delete_account.assert_not_called()
+        peer.payment_profile.refresh_from_db()
+        assert peer.payment_profile.stripe_connect_account_id_id is not None
 
 
 class TestProviderAgreement:

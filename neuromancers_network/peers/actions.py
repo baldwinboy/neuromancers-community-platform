@@ -2,21 +2,28 @@
 
 from __future__ import annotations
 
+import logging
+
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.dateparse import parse_datetime
+from django.utils.translation import gettext_lazy as _
 
 from neuromancers_network.core.actions import as_bool
 from neuromancers_network.core.actions import redirect_back
 from neuromancers_network.core.actions import require_authenticated
+from neuromancers_network.payments.services import StripeBalanceError
 from neuromancers_network.payments.services import ensure_payment_profile
 from neuromancers_network.peers.models import PeerApplication
 from neuromancers_network.peers.models import PeerAvailability
 from neuromancers_network.peers.models.profile import PROVIDER_AGREEMENT_VERSION
 from neuromancers_network.peers.services import is_eligible_peer
+
+logger = logging.getLogger(__name__)
 
 
 def _require_provider_agreement(user):
@@ -116,7 +123,22 @@ def peer_stripe_disconnect(request, data):
     if payment_profile is None or not payment_profile.stripe_connect_account_id_id:
         message = "No connected Stripe account to disconnect"
         raise PermissionDenied(message)
-    disconnect_stripe_account(payment_profile)
+    try:
+        disconnect_stripe_account(payment_profile)
+    except StripeBalanceError:
+        messages.error(
+            request,
+            _("Withdraw any remaining funds from Stripe before disconnecting."),
+        )
+        return redirect_back(request)
+    except ValueError as exc:
+        logger.warning("Stripe disconnect failed for user %s: %s", user.pk, exc)
+        messages.error(
+            request,
+            _("We could not disconnect Stripe. Please try again or contact support."),
+        )
+        return redirect_back(request)
+    messages.success(request, _("Stripe has been disconnected."))
     return redirect_back(request)
 
 
