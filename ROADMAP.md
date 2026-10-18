@@ -476,8 +476,35 @@ Expected:  migration applied; tests pass
 Blocked on: I mark Unit 6 complete and proceed.
 ```
 
+#### Unit 7 — Calendar events
+
+**Status: complete — green.** (`test_calendar.py` passed.)
+
+**Goal.** Only show calendar events for sessions a member can still attend and
+for published group meetings; remove them when the source leaves those states.
+
+**Steps**
+1. [x] `peers/calendar.py` — request events materialise only for
+   `APPROVED`/`PAID`; group-meeting events only for `PUBLISHED`; the existing
+   remove-then-create keeps cancellations/archives clean.
+2. [x] `peers/tests/test_calendar.py` — active request event; unapproved has
+   none; cancellation removes; draft has none; published creates a public event;
+   archive removes.
+
+**Acceptance.** No events for unapproved/cancelled sessions or non-published
+meetings.
+
+```
+HANDOVER
+Purpose:   Verify Unit 7.
+Command:   just pytest neuromancers_network/peers/tests/test_calendar.py -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I mark Unit 7 complete and proceed.
+```
+
 #### Remaining 0.2 units
-- [ ] **Calendar events for unapproved/non-live; not removed on cancel** — `peers/calendar.py:81-119`. Materialise only APPROVED/PAID + PUBLISHED; remove on exit.
 - [ ] **ICS feed includes cancelled/refunded** — `core/views/calendar.py:21-25`, `core/ical.py:35-45`. Filter to active statuses.
 - [ ] Low: rejected refunds unraisable (`refund.py:56-59`); `archive` dead-end (`meeting.py:289-295`); `updated_at` not bumped on link writes; hardcoded "30 minutes" drift.
 

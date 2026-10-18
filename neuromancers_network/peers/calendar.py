@@ -79,8 +79,17 @@ def sync_availability(window) -> None:
 
 
 def sync_request(request) -> None:
-    """(Re)build the calendar event for a 1:1 meeting request."""
+    """(Re)build the calendar event for an approved or paid 1:1 request."""
+    from neuromancers_network.meetings.models import (  # noqa: PLC0415
+        MeetingRequestStatus,
+    )
+
     remove_events("request", request.pk)
+    if request.status not in {
+        MeetingRequestStatus.APPROVED,
+        MeetingRequestStatus.PAID,
+    }:
+        return
     meeting = request.meeting
     start = request.requested_start_time
     duration = request.requested_duration_minutes
@@ -99,11 +108,15 @@ def sync_request(request) -> None:
 
 
 def sync_meeting(meeting) -> None:
-    """(Re)build the calendar event for a public group meeting."""
+    """(Re)build the calendar event for a published group meeting."""
+    from neuromancers_network.meetings.models import MeetingStatus  # noqa: PLC0415
     from neuromancers_network.meetings.models import MeetingType  # noqa: PLC0415
 
     remove_events("meeting", meeting.pk)
-    if meeting.meeting_type != MeetingType.GROUP:
+    if (
+        meeting.meeting_type != MeetingType.GROUP
+        or meeting.status != MeetingStatus.PUBLISHED
+    ):
         return
     if meeting.scheduled_at is None or not meeting.duration_minutes:
         return
