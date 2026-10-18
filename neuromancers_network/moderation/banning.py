@@ -25,7 +25,10 @@ def email_is_banned(email: str | None) -> bool:
     domain = value.rsplit("@", 1)[1]
     return (
         EmailBan.objects.filter(is_active=True)
-        .filter(Q(value=value, is_domain=False) | Q(value=domain, is_domain=True))
+        .filter(
+            Q(value__iexact=value, is_domain=False)
+            | Q(value__iexact=domain, is_domain=True),
+        )
         .exists()
     )
 

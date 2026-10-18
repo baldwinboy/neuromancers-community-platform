@@ -12,6 +12,21 @@ pytestmark = pytest.mark.django_db
 
 
 class TestEmailBan:
+    def test_matches_legacy_mixed_case_values(self):
+        exact = EmailBan.objects.create(value="bad@example.com")
+        EmailBan.objects.filter(pk=exact.pk).update(value="Bad@Example.com")
+        domain = EmailBan.objects.create(value="blocked.test", is_domain=True)
+        EmailBan.objects.filter(pk=domain.pk).update(value="Blocked.Test")
+
+        assert email_is_banned("bad@example.com") is True
+        assert email_is_banned("anyone@blocked.test") is True
+
+    def test_values_are_normalised_on_save(self):
+        ban = EmailBan.objects.create(value="  Mixed@Example.COM  ")
+
+        assert ban.value == "mixed@example.com"
+        assert EmailBan.objects.get(pk=ban.pk).value == "mixed@example.com"
+
     def test_exact_domain_and_inactive(self):
         EmailBan.objects.create(value="bad@example.com")
         EmailBan.objects.create(value="blocked.test", is_domain=True)

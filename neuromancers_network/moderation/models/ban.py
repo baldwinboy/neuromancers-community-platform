@@ -26,6 +26,17 @@ class EmailBan(Timestamped):
         verbose_name = _("Email ban")
         verbose_name_plural = _("Email bans")
 
+    def _normalise(self) -> None:
+        self.value = (self.value or "").strip().lower()
+
+    def clean(self):
+        super().clean()
+        self._normalise()
+
+    def save(self, *args, **kwargs):
+        self._normalise()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.value
 
