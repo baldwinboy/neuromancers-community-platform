@@ -11,6 +11,23 @@ from wagtail_daisIE.forms.models import DaisieFormPage
 
 logger = logging.getLogger(__name__)
 
+_SUPPORT_TICKET_FIELDS = {"kind", "subject_url", "message", "subject_user"}
+
+
+def _resolve_subject_user(value):
+    if value is None or value == "":
+        return None
+    from neuromancers_network.users.models import User  # noqa: PLC0415
+
+    if isinstance(value, User):
+        return value
+    user = None
+    if isinstance(value, int) or (isinstance(value, str) and value.isdigit()):
+        user = User.objects.filter(pk=value).first()
+    if user is None and isinstance(value, str):
+        user = User.objects.filter(username__iexact=value.strip()).first()
+    return user
+
 
 class SupportFormField(DaisieFormField):
     page = ParentalKey(
@@ -37,12 +54,28 @@ class SupportFormPage(DaisieFormPage):
 
         request = getattr(self, "_daisie_request", None)
         user = getattr(request, "user", None)
-        data = form.cleaned_data
+        mapping = self.get_model_field_map()
+
+        kwargs = {}
+        subject_user = None
+        for name, value in form.cleaned_data.items():
+            target = mapping.get(name, name)
+            if target not in _SUPPORT_TICKET_FIELDS:
+                continue
+            if target == "subject_user":
+                subject_user = _resolve_subject_user(value)
+            else:
+                kwargs[target] = value
+
+        kind = kwargs.get("kind") or SupportKind.GENERAL
+        if kind not in SupportKind.values:
+            kind = SupportKind.GENERAL
+        kwargs["kind"] = kind
+
         ticket = SupportTicket.objects.create(
-            kind=data.get("kind") or SupportKind.GENERAL,
             reporter=user if user is not None and user.is_authenticated else None,
-            subject_url=data.get("subject_url", ""),
-            message=data.get("message", ""),
+            subject_user=subject_user,
+            **kwargs,
         )
         try:
             emit(
