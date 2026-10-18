@@ -64,6 +64,11 @@ class RefundRequest(FSMModelMixin, Timestamped):
         """
         with transaction.atomic():
             locked = type(self).objects.select_for_update().get(pk=self.pk)
+            if locked.status == RefundStatus.REJECTED:
+                locked.reopen()
+                locked.save(
+                    update_fields=["status", "peer_response", "updated_at"],
+                )
             if locked.status != RefundStatus.PENDING:
                 self.refresh_from_db()
                 return self
@@ -96,6 +101,15 @@ class RefundRequest(FSMModelMixin, Timestamped):
     )
     def reject(self):
         pass
+
+    @transition(
+        field=status,
+        source=RefundStatus.REJECTED,
+        target=RefundStatus.PENDING,
+    )
+    def reopen(self):
+        """Allow a rejected refund to be raised again."""
+        self.peer_response = ""
 
     @transition(
         field=status,

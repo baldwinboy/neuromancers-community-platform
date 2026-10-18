@@ -551,3 +551,16 @@ class TestMeetingSchedulingWindow:
 
         with pytest.raises(ValidationError, match="at least 30 minutes"):
             meeting.save(update_fields=["status", "updated_at"])
+
+
+class TestMeetingArchive:
+    def test_archived_meeting_can_be_restored(self):
+        meeting = make_meeting(peer=make_peer())
+        meeting.archive()
+        meeting.save(update_fields=["status", "updated_at"])
+
+        meeting.restore()
+        meeting.save(update_fields=["status", "updated_at"])
+
+        meeting.refresh_from_db()
+        assert meeting.status == MeetingStatus.DRAFT

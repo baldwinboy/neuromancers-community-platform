@@ -390,4 +390,7 @@ class MeetingRequest(FSMModelMixin, Timestamped):
         )
         self.meeting_link = result.room_url
         self.provider_room_id = result.room_id
-        self.save(validate=False, update_fields=["meeting_link", "provider_room_id"])
+        self.save(
+            validate=False,
+            update_fields=["meeting_link", "provider_room_id", "updated_at"],
+        )

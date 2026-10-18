@@ -245,6 +245,18 @@ class TestRefundFlow:
         with pytest.raises(ValueError, match="no recorded payment"):
             request.request_refund("Partial", amount="5.00")
 
+    def test_rejected_refund_can_be_raised_again(self):
+        configure_stripe()
+        request = make_refund_request(refund_requires_approval=True)
+        refund_request = request.request_refund("First attempt")
+        refund_request.reject()
+        refund_request.save()
+
+        raised_again = request.request_refund("Second attempt")
+
+        assert raised_again.status == RefundStatus.PENDING
+        assert raised_again.reason == "Second attempt"
+
 
 class TestPaymentHistory:
     def _request(self, user):

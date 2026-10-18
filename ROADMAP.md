@@ -532,8 +532,38 @@ Expected:  pass
 Blocked on: I mark Unit 8 complete and proceed to 0.3.
 ```
 
-#### Remaining 0.2 units
-- [ ] Low: rejected refunds unraisable (`refund.py:56-59`); `archive` dead-end (`meeting.py:289-295`); `updated_at` not bumped on link writes; hardcoded "30 minutes" drift.
+#### Unit 9 — Low-severity cleanup
+
+**Status: complete — green.** (`TestRefundFlow` + `TestMeetingArchive` passed.)
+
+**Goal.** Close the remaining small correctness gaps in the meetings domain.
+
+**Steps**
+1. [x] `meetings/models/refund.py` — add a `REJECTED → PENDING` `reopen`
+   transition; `request_refund` reopens a rejected request and clears the peer
+   response, allowing a new request.
+2. [x] `meetings/models/meeting.py` — add an `ARCHIVED → DRAFT` `restore`
+   transition so archived meetings are not a dead end.
+3. [x] `meetings/models/meeting.py` + `request.py` — `populate_meeting_link`
+   includes `updated_at` in `update_fields`.
+4. [x] `meetings/models/meeting.py` — the lead-time error message uses
+   `GROUP_MINIMUM_START_AHEAD_MINUTES` instead of a hardcoded 30.
+5. [x] Tests — rejected refund can be re-raised; archived meeting can be
+   restored.
+
+**Acceptance.** Rejected refunds are re-raisable, archived meetings can be
+restored, link writes bump `updated_at`, and the error text follows the
+constant.
+
+```
+HANDOVER
+Purpose:   Verify Unit 9.
+Command:   just pytest neuromancers_network/meetings/tests/test_payments.py::TestRefundFlow neuromancers_network/meetings/tests/test_meetings.py::TestMeetingArchive -q
+Cwd:       /Users/giraffe/neuromancers_network
+Env:       project .env
+Expected:  pass
+Blocked on: I mark 0.2 complete and proceed to 0.3.
+```
 
 ### 0.3 Accounts, identity & privacy
 - [ ] **Reactivate doesn't cancel pending deletion ⇒ active users purged** — `users/services.py:139-166`, `moderation/services.py:127-145,245-256`. Cancel on reactivate; guard `is_active` in purge.

@@ -315,6 +315,14 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
     def archive(self):
         pass
 
+    @transition(
+        field=status,
+        source=MeetingStatus.ARCHIVED,
+        target=MeetingStatus.DRAFT,
+    )
+    def restore(self):
+        """Move an archived meeting back to draft so it can be published again."""
+
     def clean(self):
         super().clean()
         from django.core.exceptions import ValidationError  # noqa: PLC0415
@@ -342,8 +350,9 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
                 < timezone.now() + timedelta(minutes=GROUP_MINIMUM_START_AHEAD_MINUTES)
             ):
                 errors["scheduled_at"] = _(
-                    "Group meetings must start at least 30 minutes in the future.",
-                )
+                    "Group meetings must start at least %(minutes)d minutes "
+                    "in the future.",
+                ) % {"minutes": GROUP_MINIMUM_START_AHEAD_MINUTES}
             if self.pricing_type == PricingType.DURATION_TIERS:
                 errors["pricing_type"] = _(
                     "Duration tiers are not supported for group meetings.",
@@ -429,7 +438,10 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
         )
         self.meeting_link = result.room_url
         self.provider_room_id = result.room_id
-        self.save(validate=False, update_fields=["meeting_link", "provider_room_id"])
+        self.save(
+            validate=False,
+            update_fields=["meeting_link", "provider_room_id", "updated_at"],
+        )
 
     def _active_bookings(self):
         """Bookings that still occupy a place (pending or paid)."""
