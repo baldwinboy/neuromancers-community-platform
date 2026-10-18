@@ -850,6 +850,7 @@ _NOTIFICATION_EVENT_KEYS = [
     "email_unbanned",
     "report_created",
     "report_resolved",
+    "report_rejected",
     "data_export_requested",
     "data_export_ready",
     "peer_published_meeting",

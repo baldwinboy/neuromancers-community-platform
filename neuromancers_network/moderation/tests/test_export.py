@@ -12,6 +12,7 @@ from django.core.files.storage import FileSystemStorage
 from django.urls import reverse
 from django.utils import timezone
 
+from neuromancers_network.moderation.export import MAX_EXPORT_ATTEMPTS
 from neuromancers_network.moderation.export import build_export_file
 from neuromancers_network.moderation.export import export_download_token
 from neuromancers_network.moderation.export import request_data_export
@@ -90,6 +91,44 @@ class TestRequestExport:
 
 
 class TestSweep:
+    def _stale_export(self, *, attempts):
+        export = DataExportRequest.objects.create(
+            user=UserFactory(),
+            status=ExportStatus.PROCESSING,
+            attempts=attempts,
+        )
+        DataExportRequest.objects.filter(pk=export.pk).update(
+            updated_at=timezone.now() - timedelta(hours=2),
+        )
+        return export
+
+    def test_retries_increment_attempts(self, monkeypatch):
+        export = self._stale_export(attempts=0)
+        retried = []
+        monkeypatch.setattr(
+            "neuromancers_network.moderation.export.build_export_file",
+            lambda export_request: retried.append(export_request.pk),
+        )
+
+        sweep_data_exports()
+
+        export.refresh_from_db()
+        assert export.attempts == 1
+        assert retried == [export.pk]
+
+    def test_stops_after_max_attempts(self, monkeypatch):
+        export = self._stale_export(attempts=MAX_EXPORT_ATTEMPTS)
+        monkeypatch.setattr(
+            "neuromancers_network.moderation.export.build_export_file",
+            lambda export_request: pytest.fail("should not retry"),
+        )
+
+        sweep_data_exports()
+
+        export.refresh_from_db()
+        assert export.status == ExportStatus.FAILED
+        assert export.error == "Exceeded retry limit"
+
     def test_purges_expired(self, export_storage):
         user = UserFactory()
         export = DataExportRequest.objects.create(
@@ -120,14 +159,24 @@ class TestDownload:
 
         assert response.status_code == HTTPStatus.NOT_FOUND
 
-    def test_anonymous_is_redirected(self, client, export_storage):
+    def test_anonymous_is_forbidden(self, client, export_storage):
         owner = UserFactory()
         export = self._ready_export(owner)
         token = export_download_token(export)
 
         response = client.get(reverse("data_export_download", args=[export.pk, token]))
 
-        assert response.status_code in (302, 403)
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    def test_non_owner_is_forbidden(self, client, export_storage):
+        owner = UserFactory()
+        export = self._ready_export(owner)
+        token = export_download_token(export)
+        client.force_login(UserFactory())
+
+        response = client.get(reverse("data_export_download", args=[export.pk, token]))
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
     def test_owner_can_download(self, client, export_storage):
         owner = UserFactory()

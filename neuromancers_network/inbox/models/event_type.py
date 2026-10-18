@@ -92,6 +92,7 @@ class NotificationEventType(models.TextChoices):
     EMAIL_UNBANNED = "email_unbanned", _("Email address unbanned")
     REPORT_CREATED = "report_created", _("Report created")
     REPORT_RESOLVED = "report_resolved", _("Report resolved")
+    REPORT_REJECTED = "report_rejected", _("Report rejected")
 
     # Privacy / data
     DATA_EXPORT_REQUESTED = "data_export_requested", _("Data export requested")

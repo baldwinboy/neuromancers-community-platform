@@ -172,8 +172,13 @@ def _resolve_tickets(objects, *, status, actor=None, response=""):
             ],
         )
         with contextlib.suppress(Exception):
+            event_type = (
+                "report_rejected"
+                if status == SupportStatus.REJECTED
+                else "report_resolved"
+            )
             emit(
-                "report_resolved",
+                event_type,
                 payload={
                     "actor_user_id": getattr(actor, "pk", None),
                     "recipient_user_ids": (

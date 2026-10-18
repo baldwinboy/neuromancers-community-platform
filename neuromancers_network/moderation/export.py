@@ -29,6 +29,7 @@ EXPORT_TTL_HOURS = 48
 EXPORT_COOLDOWN_HOURS = 24
 EXPORT_STALE_HOURS = 1
 EXPORT_CHUNK_SIZE = 500
+MAX_EXPORT_ATTEMPTS = 3
 
 ACCOUNT_FIELDS = [
     "id",
@@ -284,6 +285,13 @@ def sweep_data_exports(now=None) -> int:
         updated_at__lt=stale_cutoff,
     )
     for export in stale:
+        if export.attempts >= MAX_EXPORT_ATTEMPTS:
+            export.status = ExportStatus.FAILED
+            export.error = "Exceeded retry limit"
+            export.save(update_fields=["status", "error", "updated_at"])
+            continue
+        export.attempts += 1
+        export.save(update_fields=["attempts", "updated_at"])
         try:
             build_export_file(export)
         except Exception:

@@ -182,6 +182,7 @@ class TestEventVocabulary:
             "email_unbanned",
             "report_created",
             "report_resolved",
+            "report_rejected",
             "data_export_requested",
             "data_export_ready",
             "meeting_unpublished",

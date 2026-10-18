@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from django.contrib.auth.views import redirect_to_login
+from django.core.exceptions import PermissionDenied
 from django.http import FileResponse
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -33,7 +33,8 @@ class DataExportDownloadView(View):
             getattr(user, "is_authenticated", False) and user.pk == export.user_id
         )
         if not (is_owner or getattr(user, "is_staff", False)):
-            return redirect_to_login(request.get_full_path())
+            message = "You do not have access to this export"
+            raise PermissionDenied(message)
 
         if export.expires_at is not None and export.expires_at < timezone.now():
             raise Http404
