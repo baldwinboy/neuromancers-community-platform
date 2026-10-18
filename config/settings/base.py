@@ -946,6 +946,18 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
         "label": "Meeting participant",
         "rule": "neuromancers_network.core.audience.is_meeting_participant",
     },
+    "joining_meeting_host": {
+        "label": "Joining an upcoming meeting (host)",
+        "rule": (
+            "neuromancers_network.core.audience.is_joining_upcoming_meeting_as_host"
+        ),
+    },
+    "joining_meeting_guest": {
+        "label": "Joining an upcoming meeting (guest)",
+        "rule": (
+            "neuromancers_network.core.audience.is_joining_upcoming_meeting_as_guest"
+        ),
+    },
     "own_profile": {
         "label": "Own profile",
         "rule": "neuromancers_network.core.audience.is_own_profile",

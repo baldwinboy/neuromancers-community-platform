@@ -89,6 +89,13 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
         max_length=255,
         blank=True,
     )
+    provider = models.CharField(
+        _("Meeting provider"),
+        max_length=20,
+        blank=True,
+        default="",
+        help_text=_("The provider that created this room, if any."),
+    )
     pricing_type = models.CharField(
         _("Pricing type"),
         max_length=20,
@@ -446,9 +453,15 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
         )
         self.meeting_link = result.room_url
         self.provider_room_id = result.room_id
+        self.provider = result.provider
         self.save(
             validate=False,
-            update_fields=["meeting_link", "provider_room_id", "updated_at"],
+            update_fields=[
+                "meeting_link",
+                "provider_room_id",
+                "provider",
+                "updated_at",
+            ],
         )
 
     def _active_bookings(self):

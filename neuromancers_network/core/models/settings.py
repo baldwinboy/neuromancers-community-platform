@@ -217,6 +217,11 @@ class IntegrationSettings(BaseGenericSetting):
         default="neuromancers",
         help_text=_("Prefix for generated meeting room names."),
     )
+    joining_lead_minutes = models.PositiveSmallIntegerField(
+        _("Join window lead (minutes)"),
+        default=10,
+        help_text=_("How long before a session starts the join link opens."),
+    )
     getpronto_api_key = models.CharField(
         _("GetPronto API Key"),
         max_length=255,
@@ -238,7 +243,11 @@ class IntegrationSettings(BaseGenericSetting):
 
     panels = [
         MultiFieldPanel(
-            [FieldPanel("meeting_provider"), FieldPanel("meeting_room_prefix")],
+            [
+                FieldPanel("meeting_provider"),
+                FieldPanel("meeting_room_prefix"),
+                FieldPanel("joining_lead_minutes"),
+            ],
             heading=_("Meeting rooms"),
         ),
         MultiFieldPanel(

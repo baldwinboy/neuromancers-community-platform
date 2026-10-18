@@ -43,3 +43,17 @@ class MeetingProvider(ABC):
         prefix
             Optional human-friendly room-name prefix, when supported.
         """
+
+    def join_url(  # noqa: PLR0913
+        self,
+        *,
+        room_id: str,
+        room_url: str,
+        user,
+        is_host: bool,
+        start_at: datetime,
+        end_at: datetime,
+    ) -> str:
+        """Return the role-appropriate, time-boxed join URL for a room."""
+        message = f"{type(self).__name__} does not support join links"
+        raise NotImplementedError(message)

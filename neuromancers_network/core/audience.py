@@ -144,6 +144,34 @@ def is_meeting_participant(request: HttpRequest) -> bool:
     return is_meeting_host(request) or is_meeting_seeker(request)
 
 
+def _join_target(request: HttpRequest):
+    from neuromancers_network.meetings.join import resolve_join_target  # noqa: PLC0415
+
+    user = _request_user(request)
+    if user is None:
+        return None
+    params = _path_params(request)
+    return resolve_join_target(
+        user,
+        meeting_pk=params.get("meeting_pk"),
+        request_pk=params.get("meeting_request_pk") or params.get("request_pk"),
+    )
+
+
+def is_joining_upcoming_meeting_as_host(request: HttpRequest) -> bool:
+    from neuromancers_network.meetings.join import target_is_open  # noqa: PLC0415
+
+    target = _join_target(request)
+    return bool(target and target.is_host and target_is_open(target))
+
+
+def is_joining_upcoming_meeting_as_guest(request: HttpRequest) -> bool:
+    from neuromancers_network.meetings.join import target_is_open  # noqa: PLC0415
+
+    target = _join_target(request)
+    return bool(target and target.is_guest and target_is_open(target))
+
+
 def is_own_profile(request: HttpRequest) -> bool:
     user = _request_user(request)
     if user is None:

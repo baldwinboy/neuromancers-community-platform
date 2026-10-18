@@ -190,7 +190,13 @@ class DailyStreamingCustomLayoutConfig(pydantic.BaseModel):
     composition_params: typing.Optional[dict[str, typing.Any]] = None
     session_assets: typing.Optional[dict[str, typing.Any]] = None
 
-DailyStreamingLayoutConfig = typing.Annotated[DailyStreamingDefaultLayoutConfig | DailyStreamingSingleParticipantLayoutConfig | DailyStreamingActiveParticipantLayoutConfig | DailyStreamingPortraitLayoutConfig | DailyStreamingCustomLayoutConfig, pydantic.Field(discriminator="preset")]
+DailyStreamingLayoutConfig = (
+    DailyStreamingDefaultLayoutConfig
+    | DailyStreamingSingleParticipantLayoutConfig
+    | DailyStreamingActiveParticipantLayoutConfig
+    | DailyStreamingPortraitLayoutConfig
+    | DailyStreamingCustomLayoutConfig
+)
 
 class RecordingStreamingOptions(pydantic.BaseModel):
     width: float
