@@ -27,7 +27,14 @@ class LocalizationMiddleware:
         request.localization = data
         request.available_languages = choices
 
-        if data.get("enabled", True) and offered:
+        if not data.get("enabled", True):
+            default = data["default_language"]
+            if default not in offered and offered:
+                default = sorted(offered)[0]
+            if default:
+                translation.activate(default)
+                request.LANGUAGE_CODE = default
+        elif offered:
             language = self._select_language(request, data, offered)
             if language:
                 translation.activate(language)

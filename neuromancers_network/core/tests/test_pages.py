@@ -8,6 +8,7 @@ from neuromancers_network.core.models import HomePage
 from neuromancers_network.core.models import StandardPage
 from neuromancers_network.core.models.pages import TagDetailPage
 from neuromancers_network.core.models.pages import TagIndexPage
+from neuromancers_network.core.selectors import _allowed_page_types
 from neuromancers_network.core.selectors import all_descendants
 from neuromancers_network.core.selectors import immediate_children
 from neuromancers_network.core.selectors import sitewide_pages
@@ -125,6 +126,13 @@ class TestTagDetailPages:
         tag.delete()
 
         assert not TagDetailPage.objects.filter(source_object_id=tag.pk).exists()
+
+
+class TestAllowedPageTypes:
+    def test_unknown_page_type_is_skipped(self, settings):
+        settings.WAGTAIL_DAISIE_PAGE_FEEDS_CONTENT_TYPES = ["missing.MissingPage"]
+
+        assert _allowed_page_types() == ()
 
 
 class TestTagDetailContext:

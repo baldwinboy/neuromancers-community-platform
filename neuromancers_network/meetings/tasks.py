@@ -15,16 +15,18 @@ def populate_pending_meeting_links():
     Applies to 1:1 meetings only (group meetings get links on creation).
     """
     from .models import MeetingRequest  # noqa: PLC0415
+    from .models import MeetingRequestStatus  # noqa: PLC0415
+    from .models import MeetingType  # noqa: PLC0415
 
     now = timezone.now()
     threshold = now + timedelta(hours=1)
 
     requests = MeetingRequest.objects.filter(
         meeting_link="",
-        meeting__meeting_type="1:1",
+        meeting__meeting_type=MeetingType.ONE_ON_ONE,
         requested_start_time__lte=threshold,
         requested_start_time__gte=now,
-        status__in=["paid", "approved"],
+        status__in=[MeetingRequestStatus.PAID, MeetingRequestStatus.APPROVED],
     )
 
     for req in requests:

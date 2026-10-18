@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from django.apps import apps
 from django.conf import settings
 from wagtail.models import Page
@@ -9,15 +11,20 @@ from wagtail.models import Page
 from neuromancers_network.core.models.pages import StandardPage
 from neuromancers_network.core.models.pages import TagDetailPage
 
+logger = logging.getLogger(__name__)
+
 
 def _allowed_page_types():
     """Page models permitted in the generic page feeds (allowlist)."""
     paths = getattr(settings, "WAGTAIL_DAISIE_PAGE_FEEDS_CONTENT_TYPES", []) or []
     models = []
     for path in paths:
-        model = apps.get_model(path)
-        if model is not None:
-            models.append(model)
+        try:
+            model = apps.get_model(path)
+        except LookupError, ValueError:
+            logger.warning("Unknown page feed content type %r", path)
+            continue
+        models.append(model)
     return tuple(models)
 
 

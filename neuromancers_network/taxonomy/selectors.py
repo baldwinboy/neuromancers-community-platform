@@ -44,7 +44,7 @@ def country_choices() -> list[tuple[str, str]]:
 
 def tag_choices(group_slug: str | None = None) -> list[tuple[str, str]]:
     """Return ``(slug, name)`` for active tags, optionally within a group."""
-    tags = AllowedTag.objects.filter(is_active=True)
+    tags = AllowedTag.objects.filter(is_active=True, group__is_active=True)
     if group_slug is not None:
         tags = tags.filter(group__slug=group_slug)
     return [(tag.slug, tag.name) for tag in tags]

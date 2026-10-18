@@ -9,23 +9,7 @@ from modelcluster.fields import ParentalKey
 from wagtail_daisIE.forms.fields import DaisieFormField
 from wagtail_daisIE.forms.models import DaisieFormPage
 
-_MEETING_FIELDS = (
-    "title",
-    "description",
-    "terms",
-    "meeting_type",
-    "meeting_link",
-    "pricing_type",
-    "price",
-    "sliding_scale_min",
-    "sliding_scale_max",
-    "currency",
-    "approval_policy",
-    "refund_requires_approval",
-    "max_participants",
-    "scheduled_at",
-    "duration_minutes",
-)
+from neuromancers_network.meetings.constants import MEETING_FORM_FIELDS
 
 
 def _as_list(value) -> list:
@@ -71,7 +55,7 @@ class MeetingFormPage(DaisieFormPage):
             return None
 
         data = form.cleaned_data
-        fields = {key: data[key] for key in _MEETING_FIELDS if key in data}
+        fields = {key: data[key] for key in MEETING_FORM_FIELDS if key in data}
         fields["tags"] = _as_list(data.get("tags"))
         fields["countries"] = _as_list(data.get("countries"))
         fields["languages"] = _as_list(data.get("languages"))

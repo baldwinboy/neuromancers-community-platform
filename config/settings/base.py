@@ -732,7 +732,7 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "label": _("Host meeting"),
         "model": "meetings.Meeting",
         "source": "request.user",
-        "queryset": "neuromancers_network.meetings.selectors.host_meetings",
+        "queryset": "neuromancers_network.meetings.selectors.my_meetings",
     },
     "host_request": {
         "label": _("Host booking request"),

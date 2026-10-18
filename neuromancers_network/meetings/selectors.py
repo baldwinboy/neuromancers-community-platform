@@ -74,11 +74,6 @@ def unpaid_bookings(request=None, page=None):
     ).select_related("meeting")
 
 
-def host_meetings(request=None, page=None):
-    """The signed-in peer's own meetings (the host dashboard feed)."""
-    return my_meetings(request=request, page=page)
-
-
 def host_requests(request=None, page=None):
     """Booking requests made against the signed-in peer's meetings."""
     from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415

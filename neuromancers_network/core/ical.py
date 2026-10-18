@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC
 from datetime import timedelta
-from urllib.parse import urlencode
 
 from icalendar import Calendar
 from icalendar import Event
@@ -52,31 +50,3 @@ def build_ics(bookings) -> bytes:
             calendar.add_component(event)
 
     return calendar.to_ical()
-
-
-def _fmt_google(dt) -> str:
-    return dt.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-
-
-def google_calendar_link(*, title, start, end, details="", location=""):
-    params = {
-        "action": "TEMPLATE",
-        "text": title,
-        "dates": f"{_fmt_google(start)}/{_fmt_google(end)}",
-        "details": details,
-        "location": location,
-    }
-    return "https://calendar.google.com/calendar/render?" + urlencode(params)
-
-
-def outlook_calendar_link(*, title, start, end, details="", location=""):
-    params = {
-        "path": "/calendar/action/compose",
-        "rru": "addevent",
-        "subject": title,
-        "startdt": start.isoformat(),
-        "enddt": end.isoformat(),
-        "body": details,
-        "location": location,
-    }
-    return "https://outlook.live.com/calendar/0/deeplink/compose?" + urlencode(params)

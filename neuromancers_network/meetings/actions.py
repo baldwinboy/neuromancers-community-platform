@@ -15,6 +15,7 @@ from neuromancers_network.core.actions import as_bool
 from neuromancers_network.core.actions import as_list
 from neuromancers_network.core.actions import redirect_back
 from neuromancers_network.core.actions import require_authenticated
+from neuromancers_network.meetings.constants import MEETING_FORM_FIELDS
 from neuromancers_network.meetings.models import Booking
 from neuromancers_network.meetings.models import BookingStatus
 from neuromancers_network.meetings.models import Meeting
@@ -34,23 +35,7 @@ from neuromancers_network.meetings.services import unpublish_all
 
 logger = logging.getLogger(__name__)
 
-_ALLOWED_MEETING_FIELDS = {
-    "title",
-    "description",
-    "terms",
-    "meeting_type",
-    "meeting_link",
-    "pricing_type",
-    "price",
-    "sliding_scale_min",
-    "sliding_scale_max",
-    "currency",
-    "approval_policy",
-    "refund_requires_approval",
-    "max_participants",
-    "scheduled_at",
-    "duration_minutes",
-}
+_ALLOWED_MEETING_FIELDS = frozenset(MEETING_FORM_FIELDS)
 
 
 def _owned_meeting(user, data) -> Meeting:
