@@ -39,6 +39,7 @@ _EVENT_SNAPSHOT_SPEC = {
     PeerApplication: ("status",),
     StripeSubscription: ("stripe_data",),
     PeerSubscription: ("paused_at",),
+    Review: ("status",),
 }
 
 # Stashed pre-save values, keyed by instance. A weak store drops entries when an
@@ -183,6 +184,49 @@ def emit_review_created(sender, instance, created, **kwargs):
         )
     except Exception:
         logger.exception("Failed to emit review_created event")
+
+
+def _emit_review_transition(instance, event_type, *, actor, recipients):
+    try:
+        emit(
+            event_type,
+            payload=review_payload(instance, actor=actor, recipients=recipients),
+            event_ref=f"review.{instance.pk}.{instance.status}",
+        )
+    except Exception:
+        logger.exception("Failed to emit %s event", event_type)
+
+
+def emit_review_status_changed(sender, instance, created, **kwargs):
+    from neuromancers_network.meetings.models import ReviewStatus  # noqa: PLC0415
+
+    if created:
+        if instance.status == ReviewStatus.PENDING_APPROVAL:
+            _emit_review_transition(
+                instance,
+                "review_pending_approval",
+                actor=instance.reviewer,
+                recipients=[instance.peer],
+            )
+        return
+
+    previous = _drop_pre_state(instance)
+    if previous.get("status") == instance.status:
+        return
+    if instance.status == ReviewStatus.PUBLISHED:
+        _emit_review_transition(
+            instance,
+            "review_published",
+            actor=instance.peer,
+            recipients=[instance.reviewer],
+        )
+    elif instance.status == ReviewStatus.HIDDEN:
+        _emit_review_transition(
+            instance,
+            "review_hidden",
+            actor=instance.peer,
+            recipients=[instance.reviewer],
+        )
 
 
 # --- Peer approval ----------------------------------------------------------
@@ -491,6 +535,8 @@ post_transition.connect(emit_booking_transition, sender=MeetingRequest)
 post_save.connect(emit_refund_requested, sender=RefundRequest)
 post_transition.connect(emit_refund_transition, sender=RefundRequest)
 post_save.connect(emit_review_created, sender=Review)
+pre_save.connect(_stash_pre_state, sender=Review)
+post_save.connect(emit_review_status_changed, sender=Review)
 post_transition.connect(emit_meeting_cancelled, sender=Meeting)
 post_transition.connect(emit_meeting_published, sender=Meeting)
 post_transition.connect(emit_meeting_unpublished, sender=Meeting)

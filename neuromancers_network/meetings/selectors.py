@@ -7,6 +7,7 @@ from django.db.models import Q
 from neuromancers_network.meetings.models import Booking
 from neuromancers_network.meetings.models import BookingStatus
 from neuromancers_network.meetings.models import MeetingRequest
+from neuromancers_network.meetings.models import MeetingRequestStatus
 from neuromancers_network.meetings.models import RefundRequest
 from neuromancers_network.meetings.models import Review
 from neuromancers_network.meetings.models import ReviewStatus
@@ -296,3 +297,73 @@ def host_refunds(request=None, page=None):
         .select_related("meeting_request__meeting", "meeting_request__support_seeker")
         .order_by("-created_at")
     )
+
+
+def peer_reviews(request=None, page=None, *, status=None):
+    """Reviews received by the signed-in peer, newest first."""
+    user = _viewer(request)
+    if user is None:
+        return Review.objects.none()
+    queryset = (
+        Review.objects.filter(peer=user)
+        .select_related("reviewer", "meeting_request__meeting")
+        .order_by("-created_at")
+    )
+    if status is not None:
+        queryset = queryset.filter(status=status)
+    return queryset
+
+
+def my_reviews(request=None, page=None):
+    return peer_reviews(request=request, page=page)
+
+
+def my_pending_reviews(request=None, page=None):
+    return peer_reviews(
+        request=request,
+        page=page,
+        status=ReviewStatus.PENDING_APPROVAL,
+    )
+
+
+def my_published_reviews(request=None, page=None):
+    return peer_reviews(request=request, page=page, status=ReviewStatus.PUBLISHED)
+
+
+def my_hidden_reviews(request=None, page=None):
+    return peer_reviews(request=request, page=page, status=ReviewStatus.HIDDEN)
+
+
+def review_stats(peer_user, *, viewer=None):
+    """Public review/session aggregates for *peer_user*, honouring preferences."""
+    from django.db.models import Avg  # noqa: PLC0415
+    from django.db.models import Count  # noqa: PLC0415
+
+    from neuromancers_network.peers.models import PeerProfile  # noqa: PLC0415
+
+    reviews = Review.objects.filter(
+        peer=peer_user,
+        status=ReviewStatus.PUBLISHED,
+    )
+    reviews = exclude_hidden(reviews, viewer, owner_field="reviewer")
+    aggregate = reviews.aggregate(rating=Avg("rating"), count=Count("id"))
+    profile = PeerProfile.objects.filter(user=peer_user).first()
+
+    rating = aggregate["rating"]
+    if profile is not None and not profile.show_review_rating:
+        rating = None
+    rating_count = aggregate["count"]
+    if profile is not None and not profile.show_rating_count:
+        rating_count = None
+    sessions = MeetingRequest.objects.filter(
+        meeting__peer=peer_user,
+        status=MeetingRequestStatus.COMPLETED,
+    ).count()
+    if profile is not None and not profile.show_sessions_count:
+        sessions = None
+    return {
+        "rating": rating,
+        "rating_count": rating_count,
+        "sessions": sessions,
+        "review_count": aggregate["count"],
+    }

@@ -329,3 +329,57 @@ def bookings_request_refund(request, data):
         amount=data.get("amount") or None,
     )
     return redirect_back(request)
+
+
+def _peer_review(user, data):
+    from neuromancers_network.meetings.models import Review  # noqa: PLC0415
+
+    raw_pk = data.get("review") or data.get("review_id") or data.get("pk")
+    review = (
+        Review.objects.filter(pk=raw_pk, peer=user).select_related("reviewer").first()
+    )
+    if review is None:
+        message = "Review not found"
+        raise PermissionDenied(message)
+    return review
+
+
+def review_approve(request, data):
+    """Publish a pending review owned by the signed-in peer."""
+    from neuromancers_network.core.audit import record_audit  # noqa: PLC0415
+    from neuromancers_network.meetings.models import ReviewStatus  # noqa: PLC0415
+
+    user = require_authenticated(request)
+    review = _peer_review(user, data)
+    if review.status == ReviewStatus.HIDDEN:
+        message = "A hidden review cannot be approved"
+        raise PermissionDenied(message)
+    if review.status != ReviewStatus.PUBLISHED:
+        review.publish()
+        review.save(update_fields=["status", "updated_at"])
+        record_audit(
+            action="review.peer_approve",
+            actor=user,
+            user=review.reviewer,
+            request=request,
+        )
+    return redirect_back(request)
+
+
+def review_hide(request, data):
+    """Hide (never delete) a review owned by the signed-in peer."""
+    from neuromancers_network.core.audit import record_audit  # noqa: PLC0415
+    from neuromancers_network.meetings.models import ReviewStatus  # noqa: PLC0415
+
+    user = require_authenticated(request)
+    review = _peer_review(user, data)
+    if review.status != ReviewStatus.HIDDEN:
+        review.hide()
+        review.save(update_fields=["status", "updated_at"])
+        record_audit(
+            action="review.peer_hide",
+            actor=user,
+            user=review.reviewer,
+            request=request,
+        )
+    return redirect_back(request)

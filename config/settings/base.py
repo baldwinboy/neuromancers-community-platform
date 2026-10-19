@@ -701,6 +701,34 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "lookup_field": "review_pk",
         "queryset": "neuromancers_network.meetings.selectors.published_reviews",
     },
+    "my_reviews": {
+        "label": _("My reviews"),
+        "model": "meetings.Review",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.my_reviews",
+        "select_related": ["reviewer", "meeting_request__meeting"],
+    },
+    "my_pending_reviews": {
+        "label": _("My pending reviews"),
+        "model": "meetings.Review",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.my_pending_reviews",
+        "select_related": ["reviewer", "meeting_request__meeting"],
+    },
+    "my_published_reviews": {
+        "label": _("My published reviews"),
+        "model": "meetings.Review",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.my_published_reviews",
+        "select_related": ["reviewer", "meeting_request__meeting"],
+    },
+    "my_hidden_reviews": {
+        "label": _("My hidden reviews"),
+        "model": "meetings.Review",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.my_hidden_reviews",
+        "select_related": ["reviewer", "meeting_request__meeting"],
+    },
     "user_profile": {
         "label": _("Member profile"),
         "model": "users.UserProfile",
@@ -875,6 +903,9 @@ _NOTIFICATION_EVENT_KEYS = [
     "refund_rejected",
     "refund_refunded",
     "review_created",
+    "review_pending_approval",
+    "review_published",
+    "review_hidden",
     "subscription_created",
     "subscription_cancelled",
     "subscription_paused",
@@ -1092,6 +1123,14 @@ WAGTAIL_DAISIE_ACTIONS = {
     "refunds.reject": {
         "label": _("Reject refund"),
         "handler": "neuromancers_network.meetings.actions.refunds_reject",
+    },
+    "review.approve": {
+        "label": _("Approve review"),
+        "handler": "neuromancers_network.meetings.actions.review_approve",
+    },
+    "review.hide": {
+        "label": _("Hide review"),
+        "handler": "neuromancers_network.meetings.actions.review_hide",
     },
     "bookings.request": {
         "label": _("Request booking"),

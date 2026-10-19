@@ -227,10 +227,36 @@ class MeetingDetailPage(SourceBoundDetailPage):
     parent_page_types = ["core.MeetingIndexPage"]
     subpage_types: list[str] = []
 
+    def get_context(self, request, *args, **kwargs):
+        from neuromancers_network.meetings.selectors import (  # noqa: PLC0415
+            review_stats,
+        )
+
+        context = super().get_context(request, *args, **kwargs)
+        if self.source is not None:
+            context["review_stats"] = review_stats(
+                self.source.peer,
+                viewer=getattr(request, "user", None),
+            )
+        return context
+
 
 class PeerProfileDetailPage(SourceBoundDetailPage):
     parent_page_types = ["core.PeerIndexPage"]
     subpage_types: list[str] = []
+
+    def get_context(self, request, *args, **kwargs):
+        from neuromancers_network.meetings.selectors import (  # noqa: PLC0415
+            review_stats,
+        )
+
+        context = super().get_context(request, *args, **kwargs)
+        if self.source is not None:
+            context["review_stats"] = review_stats(
+                self.source.user,
+                viewer=getattr(request, "user", None),
+            )
+        return context
 
     def daisie_source_params(self):
         params = super().daisie_source_params()  # peer_pk

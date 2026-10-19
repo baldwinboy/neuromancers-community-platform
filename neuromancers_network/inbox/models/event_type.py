@@ -26,6 +26,12 @@ class NotificationEventType(models.TextChoices):
 
     # Reviews
     REVIEW_CREATED = "review_created", _("Review created")
+    REVIEW_PENDING_APPROVAL = (
+        "review_pending_approval",
+        _("Review pending approval"),
+    )
+    REVIEW_PUBLISHED = "review_published", _("Review published")
+    REVIEW_HIDDEN = "review_hidden", _("Review hidden")
 
     # Peer approval
     PEER_APPROVED = "peer_approved", _("Peer approved")

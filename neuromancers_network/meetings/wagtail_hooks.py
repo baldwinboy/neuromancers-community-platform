@@ -432,13 +432,23 @@ class UnpublishReviewBulkAction(ConfirmBulkAction):
     action_button_text = _("Yes, unpublish")
     no_action_button_text = _("No, go back")
 
+    def get_execution_context(self):
+        return {"actor": self.request.user}
+
     @classmethod
-    def execute_action(cls, objects, **kwargs):
+    def execute_action(cls, objects, *, actor=None, **kwargs):
+        from neuromancers_network.core.audit import record_audit  # noqa: PLC0415
+
         hidden = 0
         for review in objects:
             if review.status != ReviewStatus.HIDDEN:
                 review.hide()
                 review.save(update_fields=["status", "updated_at"])
+                record_audit(
+                    action="review.moderator_hide",
+                    actor=actor,
+                    user=review.reviewer,
+                )
                 hidden += 1
         return hidden, 0
 
