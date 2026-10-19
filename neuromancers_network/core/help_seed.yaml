@@ -520,6 +520,78 @@ articles:
     sort_order: 19
     is_published: true
 
+  - title: Building a peer application form
+    slug: building-a-peer-application-form
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: Create a form page that generates a PeerApplication, gate it with a required checkbox, and review the answers.
+    body:
+      - type: rich_text
+        text: |-
+          <p>A <strong>Peer application form page</strong> is an admin-authored form for people who want to become care providers. A signed-in member submits it once; the platform creates a <strong>PeerApplication</strong> for them. You can add, remove and reorder questions later without changing the database.</p>
+      - type: header
+        text: Before you start
+      - type: rich_text
+        text: |-
+          <p>The page must be a child of the home page. Each member may have one application; a second submission is accepted by the form but does not create another application. The special <strong>Reason</strong> answer is shown in the applications queue; other answers are stored in the submission JSON and shown in the application's <strong>Form answers</strong> panel.</p>
+      - type: header
+        text: Create the page
+      - type: rich_text
+        text: |-
+          <p>Add the page under <strong>Pages &rarr; Home page</strong>, choose <strong>Peer application form page</strong>, and give it a title. Under <strong>Audience</strong>, choose <strong>Signed-in members</strong> and set the denied behaviour. Do not set <strong>Model to create</strong>; this page has its own submission handler.</p>
+      - type: header
+        text: Add the required fields
+      - type: table
+        headers: ["Label", "Field type", "Required", "Model field", "Purpose"]
+        rows:
+          - ["Reason", "Multiline", "Yes", "reason", "Copied to PeerApplication.reason and shown in the applications queue."]
+          - ["I confirm that the information I have given is true", "Checkbox", "Yes", "—", "Blocks submission until ticked; stored in the answer set."]
+          - ["Experience (example)", "Multiline", "No", "—", "A custom question; stored only in the submission JSON."]
+      - type: rich_text
+        text: |-
+          <p>Use the <strong>Form fields</strong> inline panel for all of these. The checkbox must be a <strong>Form field</strong>, not the decorative Checkbox block: only real form fields are validated and submitted. A required checkbox is enough to prevent submission until it is ticked.</p>
+      - type: header
+        text: Place and pad the fields
+      - type: rich_text
+        text: |-
+          <p>In the page body, use <strong>Form field</strong> blocks to place a bound field where you want it. Any field you do not place appears automatically above the submit button. Do not place the same field twice; the page rejects duplicate placements.</p>
+      - type: rich_text
+        text: |-
+          <p>For a padded or bordered box around one field, add a <strong>Form field (padded)</strong> block, choose the field, and set <strong>Design &rarr; Padding</strong> (and background, border or margin if needed). This wrapper is available on every form page and is entirely admin-controlled.</p>
+      - type: table
+        headers: ["Goal", "Do this", "Notes"]
+        rows:
+          - ["Pad the whole form", "Main design → Padding", "Applies to the page's main container, not each field."]
+          - ["Pad one bound field", "Form field (padded) → Design → Padding", "Creates a wrapper around that field's label, input, help text and errors."]
+          - ["Group static inputs", "Fieldset block → Design → Padding", "Only for design-time Input blocks; it cannot contain bound Form field blocks."]
+      - type: header
+        text: Change questions later
+      - type: rich_text
+        text: |-
+          <p>Edit the <strong>Form fields</strong> panel and publish to change the questions. New submissions use the new fields; older applications keep their original JSON snapshot. A field's internal name is fixed when it is created, so renaming its label later does not lose old answers. Remove a field and old answers remain visible through the fallback in the Form answers panel.</p>
+      - type: header
+        text: Review submissions
+      - type: rich_text
+        text: |-
+          <p>Open <strong>Profiles &rarr; Peer applications</strong>. The <strong>Answers</strong> column gives a short preview; open an application to see the labelled <strong>Form answers</strong> table. The page's <strong>Form submissions</strong> panel also keeps the raw submission. Approve or reject from the queue; approval updates the peer profile, and the usual care-provider requirements still apply.</p>
+      - type: header
+        text: Troubleshooting
+      - type: rich_text
+        text: |-
+          <ul><li><strong>Reason is blank:</strong> set the field's <strong>Model field</strong> to <code>reason</code>, or label the field exactly <code>Reason</code>.</li><li><strong>Submit succeeded but no application:</strong> the visitor is not signed in, or already has an application.</li><li><strong>Checkbox did not block submission:</strong> it was added as a static Checkbox block or its <strong>Required</strong> flag is off.</li><li><strong>Answers are missing from the queue:</strong> legacy applications have no linked form submission; the panel falls back to the stored JSON.</li><li><strong>Padding looks wrong:</strong> input/label design styles the control; use <strong>Form field (padded)</strong> to style the whole field.</li></ul>
+    steps:
+      - text: Add a Peer application form page under the home page.
+      - text: Set Audience to Signed-in members.
+      - text: Add the required Reason field and set Model field to reason.
+      - text: Add the required declaration checkbox.
+      - text: Add any custom questions.
+      - text: Place fields and add Form field (padded) wrappers where needed.
+      - text: Publish the page and link to it.
+      - text: Review applications and answers from the Peer applications queue.
+    sort_order: 20
+    is_published: true
+
   - title: Reviewing peer applications
     slug: reviewing-peer-applications
     category: administrators-moderation-operations
@@ -530,6 +602,9 @@ articles:
       - type: rich_text
         text: |-
           <p>Care providers apply before they can offer meetings. Each application appears in <strong>Profiles &rarr; Peer applications</strong> with the applicant and their reason. Approving an application marks the peer profile as approved, which is the first requirement for a provider to become eligible. Rejecting leaves the profile unapproved. You can approve or reject several at once with the bulk actions. Approval does not by itself make a provider visible; the other care-provider requirements still apply.</p>
+      - type: rich_text
+        text: |-
+          <p>See <strong>Building a peer application form</strong> for creating the form page, adding the reason and declaration checkbox, and reading the submitted answers.</p>
     steps:
       - text: Open the applications queue.
       - text: Review the reason given by the applicant.

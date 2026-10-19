@@ -1,9 +1,11 @@
+# ruff: noqa: PLC0415
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from neuromancers_network.core.models import Timestamped
+from neuromancers_network.peers.submissions import summary
 
 from .choices import PeerApplicationStatus
 
@@ -35,12 +37,25 @@ class PeerApplication(Timestamped):
     )
     reviewed_at = models.DateTimeField(_("Reviewed at"), null=True, blank=True)
     submission = models.JSONField(_("Submission"), null=True, blank=True)
+    submission_record = models.OneToOneField(
+        "wagtailforms.FormSubmission",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="peer_application",
+        verbose_name=_("Form submission"),
+    )
 
     class Meta:
         verbose_name_plural = "Peer applications"
 
     def __str__(self):
         return f"{self.user} ({self.get_status_display()})"
+
+    def submission_summary(self) -> str:
+        return summary(self)
+
+    submission_summary.short_description = _("Answers")
 
     def save(self, *args, **kwargs):
         # An explicit terminal status wins; otherwise approval promotes it.
@@ -54,9 +69,7 @@ class PeerApplication(Timestamped):
 
     def approve(self, reviewer=None):
         """Approve the application and mark the applicant's peer profile."""
-        from neuromancers_network.peers.models.profile import (  # noqa: PLC0415
-            PeerProfile,
-        )
+        from neuromancers_network.peers.models.profile import PeerProfile
 
         self.is_approved = True
         self.status = PeerApplicationStatus.APPROVED

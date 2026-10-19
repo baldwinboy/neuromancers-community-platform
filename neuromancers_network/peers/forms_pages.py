@@ -5,7 +5,8 @@ from __future__ import annotations
 from django.db import models
 from modelcluster.fields import ParentalKey
 from wagtail_daisIE.forms.fields import DaisieFormField
-from wagtail_daisIE.forms.models import DaisieFormPage
+
+from neuromancers_network.core.forms_pages import ProjectDaisieFormPage
 
 
 class PeerApplicationFormField(DaisieFormField):
@@ -16,10 +17,16 @@ class PeerApplicationFormField(DaisieFormField):
     )
 
 
-class PeerApplicationFormPage(DaisieFormPage):
+class PeerApplicationFormPage(ProjectDaisieFormPage):
     template = "wagtail_daisIE/forms/form_page.html"
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
+
+    def _reason_value(self, form):
+        for clean_name, target in self.get_model_field_map().items():
+            if target == "reason":
+                return form.cleaned_data.get(clean_name, "")
+        return form.cleaned_data.get("reason", "")
 
     def create_instance_from_submission(self, form, submission=None):
         from neuromancers_network.peers.models import PeerApplication  # noqa: PLC0415
@@ -31,9 +38,9 @@ class PeerApplicationFormPage(DaisieFormPage):
         if PeerApplication.objects.filter(user=user).exists():
             return None
 
-        data = form.cleaned_data
         return PeerApplication.objects.create(
             user=user,
-            reason=data.get("reason", ""),
+            reason=self._reason_value(form),
             submission=submission.form_data if submission is not None else {},
+            submission_record=submission,
         )

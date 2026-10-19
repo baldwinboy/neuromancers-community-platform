@@ -1,0 +1,32 @@
+{% load i18n %}
+
+<div class="w-panel">
+  <h2 class="w-panel__heading">{{ self.heading }}</h2>
+  <div class="w-panel__content">
+    {% if submitted_at %}
+      <p class="w-help-text">
+        {% blocktrans with submitted_at=submitted_at %}Submitted {{ submitted_at }}{% endblocktrans %}
+      </p>
+    {% endif %}
+    {% if answer_rows %}
+      <table class="w-table">
+        <thead>
+          <tr>
+            <th scope="col">{% trans "Question" %}</th>
+            <th scope="col">{% trans "Answer" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in answer_rows %}
+            <tr>
+              <th scope="row">{{ row.label }}</th>
+              <td>{{ row.value }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>{% trans "No form answers recorded." %}</p>
+    {% endif %}
+  </div>
+</div>

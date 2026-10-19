@@ -5,7 +5,8 @@ from __future__ import annotations
 from django.db import models
 from modelcluster.fields import ParentalKey
 from wagtail_daisIE.forms.fields import DaisieFormField
-from wagtail_daisIE.forms.models import DaisieFormPage
+
+from neuromancers_network.core.forms_pages import ProjectDaisieFormPage
 
 _PROFILE_FIELDS = ("bio", "access_needs", "visibility", "timezone", "country")
 
@@ -26,7 +27,7 @@ class ProfileEditFormField(DaisieFormField):
     )
 
 
-class ProfileEditFormPage(DaisieFormPage):
+class ProfileEditFormPage(ProjectDaisieFormPage):
     template = "wagtail_daisIE/forms/form_page.html"
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []

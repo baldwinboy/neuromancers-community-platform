@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 """Admin-authored support/report form page."""
 
 from __future__ import annotations
@@ -7,7 +8,8 @@ import logging
 from django.db import models
 from modelcluster.fields import ParentalKey
 from wagtail_daisIE.forms.fields import DaisieFormField
-from wagtail_daisIE.forms.models import DaisieFormPage
+
+from neuromancers_network.core.forms_pages import ProjectDaisieFormPage
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +19,7 @@ _SUPPORT_TICKET_FIELDS = {"kind", "subject_url", "message", "subject_user"}
 def _resolve_subject_user(value):
     if value is None or value == "":
         return None
-    from neuromancers_network.users.models import User  # noqa: PLC0415
+    from neuromancers_network.users.models import User
 
     if isinstance(value, User):
         return value
@@ -37,7 +39,7 @@ class SupportFormField(DaisieFormField):
     )
 
 
-class SupportFormPage(DaisieFormPage):
+class SupportFormPage(ProjectDaisieFormPage):
     """A support/report form that creates a :class:`SupportTicket`."""
 
     template = "wagtail_daisIE/forms/form_page.html"
@@ -45,12 +47,10 @@ class SupportFormPage(DaisieFormPage):
     subpage_types: list[str] = []
 
     def create_instance_from_submission(self, form, submission=None):
-        from neuromancers_network.core.audience import moderator_users  # noqa: PLC0415
-        from neuromancers_network.inbox.events import emit  # noqa: PLC0415
-        from neuromancers_network.moderation.models import SupportKind  # noqa: PLC0415
-        from neuromancers_network.moderation.models import (  # noqa: PLC0415
-            SupportTicket,
-        )
+        from neuromancers_network.core.audience import moderator_users
+        from neuromancers_network.inbox.events import emit
+        from neuromancers_network.moderation.models import SupportKind
+        from neuromancers_network.moderation.models import SupportTicket
 
         request = getattr(self, "_daisie_request", None)
         user = getattr(request, "user", None)

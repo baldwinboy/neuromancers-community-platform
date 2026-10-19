@@ -14,6 +14,7 @@ from neuromancers_network.core.views.viewset import HiddenFromSnippetIndexMixin
 from neuromancers_network.peers.forms import PeerProfileAdminForm
 from neuromancers_network.peers.models import PeerApplication
 from neuromancers_network.peers.models import PeerProfile
+from neuromancers_network.peers.panels import PeerApplicationAnswersPanel
 from neuromancers_network.users.models import UserProfile
 
 
@@ -45,6 +46,7 @@ class PeerApplicationViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
         "user",
         "status",
         "is_approved",
+        "submission_summary",
         "reviewed_by",
         "reviewed_at",
         "created_at",
@@ -54,12 +56,19 @@ class PeerApplicationViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     panels = [
         FieldPanel("user"),
         FieldPanel("reason"),
+        PeerApplicationAnswersPanel(heading=_("Form answers")),
         FieldPanel("is_approved"),
         FieldPanel("status"),
         FieldPanel("reviewed_by"),
         FieldPanel("reviewed_at"),
     ]
     list_per_page = 50
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        if queryset is None:
+            queryset = self.model._default_manager.all()  # noqa: SLF001
+        return queryset.select_related("submission_record")
 
 
 class PeerProfileViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):

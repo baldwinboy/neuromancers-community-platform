@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 """Admin-authored meeting, booking, refund and review form pages."""
 
 from __future__ import annotations
@@ -7,8 +8,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from modelcluster.fields import ParentalKey
 from wagtail_daisIE.forms.fields import DaisieFormField
-from wagtail_daisIE.forms.models import DaisieFormPage
 
+from neuromancers_network.core.forms_pages import ProjectDaisieFormPage
 from neuromancers_network.meetings.constants import MEETING_FORM_FIELDS
 
 
@@ -36,18 +37,14 @@ class MeetingFormField(DaisieFormField):
     )
 
 
-class MeetingFormPage(DaisieFormPage):
+class MeetingFormPage(ProjectDaisieFormPage):
     template = "wagtail_daisIE/forms/form_page.html"
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
 
     def create_instance_from_submission(self, form, submission=None):
-        from neuromancers_network.meetings.services import (  # noqa: PLC0415
-            apply_duration_tiers,
-        )
-        from neuromancers_network.meetings.services import (  # noqa: PLC0415
-            create_meeting,
-        )
+        from neuromancers_network.meetings.services import apply_duration_tiers
+        from neuromancers_network.meetings.services import create_meeting
 
         request = getattr(self, "_daisie_request", None)
         user = getattr(request, "user", None)
@@ -78,7 +75,7 @@ class MeetingEditFormField(DaisieFormField):
     )
 
 
-class MeetingEditFormPage(DaisieFormPage):
+class MeetingEditFormPage(ProjectDaisieFormPage):
     """Host-facing edit page for an existing 1:1 or group meeting."""
 
     template = "wagtail_daisIE/forms/form_page.html"
@@ -87,9 +84,7 @@ class MeetingEditFormPage(DaisieFormPage):
     subpage_types: list[str] = []
 
     def update_instance_from_submission(self, form, instance):
-        from neuromancers_network.meetings.services import (  # noqa: PLC0415
-            apply_duration_tiers,
-        )
+        from neuromancers_network.meetings.services import apply_duration_tiers
 
         request = getattr(self, "_daisie_request", None)
         user = getattr(request, "user", None)
@@ -114,17 +109,15 @@ class BookingFormField(DaisieFormField):
     )
 
 
-class BookingFormPage(DaisieFormPage):
+class BookingFormPage(ProjectDaisieFormPage):
     template = "wagtail_daisIE/forms/form_page.html"
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
 
     def create_instance_from_submission(self, form, submission=None):
-        from neuromancers_network.meetings.models import Meeting  # noqa: PLC0415
-        from neuromancers_network.meetings.models import MeetingStatus  # noqa: PLC0415
-        from neuromancers_network.meetings.services import (  # noqa: PLC0415
-            create_booking,
-        )
+        from neuromancers_network.meetings.models import Meeting
+        from neuromancers_network.meetings.models import MeetingStatus
+        from neuromancers_network.meetings.services import create_booking
 
         request = getattr(self, "_daisie_request", None)
         user = getattr(request, "user", None)
@@ -166,13 +159,13 @@ class RefundRequestFormField(DaisieFormField):
     )
 
 
-class RefundRequestFormPage(DaisieFormPage):
+class RefundRequestFormPage(ProjectDaisieFormPage):
     template = "wagtail_daisIE/forms/form_page.html"
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
 
     def create_instance_from_submission(self, form, submission=None):
-        from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
+        from neuromancers_network.meetings.models import MeetingRequest
 
         request = getattr(self, "_daisie_request", None)
         user = getattr(request, "user", None)
@@ -201,18 +194,16 @@ class ReviewFormField(DaisieFormField):
     )
 
 
-class ReviewFormPage(DaisieFormPage):
+class ReviewFormPage(ProjectDaisieFormPage):
     template = "wagtail_daisIE/forms/form_page.html"
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
 
     def create_instance_from_submission(self, form, submission=None):
-        from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
-        from neuromancers_network.meetings.models import (  # noqa: PLC0415
-            MeetingRequestStatus,
-        )
-        from neuromancers_network.meetings.models import Review  # noqa: PLC0415
-        from neuromancers_network.meetings.models import ReviewStatus  # noqa: PLC0415
+        from neuromancers_network.meetings.models import MeetingRequest
+        from neuromancers_network.meetings.models import MeetingRequestStatus
+        from neuromancers_network.meetings.models import Review
+        from neuromancers_network.meetings.models import ReviewStatus
 
         request = getattr(self, "_daisie_request", None)
         user = getattr(request, "user", None)

@@ -1,0 +1,6 @@
+{% load wagtailcore_tags %}
+
+{% if audience_allowed %}
+  <div class="{{ block_css }}"
+       {% if block_style %} style="{{ block_style }}"{% endif %}>{% include_block value.field %}</div>
+{% endif %}
