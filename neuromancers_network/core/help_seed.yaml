@@ -1238,8 +1238,83 @@ articles:
       - type: rich_text
         text: |-
           <p>Processes payments, payouts and subscriptions through Stripe Connect. Providers onboard to an Express connected account, and the platform takes an application fee. Stripe also sends the webhooks that keep payments, refunds and subscriptions in sync.</p>
+      - type: rich_text
+        text: |-
+          <p>See <strong>Third-party service providers</strong> for ownership and access, and <strong>Meeting provider pricing</strong> for a usage-based cost comparison.</p>
     steps: []
     sort_order: 11
+    is_published: true
+
+  - title: "Third-party service providers (Cyber Essentials register)"
+    slug: third-party-service-providers
+    category: developers-operators
+    kind: reference
+    audience: developer
+    summary: Who supplies each service, how it is accessed, what data it holds, and who owns it.
+    body:
+      - type: rich_text
+        text: |-
+          <p>This register covers the external services used to run the platform. It is written in the style of a Cyber Essentials supplier list: provider, service, access pattern, data, owner and current status.</p>
+      - type: table
+        headers: ["Provider", "Service", "Access pattern", "Data shared", "Owner", "Status"]
+        rows:
+          - ["Tailscale", "Private mesh networking for hosts and CI", "OAuth client scoped to TAILSCALE_TAG; no public Funnel", "Network and device metadata", "Gabriel Duraye", "Active"]
+          - ["Hetzner", "VPS hosting for staging and production", "SSH deploy user with a Bitwarden key, reachable over Tailscale; Ansible-managed", "Application data at rest and logs", "Gabriel Duraye", "Active"]
+          - ["GitHub", "Source repository, CI and deploy workflows", "Repository/Actions administration; BWS_ACCESS_TOKEN in GitHub environments", "Source code, CI logs and workflow secrets", "Gabriel Duraye", "Active"]
+          - ["Tigris", "Public media bucket and private backups/exports", "S3 keys from Bitwarden; public media through the bucket custom domain", "Images, documents, database backups and exports", "Gabriel Duraye", "Active"]
+          - ["GetPronto", "File and image upload API", "API key and secret stored encrypted in Wagtail settings", "Uploaded files and metadata", "Gabriel Duraye", "Active"]
+          - ["Whereby", "Video meeting rooms", "API key, secret and webhook secret stored encrypted in Wagtail settings", "Meeting metadata, join URLs and attendance", "NEUROMANCERS", "Active"]
+          - ["Stripe", "Payments, subscriptions and Connect payouts", "Secret key and webhook secret stored encrypted in Wagtail settings; Stripe-hosted KYC", "Payment data, identity/KYC data and payout details", "NEUROMANCERS", "Active"]
+          - ["Daily.co", "Video meeting rooms (alternative provider)", "No credentials configured", "None", "Unassigned", "Not set up"]
+          - ["Cloudflare", "DNS, CDN and edge protection", "Dashboard/API access with DNS zone control", "DNS records, traffic metadata and TLS", "NEUROMANCERS", "Active"]
+          - ["IONOS", "Domain registration", "Registrar account for renewals and transfer lock", "Domain registration and contact data", "NEUROMANCERS", "Active"]
+          - ["Bitwarden", "Secrets manager", "BWS_ACCESS_TOKEN in GitHub/Coolify; bws secret list and bws run at runtime", "Platform secrets (encrypted) and access metadata", "NEUROMANCERS", "Active"]
+          - ["Coolify", "Self-hosted PaaS on the Hetzner host", "Admin UI over Tailscale; API token used by Ansible", "Deployment configuration, environment variables and container logs", "NEUROMANCERS (self-hosted)", "Active"]
+      - type: rich_text
+        text: |-
+          <p>Review ownership and access when staff or suppliers change, and at least once a year. Provider names and contracts can change; this register records the current operational owner, not the billing contact.</p>
+    steps: []
+    sort_order: 12
+    is_published: true
+
+  - title: "Meeting provider pricing: Whereby vs Daily"
+    slug: meeting-provider-pricing
+    category: developers-operators
+    kind: reference
+    audience: developer
+    summary: Usage-based pricing comparison for Whereby Embedded and Daily Video SDK.
+    body:
+      - type: rich_text
+        text: |-
+          <p>This compares the API products used by the platform: <strong>Whereby Embedded (Build)</strong> and <strong>Daily Video SDK</strong>. Prices are in USD, excluding VAT, and were checked on 19 October 2026. Re-check the providers' pricing pages before committing to a plan.</p>
+      - type: table
+        headers: ["Cost line", "Daily Video SDK", "Whereby Embedded (Build)"]
+        rows:
+          - ["Monthly platform fee", "$0 (pay-as-you-go)", "$10.99/month"]
+          - ["Included participant minutes", "10,000/month free", "2,000/month included"]
+          - ["Additional participant minute", "$0.0040 (10,001–100,000; graduated to $0.0015 at 50M+)", "$0.0042"]
+          - ["Cloud recording", "$0.01349/recorded min + $0.003/min storage", "$0.01/recorded min"]
+          - ["Transcription", "$0.0059/unmuted participant min realtime; $0.0043/recorded min post-call", "From $0.0065/unmuted participant min; $0.024/recorded min"]
+          - ["Live streaming", "$0.015/min RTMP; $0.03/min HLS", "$0.01/min"]
+          - ["Included storage", "None listed; recording storage $0.003/min", "30 GB-days; then $0.0015/GB-day"]
+          - ["HIPAA", "$500/month add-on", "$16.99/month add-on"]
+          - ["Scale limits", "Up to 100,000 concurrent calls with a card on file", "200 participants, 24 active videos"]
+          - ["Support", "Free developer support; enterprise SLAs", "Email, 1 business day; enterprise TSM"]
+      - type: header
+        text: Worked examples
+      - type: rich_text
+        text: |-
+          <p>Billing is by <strong>participant-minute</strong>: participants multiplied by minutes. Group sessions therefore cost more than the same duration with one other person.</p>
+      - type: rich_text
+        text: |-
+          <p>At 10,000 participant-minutes per month, Daily costs <strong>$0</strong> and Whereby Build costs <strong>$44.59</strong> ($10.99 + 8,000 × $0.0042). At 50,000 participant-minutes, Daily costs <strong>$160.00</strong> and Whereby Build costs <strong>$212.59</strong> ($10.99 + 48,000 × $0.0042).</p>
+      - type: header
+        text: Notes
+      - type: rich_text
+        text: |-
+          <ul><li>Whereby's Build plan includes 2,000 participant minutes; the free Explore tier also has 2,000 minutes but no premium features.</li><li>Whereby Meetings per-user plans are not the pricing used by this API integration.</li><li>Daily's rates fall automatically as monthly participant-minute volume grows.</li><li>Storage, recording, transcription and HIPAA add-ons can change the effective monthly cost.</li></ul>
+    steps: []
+    sort_order: 13
     is_published: true
 
   - title: Review approval and hiding
