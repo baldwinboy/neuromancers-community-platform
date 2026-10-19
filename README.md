@@ -19,7 +19,7 @@ Moved to [settings](https://cookiecutter-django.readthedocs.io/en/latest/1-getti
 
 - To create a **superuser account**, use this command:
 
-      uv run python manage.py createsuperuser
+      just manage createsuperuser
 
 For convenience, you can keep your normal user logged in on Chrome and your superuser logged in on Firefox (or similar), so that you can see how the site behaves for both kinds of users.
 
@@ -33,9 +33,7 @@ Running type checks with mypy:
 
 To run the tests, check your test coverage, and generate an HTML coverage report:
 
-    uv run coverage run -m pytest
-    uv run coverage html
-    uv run open htmlcov/index.html
+    just pytest
 
 #### Running tests with pytest
 

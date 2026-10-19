@@ -13,6 +13,8 @@ from neuromancers_network.core.models import HelpCategory
 
 pytestmark = pytest.mark.django_db
 
+MAX_SLUG_LENGTH = 50
+
 
 def test_seed_help_guide_is_idempotent_and_renders_body():
     call_command("seed_help_guide")
@@ -41,3 +43,12 @@ def test_identity_articles_exist_and_getpronto_is_not_a_video_provider():
     video = articles["video-providers-whereby-getpronto-daily"]
     body = " ".join(entry["value"]["text"] for entry in video["body"])
     assert "not a video provider" in body
+
+
+def test_every_seeded_article_is_consistent():
+    spec = load_help_spec()
+
+    categories = {category["slug"] for category in spec["categories"]}
+    assert spec["articles"]
+    assert all(article["category"] in categories for article in spec["articles"])
+    assert all(len(article["slug"]) <= MAX_SLUG_LENGTH for article in spec["articles"])

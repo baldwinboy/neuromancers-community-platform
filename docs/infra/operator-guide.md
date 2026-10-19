@@ -230,3 +230,11 @@ Task file `configure_coolify_api.yml` (imported by `setup_coolify.yml`):
 [Manual] → generate deploy-only API token for GitHub Actions
  ↓
 [Ansible] → deploy_application.yml: project / env / app creation
+## Help content on deploy
+
+Both container start scripts run `seed_help_guide --force`, so every deploy
+overwrites the seeded Admin Guide rows from `core/help_seed.yaml`. This keeps
+the guide in step with the code, but **admin edits to seeded rows are lost on
+deploy**. Author lasting changes in the YAML file (and merge via the normal
+review process); the other seeders (`seed_pages`, `seed_account_selfservice`)
+remain non-force and never overwrite admin edits.

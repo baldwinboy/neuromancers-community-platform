@@ -13,6 +13,7 @@ Welcome to NEUROMANCERS Network's documentation!
    howto
    notifications
    users
+   platform/index
    infra/index
 
 

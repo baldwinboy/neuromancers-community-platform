@@ -8,12 +8,17 @@ admin) and what the **platform costs to run** (owned by operations).
 - **Care-provider plan prices** — `PeerRequirementsSettings.peer_plan_price_ids`
   (Stripe Price IDs a provider subscribes to).
 - **Application fee** — `StripeSettings.application_fee` (percentage of each
-  payment the platform keeps).
+  payment the platform keeps; rounded half-up).
 - **Meeting pricing** — set per meeting by the provider: fixed, sliding scale or
   duration tiers.
 - **Tax** — `StripeSettings.tax_mode` (`stripe_tax` or `off`).
+- **Charge type** — `StripeSettings.charge_type`: `direct` or `destination`
+  (`separate` was retired).
 - **Display currency and exchange** — `LocalizationSettings.display_currency`,
-  `currency_exchange_enabled` and `exchange_rate_source`.
+  `currency_exchange_enabled`, `exchange_rate_source` and
+  `manual_exchange_rates`. Stripe adaptive pricing converts at checkout when
+  the exchange-rate source is Stripe; existing payments keep the rate captured
+  on the request/ledger.
 
 Each of these is editable in the Wagtail admin (see the Admin Guide articles
 "Configuring platform pricing and fees" and "Configuring Stripe and payouts").

@@ -18,11 +18,32 @@ The event types
 ---------------------------------------------------------------------
 
 The canonical, closed set of events lives in ``NotificationEventType``
-(``neuromancers_network/inbox/models/event_type.py``). Alongside the booking,
-refund, review, peer, subscription, reminder and meeting events, the account and
-payment events ``account_created``, ``account_deleted``, ``account_degraded``,
-``peer_published_meeting``, ``payment_succeeded`` and ``payment_failed`` are
-recorded.
+(``neuromancers_network/inbox/models/event_type.py``). The full list is:
+
+* **Bookings:** ``booking_requested``, ``booking_approved``,
+  ``booking_rejected``, ``booking_paid``, ``booking_completed``,
+  ``booking_cancelled``.
+* **Refunds:** ``refund_requested``, ``refund_approved``,
+  ``refund_rejected``, ``refund_refunded``.
+* **Reviews:** ``review_created``, ``review_pending_approval``,
+  ``review_published``, ``review_hidden`` (peer approval/hide transitions).
+* **Peers:** ``peer_approved``, ``peer_application_approved``,
+  ``peer_application_rejected``.
+* **Subscriptions:** ``subscription_created``, ``subscription_cancelled``,
+  ``subscription_paused``, ``subscription_resumed``.
+* **Meetings and reminders:** ``meeting_upcoming``, ``meeting_cancelled``,
+  ``meeting_unpublished``, ``meetings_unpublished``, ``meetings_deleted``,
+  ``session_reminder_1d``, ``session_reminder_1h``, ``payment_reminder_due``.
+* **Accounts and identity:** ``account_created``, ``account_deleted``,
+  ``account_degraded``, ``account_deactivated``, ``account_reactivated``,
+  ``account_deletion_scheduled``, ``account_deletion_cancelled``,
+  ``email_changed``, ``username_changed``.
+* **Safety and moderation:** ``user_blocked``, ``user_unblocked``,
+  ``ip_banned``, ``ip_unbanned``, ``email_banned``, ``email_unbanned``,
+  ``report_created``, ``report_resolved``, ``report_rejected``.
+* **Privacy, publishing and payments:** ``data_export_requested``,
+  ``data_export_ready``, ``peer_published_meeting``, ``payment_succeeded``,
+  ``payment_failed``.
 
 How events get recorded
 ---------------------------------------------------------------------

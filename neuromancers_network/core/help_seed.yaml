@@ -193,12 +193,12 @@ articles:
         text: Connect
       - type: rich_text
         text: |-
-          <p>How money reaches care providers:</p><ul><li><strong>Charge type.</strong> <em>Direct</em> makes the care provider the merchant of record; <em>Destination</em> and <em>Separate</em> are fallbacks that route the money through the platform instead.</li><li><strong>Connect country.</strong> A two-letter code used for new Express accounts (default <code>GB</code>).</li><li><strong>Client ID.</strong> The Stripe Connect client ID.</li><li><strong>Application fee (%).</strong> The platform's share of each payment, from 1 to 100 (default 15).</li><li><strong>Onboarding redirect / refresh URLs.</strong> Where a provider lands after they finish Stripe onboarding, and where they go if the onboarding link has expired or was already used.</li></ul>
+          <p>How money reaches care providers:</p><ul><li><strong>Charge type.</strong> <em>Direct</em> makes the care provider the merchant of record; <em>Destination</em> routes the money through the platform instead. The retired <em>Separate</em> mode is no longer selectable.</li><li><strong>Connect country.</strong> A two-letter code used for new Express accounts when the member has no country (default <code>GB</code>).</li><li><strong>Client ID.</strong> Reserved for the intended Stripe Connect OAuth flow. It is not initialised with a hard-coded value; leave it blank unless you are configuring that flow.</li><li><strong>Application fee (%).</strong> The platform's share of each payment, from 1 to 100 (default 15).</li><li><strong>Onboarding redirect / refresh URLs.</strong> Where a provider lands after they finish Stripe onboarding, and where they go if the onboarding link has expired or was already used. When set, these take precedence; otherwise the platform only accepts return URLs on the site's own host.</li></ul>
       - type: header
         text: Compliance
       - type: rich_text
         text: |-
-          <ul><li><strong>Tax mode.</strong> <em>Stripe Tax</em> collects tax automatically on checkout; <em>Off</em> disables it.</li><li><strong>Allow partial refunds.</strong> Lets providers and admins refund part of a payment.</li><li><strong>Subscriptions enabled.</strong> Shows the provider subscribe button.</li></ul>
+          <ul><li><strong>Tax mode.</strong> <em>Stripe Tax</em> collects tax automatically on checkout; <em>Off</em> disables it.</li><li><strong>Allow partial refunds.</strong> Lets providers and admins refund part of a payment.</li><li><strong>Subscriptions enabled.</strong> Allows providers to start a subscription checkout (enforced on the server, not just in the UI). When off, the subscribe action is refused.</li></ul>
       - type: header
         text: Stripe operations
       - type: rich_text
@@ -241,14 +241,14 @@ articles:
     category: administrators-getting-started
     kind: howto
     audience: admin
-    summary: "IntegrationSettings: Whereby/Daily, room prefix, GetPronto API key."
+    summary: "IntegrationSettings: Whereby/Daily, room prefix, webhook secrets, GetPronto (file uploads)."
     body:
       - type: rich_text
         text: |-
           <p>Meetings happen in a video room. <strong>IntegrationSettings</strong> chooses the provider &mdash; <strong>Whereby</strong> or <strong>Daily</strong> &mdash; and sets the <strong>room prefix</strong> used when room links are created.</p>
       - type: rich_text
         text: |-
-          <p>If you use <strong>GetPronto</strong>, add its <strong>API key</strong>. Keys for Whereby and Daily go here too when those providers need them.</p>
+          <p>If you use <strong>GetPronto</strong> for file and image uploads (avatars, form attachments), add its <strong>API key</strong> here. GetPronto is not a video provider. Keys for Whereby and Daily go here too, along with each provider's webhook signing secret.</p>
       - type: rich_text
         text: |-
           <p>Room links are created automatically for meetings, so members get a working link without any manual setup.</p>
