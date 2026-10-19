@@ -24,7 +24,58 @@
     - ansible.posix
 
   tasks:
-    - import_tasks: tasks/base_packages.yml
+    - name: Ensure backup prerequisites are installed
+      ansible.builtin.apt:
+        name:
+          - curl
+          - jq
+          - unzip
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Check whether AWS CLI is installed
+      ansible.builtin.command: aws --version
+      register: awscli_version
+      failed_when: false
+      changed_when: false
+
+    - name: Determine whether AWS CLI needs installing
+      ansible.builtin.set_fact:
+        awscli_needs_install: >-
+          {{ (awscli_version.rc != 0
+              or '2.38.1' not in (awscli_version.stdout | default(''))) | bool }}
+
+    - name: Download AWS CLI v2
+      ansible.builtin.get_url:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.38.1.zip
+        dest: /tmp/awscli-2.38.1.zip
+        checksum: sha256:b11ed416d91f4251da363a17706938eeaf0e520745754c104c0c1890dd8363c7
+        mode: "0644"
+        force: true
+      when: awscli_needs_install
+
+    - name: Extract AWS CLI v2
+      ansible.builtin.unarchive:
+        src: /tmp/awscli-2.38.1.zip
+        dest: /tmp/awscli-2.38.1
+        remote_src: true
+      when: awscli_needs_install
+
+    - name: Install AWS CLI v2
+      ansible.builtin.command:
+        cmd: /tmp/awscli-2.38.1/aws/install --update
+      when: awscli_needs_install
+
+    - name: Remove AWS CLI installer files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/awscli-2.38.1.zip
+        - /tmp/awscli-2.38.1
+      when: awscli_needs_install
+
     - import_tasks: tasks/install_bitwarden.yml
     - name: Copy backup script
       ansible.builtin.copy:

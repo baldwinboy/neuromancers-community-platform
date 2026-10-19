@@ -9,12 +9,16 @@ jobs:
     permissions:
       contents: read
     strategy:
+      fail-fast: false
       matrix:
         include:
           - environment: production
             branch: main
           - environment: staging
             branch: staging
+    concurrency:
+      group: backup-${{ matrix.environment }}
+      cancel-in-progress: false
     environment: ${{ matrix.environment }}
     env:
       BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
@@ -98,7 +102,7 @@ jobs:
         env:
           ANSIBLE_HOST_KEY_CHECKING: "false"
         run: |
-          EXTRA="bws_access_token=$BWS_ACCESS_TOKEN git_environment=${{ matrix.environment }}"
+          EXTRA="bws_access_token=$BWS_ACCESS_TOKEN"
 
-          bws run -- "ansible-playbook infra/playbooks/backup_application.yml --skip-tags smoke --inventory infra/inventory/hosts.yml --private-key infra/inventory/ssh_key $EXTRA" 2>&1 | \
+          bws run -- "ansible-playbook infra/playbooks/backup_application.yml --skip-tags smoke --inventory infra/inventory/hosts.yml --private-key infra/inventory/ssh_key --extra-vars \"$EXTRA\"" 2>&1 | \
             sed -E 's/[a-zA-Z0-9._%+-]+@[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[REDACTED]/g; s/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[REDACTED]/g'
