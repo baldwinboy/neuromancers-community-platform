@@ -158,6 +158,16 @@ class SessionLedger(Timestamped):
         "meetings.MeetingRequest",
         on_delete=models.CASCADE,
         related_name="session_ledger",
+        null=True,
+        blank=True,
+    )
+    meeting = models.ForeignKey(
+        "meetings.Meeting",
+        on_delete=models.CASCADE,
+        related_name="session_ledgers",
+        null=True,
+        blank=True,
+        help_text=_("Set for group sessions (no single meeting request)."),
     )
     provider = models.CharField(_("Provider"), max_length=20, blank=True)
     minutes = models.PositiveIntegerField(_("Minutes"))
@@ -181,6 +191,20 @@ class SessionLedger(Timestamped):
         ordering = ["-occurred_at"]
         verbose_name = _("Session ledger entry")
         verbose_name_plural = _("Session ledger")
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(meeting_request__isnull=False, meeting__isnull=True)
+                    | models.Q(meeting_request__isnull=True, meeting__isnull=False)
+                ),
+                name="analytics_session_one_target",
+            ),
+            models.UniqueConstraint(
+                fields=["meeting"],
+                condition=models.Q(meeting__isnull=False),
+                name="analytics_session_unique_meeting",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.minutes} minutes ({self.provider or 'unknown'})"

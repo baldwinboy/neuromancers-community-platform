@@ -214,19 +214,29 @@ def record_subscription_payment(  # noqa: PLR0913
 
 def record_session(
     *,
-    meeting_request,
+    meeting_request=None,
+    meeting=None,
     minutes,
     provider="",
     occurred_at=None,
 ) -> SessionLedger:
-    meeting = meeting_request.meeting
+    if meeting_request is not None:
+        meeting = meeting_request.meeting
+        lookup = {"meeting_request": meeting_request}
+        seeker = meeting_request.support_seeker
+    elif meeting is not None:
+        lookup = {"meeting": meeting}
+        seeker = None
+    else:
+        message = "record_session needs a meeting or a meeting_request"
+        raise ValueError(message)
     entry, _created = SessionLedger.objects.update_or_create(
-        meeting_request=meeting_request,
+        **lookup,
         defaults={
             "provider": provider,
             "minutes": max(0, int(minutes or 0)),
             "peer": meeting.peer,
-            "seeker": meeting_request.support_seeker,
+            "seeker": seeker,
             "occurred_at": occurred_at or timezone.now(),
         },
     )

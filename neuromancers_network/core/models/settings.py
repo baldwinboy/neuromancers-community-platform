@@ -241,6 +241,18 @@ class IntegrationSettings(BaseGenericSetting):
         blank=True,
         help_text=_("API key for Daily.co integration."),
     )
+    whereby_webhook_secret = EncryptedCharField(
+        _("Whereby webhook secret"),
+        max_length=255,
+        blank=True,
+        help_text=_("Signing secret for Whereby meeting webhooks."),
+    )
+    daily_webhook_secret = EncryptedCharField(
+        _("Daily webhook secret"),
+        max_length=255,
+        blank=True,
+        help_text=_("Signing secret for Daily meeting webhooks."),
+    )
 
     panels = [
         MultiFieldPanel(
@@ -256,11 +268,17 @@ class IntegrationSettings(BaseGenericSetting):
             heading=_("GetPronto"),
         ),
         MultiFieldPanel(
-            [FieldPanel("whereby_api_key")],
+            [
+                FieldPanel("whereby_api_key"),
+                FieldPanel("whereby_webhook_secret"),
+            ],
             heading=_("Whereby"),
         ),
         MultiFieldPanel(
-            [FieldPanel("daily_api_key")],
+            [
+                FieldPanel("daily_api_key"),
+                FieldPanel("daily_webhook_secret"),
+            ],
             heading=_("Daily.co"),
         ),
     ]

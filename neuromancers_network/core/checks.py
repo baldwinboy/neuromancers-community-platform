@@ -14,6 +14,8 @@ SECRET_FIELDS = {
         "getpronto_api_key",
         "whereby_api_key",
         "daily_api_key",
+        "whereby_webhook_secret",
+        "daily_webhook_secret",
     ),
 }
 
