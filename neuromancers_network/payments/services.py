@@ -31,6 +31,7 @@ DEFAULT_WEBHOOK_EVENTS = [
     "customer.subscription.updated",
     "customer.subscription.deleted",
     "invoice.payment_succeeded",
+    "invoice.paid",
     "invoice.payment_failed",
 ]
 

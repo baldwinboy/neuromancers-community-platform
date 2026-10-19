@@ -138,6 +138,7 @@ LOCAL_APPS = [
     "neuromancers_network.taxonomy",
     "neuromancers_network.inbox",
     "neuromancers_network.moderation",
+    "neuromancers_network.analytics",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = [

@@ -123,6 +123,35 @@ def sync_peer_subscription(sender, event, **kwargs):
         existing.save(update_fields=[*updates, "updated_at"])
 
 
+@djstripe_receiver(["invoice.payment_succeeded", "invoice.paid"])
+def record_subscription_invoice(sender, event, **kwargs):
+    """Record paid invoices on the subscription-revenue ledger."""
+    from neuromancers_network.analytics.services import (  # noqa: PLC0415
+        occurred_at_from,
+    )
+    from neuromancers_network.analytics.services import (  # noqa: PLC0415
+        record_subscription_payment,
+    )
+
+    data = event.data.get("object", {})
+    invoice_id = data.get("id")
+    amount_paid = data.get("amount_paid") or 0
+    if not invoice_id or amount_paid <= 0:
+        return
+
+    payment_profile = PaymentProfile.objects.filter(
+        stripe_customer_id_id=data.get("customer"),
+    ).first()
+    record_subscription_payment(
+        invoice_id=invoice_id,
+        subscription_id=data.get("subscription") or "",
+        amount_minor=amount_paid,
+        currency=data.get("currency") or "GBP",
+        occurred_at=occurred_at_from(data),
+        payer=payment_profile.user if payment_profile is not None else None,
+    )
+
+
 # --- Calendar event sync ----------------------------------------------------
 
 

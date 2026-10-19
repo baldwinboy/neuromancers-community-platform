@@ -93,6 +93,16 @@ def mark_completed_sessions():
             continue
         session.complete()
         session.save(validate=False, update_fields=["status", "updated_at"])
+        from neuromancers_network.analytics.services import (  # noqa: PLC0415
+            record_session,
+        )
+
+        record_session(
+            meeting_request=session,
+            minutes=duration,
+            provider=session.provider or session.meeting.provider,
+            occurred_at=start + timedelta(minutes=duration),
+        )
 
 
 def next_publishable_slot(rule, after, *, minimum):
