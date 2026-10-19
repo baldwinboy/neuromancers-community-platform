@@ -345,3 +345,70 @@ def member_metrics(member, *, period, now=None, target_currency=None) -> dict:
         "spend_converted": converted_total(payments, target_currency),
         "refunds": refunds(queryset),
     }
+
+
+SERIES_METRICS = (
+    "gbv",
+    "application_fees",
+    "refunds",
+    "payments",
+    "active_members",
+    "active_peers",
+    "subscription_revenue",
+    "session_minutes",
+)
+
+
+def _series_value(metric, start, stop) -> Decimal:
+    if metric == "subscription_revenue":
+        rows = SubscriptionLedger.objects.filter(
+            kind=SubscriptionKind.PAYMENT,
+            occurred_at__gte=start,
+            occurred_at__lt=stop,
+        )
+        return _quantize(rows.aggregate(total=Sum("presentment_amount"))["total"])
+    if metric == "session_minutes":
+        rows = SessionLedger.objects.filter(
+            occurred_at__gte=start,
+            occurred_at__lt=stop,
+        )
+        return Decimal(rows.aggregate(total=Sum("minutes"))["total"] or 0)
+    queryset = TransactionLedger.objects.filter(
+        occurred_at__gte=start,
+        occurred_at__lt=stop,
+    )
+    transaction_metrics = {
+        "gbv": gbv,
+        "application_fees": application_fees,
+        "refunds": refunds,
+    }
+    if metric in transaction_metrics:
+        return transaction_metrics[metric](queryset)
+    people_metrics = {
+        "payments": lambda rows: Decimal(
+            rows.filter(kind=TransactionKind.BOOKING_PAYMENT).count(),
+        ),
+        "active_members": lambda rows: Decimal(active_members(rows)),
+        "active_peers": lambda rows: Decimal(active_peers(rows)),
+    }
+    if metric in people_metrics:
+        return people_metrics[metric](queryset)
+    message = f"Unknown series metric {metric!r}"
+    raise ValueError(message)
+
+
+def series_for_metric(metric: str, *, months: int = 6, now=None) -> dict:
+    """Return UTC monthly labels/values for a metric (oldest first)."""
+    if metric not in SERIES_METRICS:
+        message = f"Unknown series metric {metric!r}"
+        raise ValueError(message)
+    now = now or timezone.now()
+    current_start = _month_start(now)
+    labels = []
+    values = []
+    for offset in range(months - 1, -1, -1):
+        start = add_months(current_start, -offset)
+        stop = add_months(start, 1)
+        labels.append(start.strftime("%b %Y"))
+        values.append(float(_series_value(metric, start, stop)))
+    return {"labels": labels, "values": values}

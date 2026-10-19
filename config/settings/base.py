@@ -88,6 +88,7 @@ THIRD_PARTY_APPS = [
     "django_fsm",
     "djstripe",
     "rules",
+    "wagtailcharts",
 ]
 
 ALLAUTH_APPS = [

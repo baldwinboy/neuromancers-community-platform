@@ -1,3 +1,5 @@
+from neuromancers_network.core import page_blocks  # noqa: F401  (register blocks)
+
 from .audit import AccountAuditLog
 from .base import Timestamped
 from .calendar import CalendarFeedToken

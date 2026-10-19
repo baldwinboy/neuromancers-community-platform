@@ -1,0 +1,9 @@
+{% load wagtailcharts_tags %}
+
+{% if chart_title %}<h3>{{ chart_title }}</h3>{% endif %}
+<canvas id="chart-{{ block.id }}"
+        data-datasets="{{ chart_datasets }}"
+        data-config="{{ chart_config }}"
+        data-chart-type="{{ chart_type }}"
+        aria-label="{{ chart_title }}"></canvas>
+{% render_charts %}

@@ -53,6 +53,7 @@ dependencies = [
   "stripe>=15.6.1",
   "wagtail>=8.0,<8.1",
   "wagtail-daisie[allauth,allauth-emails,blocks,notifications]==3.4.0",
+  "wagtailcharts>=0.7",
   "whitenoise==6.12.0",
 ]
 

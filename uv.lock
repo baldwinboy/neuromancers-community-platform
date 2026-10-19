@@ -1815,6 +1815,7 @@ dependencies = [
     { name = "stripe" },
     { name = "wagtail" },
     { name = "wagtail-daisie", extra = ["allauth", "allauth-emails", "blocks"] },
+    { name = "wagtailcharts" },
     { name = "whitenoise" },
 ]
 
@@ -1887,6 +1888,7 @@ requires-dist = [
     { name = "stripe", specifier = ">=15.6.1" },
     { name = "wagtail", specifier = ">=8.0,<8.1" },
     { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.4.0" },
+    { name = "wagtailcharts", specifier = ">=0.7" },
     { name = "whitenoise", specifier = "==6.12.0" },
 ]
 
@@ -2992,6 +2994,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/eb/29/696ccb3e8e7c778b68a12e5cd99223f080b6b666954f62ae35cebc5936ea/wagtail_traverse-1.0.1.tar.gz", hash = "sha256:f39014fe6cf94f9981f3841563d325ed2552bdd0efea50c9842d2f91a8964f14", size = 10174, upload-time = "2026-04-03T04:02:25.995Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4f/d7/7c8c0ed062657803328cc9825d7ed4b7dadc2042a0f26d21a1399a1a3861/wagtail_traverse-1.0.1-py3-none-any.whl", hash = "sha256:d4f4d1cad2db48744742a07479f283f88536aac35cbfe68f15b3c13bf4581fc9", size = 10286, upload-time = "2026-04-03T04:02:24.598Z" },
+]
+
+[[package]]
+name = "wagtailcharts"
+version = "0.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "wagtail" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d6/24/f08e98c193a6f5dc0e4a30d2115c11ef6dfd97f71ed6d97245b3b9bff9c9/wagtailcharts-0.7.tar.gz", hash = "sha256:15fa93497785e968828bebe4d09d514315335d94ad5ba8e13b29ce351f141367", size = 281989, upload-time = "2026-10-07T16:25:42.253Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/52/5d9a424fc7832dbc8438532aa67ded127c05e30661cf5f509a1b381f574f/wagtailcharts-0.7-py3-none-any.whl", hash = "sha256:a0c10655b1a856dbdabb094f22acd890a9cea00e408ea9e154a1e4a431306b24", size = 289467, upload-time = "2026-10-07T16:25:40.699Z" },
 ]
 
 [[package]]
