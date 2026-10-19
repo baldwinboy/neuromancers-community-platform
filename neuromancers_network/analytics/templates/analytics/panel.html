@@ -1,0 +1,10 @@
+{% load i18n %}
+
+<p>
+  {% trans "This month" %}: <strong>{{ revenue.combined }}</strong>
+  ({% trans "marketplace" %} {{ revenue.marketplace }},
+  {% trans "subscriptions" %} {{ revenue.subscription }})
+</p>
+<p>
+  <a class="button button-secondary" href="{{ analytics_url }}">{% trans "Open analytics" %}</a>
+</p>

@@ -1,0 +1,117 @@
+{% extends "wagtailadmin/generic/base.html" %}
+
+{% load i18n %}
+
+{% block main_content %}
+  <div class="w-mb-6 flex flex-wrap items-center gap-2">
+    {% for value, label in periods %}
+      <a class="button {% if value == period %}button-primary{% else %}button-secondary{% endif %}"
+         href="?period={{ value }}">{{ label }}</a>
+    {% endfor %}
+  </div>
+  <div class="w-grid w-grid-cols-1 md:w-grid-cols-3 w-gap-4 w-mb-8">
+    <section class="w-p-4 w-border w-rounded">
+      <h2 class="w-h3">{% trans "Marketplace revenue" %}</h2>
+      <p class="w-text-2xl">{{ revenue.marketplace }}</p>
+    </section>
+    <section class="w-p-4 w-border w-rounded">
+      <h2 class="w-h3">{% trans "Subscription revenue" %}</h2>
+      <p class="w-text-2xl">{{ revenue.subscription }}</p>
+    </section>
+    <section class="w-p-4 w-border w-rounded">
+      <h2 class="w-h3">{% trans "Combined revenue" %}</h2>
+      <p class="w-text-2xl">{{ revenue.combined }}</p>
+    </section>
+  </div>
+  <table class="listing w-mb-8">
+    <caption>{% trans "Key metrics" %}</caption>
+    <tbody>
+      <tr><th>{% trans "Gross booking value" %}</th><td>{{ metrics.gbv }}</td></tr>
+      <tr><th>{% trans "Payments" %}</th><td>{{ metrics.payments }}</td></tr>
+      <tr><th>{% trans "Take rate" %}</th><td>{{ metrics.take_rate }}</td></tr>
+      <tr><th>{% trans "Refunds" %}</th><td>{{ metrics.refunds }}</td></tr>
+      <tr><th>{% trans "Refund rate" %}</th><td>{{ metrics.refund_rate }}</td></tr>
+      <tr><th>{% trans "Disputes" %}</th><td>{{ metrics.disputes }}</td></tr>
+      <tr><th>{% trans "Average order value" %}</th><td>{{ metrics.average_order_value }}</td></tr>
+      <tr><th>{% trans "Active members" %}</th><td>{{ metrics.active_members }}</td></tr>
+      <tr><th>{% trans "Active peers" %}</th><td>{{ metrics.active_peers }}</td></tr>
+      <tr><th>{% trans "Repeat booking rate" %}</th><td>{{ metrics.repeat_booking_rate }}</td></tr>
+      <tr><th>{% trans "Published review rate" %}</th><td>{{ metrics.published_review_rate }}</td></tr>
+      <tr><th>{% trans "Users" %}</th><td>{{ metrics.users }}</td></tr>
+      <tr><th>{% trans "Peers" %}</th><td>{{ metrics.peers }}</td></tr>
+      <tr><th>{% trans "Published meetings" %}</th><td>{{ metrics.meetings }}</td></tr>
+    </tbody>
+  </table>
+  <h2 class="w-h2 w-mb-2">{% trans "Session minutes by provider" %}</h2>
+  <table class="listing w-mb-8">
+    <thead>
+      <tr>
+        <th>{% trans "Provider" %}</th>
+        <th>{% trans "Minutes" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for provider, minutes in metrics.session_minutes.items %}
+        <tr>
+          <td>{{ provider }}</td>
+          <td>{{ minutes }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="2">{% trans "No completed sessions in this period." %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h2 class="w-h2 w-mb-2">{% trans "GBV by currency" %}</h2>
+  <table class="listing w-mb-8">
+    <thead>
+      <tr>
+        <th>{% trans "Currency" %}</th>
+        <th>{% trans "Amount" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for currency, amount in metrics.gbv_by_currency.items %}
+        <tr>
+          <td>{{ currency }}</td>
+          <td>{{ amount }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="2">{% trans "No payments in this period." %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h2 class="w-h2 w-mb-2">{% trans "Requests by status" %}</h2>
+  <table class="listing w-mb-8">
+    <tbody>
+      {% for status, total in metrics.requests_by_status.items %}
+        <tr>
+          <th>{{ status }}</th>
+          <td>{{ total }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td>{% trans "No requests in this period." %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h2 class="w-h2 w-mb-2">{% trans "Bookings by status" %}</h2>
+  <table class="listing">
+    <tbody>
+      {% for status, total in metrics.bookings_by_status.items %}
+        <tr>
+          <th>{{ status }}</th>
+          <td>{{ total }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td>{% trans "No bookings in this period." %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock main_content %}

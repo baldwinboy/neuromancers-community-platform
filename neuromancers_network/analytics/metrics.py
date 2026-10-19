@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import UTC
 from datetime import datetime
 from decimal import Decimal
+from functools import cached_property
 
 from django.db.models import Count
 from django.db.models import Q
@@ -36,6 +37,18 @@ PERIODS = (
 
 MONEY = Decimal("0.01")
 REPEAT_BOOKING_THRESHOLD = 2
+
+
+class RevenueSummary:
+    """Marketplace and subscription revenue with a cached combined total."""
+
+    def __init__(self, marketplace, subscription):
+        self.marketplace = _quantize(marketplace)
+        self.subscription = _quantize(subscription)
+
+    @cached_property
+    def combined(self) -> Decimal:
+        return (self.marketplace + self.subscription).quantize(MONEY)
 
 
 def _quantize(value) -> Decimal:
