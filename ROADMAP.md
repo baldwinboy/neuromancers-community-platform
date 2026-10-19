@@ -1,9 +1,9 @@
 # NEUROMANCERS Network — Roadmap
 
-> Status: Phases 0 (0.1–0.5), A (A1–A5, including A4 step 7) and B (B0–B6) are
-> complete and green. Remaining: Phase C (scripts & consent) and Phase D
-> (documentation). Each completed unit landed test-first with migration/gate
-> handovers; the checkboxes below reflect committed work.
+> Status: Phases 0 (0.1–0.5), A (A1–A5, including A4 step 7), B (B0–B6) and C
+> (C1–C4) are complete and green. Remaining: Phase D (documentation). Each
+> completed unit landed test-first with migration/gate handovers; the
+> checkboxes below reflect committed work.
 
 ## Principles
 
@@ -1130,22 +1130,22 @@ regressions.
 
 ### C1 — Admin script injection
 Steps:
-1. [ ] Add a `ScriptsSetting` (Wagtail `BaseGenericSetting`) with head/body script
+1. [x] Add a `ScriptsSetting` (Wagtail `BaseGenericSetting`) with head/body script
    entries (name, category, code, placement) + per-script audience gating; render
    via the unused `{% block extra_head %}` / `{% block extra_body %}`
    (`templates/base.html:32-33,50-51`).
-2. [ ] Follow the `ArbitraryCSSMiddleware` / arbitrary-CSS pattern
+2. [x] Follow the `ArbitraryCSSMiddleware` / arbitrary-CSS pattern
    (`wagtail_daisIE/middleware.py`) for consistency (DRY): a settings model plus a
    small render path.
-3. [ ] **Bug — no injection point today** (blocks unused): wire it and cover with a
+3. [x] **Bug — no injection point today** (blocks unused): wire it and cover with a
    render test.
-4. [ ] **Risk (documented) — no CSP** (no `django-csp`): admin scripts are
+4. [x] **Risk (documented) — no CSP** (no `django-csp`): admin scripts are
    unconstrained. Document CSP/nonce guidance for C4; gate editing on admin
    permission and audit changes.
-5. [ ] **Risk (documented) — `X_FRAME_OPTIONS = "DENY"`**
+5. [x] **Risk (documented) — `X_FRAME_OPTIONS = "DENY"`**
    (`config/settings/base.py:309`) conflicts with third-party embeds; document
    per-script guidance.
-6. [ ] Tests: head/body scripts render only when configured, permitted and
+6. [x] Tests: head/body scripts render only when configured, permitted and
    consented; nothing else renders.
 
 Acceptance: admins can add scripts; nothing renders that is not configured,
@@ -1153,18 +1153,18 @@ permitted and consented.
 
 ### C2 — Cookie registry + policy page
 Steps:
-1. [ ] Add `CookieCategory` (`necessary`/`analytics`/`marketing`) and `Cookie`
+1. [x] Add `CookieCategory` (`necessary`/`analytics`/`marketing`) and `Cookie`
    snippets (name, provider, purpose, duration, category), admin-editable.
-2. [ ] Policy page = an **admin-authored `StandardPage`** fed by the registry via a
+2. [x] Policy page = an **admin-authored `StandardPage`** fed by the registry via a
    template tag/block; admins author the surrounding copy — no seeded legal text.
-3. [ ] **Bug — undisclosed cookies.** Register the **language** cookie
+3. [x] **Bug — undisclosed cookies.** Register the **language** cookie
    (`core/middleware.py:41`, set by `LocaleMiddleware`) and the **`daisie_theme`**
    cookie (`theme_persistence.js`, read in `wagtail_daisIE/pages.py:212`), plus
    session/CSRF as `necessary`.
-4. [ ] **Cross-ref (0.5)** — `LocalizationMiddleware` default-language bug
+4. [x] **Cross-ref (0.5)** — `LocalizationMiddleware` default-language bug
    (`core/middleware.py:30-34`) must be fixed so the language cookie behaves
    deterministically.
-5. [ ] Tests: registry renders on the policy page; categories drive the banner (no
+5. [x] Tests: registry renders on the policy page; categories drive the banner (no
    drift); session/CSRF marked necessary.
 
 Acceptance: every cookie in use is registered and shown; the policy page is
@@ -1172,18 +1172,18 @@ admin-owned and registry-driven.
 
 ### C3 — Consent banner + persistence (cookie only)
 Steps:
-1. [ ] Admin-authored banner UX; persistence = **a single consent cookie**
+1. [x] Admin-authored banner UX; persistence = **a single consent cookie**
    (categories + policy version + timestamp; JSON, signed/checked) — no
    server-side record.
-2. [ ] **Bug — non-essential scripts render before consent.** Gate script
+2. [x] **Bug — non-essential scripts render before consent.** Gate script
    rendering server-side on the consent cookie so tracking never ships until
    accepted; essential stays.
-3. [ ] **Bug — no `Vary`.** Add `Vary: Cookie` to consent-dependent responses (or a
+3. [x] **Bug — no `Vary`.** Add `Vary: Cookie` to consent-dependent responses (or a
    small middleware) so caches don't serve mixed consent states.
-4. [ ] Support change/withdraw (re-open banner) and policy **versioning** (re-ask
+4. [x] Support change/withdraw (re-open banner) and policy **versioning** (re-ask
    after a policy change).
-5. [ ] Accessibility + localization of the banner.
-6. [ ] Tests: decline ⇒ no non-essential script; accept ⇒ scripts render; changing
+5. [x] Accessibility + localization of the banner.
+6. [x] Tests: decline ⇒ no non-essential script; accept ⇒ scripts render; changing
    consent updates; version bump re-asks; `Vary: Cookie` present.
 
 Acceptance: consent recorded (cookie) and honoured; declining suppresses
@@ -1191,13 +1191,13 @@ non-essential scripts; no cross-user cache bleed.
 
 ### C4 — CSP & security (documentation only)
 Steps:
-1. [ ] Document `Content-Security-Policy` requirements and nonce support for
+1. [x] Document `Content-Security-Policy` requirements and nonce support for
    admin-injected scripts (`extra_head`/`extra_body`) and daisIE inline scripts
    (`{% daisie_htmx %}` etc.) — **no enforcement this phase**.
-2. [ ] Document `frame-ancestors` vs `X_FRAME_OPTIONS` for embeds.
-3. [ ] `UNVERIFIED (documentation)` — note which daisIE inline scripts would need
+2. [x] Document `frame-ancestors` vs `X_FRAME_OPTIONS` for embeds.
+3. [x] `UNVERIFIED (documentation)` — note which daisIE inline scripts would need
    nonces/hashes if CSP is enforced later.
-4. [ ] No code/tests required; a docs deliverable only.
+4. [x] No code/tests required; a docs deliverable only.
 
 Acceptance: CSP interaction is documented; enforcement explicitly deferred.
 

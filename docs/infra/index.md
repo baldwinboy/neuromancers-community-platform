@@ -15,4 +15,5 @@ pricing
 deployment-pipeline
 secure-domain-plan
 rollback-plan
+content-security-policy
 ```
