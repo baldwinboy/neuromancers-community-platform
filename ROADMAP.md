@@ -1,8 +1,7 @@
 # NEUROMANCERS Network — Roadmap
 
-> Status: Phases 0 (0.1–0.5), A (A1–A5, including A4 step 7), B (B0–B6), C
-> (C1–C4) and D1–D3 (documentation) are complete and green. D4 remains as the
-> manual Sphinx build check. Each completed unit landed test-first with
+> Status: all phases are complete and green — 0 (0.1–0.5), A (A1–A5 incl. A4
+> step 7), B (B0–B6), C (C1–C4) and D (D1–D4). Each unit landed test-first with
 > migration/gate handovers; the checkboxes below reflect committed work.
 
 ## Principles
@@ -1284,9 +1283,9 @@ Acceptance: every feature and provider has a developer entry; no dead links.
 
 ### D4 — Validation & tooling
 Steps:
-1. [ ] Manual Sphinx build check with no broken toctrees (handover; **not** added
+1. [x] Manual Sphinx build check with no broken toctrees (handover; **not** added
    to CI).
-2. [ ] Keep `docs/platform` references consistent across roadmap/help.
+2. [x] Keep `docs/platform` references consistent across roadmap/help.
 
 Acceptance: docs build clean (manual); drift detectable.
 

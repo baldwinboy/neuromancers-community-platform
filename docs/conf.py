@@ -26,6 +26,8 @@ os.environ["DATABASE_URL"] = "sqlite:///readthedocs.db"
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 django.setup()
 
+MYST_HEADING_ANCHORS = 4
+
 # -- Project information -----------------------------------------------------
 
 project = "NEUROMANCERS Network"
@@ -73,3 +75,6 @@ html_theme = "sphinx_wagtail_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ["_static"]
+
+# Enable MyST heading anchors up to level 4
+myst_heading_anchors = MYST_HEADING_ANCHORS
