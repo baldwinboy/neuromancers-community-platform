@@ -30,6 +30,7 @@
     {% daisyui_favicon %}
     {% draftail_text_assets %}
     {% block extra_head %}
+      {% for script in head_scripts %}{{ script|safe }}{% endfor %}
     {% endblock extra_head %}
   </head>
   <body class="flex min-h-screen flex-col bg-base-100 text-base-content {% block body_class %}{% endblock body_class %}"
@@ -48,6 +49,7 @@
       {% daisyui_menu "Footer" %}
     {% endblock footer %}
     {% block extra_body %}
+      {% for script in body_scripts %}{{ script|safe }}{% endfor %}
     {% endblock extra_body %}
   </body>
 </html>

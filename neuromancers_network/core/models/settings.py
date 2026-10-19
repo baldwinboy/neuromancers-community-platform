@@ -3,10 +3,13 @@ from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from wagtail import blocks
 from wagtail.admin.panels import FieldPanel
 from wagtail.admin.panels import MultiFieldPanel
 from wagtail.contrib.settings.models import BaseGenericSetting
 from wagtail.contrib.settings.models import register_setting
+from wagtail.fields import StreamField
+from wagtail_daisIE.base_blocks.audience import get_audience_rule_choices
 
 from neuromancers_network.core.fields import EncryptedCharField
 from neuromancers_network.core.panels import SendTestEmailPanel
@@ -513,3 +516,51 @@ class AccountSettings(BaseGenericSetting):
 
     class Meta:
         verbose_name = _("Account Settings")
+
+
+class ScriptCategory(models.TextChoices):
+    NECESSARY = "necessary", _("Necessary")
+    ANALYTICS = "analytics", _("Analytics")
+    MARKETING = "marketing", _("Marketing")
+
+
+class ScriptPlacement(models.TextChoices):
+    HEAD = "head", _("Head")
+    BODY = "body", _("Body")
+
+
+class ScriptBlock(blocks.StructBlock):
+    name = blocks.CharBlock(help_text=_("Internal label for this script."))
+    category = blocks.ChoiceBlock(choices=ScriptCategory.choices)
+    placement = blocks.ChoiceBlock(choices=ScriptPlacement.choices)
+    audience = blocks.MultipleChoiceBlock(
+        choices=get_audience_rule_choices,
+        required=False,
+        help_text=_("Who may receive this script (empty = everyone)."),
+    )
+    code = blocks.TextBlock(help_text=_("Paste the full script markup."))
+
+    class Meta:
+        icon = "code"
+        label = _("Script")
+
+
+@register_setting(icon="code")
+class ScriptsSetting(BaseGenericSetting):
+    """Admin-authored head/body scripts, gated by audience and consent."""
+
+    scripts = StreamField(
+        [("script", ScriptBlock())],
+        blank=True,
+        use_json_field=True,
+        verbose_name=_("Scripts"),
+        help_text=_(
+            "Scripts render only when their audience matches and the relevant "
+            "cookie category has been consented to.",
+        ),
+    )
+
+    panels = [FieldPanel("scripts")]
+
+    class Meta:
+        verbose_name = _("Script Settings")

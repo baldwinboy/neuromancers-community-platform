@@ -284,6 +284,7 @@ TEMPLATES = [
                 "neuromancers_network.users.context_processors.allauth_settings",
                 "neuromancers_network.core.context_processors.localization",
                 "neuromancers_network.core.context_processors.daisie_themes",
+                "neuromancers_network.core.context_processors.site_scripts",
             ],
         },
     },

@@ -14,6 +14,7 @@ from .settings import IntegrationSettings
 from .settings import LocalizationSettings
 from .settings import ModerationSettings
 from .settings import NotificationSettings
+from .settings import ScriptsSetting
 from .settings import StripeSettings
 
 __all__ = [
@@ -29,6 +30,7 @@ __all__ = [
     "LocalizationSettings",
     "ModerationSettings",
     "NotificationSettings",
+    "ScriptsSetting",
     "StandardPage",
     "StripeSettings",
     "Timestamped",
