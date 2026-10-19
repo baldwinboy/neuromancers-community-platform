@@ -18,6 +18,7 @@ dependencies = [
   "celery==5.6.3",
   "clientele[core]>=2.3.1",
   "crispy-bootstrap5==2026.9",
+  "cryptography>=50.0.2",
   "dj-stripe>=2.11.0",
   "django>=6.0,<6.1",
   "django-allauth>=65.19.7,<66",

@@ -14,6 +14,8 @@ class CoreConfig(AppConfig):
         """
         Override this method in subclasses to run code when Django starts.
         """
+        from neuromancers_network.core.models import EmailSettings
+        from neuromancers_network.core.models import IntegrationSettings
         from neuromancers_network.core.models import LocalizationSettings
         from neuromancers_network.core.models import ModerationSettings
         from neuromancers_network.core.models import NotificationSettings
@@ -21,10 +23,16 @@ class CoreConfig(AppConfig):
         from neuromancers_network.users.validators import bust_blocked_usernames_cache
 
         from . import signals
+        from .forms import EmailSettingsForm
+        from .forms import IntegrationSettingsForm
         from .forms import NotificationSettingsForm
+        from .forms import StripeSettingsForm
 
         # Set after app loading to avoid a core.models <-> core.forms cycle.
         NotificationSettings.base_form_class = NotificationSettingsForm
+        StripeSettings.base_form_class = StripeSettingsForm
+        EmailSettings.base_form_class = EmailSettingsForm
+        IntegrationSettings.base_form_class = IntegrationSettingsForm
 
         post_save.connect(
             signals.update_dj_stripe_keys,

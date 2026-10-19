@@ -6,7 +6,10 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin.forms import WagtailAdminModelForm
 
+from neuromancers_network.core.models import EmailSettings
+from neuromancers_network.core.models import IntegrationSettings
 from neuromancers_network.core.models import NotificationSettings
+from neuromancers_network.core.models import StripeSettings
 from neuromancers_network.payments.services import DEFAULT_WEBHOOK_EVENTS
 
 
@@ -62,3 +65,42 @@ class NotificationSettingsForm(WagtailAdminModelForm):
                 "platform's fixed transactional events.",
             ),
         )
+
+
+class SecretFieldsFormMixin:
+    """Keep the stored value when a secret input is submitted blank."""
+
+    secret_fields: tuple[str, ...] = ()
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.instance is None or self.instance.pk is None:
+            return cleaned
+        for name in self.secret_fields:
+            if name in self.fields and not cleaned.get(name):
+                cleaned[name] = getattr(self.instance, name)
+        return cleaned
+
+
+class StripeSettingsForm(SecretFieldsFormMixin, WagtailAdminModelForm):
+    secret_fields = ("secret_key", "webhook_secret", "client_id")
+
+    class Meta:
+        model = StripeSettings
+        fields = "__all__"
+
+
+class EmailSettingsForm(SecretFieldsFormMixin, WagtailAdminModelForm):
+    secret_fields = ("password",)
+
+    class Meta:
+        model = EmailSettings
+        fields = "__all__"
+
+
+class IntegrationSettingsForm(SecretFieldsFormMixin, WagtailAdminModelForm):
+    secret_fields = ("getpronto_api_key", "whereby_api_key", "daily_api_key")
+
+    class Meta:
+        model = IntegrationSettings
+        fields = "__all__"

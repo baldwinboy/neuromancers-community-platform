@@ -111,6 +111,23 @@ The root `AWS_*` keys back the private `exports` storage alias for member data e
 4. Run a production deploy and verify health checks.
 5. Revoke old credential.
 
+### Rotating `DJANGO_SECRET_KEY` (encrypted database settings)
+
+`DJANGO_SECRET_KEY` is also the key-encryption key for integration secrets
+stored in Wagtail settings (Stripe keys, SMTP password, GetPronto/Whereby/Daily
+API keys). Those fields are Fernet-encrypted at rest and cannot be recovered
+with a different key.
+
+1. Apply the normal rotation steps above to update `DJANGO_SECRET_KEY`.
+2. Deploy; `manage.py check` (and the deploy health check) fails with
+   `core.E001` if any stored secret cannot be decrypted.
+3. Re-enter each integration secret in the Wagtail admin (leave the field blank
+   to keep a working value; enter the value again after a rotation).
+4. Re-run `manage.py check` until `core.E001` is clear.
+5. Rotating back to the old key restores access to the old ciphertext, but the
+   re-entered values are encrypted with the new key — re-enter once more if you
+   roll the key back for good.
+
 ## Minimum CI preflight checks
 
 1. Validate `BWS_ACCESS_TOKEN` is present in the active GitHub environment.

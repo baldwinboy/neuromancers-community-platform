@@ -8,6 +8,7 @@ from wagtail.admin.panels import MultiFieldPanel
 from wagtail.contrib.settings.models import BaseGenericSetting
 from wagtail.contrib.settings.models import register_setting
 
+from neuromancers_network.core.fields import EncryptedCharField
 from neuromancers_network.core.panels import SendTestEmailPanel
 from neuromancers_network.core.panels import StripeOpsPanel
 
@@ -34,17 +35,17 @@ class StripeSettings(BaseGenericSetting):
         max_length=255,
         blank=True,
     )
-    secret_key = models.CharField(
+    secret_key = EncryptedCharField(
         _("Secret key"),
         max_length=255,
         blank=True,
     )
-    webhook_secret = models.CharField(
+    webhook_secret = EncryptedCharField(
         _("Webhook secret"),
         max_length=255,
         blank=True,
     )
-    client_id = models.CharField(
+    client_id = EncryptedCharField(
         _("Client ID"),
         max_length=255,
         blank=True,
@@ -157,7 +158,7 @@ class EmailSettings(BaseGenericSetting):
     host = models.CharField(_("SMTP Host"), max_length=255, blank=True)
     port = models.PositiveIntegerField(_("Port"), default=587)
     username = models.CharField(_("Username"), max_length=255, blank=True)
-    password = models.CharField(_("Password"), max_length=255, blank=True)
+    password = EncryptedCharField(_("Password"), max_length=255, blank=True)
     use_tls = models.BooleanField(_("Use TLS"), default=True)
     use_ssl = models.BooleanField(_("Use SSL"), default=False)
     default_from_email = models.EmailField(
@@ -222,19 +223,19 @@ class IntegrationSettings(BaseGenericSetting):
         default=10,
         help_text=_("How long before a session starts the join link opens."),
     )
-    getpronto_api_key = models.CharField(
+    getpronto_api_key = EncryptedCharField(
         _("GetPronto API Key"),
         max_length=255,
         blank=True,
         help_text=_("API key for GetPronto integration."),
     )
-    whereby_api_key = models.CharField(
+    whereby_api_key = EncryptedCharField(
         _("Whereby API Key"),
         max_length=255,
         blank=True,
         help_text=_("API key for Whereby integration."),
     )
-    daily_api_key = models.CharField(
+    daily_api_key = EncryptedCharField(
         _("Daily API Key"),
         max_length=255,
         blank=True,
