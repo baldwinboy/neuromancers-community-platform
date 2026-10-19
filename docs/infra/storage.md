@@ -7,8 +7,12 @@ buckets with different exposure and lifecycles.
 
 - Holds things that are safe to serve directly: avatars, uploaded images and
   admin documents. **No personal data exports and no backups belong here.**
-- Configured with the `DJANGO_AWS_*` variables and served through the custom
-  domain (`DJANGO_AWS_S3_CUSTOM_DOMAIN`, e.g. `t3.storage.dev`).
+- Configured with the `DJANGO_AWS_*` variables and served through the bucket's
+  public custom domain (`DJANGO_AWS_S3_CUSTOM_DOMAIN`, e.g.
+  `neuromancers-network-staging.t3.tigrisfiles.io`).
+- The S3 API endpoint is `DJANGO_AWS_S3_ENDPOINT_URL` (e.g.
+  `t3.storage.dev`). It is not a public media host and must not be used as the
+  custom domain.
 - Backed by the `default` storage alias (`STORAGES["default"]`, location
   `media`).
 

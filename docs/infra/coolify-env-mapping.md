@@ -27,9 +27,9 @@ See [Operator Guide — First deployment](operator-guide.md#first-deployment) fo
 - `DJANGO_AWS_SECRET_ACCESS_KEY`
 - `DJANGO_AWS_STORAGE_BUCKET_NAME`
 - `DJANGO_AWS_S3_REGION_NAME`
-- `DJANGO_AWS_S3_ENDPOINT_URL`
+- `DJANGO_AWS_S3_ENDPOINT_URL` — S3 API host (e.g. `t3.storage.dev`)
 - `DJANGO_AWS_S3_ADDRESSING_STYLE`
-- `DJANGO_AWS_S3_CUSTOM_DOMAIN`
+- `DJANGO_AWS_S3_CUSTOM_DOMAIN` — public bucket hostname, bare host (e.g. `<bucket>.t3.tigrisfiles.io`)
 - `DJANGO_SECRET_KEY`
 - `DJANGO_SECURE_SSL_REDIRECT`
 - `DJANGO_SERVER_EMAIL`

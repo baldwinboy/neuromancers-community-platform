@@ -3,6 +3,7 @@ import logging
 from urllib.parse import urlparse
 
 import sentry_sdk
+from django.core.exceptions import ImproperlyConfigured
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -121,6 +122,29 @@ AWS_S3_ENDPOINT_URL = env("DJANGO_AWS_S3_ENDPOINT_URL", default=None)
 AWS_S3_CUSTOM_DOMAIN = env("DJANGO_AWS_S3_CUSTOM_DOMAIN", default=None)
 AWS_S3_ADDRESSING_STYLE = env("DJANGO_AWS_S3_ADDRESSING_STYLE", default=None)
 aws_s3_domain = AWS_S3_CUSTOM_DOMAIN or f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+
+# The custom domain is the public media host for the bucket. The endpoint URL is
+# the S3 API host and must not be reused here, or every media URL will point at
+# the wrong host.
+if not AWS_S3_CUSTOM_DOMAIN:
+    message = "DJANGO_AWS_S3_CUSTOM_DOMAIN must be set for public media URLs."
+    raise ImproperlyConfigured(message)
+if "://" in AWS_S3_CUSTOM_DOMAIN or "/" in AWS_S3_CUSTOM_DOMAIN:
+    message = (
+        "DJANGO_AWS_S3_CUSTOM_DOMAIN must be a bare hostname, without a scheme "
+        "or trailing slash."
+    )
+    raise ImproperlyConfigured(message)
+if AWS_S3_ENDPOINT_URL:
+    parsed_endpoint = urlparse(AWS_S3_ENDPOINT_URL)
+    endpoint_host = parsed_endpoint.netloc or parsed_endpoint.path.split("/", 1)[0]
+    if endpoint_host == AWS_S3_CUSTOM_DOMAIN:
+        message = (
+            "DJANGO_AWS_S3_CUSTOM_DOMAIN must be the bucket's public custom "
+            "domain, not the S3 endpoint host."
+        )
+        raise ImproperlyConfigured(message)
+
 # STATIC & MEDIA
 # ------------------------
 STORAGES = {

@@ -103,6 +103,8 @@ bws run -- 'ansible-playbook infra/playbooks/site.yml --inventory infra/inventor
 
 The root `AWS_*` keys back the private `exports` storage alias for member data exports, distinct from the `DJANGO_AWS_*` public-media credentials. The application container needs `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET_NAME`, `AWS_REGION` and `AWS_ENDPOINT_URL_S3`. `RETENTION_DAYS` and `AWS_ENDPOINT_URL_IAM` are used only by the server-side backup cron (`infra/scripts/backup.sh`), not the container. See [Storage architecture](storage.md).
 
+`DJANGO_AWS_S3_ENDPOINT_URL` is the S3 API host (for Tigris, `t3.storage.dev`). `DJANGO_AWS_S3_CUSTOM_DOMAIN` is the bucket's public hostname (for example `neuromancers-network-staging.t3.tigrisfiles.io`). It must be a bare hostname, not the endpoint and not a URL.
+
 ## Rotation procedure
 
 1. Rotate secret in source provider.
