@@ -29,12 +29,12 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')",
+          "import socket; socket.create_connection(('127.0.0.1', 5000), 3).close()",
         ]
-      interval: 30s
+      interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 30s
+      retries: 12
+      start_period: 300s
     mem_limit: 512m
     volumes:
       - /var/log/django:/var/log/django
