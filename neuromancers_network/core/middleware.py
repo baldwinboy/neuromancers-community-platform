@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.utils import translation
+from django.utils.cache import patch_vary_headers
 from django.utils.translation import get_language_from_path
 from django.utils.translation import get_language_from_request
 
@@ -70,3 +71,16 @@ class LocalizationMiddleware:
             if code in offered:
                 return code
         return default
+
+
+class ConsentVaryMiddleware:
+    """HTML responses depend on the consent cookie; keep caches correct."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if "text/html" in response.get("Content-Type", ""):
+            patch_vary_headers(response, ("Cookie",))
+        return response

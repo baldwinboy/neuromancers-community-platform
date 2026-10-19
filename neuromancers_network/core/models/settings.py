@@ -564,3 +564,42 @@ class ScriptsSetting(BaseGenericSetting):
 
     class Meta:
         verbose_name = _("Script Settings")
+
+
+@register_setting(icon="cog")
+class ConsentSettings(BaseGenericSetting):
+    """Admin-authored cookie-consent banner copy and policy version."""
+
+    policy_version = models.CharField(
+        _("Policy version"),
+        max_length=50,
+        default="1",
+        help_text=_("Bump this when the cookie policy changes; visitors re-consent."),
+    )
+    banner_title = models.CharField(
+        _("Banner title"),
+        max_length=200,
+        default="Cookies",
+    )
+    banner_text = models.TextField(_("Banner text"), blank=True)
+    accept_label = models.CharField(
+        _("Accept label"),
+        max_length=100,
+        default="Accept selected",
+    )
+    decline_label = models.CharField(
+        _("Necessary-only label"),
+        max_length=100,
+        default="Necessary only",
+    )
+
+    panels = [
+        FieldPanel("policy_version"),
+        FieldPanel("banner_title"),
+        FieldPanel("banner_text"),
+        FieldPanel("accept_label"),
+        FieldPanel("decline_label"),
+    ]
+
+    class Meta:
+        verbose_name = _("Consent Settings")

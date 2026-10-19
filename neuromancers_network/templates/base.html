@@ -51,5 +51,6 @@
     {% block extra_body %}
       {% for script in body_scripts %}{{ script|safe }}{% endfor %}
     {% endblock extra_body %}
+    {% include "core/includes/consent_banner.html" %}
   </body>
 </html>

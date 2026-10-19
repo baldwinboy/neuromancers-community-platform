@@ -71,3 +71,32 @@ def site_scripts(request):
         target = head_scripts if value["placement"] == "head" else body_scripts
         target.append(value["code"])
     return {"head_scripts": head_scripts, "body_scripts": body_scripts}
+
+
+def consent_banner(request):
+    """Expose the signed consent and admin-authored banner copy."""
+    from .consent import consent_needs_update  # noqa: PLC0415
+    from .consent import read_consent  # noqa: PLC0415
+    from .models import ConsentSettings  # noqa: PLC0415
+    from .models import CookieCategory  # noqa: PLC0415
+
+    try:
+        settings_obj = ConsentSettings.load(request)
+    except DatabaseError:
+        logger.exception("Could not load consent settings")
+        return {
+            "consent": {},
+            "consent_needs_update": False,
+            "consent_settings": None,
+            "consent_categories": [],
+        }
+    return {
+        "consent": read_consent(request),
+        "consent_needs_update": consent_needs_update(request),
+        "consent_settings": settings_obj,
+        "consent_categories": [
+            (value, label)
+            for value, label in CookieCategory.choices
+            if value != CookieCategory.NECESSARY
+        ],
+    }

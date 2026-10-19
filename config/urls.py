@@ -7,6 +7,8 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from neuromancers_network.core.views.calendar import CalendarFeedView
+from neuromancers_network.core.views.consent import accept_consent
+from neuromancers_network.core.views.consent import reset_consent
 from neuromancers_network.core.views.provider_webhooks import daily_webhook
 from neuromancers_network.core.views.provider_webhooks import whereby_webhook
 from neuromancers_network.meetings.views import PaymentCancelledView
@@ -25,6 +27,8 @@ urlpatterns = [
     path("api/", api.urls),
     # Provider meeting webhooks (signature-verified)
     path("webhooks/whereby/", whereby_webhook, name="whereby_webhook"),
+    path("consent/accept/", accept_consent, name="consent_accept"),
+    path("consent/reset/", reset_consent, name="consent_reset"),
     path("webhooks/daily/", daily_webhook, name="daily_webhook"),
     # Private data-export download (signed, owner/staff only)
     path(

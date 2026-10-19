@@ -11,6 +11,7 @@ from .help import HelpCategory
 from .pages import HomePage
 from .pages import StandardPage
 from .settings import AccountSettings
+from .settings import ConsentSettings
 from .settings import EmailSettings
 from .settings import IntegrationSettings
 from .settings import LocalizationSettings
@@ -23,6 +24,7 @@ __all__ = [
     "AccountAuditLog",
     "AccountSettings",
     "CalendarFeedToken",
+    "ConsentSettings",
     "Cookie",
     "CookieCategory",
     "EmailSettings",

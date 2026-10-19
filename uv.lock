@@ -1887,7 +1887,7 @@ requires-dist = [
     { name = "sentry-sdk", specifier = "==2.71.0" },
     { name = "stripe", specifier = ">=15.6.1" },
     { name = "wagtail", specifier = ">=8.0,<8.1" },
-    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.4.0" },
+    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.5.0" },
     { name = "wagtailcharts", specifier = ">=0.7" },
     { name = "whitenoise", specifier = "==6.12.0" },
 ]
@@ -2955,7 +2955,7 @@ wheels = [
 
 [[package]]
 name = "wagtail-daisie"
-version = "3.4.0"
+version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cssutils" },
@@ -2968,9 +2968,9 @@ dependencies = [
     { name = "mjml-python" },
     { name = "wagtail" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/40/d2/a61e0b5a5e31f8ccc8f6b4d43c424df2accfa0b9b6e7cef664a1d44de449/wagtail_daisie-3.4.0.tar.gz", hash = "sha256:80553a6918564133cef1173ce497e2826764aa05d23808dbe8375740e2c6b068", size = 370127, upload-time = "2026-10-13T23:06:13.434Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/05/4c270523c5b42949161b4e10bee1625ea6b99ac1d4796da34d40b5bf11a2/wagtail_daisie-3.5.0.tar.gz", hash = "sha256:6872634d3a01773fd2c911a26743681e8a277f2a0bc318e0249cfeffc41ba49a", size = 370352, upload-time = "2026-10-19T15:43:52.618Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3c/ab/c7369dd017c4546136074b26e9a380494ec4d92880b526009a448d5b8309/wagtail_daisie-3.4.0-py3-none-any.whl", hash = "sha256:bc2e4332e2194d57c88fbd9ea01cb49b1f8eaed7639a092d59723f9e60d8dca4", size = 549305, upload-time = "2026-10-13T23:06:11.641Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/2b/d7061f177104db1ca964a6c510b6a9e378fd792f7a299370db4a4ccced49/wagtail_daisie-3.5.0-py3-none-any.whl", hash = "sha256:3c0fbf74c9978ac477c15676623f27d0bda9355a7acdde379cc695e21c6cbeba", size = 548492, upload-time = "2026-10-19T15:43:50.543Z" },
 ]
 
 [package.optional-dependencies]
