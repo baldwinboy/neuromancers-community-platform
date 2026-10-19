@@ -210,3 +210,85 @@ class TestProviderSwitch:
             "daily": 30,
             "whereby": 45,
         }
+
+
+class TestAttendanceWebhooks:
+    def test_daily_viewer_attendance(self, client):
+        _configure(daily=DAILY_SECRET)
+        request_row = _one_to_one()
+
+        response = _post(
+            client,
+            DAILY_URL,
+            {
+                "event": "participant.joined",
+                "id": "evt_attendance_1",
+                "payload": {
+                    "room": "room-1",
+                    "participant": {"is_owner": False},
+                    "start_ts": 1_700_000_000,
+                    "end_ts": 1_700_001_200,
+                },
+            },
+            DAILY_SECRET,
+            "HTTP_X_WEBHOOK_SIGNATURE",
+        )
+
+        assert response.status_code == OK
+        request_row.refresh_from_db()
+        assert request_row.viewer_attended is True
+        assert request_row.host_attended is False
+
+    def test_daily_host_attendance_without_minutes(self, client):
+        _configure(daily=DAILY_SECRET)
+        request_row = _one_to_one()
+
+        response = _post(
+            client,
+            DAILY_URL,
+            {
+                "event": "participant.joined",
+                "id": "evt_attendance_2",
+                "payload": {
+                    "room": "room-1",
+                    "participant": {"is_owner": True},
+                },
+            },
+            DAILY_SECRET,
+            "HTTP_X_WEBHOOK_SIGNATURE",
+        )
+
+        assert response.status_code == OK
+        request_row.refresh_from_db()
+        assert request_row.host_attended is True
+        assert not SessionLedger.objects.filter(
+            meeting_request=request_row,
+        ).exists()
+
+    def test_whereby_group_attendance_is_idempotent(self, client):
+        _configure(whereby=WHEREBY_SECRET)
+        meeting = _group()
+        payload = {
+            "event": "participant.joined",
+            "id": "evt_attendance_3",
+            "data": {"meetingId": "room-2", "role": "viewer"},
+        }
+
+        _post(
+            client,
+            WHEREBY_URL,
+            payload,
+            WHEREBY_SECRET,
+            "HTTP_X_WHEREBY_SIGNATURE",
+        )
+        _post(
+            client,
+            WHEREBY_URL,
+            payload,
+            WHEREBY_SECRET,
+            "HTTP_X_WHEREBY_SIGNATURE",
+        )
+
+        meeting.refresh_from_db()
+        assert meeting.viewer_attended is True
+        assert meeting.host_attended is False

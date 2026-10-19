@@ -44,6 +44,21 @@ def _minutes(start, end):
     return max(0, round((end - start).total_seconds() / 60))
 
 
+def _attendance(body):
+    participant = body.get("participant") or {}
+    role = str(participant.get("role") or body.get("role") or "").lower()
+    if (
+        role in {"host", "owner"}
+        or participant.get("is_owner")
+        or body.get("is_owner")
+        or body.get("isHost")
+    ):
+        return "host"
+    if role in {"viewer", "guest"} or participant or body.get("isHost") is False:
+        return "viewer"
+    return None
+
+
 def _daily_payload(payload):
     body = payload.get("payload") or payload
     start = _timestamp(
@@ -60,6 +75,7 @@ def _daily_payload(payload):
         "start": start,
         "end": end,
         "event_id": payload.get("id") or body.get("id"),
+        "attendance": _attendance(body),
     }
 
 
@@ -72,6 +88,7 @@ def _whereby_payload(payload):
         "start": _timestamp(body.get("startDate") or body.get("start_date")),
         "end": _timestamp(body.get("endDate") or body.get("end_date")),
         "event_id": payload.get("id") or body.get("id"),
+        "attendance": _attendance(body),
     }
 
 
@@ -109,7 +126,8 @@ def _record_from_payload(provider, body, data):
 
     room_id = data["room_id"]
     minutes = _minutes(data["start"], data["end"])
-    if not room_id or minutes is None:
+    attendance = data.get("attendance")
+    if not room_id or (minutes is None and attendance is None):
         return JsonResponse({"status": "ignored"})
 
     request_row = (
@@ -120,30 +138,46 @@ def _record_from_payload(provider, body, data):
         .select_related("meeting")
         .first()
     )
-    if request_row is not None:
+    meeting = None
+    if request_row is None:
+        meeting = Meeting.objects.filter(
+            provider=provider,
+            provider_room_id=room_id,
+        ).first()
+    if request_row is None and meeting is None:
+        logger.info("No session found for %s room %s", provider, room_id)
+        return JsonResponse({"status": "ignored"})
+
+    if attendance:
+        _mark_attendance(
+            request_row=request_row,
+            meeting=meeting,
+            attendance=attendance,
+        )
+    if minutes is not None:
         record_session(
             meeting_request=request_row,
-            minutes=minutes,
-            provider=provider,
-            occurred_at=occurred_at,
-        )
-        return JsonResponse({"status": "ok"})
-
-    meeting = Meeting.objects.filter(
-        provider=provider,
-        provider_room_id=room_id,
-    ).first()
-    if meeting is not None:
-        record_session(
             meeting=meeting,
             minutes=minutes,
             provider=provider,
             occurred_at=occurred_at,
         )
-        return JsonResponse({"status": "ok"})
+    return JsonResponse({"status": "ok"})
 
-    logger.info("No session found for %s room %s", provider, room_id)
-    return JsonResponse({"status": "ignored"})
+
+def _mark_attendance(*, request_row=None, meeting=None, attendance):
+    target = request_row if request_row is not None else meeting
+    if target is None:
+        return
+    fields = []
+    if attendance == "host" and not target.host_attended:
+        target.host_attended = True
+        fields.append("host_attended")
+    elif attendance == "viewer" and not target.viewer_attended:
+        target.viewer_attended = True
+        fields.append("viewer_attended")
+    if fields:
+        target.save(update_fields=[*fields, "updated_at"])
 
 
 @csrf_exempt

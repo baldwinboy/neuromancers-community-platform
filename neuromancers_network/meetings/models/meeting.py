@@ -89,6 +89,8 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
         max_length=255,
         blank=True,
     )
+    host_attended = models.BooleanField(_("Host attended"), default=False)
+    viewer_attended = models.BooleanField(_("Viewer attended"), default=False)
     provider = models.CharField(
         _("Meeting provider"),
         max_length=20,
