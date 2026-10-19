@@ -691,3 +691,47 @@ class TestPricing:
 
         with pytest.raises(ValueError, match="no amount to charge"):
             booking.compute_total()
+
+
+class TestCurrencyCapture:
+    def test_sync_persists_base_amount_and_rate(self):
+        meeting = create_meeting(peer=make_peer())
+        meeting.currency = "USD"
+        meeting.save(validate=False)
+        meeting_request = MeetingRequest.objects.create(
+            meeting=meeting,
+            support_seeker=UserFactory(),
+            status=MeetingRequestStatus.PAID,
+        )
+
+        meeting_request.sync_payment_from_checkout(
+            "cs_currency",
+            "pi_currency",
+            1000,
+            currency_conversion={
+                "currency": "GBP",
+                "amount": 800,
+                "source_currency": "USD",
+                "target_currency": "GBP",
+            },
+        )
+
+        meeting_request.refresh_from_db()
+        assert meeting_request.price_paid == Decimal("10.00")
+        assert meeting_request.price_paid_currency == "USD"
+        assert meeting_request.price_paid_base == Decimal("8.00")
+        assert meeting_request.price_paid_rate == Decimal("0.80000000")
+
+    def test_same_currency_records_one_to_one(self):
+        meeting = create_meeting(peer=make_peer())
+        meeting_request = MeetingRequest.objects.create(
+            meeting=meeting,
+            support_seeker=UserFactory(),
+            status=MeetingRequestStatus.PAID,
+        )
+
+        meeting_request.sync_payment_from_checkout("cs_gbp", "pi_gbp", 2500)
+
+        meeting_request.refresh_from_db()
+        assert meeting_request.price_paid_base == Decimal("25.00")
+        assert meeting_request.price_paid_rate == Decimal("1")

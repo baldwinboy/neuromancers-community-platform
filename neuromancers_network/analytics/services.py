@@ -50,17 +50,20 @@ def record_transaction(  # noqa: PLR0913
     fee_minor=0,
     provider_object_id="",
     exchange_rate=None,
+    base_amount_minor=None,
+    base_currency=None,
 ) -> TransactionLedger:
     """Upsert one marketplace ledger row keyed by *idempotency_key*."""
     amount = _major(amount_minor)
     fee = _major(fee_minor)
+    base_amount = _major(base_amount_minor) if base_amount_minor is not None else amount
     net = amount - fee if kind == TransactionKind.BOOKING_PAYMENT else amount
     entry, _created = TransactionLedger.objects.update_or_create(
         idempotency_key=idempotency_key,
         defaults={
             "kind": kind,
-            "base_currency": _currency(currency),
-            "base_amount": amount,
+            "base_currency": _currency(base_currency or currency),
+            "base_amount": base_amount,
             "presentment_currency": _currency(currency),
             "presentment_amount": amount,
             "exchange_rate": exchange_rate,
@@ -85,6 +88,9 @@ def record_payment(  # noqa: PLR0913
     payer=None,
     payee=None,
     provider_object_id="",
+    base_amount_minor=None,
+    base_currency=None,
+    exchange_rate=None,
 ) -> TransactionLedger:
     return record_transaction(
         kind=TransactionKind.BOOKING_PAYMENT,
@@ -95,6 +101,9 @@ def record_payment(  # noqa: PLR0913
         payer=payer,
         payee=payee,
         provider_object_id=provider_object_id,
+        base_amount_minor=base_amount_minor,
+        base_currency=base_currency,
+        exchange_rate=exchange_rate,
     )
 
 

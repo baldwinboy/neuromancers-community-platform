@@ -25,6 +25,7 @@ class CoreConfig(AppConfig):
         from . import signals
         from .forms import EmailSettingsForm
         from .forms import IntegrationSettingsForm
+        from .forms import LocalizationSettingsForm
         from .forms import NotificationSettingsForm
         from .forms import StripeSettingsForm
 
@@ -33,6 +34,7 @@ class CoreConfig(AppConfig):
         StripeSettings.base_form_class = StripeSettingsForm
         EmailSettings.base_form_class = EmailSettingsForm
         IntegrationSettings.base_form_class = IntegrationSettingsForm
+        LocalizationSettings.base_form_class = LocalizationSettingsForm
 
         post_save.connect(
             signals.update_dj_stripe_keys,

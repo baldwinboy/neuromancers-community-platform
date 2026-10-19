@@ -46,9 +46,11 @@ def _record_item_ledger(  # noqa: PLR0913
     currency,
     occurred_at,
     provider_object_id="",
+    currency_conversion=None,
 ):
     from neuromancers_network.analytics.services import record_activity  # noqa: PLC0415
     from neuromancers_network.analytics.services import record_payment  # noqa: PLC0415
+    from neuromancers_network.core.currency import base_conversion  # noqa: PLC0415
     from neuromancers_network.meetings.models import Booking  # noqa: PLC0415
     from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
 
@@ -74,6 +76,12 @@ def _record_item_ledger(  # noqa: PLR0913
         return
     if target is None:
         return
+    amount = Decimal(amount_minor or 0) / 100
+    base_currency, base_amount, rate = base_conversion(
+        amount,
+        currency,
+        stripe_conversion=currency_conversion,
+    )
     record_payment(
         session_id=session_id,
         ref=ref,
@@ -83,6 +91,9 @@ def _record_item_ledger(  # noqa: PLR0913
         payer=target.support_seeker,
         payee=target.meeting.peer,
         provider_object_id=provider_object_id,
+        base_amount_minor=int(base_amount * 100),
+        base_currency=base_currency,
+        exchange_rate=rate,
     )
     record_activity(
         event_type="booking_paid",
@@ -154,6 +165,11 @@ def handle_checkout_session_completed(sender, event, **kwargs):
     occurred_at = occurred_at_from(session_data)
     fee_minor = _checkout_fee_minor(payment_intent, amount_total)
     currency = session_data.get("currency")
+    currency_conversion = (
+        payment_intent.get("currency_conversion")
+        if payment_intent is not None
+        else None
+    )
     fee_key = payment_intent_id or session_id
 
     meeting_request = MeetingRequest.objects.filter(
@@ -164,6 +180,7 @@ def handle_checkout_session_completed(sender, event, **kwargs):
             session_id,
             payment_intent_id,
             amount_total,
+            currency_conversion=currency_conversion,
         )
         _record_item_ledger(
             session_id=session_id,
@@ -172,6 +189,7 @@ def handle_checkout_session_completed(sender, event, **kwargs):
             currency=currency,
             occurred_at=occurred_at,
             provider_object_id=payment_intent_id or "",
+            currency_conversion=currency_conversion,
         )
         _record_session_fee(
             provider_key=fee_key,
@@ -185,7 +203,13 @@ def handle_checkout_session_completed(sender, event, **kwargs):
     if booking is not None:
         refs = _line_item_refs(session_data)
         if refs:
-            _apply_line_item_amounts(session_id, session_data, refs, event)
+            _apply_line_item_amounts(
+                session_id,
+                session_data,
+                refs,
+                event,
+                currency_conversion=currency_conversion,
+            )
             _record_session_fee(
                 provider_key=fee_key,
                 fee_minor=fee_minor,
@@ -207,6 +231,7 @@ def handle_checkout_session_completed(sender, event, **kwargs):
             currency=currency,
             occurred_at=occurred_at,
             provider_object_id=payment_intent_id or "",
+            currency_conversion=currency_conversion,
         )
         _record_session_fee(
             provider_key=fee_key,
@@ -250,7 +275,13 @@ def _retrieve_line_items(session_id: str, event) -> list:
         starting_after = page.data[-1].id
 
 
-def _apply_line_item_amounts(session_id, session_data, refs, event) -> None:
+def _apply_line_item_amounts(
+    session_id,
+    session_data,
+    refs,
+    event,
+    currency_conversion=None,
+) -> None:
     """Apply each Stripe line item amount to its referenced record."""
     from neuromancers_network.analytics.services import (  # noqa: PLC0415
         occurred_at_from,
@@ -322,6 +353,7 @@ def _apply_line_item_amounts(session_id, session_data, refs, event) -> None:
             currency=getattr(item, "currency", None) or session_data.get("currency"),
             occurred_at=occurred_at,
             provider_object_id=getattr(item, "id", ""),
+            currency_conversion=currency_conversion,
         )
 
     for booking_id in affected_bookings:

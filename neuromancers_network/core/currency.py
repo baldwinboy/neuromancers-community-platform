@@ -85,3 +85,58 @@ def _positive_rate(value) -> Decimal | None:
 
 def _quantize(value: Decimal) -> Decimal:
     return value.quantize(_TWO_PLACES)
+
+
+RATE_PLACES = Decimal("0.00000001")
+
+
+def base_conversion(
+    amount,
+    presentment_currency: str,
+    *,
+    stripe_conversion=None,
+    base_currency: str | None = None,
+):
+    """Return ``(base_currency, base_amount, base_per_presentment_rate)``.
+
+    Prefers Stripe's ``currency_conversion`` payload when it identifies the base
+    currency, then its ``fx_rate`` with explicit source/target currencies, and
+    finally the configured manual rates. ``rate`` is ``None`` when no conversion
+    is known (the amount is returned unchanged and callers should not pretend a
+    1:1 rate).
+    """
+    value = Decimal(str(amount or 0))
+    presentment = (presentment_currency or DEFAULT_CURRENCY).upper()
+    base = (base_currency or display_currency() or DEFAULT_CURRENCY).upper()
+    if presentment == base:
+        return base, _quantize(value), Decimal("1")
+
+    conversion = stripe_conversion or {}
+    cv_currency = (conversion.get("currency") or "").upper()
+    cv_amount = conversion.get("amount")
+    if cv_currency == base and cv_amount not in (None, ""):
+        base_amount = _quantize(Decimal(str(cv_amount)) / 100)
+        rate = (base_amount / value).quantize(RATE_PLACES) if value else None
+        return base, base_amount, rate
+
+    fx_rate = _positive_rate(conversion.get("fx_rate"))
+    source = (conversion.get("source_currency") or "").upper()
+    target = (conversion.get("target_currency") or "").upper()
+    if fx_rate is not None:
+        rate = None
+        if source == base and target == presentment:
+            rate = (Decimal("1") / fx_rate).quantize(RATE_PLACES)
+        elif source == presentment and target == base:
+            rate = fx_rate
+        if rate is not None:
+            return base, _quantize(value * rate), rate
+
+    converted = convert_amount(
+        value,
+        source_currency=presentment,
+        target_currency=base,
+    )
+    if converted == _quantize(value):
+        return base, converted, None
+    rate = (converted / value).quantize(RATE_PLACES) if value else None
+    return base, converted, rate

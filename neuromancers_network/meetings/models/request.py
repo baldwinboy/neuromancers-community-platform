@@ -51,6 +51,25 @@ class MeetingRequest(FSMModelMixin, Timestamped):
         null=True,
         blank=True,
     )
+    price_paid_currency = models.CharField(
+        _("Price paid currency"),
+        max_length=3,
+        blank=True,
+    )
+    price_paid_base = models.DecimalField(
+        _("Price paid (base currency)"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    price_paid_rate = models.DecimalField(
+        _("Base per presentment rate"),
+        max_digits=18,
+        decimal_places=8,
+        null=True,
+        blank=True,
+    )
     seeker_terms = models.TextField(
         _("Support seeker terms / needs"),
         blank=True,
@@ -254,8 +273,10 @@ class MeetingRequest(FSMModelMixin, Timestamped):
         session_id: str,
         payment_intent_id: str | None,
         amount_total: int | None,
+        currency_conversion=None,
     ) -> None:
         """Synchronize local payment fields after checkout completion."""
+        from neuromancers_network.core.currency import base_conversion  # noqa: PLC0415
         from neuromancers_network.payments.services import (  # noqa: PLC0415
             receipt_url_for,
         )
@@ -266,6 +287,15 @@ class MeetingRequest(FSMModelMixin, Timestamped):
             self.receipt_url = receipt_url_for(payment_intent_id) or self.receipt_url
         if amount_total is not None:
             self.price_paid = Decimal(amount_total) / Decimal(100)
+            currency = self.meeting.currency.upper()
+            _base_currency, base_amount, rate = base_conversion(
+                self.price_paid,
+                currency,
+                stripe_conversion=currency_conversion,
+            )
+            self.price_paid_currency = currency
+            self.price_paid_base = base_amount
+            self.price_paid_rate = rate
         if can_proceed(self.mark_paid):
             self.mark_paid()
         self.save(validate=False)

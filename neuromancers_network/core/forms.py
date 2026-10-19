@@ -8,8 +8,10 @@ from wagtail.admin.forms import WagtailAdminModelForm
 
 from neuromancers_network.core.models import EmailSettings
 from neuromancers_network.core.models import IntegrationSettings
+from neuromancers_network.core.models import LocalizationSettings
 from neuromancers_network.core.models import NotificationSettings
 from neuromancers_network.core.models import StripeSettings
+from neuromancers_network.core.widgets import KeyValueWidget
 from neuromancers_network.payments.services import DEFAULT_WEBHOOK_EVENTS
 
 
@@ -103,4 +105,16 @@ class IntegrationSettingsForm(SecretFieldsFormMixin, WagtailAdminModelForm):
 
     class Meta:
         model = IntegrationSettings
+        fields = "__all__"
+
+
+class LocalizationSettingsForm(WagtailAdminModelForm):
+    manual_exchange_rates = forms.JSONField(
+        widget=KeyValueWidget(),
+        required=False,
+        help_text=_("Map a currency code to its rate relative to the base currency."),
+    )
+
+    class Meta:
+        model = LocalizationSettings
         fields = "__all__"

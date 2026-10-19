@@ -1,0 +1,46 @@
+{% load i18n %}
+
+<div class="w-field__wrapper" data-key-value-widget>
+  <div data-key-value-rows>
+    {% for pair in pairs %}
+      <div class="flex gap-2 mb-2" data-key-value-row>
+        <input type="text"
+               name="{{ widget.name }}_keys"
+               value="{{ pair.key }}"
+               class="w-field__input"
+               placeholder="{% trans 'Currency' %}" />
+        <input type="text"
+               name="{{ widget.name }}_values"
+               value="{{ pair.value }}"
+               class="w-field__input"
+               placeholder="{% trans 'Rate' %}" />
+      </div>
+    {% endfor %}
+    <div class="flex gap-2 mb-2" data-key-value-row>
+      <input type="text"
+             name="{{ widget.name }}_keys"
+             value=""
+             class="w-field__input"
+             placeholder="{% trans 'Currency' %}" />
+      <input type="text"
+             name="{{ widget.name }}_values"
+             value=""
+             class="w-field__input"
+             placeholder="{% trans 'Rate' %}" />
+    </div>
+  </div>
+  <button type="button"
+          class="button button-secondary button-small"
+          data-key-value-add>{% trans "Add rate" %}</button>
+  <script>
+    (function() {
+      const root = document.currentScript.closest("[data-key-value-widget]");
+      if (!root) return;
+      root.querySelector("[data-key-value-add]").addEventListener("click", function() {
+        const rows = root.querySelector("[data-key-value-rows]");
+        const last = rows.querySelector("[data-key-value-row]:last-child");
+        rows.appendChild(last.cloneNode(true));
+      });
+    })();
+  </script>
+</div>
