@@ -1,7 +1,9 @@
 from django.urls import path
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
 from wagtail.admin.filters import WagtailFilterSet
+from wagtail.admin.menu import MenuItem
 from wagtail.admin.panels import FieldPanel
 from wagtail.admin.viewsets.base import ViewSetGroup
 from wagtail.snippets.models import register_snippet
@@ -19,6 +21,7 @@ from neuromancers_network.core.views.stripe import StripeSyncView
 from neuromancers_network.core.views.stripe import StripeWebhookView
 from neuromancers_network.inbox.wagtail_hooks import NotificationPreferenceViewSet
 from neuromancers_network.meetings.wagtail_hooks import MeetingOperationsViewSetGroup
+from neuromancers_network.moderation.visibility import viewer_can_view_source
 from neuromancers_network.moderation.wagtail_hooks import (
     ModerationOperationsViewSetGroup,
 )
@@ -146,14 +149,26 @@ register_snippet(CookieViewSet)
 
 
 class HelpViewSetGroup(SnippetViewSetGroup):
-    menu_label = _("Admin Guide")
+    menu_label = _("Admin Guide Settings")
     menu_name = "admin_help"
     menu_icon = "help"
     menu_hook = "register_help_menu_item"
+    menu_order = 8999
     items = (HelpCategoryViewSet, HelpArticleViewSet, GlossaryTermViewSet)
 
 
 register_snippet(HelpViewSetGroup)
+
+
+@hooks.register("register_help_menu_item")
+def register_admin_guide_menu_item():
+    return MenuItem(
+        _("Admin Guide"),
+        reverse("help_guide"),
+        name="admin_guide",
+        icon_name="help",
+        order=9000,
+    )
 
 
 @hooks.register("register_admin_urls")
@@ -190,10 +205,6 @@ def hide_inaccessible_detail_pages(page, request, args, kwargs):
     source = specific.source
     if source is None:
         return render_error_page(request, 404)
-
-    from neuromancers_network.moderation.visibility import (  # noqa: PLC0415
-        viewer_can_view_source,
-    )
 
     if viewer_can_view_source(source, getattr(request, "user", None)):
         return None
