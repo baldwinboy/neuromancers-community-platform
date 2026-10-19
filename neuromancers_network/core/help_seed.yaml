@@ -1125,6 +1125,9 @@ articles:
       - type: rich_text
         text: |-
           <p>The application is <strong>Django</strong> with <strong>Wagtail</strong> for the admin and page authoring, extended by the in-house <strong>daisIE</strong> toolkit for design blocks, feeds, forms, menus and notifications. The <strong>repository</strong> is on <strong>GitHub</strong>, and changes deploy through <strong>Coolify</strong> to a <strong>Hetzner</strong> host. <strong>Ansible</strong> manages infrastructure as code (<strong>IaC</strong>). <strong>Secrets</strong> are stored in a secret manager and injected as environment variables. <strong>Tailscale</strong> provides private networking to the host, and <strong>Cloudflare</strong> provides <strong>DNS</strong>.</p>
+      - type: rich_text
+        text: |-
+          <p>Developer documentation for the architecture, data model, configuration and providers lives in <code>docs/platform/</code> in the repository; infrastructure runbooks live in <code>docs/infra/</code>.</p>
     steps: []
     sort_order: 6
     is_published: true

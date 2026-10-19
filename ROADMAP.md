@@ -1,9 +1,9 @@
 # NEUROMANCERS Network — Roadmap
 
-> Status: Phases 0 (0.1–0.5), A (A1–A5, including A4 step 7), B (B0–B6) and C
-> (C1–C4) are complete and green. Remaining: Phase D (documentation). Each
-> completed unit landed test-first with migration/gate handovers; the
-> checkboxes below reflect committed work.
+> Status: Phases 0 (0.1–0.5), A (A1–A5, including A4 step 7), B (B0–B6), C
+> (C1–C4) and D1–D3 (documentation) are complete and green. D4 remains as the
+> manual Sphinx build check. Each completed unit landed test-first with
+> migration/gate handovers; the checkboxes below reflect committed work.
 
 ## Principles
 
@@ -1226,30 +1226,30 @@ docs-build CI (manual check).
 
 ### D1 — Fix drift + refresh admin guides on deploy
 Steps:
-1. [ ] **Bug — Stripe article documents dead settings** (`core/help_seed.yaml:
+1. [x] **Bug — Stripe article documents dead settings** (`core/help_seed.yaml:
    187-212`): keep it describing them as live and **wire them in 0.4**
    (`connect_country`, `client_id`, `onboarding_redirect_url`,
    `onboarding_refresh_url`, `subscription_enabled`).
-2. [ ] **Bug — GetPronto mislabeled as a meeting/video provider**
+2. [x] **Bug — GetPronto mislabeled as a meeting/video provider**
    (`help_seed.yaml:239-262,1086-1098`); describe it as file upload.
-3. [ ] **Bug — charge-type description** (`help_seed.yaml:187`): correct
+3. [x] **Bug — charge-type description** (`help_seed.yaml:187`): correct
    `Separate` semantics (or fix the code in 0.1).
-4. [ ] **Bug — README boilerplate/command drift** (`README.md:18-22`): use
+4. [x] **Bug — README boilerplate/command drift** (`README.md:18-22`): use
    `just manage …` conventions.
-5. [ ] **Bug — `docs/index.rst` toctree** (`docs/index.rst:9-15`): add the platform
+5. [x] **Bug — `docs/index.rst` toctree** (`docs/index.rst:9-15`): add the platform
    tree.
-6. [ ] **Bug — `docs/notifications.rst` event list** must match
+6. [x] **Bug — `docs/notifications.rst` event list** must match
    `NotificationEventType` (incl. B5 `review_*`).
-7. [ ] **Bug — `docs/spec/daily.openapi.yaml`** omits meeting tokens; note/regen
+7. [x] **Bug — `docs/spec/daily.openapi.yaml`** omits meeting tokens; note/regen
    (A4/B6).
-8. [ ] Verify `docs/infra/pricing.md` against the code; correct as needed.
-9. [ ] **Admin guides are code-owned — refresh on deploy.** Change
+8. [x] Verify `docs/infra/pricing.md` against the code; correct as needed.
+9. [x] **Admin guides are code-owned — refresh on deploy.** Change
    `compose/production/django/start` and `compose/local/django/start` to run
    `python /app/manage.py seed_help_guide --force` (currently no `--force`), so a
    deploy overwrites seeded help rows from `help_seed.yaml`. Document the tradeoff
    (admin edits to seeded rows are overwritten on deploy; other seeders — pages,
    account self-service — stay non-force).
-10. [ ] Tests: help-seed validation covers all articles (slug length, category
+10. [x] Tests: help-seed validation covers all articles (slug length, category
     refs, body types).
 
 Acceptance: no stale/dead-setting claims; toctrees complete; seed validates;
@@ -1257,28 +1257,28 @@ Acceptance: no stale/dead-setting claims; toctrees complete; seed validates;
 
 ### D2 — Admin guide content
 Steps:
-1. [ ] Extend the help-seed loader with a `table` body type (A5) and render it in
+1. [x] Extend the help-seed loader with a `table` body type (A5) and render it in
    the reader (`core/help_seed.py:18`, `core/views/help.py`).
-2. [ ] Add/refresh articles for: review approval + peer hide (B5), meeting join
+2. [x] Add/refresh articles for: review approval + peer hide (B5), meeting join
    windowing (A4), analytics (B3), scripts & cookie consent (C), two-party records
    (A3), search (A2).
-3. [ ] Add comparison tables: **Stripe charge types** (direct/destination/separate)
+3. [x] Add comparison tables: **Stripe charge types** (direct/destination/separate)
    and **Whereby vs Daily** (host/guest links, tokens, room lifetime, cost).
-4. [ ] Keep seeding idempotent under the non-force path; `--force` is the
+4. [x] Keep seeding idempotent under the non-force path; `--force` is the
    deploy-refresh path (D1 step 9).
 
 Acceptance: every feature has an admin article; both seed paths validated.
 
 ### D3 — Developer platform docs (`docs/platform/`)
 Steps:
-1. [ ] Create the `docs/platform/` `.md` tree and add it to a toctree (root or
+1. [x] Create the `docs/platform/` `.md` tree and add it to a toctree (root or
    `docs/platform/index.md`).
-2. [ ] Authored prose: architecture, data model, feature → code-location index,
+2. [x] Authored prose: architecture, data model, feature → code-location index,
    configuration/environment (incl. `DJANGO_SECRET_KEY` as the field-encryption
    KEK), daisIE usage, analytics ledgers, scripts/consent, and **each provider**
    (Whereby, Daily, GetPronto, Stripe).
-3. [ ] Cross-link `docs/infra/*` runbooks rather than duplicating (DRY).
-4. [ ] English only.
+3. [x] Cross-link `docs/infra/*` runbooks rather than duplicating (DRY).
+4. [x] English only.
 
 Acceptance: every feature and provider has a developer entry; no dead links.
 
