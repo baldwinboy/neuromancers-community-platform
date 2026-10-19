@@ -1,0 +1,33 @@
+{% load i18n %}
+
+<div class="overflow-x-auto">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>{% trans "Cookie" %}</th>
+        <th>{% trans "Provider" %}</th>
+        <th>{% trans "Purpose" %}</th>
+        <th>{% trans "Duration" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for group in cookie_groups %}
+        <tr class="bg-base-200">
+          <th colspan="4">{{ group.label }}</th>
+        </tr>
+        {% for cookie in group.cookies %}
+          <tr>
+            <td>{{ cookie.name }}</td>
+            <td>{{ cookie.provider }}</td>
+            <td>{{ cookie.purpose }}</td>
+            <td>{{ cookie.duration }}</td>
+          </tr>
+        {% endfor %}
+      {% empty %}
+        <tr>
+          <td colspan="4">{% trans "No cookies have been registered." %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

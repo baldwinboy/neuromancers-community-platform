@@ -1,11 +1,14 @@
 from django.urls import path
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
+from wagtail.admin.filters import WagtailFilterSet
+from wagtail.admin.panels import FieldPanel
 from wagtail.admin.viewsets.base import ViewSetGroup
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import SnippetViewSet
 from wagtail.snippets.views.snippets import SnippetViewSetGroup
 
+from neuromancers_network.core.models import Cookie
 from neuromancers_network.core.models import GlossaryTerm
 from neuromancers_network.core.models import HelpArticle
 from neuromancers_network.core.models import HelpCategory
@@ -111,6 +114,35 @@ class GlossaryTermViewSet(SnippetViewSet):
     search_fields = ["term", "definition"]
     list_per_page = 50
     add_to_admin_menu = False
+
+
+class CookieFilterSet(WagtailFilterSet):
+    class Meta:
+        model = Cookie
+        fields = ["category", "is_active"]
+
+
+class CookieViewSet(SnippetViewSet):
+    model = Cookie
+    icon = "cog"
+    menu_label = _("Cookies")
+    menu_name = "cookies"
+    menu_order = 5
+    list_display = ["name", "category", "provider", "duration", "is_active"]
+    search_fields = ["name", "provider", "purpose"]
+    filterset_class = CookieFilterSet
+    panels = [
+        FieldPanel("name"),
+        FieldPanel("provider"),
+        FieldPanel("purpose"),
+        FieldPanel("duration"),
+        FieldPanel("category"),
+        FieldPanel("is_active"),
+    ]
+    list_per_page = 50
+
+
+register_snippet(CookieViewSet)
 
 
 class HelpViewSetGroup(SnippetViewSetGroup):

@@ -3,6 +3,8 @@ from neuromancers_network.core import page_blocks  # noqa: F401  (register block
 from .audit import AccountAuditLog
 from .base import Timestamped
 from .calendar import CalendarFeedToken
+from .cookies import Cookie
+from .cookies import CookieCategory
 from .help import GlossaryTerm
 from .help import HelpArticle
 from .help import HelpCategory
@@ -21,6 +23,8 @@ __all__ = [
     "AccountAuditLog",
     "AccountSettings",
     "CalendarFeedToken",
+    "Cookie",
+    "CookieCategory",
     "EmailSettings",
     "GlossaryTerm",
     "HelpArticle",
