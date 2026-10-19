@@ -52,3 +52,26 @@ def test_every_seeded_article_is_consistent():
     assert spec["articles"]
     assert all(article["category"] in categories for article in spec["articles"])
     assert all(len(article["slug"]) <= MAX_SLUG_LENGTH for article in spec["articles"])
+
+
+def test_comparison_tables_are_seeded():
+    spec = load_help_spec()
+    articles = {article["slug"]: article for article in spec["articles"]}
+
+    stripe_tables = [
+        entry
+        for entry in articles["configuring-stripe-and-payouts"]["body"]
+        if entry["type"] == "table"
+    ]
+    provider_tables = [
+        entry
+        for entry in articles["provider-overview-whereby-daily-getpronto-stripe"][
+            "body"
+        ]
+        if entry["type"] == "table"
+    ]
+
+    assert stripe_tables[0]["value"]["content"]["data"][1][0] == "Direct"
+    provider_rows = provider_tables[0]["value"]["content"]["data"]
+    assert "Whereby" in provider_rows[1]
+    assert "Daily" in provider_rows[2]

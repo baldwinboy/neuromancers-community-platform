@@ -4,7 +4,8 @@
 # clobbered unless --force is passed). Content is grouped by audience: each
 # article's `audience` records who the article is about.
 #
-# body entries:  {type: header|text|rich_text, text: "..."}
+# body entries:  {type: header|text|rich_text, text: "..."} or
+#                {type: table, headers: [...], rows: [[...], ...]}
 # step entries:  {text: "...", callout: "..."}
 
 categories:
@@ -193,7 +194,16 @@ articles:
         text: Connect
       - type: rich_text
         text: |-
-          <p>How money reaches care providers:</p><ul><li><strong>Charge type.</strong> <em>Direct</em> makes the care provider the merchant of record; <em>Destination</em> routes the money through the platform instead. The retired <em>Separate</em> mode is no longer selectable.</li><li><strong>Connect country.</strong> A two-letter code used for new Express accounts when the member has no country (default <code>GB</code>).</li><li><strong>Client ID.</strong> Reserved for the intended Stripe Connect OAuth flow. It is not initialised with a hard-coded value; leave it blank unless you are configuring that flow.</li><li><strong>Application fee (%).</strong> The platform's share of each payment, from 1 to 100 (default 15).</li><li><strong>Onboarding redirect / refresh URLs.</strong> Where a provider lands after they finish Stripe onboarding, and where they go if the onboarding link has expired or was already used. When set, these take precedence; otherwise the platform only accepts return URLs on the site's own host.</li></ul>
+          <p>How money reaches care providers:</p>
+      - type: table
+        headers: ["Charge type", "Merchant of record", "How funds move"]
+        rows:
+          - ["Direct", "Care provider", "The charge is created on the provider's connected account; the platform takes an application fee."]
+          - ["Destination", "Platform", "The charge is on the platform; funds transfer to the provider minus the application fee."]
+          - ["Separate (retired)", "Platform", "Not selectable. Historical rows are mapped to Direct."]
+      - type: rich_text
+        text: |-
+          <ul><li><strong>Charge type.</strong> <em>Direct</em> makes the care provider the merchant of record; <em>Destination</em> routes the money through the platform instead. The retired <em>Separate</em> mode is no longer selectable.</li><li><strong>Connect country.</strong> A two-letter code used for new Express accounts when the member has no country (default <code>GB</code>).</li><li><strong>Client ID.</strong> Reserved for the intended Stripe Connect OAuth flow. It is not initialised with a hard-coded value; leave it blank unless you are configuring that flow.</li><li><strong>Application fee (%).</strong> The platform's share of each payment, from 1 to 100 (default 15).</li><li><strong>Onboarding redirect / refresh URLs.</strong> Where a provider lands after they finish Stripe onboarding, and where they go if the onboarding link has expired or was already used. When set, these take precedence; otherwise the platform only accepts return URLs on the site's own host.</li></ul>
       - type: header
         text: Compliance
       - type: rich_text
@@ -1200,6 +1210,11 @@ articles:
       - type: rich_text
         text: |-
           <p>Each integration has one job. Configure them in the Wagtail admin under <strong>Settings</strong>; they are not environment-only secrets.</p>
+      - type: table
+        headers: ["Provider", "Host link", "Guest link", "Link lifetime", "Notes"]
+        rows:
+          - ["Whereby", "Fetched on demand from the API and cached briefly", "Stored room URL", "Until the room expires at the provider", "Hosts receive hostRoomUrl; guests receive roomUrl."]
+          - ["Daily", "Meeting token with is_owner", "Meeting token", "Private room; the token's nbf/exp bound access", "Every join link carries a short-lived user token."]
       - type: header
         text: Whereby
       - type: rich_text
@@ -1222,6 +1237,131 @@ articles:
           <p>Processes payments, payouts and subscriptions through Stripe Connect. Providers onboard to an Express connected account, and the platform takes an application fee. Stripe also sends the webhooks that keep payments, refunds and subscriptions in sync.</p>
     steps: []
     sort_order: 11
+    is_published: true
+
+  - title: Review approval and hiding
+    slug: review-approval-and-hiding
+    category: care-providers
+    kind: howto
+    audience: peer
+    summary: Choose whether reviews need approval, then approve or hide them (never delete).
+    body:
+      - type: rich_text
+        text: |-
+          <p>When <strong>Reviews require approval</strong> is on in your peer profile, new reviews arrive as <em>Pending approval</em> and are not public until you approve them. When it is off, reviews publish immediately. You can also refuse reviews entirely with <strong>Accepts reviews</strong>.</p>
+      - type: rich_text
+        text: |-
+          <p>You can hide any review. Hiding never deletes it, and hidden reviews stop appearing on public surfaces. Moderators can additionally unpublish a review (both actions end in the same hidden state, and the actor is audited).</p>
+      - type: header
+        text: Where to act
+      - type: rich_text
+        text: |-
+          <p>Use the <strong>My reviews</strong>, <strong>My pending reviews</strong> and <strong>My hidden reviews</strong> feeds on your dashboard, with the <strong>Approve review</strong> and <strong>Hide review</strong> action buttons.</p>
+    steps:
+      - text: Choose whether reviews require approval and whether you accept reviews.
+      - text: Review pending items from My pending reviews.
+      - text: Approve to publish, or hide to remove a review from public surfaces.
+    sort_order: 30
+    is_published: true
+
+  - title: Joining a meeting
+    slug: joining-a-meeting
+    category: care-seekers
+    kind: howto
+    audience: seeker
+    summary: When the join link opens, the difference between host and guest links, and why the server checks it.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The join link opens only inside the <strong>join window</strong>: it becomes available a configurable number of minutes before the session (set by <strong>Join window lead</strong> in Integration Settings) and closes when the session ends. The button is cosmetic; the join endpoint re-checks your role and the window on the server.</p>
+      - type: rich_text
+        text: |-
+          <p>Hosts and guests receive different links. With Whereby, host links are fetched on demand and guest links use the stored room URL. With Daily, rooms are private and each link includes a short-lived meeting token, so a copied link cannot be reused outside the window.</p>
+    steps:
+      - text: Open the session from your bookings or the reminder email inside the join window.
+      - text: If the link is not open yet, wait for the window (or contact the host).
+    sort_order: 20
+    is_published: true
+
+  - title: Who can see bookings and refunds
+    slug: who-can-see-bookings-and-refunds
+    category: care-seekers
+    kind: reference
+    audience: seeker
+    summary: Bookings and refunds are private two-party records, not public content.
+    body:
+      - type: rich_text
+        text: |-
+          <p>A <strong>booking</strong> and a <strong>refund request</strong> are private two-party records. Only the seeker, the care provider whose meeting was booked, and moderators may open their detail pages or see them in feeds. Everyone else gets a 404 (detail page) or an empty feed.</p>
+      - type: rich_text
+        text: |-
+          <p>Moderators can view these records for support, but they are not participants. Detail pages are generated automatically and are never navigable by other members.</p>
+    steps: []
+    sort_order: 21
+    is_published: true
+
+  - title: Searching the site
+    slug: searching-the-site
+    category: care-seekers
+    kind: howto
+    audience: seeker
+    summary: What search covers and how visibility affects results.
+    body:
+      - type: rich_text
+        text: |-
+          <p>The Search page looks across published meetings, approved care providers, and pages whose title, description or body match your query. Results are ordered deterministically and paginated.</p>
+      - type: rich_text
+        text: |-
+          <p>Search respects visibility: unpublished meetings, ineligible or hidden providers, and pending or hidden reviews never appear. Pair search with the tag, language and country filters on feeds to narrow results.</p>
+    steps: []
+    sort_order: 22
+    is_published: true
+
+  - title: Reading the analytics dashboard
+    slug: reading-the-analytics-dashboard
+    category: administrators-moderation-operations
+    kind: reference
+    audience: admin
+    summary: The staff-only metrics dashboard, its periods and its read-only API.
+    body:
+      - type: rich_text
+        text: |-
+          <p><strong>Analytics</strong> is staff-only. Choose a UTC calendar period: this month, last month, the last three months, or all time.</p>
+      - type: header
+        text: Metrics
+      - type: rich_text
+        text: |-
+          <p>Revenue is shown split into <strong>marketplace</strong> (application fees) and <strong>subscription</strong> revenue, with a combined total. The dashboard also shows gross booking value, payments, take rate, refunds and refund rate, disputes, average order value, active members and peers, repeat-booking rate, published-review rate, session minutes by provider, GBV per currency and a converted total, and requests/bookings by status.</p>
+      - type: header
+        text: Read-only API
+      - type: rich_text
+        text: |-
+          <p><code>/api/analytics/platform</code> returns platform metrics to staff. <code>/api/analytics/me</code> returns the signed-in member's own spend/refund totals (and a peer view for providers). Both accept <code>?period=</code> with the same period names.</p>
+    steps:
+      - text: Open Analytics from the admin menu.
+      - text: Choose a period to change every figure on the page.
+      - text: Use the API for exports or reporting that should not depend on the UI.
+    sort_order: 30
+    is_published: true
+
+  - title: Scripts and cookie consent
+    slug: scripts-and-cookie-consent
+    category: administrators-getting-started
+    kind: howto
+    audience: admin
+    summary: Add head/body scripts, gate them by consent and audience, and publish the cookie policy.
+    body:
+      - type: rich_text
+        text: |-
+          <p><strong>Script Settings</strong> lets you add scripts to the site head or body. Each script has a category (<em>necessary</em>, <em>analytics</em> or <em>marketing</em>) and an optional audience. Only <em>necessary</em> scripts render before the visitor consents; the others wait for the matching category in the consent cookie.</p>
+      - type: rich_text
+        text: |-
+          <p><strong>Consent Settings</strong> holds the banner title, text, button labels and the <strong>policy version</strong>. Bump the version when the policy changes and visitors are asked again. The <strong>Cookies</strong> snippet registry lists each cookie (name, provider, purpose, duration, category); add the <strong>Cookie registry</strong> block to an admin-authored policy page to render it. Necessary cookies such as the session, CSRF, language and theme cookies are registered for you.</p>
+    steps:
+      - text: Add each script in Script Settings with its category, placement and audience.
+      - text: Author the policy page and insert the Cookie registry block.
+      - text: Update the banner copy and bump the policy version when the policy changes.
+    sort_order: 30
     is_published: true
 
 glossary:

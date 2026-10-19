@@ -15,7 +15,7 @@ import yaml
 
 DEFAULT_PATH = Path(__file__).with_name("help_seed.yaml")
 
-_BODY_TYPES = frozenset({"header", "text", "rich_text"})
+_BODY_TYPES = frozenset({"header", "text", "rich_text", "table"})
 #: ``HelpCategory.slug``/``HelpArticle.slug`` are ``SlugField`` (default max length).
 _MAX_SLUG_LENGTH = 50
 
@@ -178,12 +178,50 @@ def _body(raw: object, where: str) -> list[dict]:
         if block_type not in _BODY_TYPES:
             message = f"{where}.body[{position}] has unknown type {block_type!r}."
             raise HelpSeedError(message)
+        if block_type == "table":
+            entries.append(_table(entry, f"{where}.body[{position}]"))
+            continue
         text = entry.get("text")
         if not isinstance(text, str) or not text:
             message = f"{where}.body[{position}] needs non-empty 'text'."
             raise HelpSeedError(message)
         entries.append({"type": block_type, "value": {"text": text}})
     return entries
+
+
+def _table(entry: dict, where: str) -> dict:
+    headers = entry.get("headers") or []
+    rows = entry.get("rows") or []
+    if not isinstance(headers, list) or not isinstance(rows, list):
+        message = f"{where} needs 'headers' and 'rows' lists."
+        raise HelpSeedError(message)
+    if not headers and not rows:
+        message = f"{where} needs non-empty 'headers' or 'rows'."
+        raise HelpSeedError(message)
+    data = []
+    if headers:
+        data.append([str(value) for value in headers])
+    for row in rows:
+        if not isinstance(row, list):
+            message = f"{where} rows must be lists."
+            raise HelpSeedError(message)
+        data.append([str(value) for value in row])
+    return {
+        "type": "table",
+        "value": {
+            "content": {
+                "table_caption": "",
+                "table_header_choice": "row" if headers else "",
+                "first_row_is_table_header": bool(headers),
+                "first_col_is_header": False,
+                "data": data,
+            },
+            "design": [],
+            "cell_design": [],
+            "header_cell_design": [],
+            "audience": [],
+        },
+    }
 
 
 def _steps(raw: object, where: str) -> list[dict]:
