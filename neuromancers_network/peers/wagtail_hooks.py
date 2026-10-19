@@ -87,6 +87,17 @@ class PeerProfileViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
             ),
             MultiFieldPanel(
                 [
+                    FieldPanel("show_review_rating"),
+                    FieldPanel("show_rating_count"),
+                    FieldPanel("show_sessions_count"),
+                    FieldPanel("accepts_reviews"),
+                    FieldPanel("reviews_require_approval"),
+                ],
+                heading=_("Public profile"),
+                classname="collapsed",
+            ),
+            MultiFieldPanel(
+                [
                     FieldRowPanel(
                         [
                             FieldPanel(

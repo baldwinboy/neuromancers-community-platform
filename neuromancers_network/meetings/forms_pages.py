@@ -212,6 +212,7 @@ class ReviewFormPage(DaisieFormPage):
             MeetingRequestStatus,
         )
         from neuromancers_network.meetings.models import Review  # noqa: PLC0415
+        from neuromancers_network.meetings.models import ReviewStatus  # noqa: PLC0415
 
         request = getattr(self, "_daisie_request", None)
         user = getattr(request, "user", None)
@@ -226,10 +227,19 @@ class ReviewFormPage(DaisieFormPage):
         ).first()
         if meeting_request is None:
             return None
+        peer_profile = getattr(meeting_request.meeting.peer, "peer_profile", None)
+        if peer_profile is not None and not peer_profile.accepts_reviews:
+            return None
+        status = (
+            ReviewStatus.PENDING_APPROVAL
+            if peer_profile is not None and peer_profile.reviews_require_approval
+            else ReviewStatus.PUBLISHED
+        )
         return Review.objects.create(
             meeting_request=meeting_request,
             reviewer=user,
             peer=meeting_request.meeting.peer,
             rating=data.get("rating"),
             comment=data.get("comment", ""),
+            status=status,
         )

@@ -9,6 +9,7 @@ from neuromancers_network.meetings.models import BookingStatus
 from neuromancers_network.meetings.models import MeetingRequest
 from neuromancers_network.meetings.models import RefundRequest
 from neuromancers_network.meetings.models import Review
+from neuromancers_network.meetings.models import ReviewStatus
 from neuromancers_network.meetings.search import search_meetings
 from neuromancers_network.moderation.visibility import exclude_hidden
 from neuromancers_network.peers.services import eligible_peer_q
@@ -37,7 +38,7 @@ def my_meetings(request=None, page=None):
 def published_reviews(request=None, page=None):
     """Published reviews from eligible peers, minus block-hidden parties."""
     queryset = (
-        Review.objects.filter(is_published=True)
+        Review.objects.filter(status=ReviewStatus.PUBLISHED)
         .filter(eligible_peer_q(prefix="peer__"))
         .select_related("peer", "reviewer")
     )

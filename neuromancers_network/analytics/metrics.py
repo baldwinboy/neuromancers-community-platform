@@ -261,10 +261,11 @@ def published_review_rate(*, period, now=None) -> Decimal:
         MeetingRequestStatus,
     )
     from neuromancers_network.meetings.models import Review  # noqa: PLC0415
+    from neuromancers_network.meetings.models import ReviewStatus  # noqa: PLC0415
 
     start, end = period_bounds(period, now)
     reviews = _in_period(
-        Review.objects.filter(is_published=True),
+        Review.objects.filter(status=ReviewStatus.PUBLISHED),
         start,
         end,
         field="created_at",

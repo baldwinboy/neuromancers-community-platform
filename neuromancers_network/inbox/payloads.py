@@ -232,7 +232,7 @@ def review_payload(review, *, actor=None, recipients=()):
             "meeting_id": review.meeting_request.meeting_id,
             "meeting_title": review.meeting_request.meeting.title,
             "rating": review.rating,
-            "is_published": review.is_published,
+            "status": review.status,
             "peer_user_id": user_id(review.peer),
             "reviewer_user_id": user_id(review.reviewer),
         },

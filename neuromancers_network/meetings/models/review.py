@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from neuromancers_network.core.models.base import Timestamped
 
+from .choices import ReviewStatus
 from .request import MeetingRequest
 
 
@@ -30,7 +31,13 @@ class Review(Timestamped):
         validators=[MinValueValidator(1), MaxValueValidator(5)],
     )
     comment = models.TextField(_("Comment"), blank=True)
-    is_published = models.BooleanField(_("Published"), default=True)
+    status = models.CharField(
+        _("Status"),
+        max_length=20,
+        choices=ReviewStatus.choices,
+        default=ReviewStatus.PUBLISHED,
+        db_index=True,
+    )
 
     @property
     def display_title(self) -> str:
@@ -38,7 +45,13 @@ class Review(Timestamped):
 
     @property
     def is_live(self) -> bool:
-        return bool(self.is_published)
+        return self.status == ReviewStatus.PUBLISHED
+
+    def publish(self) -> None:
+        self.status = ReviewStatus.PUBLISHED
+
+    def hide(self) -> None:
+        self.status = ReviewStatus.HIDDEN
 
     def get_absolute_url(self) -> str:
         from django.contrib.contenttypes.models import ContentType  # noqa: PLC0415

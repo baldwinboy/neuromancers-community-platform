@@ -85,6 +85,16 @@ class PeerProfile(index.Indexed, Timestamped):  # type: ignore[django-manager-mi
     )
     verified_at = models.DateTimeField(_("Verified at"), null=True, blank=True)
 
+    # Public profile & review preferences (defaults: public)
+    show_review_rating = models.BooleanField(_("Show review rating"), default=True)
+    show_rating_count = models.BooleanField(_("Show rating count"), default=True)
+    show_sessions_count = models.BooleanField(_("Show sessions count"), default=True)
+    accepts_reviews = models.BooleanField(_("Accepts reviews"), default=True)
+    reviews_require_approval = models.BooleanField(
+        _("Reviews require approval"),
+        default=False,
+    )
+
     class Meta:
         verbose_name = "Peer profile"
         verbose_name_plural = "Peer profiles"

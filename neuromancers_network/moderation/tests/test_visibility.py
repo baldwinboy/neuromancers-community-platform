@@ -186,7 +186,6 @@ class TestFeedParity:
             reviewer=reviewer,
             peer=reviewed,
             rating=5,
-            is_published=True,
         )
         viewer = UserFactory()
         UserBlock.objects.create(blocker=viewer, blocked=reviewer)

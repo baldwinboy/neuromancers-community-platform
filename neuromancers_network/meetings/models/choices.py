@@ -37,6 +37,12 @@ class RefundStatus(models.TextChoices):
     REFUNDED = "refunded", _("Refunded")
 
 
+class ReviewStatus(models.TextChoices):
+    PENDING_APPROVAL = "pending_approval", _("Pending approval")
+    PUBLISHED = "published", _("Published")
+    HIDDEN = "hidden", _("Hidden")
+
+
 class MeetingStatus(models.TextChoices):
     DRAFT = "draft", _("Draft")
     PUBLISHED = "published", _("Published")

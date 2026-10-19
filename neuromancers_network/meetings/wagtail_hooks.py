@@ -27,6 +27,7 @@ from neuromancers_network.meetings.models import MeetingStatus
 from neuromancers_network.meetings.models import RefundRequest
 from neuromancers_network.meetings.models import RefundStatus
 from neuromancers_network.meetings.models import Review
+from neuromancers_network.meetings.models import ReviewStatus
 
 logger = logging.getLogger(__name__)
 
@@ -224,12 +225,12 @@ class ReviewViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
     menu_label = _("Reviews")
     menu_name = "reviews"
     menu_order = 4
-    list_display = ["peer", "reviewer", "rating", "is_published", "created_at"]
+    list_display = ["peer", "reviewer", "rating", "status", "created_at"]
     search_fields = ["comment", "peer__username", "reviewer__username"]
     panels = [
         FieldPanel("rating"),
         FieldPanel("comment"),
-        FieldPanel("is_published"),
+        FieldPanel("status"),
     ]
     list_per_page = 50
 
@@ -414,9 +415,9 @@ class PublishReviewBulkAction(ConfirmBulkAction):
     def execute_action(cls, objects, **kwargs):
         published = 0
         for review in objects:
-            if not review.is_published:
-                review.is_published = True
-                review.save(update_fields=["is_published", "updated_at"])
+            if review.status != ReviewStatus.PUBLISHED:
+                review.publish()
+                review.save(update_fields=["status", "updated_at"])
                 published += 1
         return published, 0
 
@@ -433,13 +434,13 @@ class UnpublishReviewBulkAction(ConfirmBulkAction):
 
     @classmethod
     def execute_action(cls, objects, **kwargs):
-        unpublished = 0
+        hidden = 0
         for review in objects:
-            if review.is_published:
-                review.is_published = False
-                review.save(update_fields=["is_published", "updated_at"])
-                unpublished += 1
-        return unpublished, 0
+            if review.status != ReviewStatus.HIDDEN:
+                review.hide()
+                review.save(update_fields=["status", "updated_at"])
+                hidden += 1
+        return hidden, 0
 
 
 for action_class in [
