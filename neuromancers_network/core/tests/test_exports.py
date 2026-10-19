@@ -77,6 +77,42 @@ class TestConvertAmount:
             "10.00",
         )
 
+    def test_none_amount_is_zero(self):
+        configure(display_currency="GBP")
+
+        assert convert_amount(None, source_currency="GBP") == Decimal("0.00")
+
+    def test_explicit_rate_is_applied(self):
+        configure(display_currency="EUR", exchange_rate_source="stripe")
+
+        assert convert_amount(
+            Decimal("10.00"),
+            source_currency="GBP",
+            target_currency="EUR",
+            rate="1.2",
+        ) == Decimal("12.00")
+
+    def test_directional_rate_key_is_applied(self):
+        configure(
+            display_currency="EUR",
+            exchange_rate_source="manual",
+            manual_exchange_rates={"GBP:EUR": "1.1"},
+        )
+
+        assert convert_amount(Decimal("10.00"), source_currency="GBP") == Decimal(
+            "11.00",
+        )
+
+    def test_invalid_rate_falls_back(self):
+        configure(display_currency="EUR", exchange_rate_source="stripe")
+
+        assert convert_amount(
+            Decimal("10.00"),
+            source_currency="GBP",
+            target_currency="EUR",
+            rate="-1",
+        ) == Decimal("10.00")
+
 
 class TestBuildIcs:
     def test_contains_calendar_and_event(self):

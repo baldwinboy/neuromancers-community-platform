@@ -25,28 +25,39 @@ def convert_amount(
     *,
     source_currency: str,
     target_currency: str | None = None,
+    rate=None,
 ) -> Decimal:
-    """Convert *amount* for display using the configured exchange rates.
+    """Convert *amount* from source to target currency.
 
-    ``stripe`` (adaptive pricing) converts at checkout, so this helper returns
-    the amount unchanged for that source. ``manual``/``fixed`` sources use the
-    admin-supplied ``manual_exchange_rates`` mapping and fall back to the
-    original amount when no rate is configured.
+    ``rate`` is an explicit source->target multiplier (for example a checkout
+    rate persisted on an analytics row); it wins over the configured source.
+    Otherwise ``stripe`` (adaptive pricing) is treated as already converted at
+    checkout and returns the amount unchanged. ``manual``/``fixed`` sources use
+    ``manual_exchange_rates``, accepting an explicit ``"SOURCE:TARGET"`` key
+    first and the legacy ``{target: rate}`` key second. Invalid, non-positive
+    or missing rates leave the amount unchanged.
     """
+    if amount in (None, ""):
+        return _quantize(Decimal("0"))
     value = Decimal(str(amount))
     data = get_localization()
-    source = source_currency.upper()
+    source = (source_currency or DEFAULT_CURRENCY).upper()
     target = (target_currency or data.get("display_currency", "GBP")).upper()
-    if source == target or data.get("exchange_rate_source", "stripe") == "stripe":
+    if source == target:
+        return _quantize(value)
+
+    factor = _positive_rate(rate)
+    if factor is not None:
+        return _quantize(value * factor)
+
+    if data.get("exchange_rate_source", "stripe") == "stripe":
         return _quantize(value)
 
     rates = data.get("manual_exchange_rates") or {}
-    rate = rates.get(target)
-    if rate is None:
-        return _quantize(value)
-    try:
-        factor = Decimal(str(rate))
-    except InvalidOperation:
+    factor = _positive_rate(rates.get(f"{source}:{target}"))
+    if factor is None:
+        factor = _positive_rate(rates.get(target))
+    if factor is None:
         return _quantize(value)
     return _quantize(value * factor)
 
@@ -60,6 +71,16 @@ def format_amount(amount, *, currency=None, locale=None) -> str:
         return babel_format_currency(value, code, locale=language)
     except Exception:  # noqa: BLE001 - fall back for unknown locale/currency
         return f"{value:.2f} {code}"
+
+
+def _positive_rate(value) -> Decimal | None:
+    if value in (None, ""):
+        return None
+    try:
+        rate = Decimal(str(value))
+    except InvalidOperation, ValueError:
+        return None
+    return rate if rate > 0 else None
 
 
 def _quantize(value: Decimal) -> Decimal:
