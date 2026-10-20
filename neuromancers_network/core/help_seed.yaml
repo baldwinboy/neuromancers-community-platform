@@ -198,9 +198,21 @@ articles:
       - type: table
         headers: ["Charge type", "Merchant of record", "How funds move"]
         rows:
-          - ["Direct", "Care provider", "The charge is created on the provider's connected account; the platform takes an application fee."]
-          - ["Destination", "Platform", "The charge is on the platform; funds transfer to the provider minus the application fee."]
-          - ["Separate (retired)", "Platform", "Not selectable. Historical rows are mapped to Direct."]
+          - [
+              "Direct",
+              "Care provider",
+              "The charge is created on the provider's connected account; the platform takes an application fee.",
+            ]
+          - [
+              "Destination",
+              "Platform",
+              "The charge is on the platform; funds transfer to the provider minus the application fee.",
+            ]
+          - [
+              "Separate (retired)",
+              "Platform",
+              "Not selectable. Historical rows are mapped to Direct.",
+            ]
       - type: rich_text
         text: |-
           <ul><li><strong>Charge type.</strong> <em>Direct</em> makes the care provider the merchant of record; <em>Destination</em> routes the money through the platform instead. The retired <em>Separate</em> mode is no longer selectable.</li><li><strong>Connect country.</strong> A two-letter code used for new Express accounts when the member has no country (default <code>GB</code>).</li><li><strong>Client ID.</strong> Reserved for the intended Stripe Connect OAuth flow. It is not initialised with a hard-coded value; leave it blank unless you are configuring that flow.</li><li><strong>Application fee (%).</strong> The platform's share of each payment, from 1 to 100 (default 15).</li><li><strong>Onboarding redirect / refresh URLs.</strong> Where a provider lands after they finish Stripe onboarding, and where they go if the onboarding link has expired or was already used. When set, these take precedence; otherwise the platform only accepts return URLs on the site's own host.</li></ul>
@@ -545,9 +557,27 @@ articles:
       - type: table
         headers: ["Label", "Field type", "Required", "Model field", "Purpose"]
         rows:
-          - ["Reason", "Multiline", "Yes", "reason", "Copied to PeerApplication.reason and shown in the applications queue."]
-          - ["I confirm that the information I have given is true", "Checkbox", "Yes", "—", "Blocks submission until ticked; stored in the answer set."]
-          - ["Experience (example)", "Multiline", "No", "—", "A custom question; stored only in the submission JSON."]
+          - [
+              "Reason",
+              "Multiline",
+              "Yes",
+              "reason",
+              "Copied to PeerApplication.reason and shown in the applications queue.",
+            ]
+          - [
+              "I confirm that the information I have given is true",
+              "Checkbox",
+              "Yes",
+              "—",
+              "Blocks submission until ticked; stored in the answer set.",
+            ]
+          - [
+              "Experience (example)",
+              "Multiline",
+              "No",
+              "—",
+              "A custom question; stored only in the submission JSON.",
+            ]
       - type: rich_text
         text: |-
           <p>Use the <strong>Form fields</strong> inline panel for all of these. The checkbox must be a <strong>Form field</strong>, not the decorative Checkbox block: only real form fields are validated and submitted. A required checkbox is enough to prevent submission until it is ticked.</p>
@@ -562,9 +592,21 @@ articles:
       - type: table
         headers: ["Goal", "Do this", "Notes"]
         rows:
-          - ["Pad the whole form", "Main design → Padding", "Applies to the page's main container, not each field."]
-          - ["Pad one bound field", "Form field (padded) → Design → Padding", "Creates a wrapper around that field's label, input, help text and errors."]
-          - ["Group static inputs", "Fieldset block → Design → Padding", "Only for design-time Input blocks; it cannot contain bound Form field blocks."]
+          - [
+              "Pad the whole form",
+              "Main design → Padding",
+              "Applies to the page's main container, not each field.",
+            ]
+          - [
+              "Pad one bound field",
+              "Form field (padded) → Design → Padding",
+              "Creates a wrapper around that field's label, input, help text and errors.",
+            ]
+          - [
+              "Group static inputs",
+              "Fieldset block → Design → Padding",
+              "Only for design-time Input blocks; it cannot contain bound Form field blocks.",
+            ]
       - type: header
         text: Change questions later
       - type: rich_text
@@ -1289,10 +1331,23 @@ articles:
         text: |-
           <p>Each integration has one job. Configure them in the Wagtail admin under <strong>Settings</strong>; they are not environment-only secrets.</p>
       - type: table
-        headers: ["Provider", "Host link", "Guest link", "Link lifetime", "Notes"]
+        headers:
+          ["Provider", "Host link", "Guest link", "Link lifetime", "Notes"]
         rows:
-          - ["Whereby", "Fetched on demand from the API and cached briefly", "Stored room URL", "Until the room expires at the provider", "Hosts receive hostRoomUrl; guests receive roomUrl."]
-          - ["Daily", "Meeting token with is_owner", "Meeting token", "Private room; the token's nbf/exp bound access", "Every join link carries a short-lived user token."]
+          - [
+              "Whereby",
+              "Fetched on demand from the API and cached briefly",
+              "Stored room URL",
+              "Until the room expires at the provider",
+              "Hosts receive hostRoomUrl; guests receive roomUrl.",
+            ]
+          - [
+              "Daily",
+              "Meeting token with is_owner",
+              "Meeting token",
+              "Private room; the token's nbf/exp bound access",
+              "Every join link carries a short-lived user token.",
+            ]
       - type: header
         text: Whereby
       - type: rich_text
@@ -1331,20 +1386,112 @@ articles:
         text: |-
           <p>This register covers the external services used to run the platform. It is written in the style of a Cyber Essentials supplier list: provider, service, access pattern, data, owner and current status.</p>
       - type: table
-        headers: ["Provider", "Service", "Access pattern", "Data shared", "Owner", "Status"]
+        headers:
+          [
+            "Provider",
+            "Service",
+            "Access pattern",
+            "Data shared",
+            "Owner",
+            "Status",
+          ]
         rows:
-          - ["Tailscale", "Private mesh networking for hosts and CI", "OAuth client scoped to TAILSCALE_TAG; no public Funnel", "Network and device metadata", "Gabriel Duraye", "Active"]
-          - ["Hetzner", "VPS hosting for staging and production", "SSH deploy user with a Bitwarden key, reachable over Tailscale; Ansible-managed", "Application data at rest and logs", "Gabriel Duraye", "Active"]
-          - ["GitHub", "Source repository, CI and deploy workflows", "Repository/Actions administration; BWS_ACCESS_TOKEN in GitHub environments", "Source code, CI logs and workflow secrets", "Gabriel Duraye", "Active"]
-          - ["Tigris", "Public media bucket and private backups/exports", "S3 keys from Bitwarden; public media through the bucket custom domain", "Images, documents, database backups and exports", "Gabriel Duraye", "Active"]
-          - ["GetPronto", "File and image upload API", "API key and secret stored encrypted in Wagtail settings", "Uploaded files and metadata", "Gabriel Duraye", "Active"]
-          - ["Whereby", "Video meeting rooms", "API key, secret and webhook secret stored encrypted in Wagtail settings", "Meeting metadata, join URLs and attendance", "NEUROMANCERS", "Active"]
-          - ["Stripe", "Payments, subscriptions and Connect payouts", "Secret key and webhook secret stored encrypted in Wagtail settings; Stripe-hosted KYC", "Payment data, identity/KYC data and payout details", "NEUROMANCERS", "Active"]
-          - ["Daily.co", "Video meeting rooms (alternative provider)", "No credentials configured", "None", "Unassigned", "Not set up"]
-          - ["Cloudflare", "DNS, CDN and edge protection", "Dashboard/API access with DNS zone control", "DNS records, traffic metadata and TLS", "NEUROMANCERS", "Active"]
-          - ["IONOS", "Domain registration", "Registrar account for renewals and transfer lock", "Domain registration and contact data", "NEUROMANCERS", "Active"]
-          - ["Bitwarden", "Secrets manager", "BWS_ACCESS_TOKEN in GitHub/Coolify; bws secret list and bws run at runtime", "Platform secrets (encrypted) and access metadata", "NEUROMANCERS", "Active"]
-          - ["Coolify", "Self-hosted PaaS on the Hetzner host", "Admin UI over Tailscale; API token used by Ansible", "Deployment configuration, environment variables and container logs", "NEUROMANCERS (self-hosted)", "Active"]
+          - [
+              "Tailscale",
+              "Private mesh networking for hosts and CI",
+              "OAuth client scoped to TAILSCALE_TAG; no public Funnel",
+              "Network and device metadata",
+              "Gabriel Duraye",
+              "Active",
+            ]
+          - [
+              "Hetzner",
+              "VPS hosting for staging and production",
+              "SSH deploy user with a Bitwarden key, reachable over Tailscale; Ansible-managed",
+              "Application data at rest and logs",
+              "Gabriel Duraye",
+              "Active",
+            ]
+          - [
+              "GitHub",
+              "Source repository, CI and deploy workflows",
+              "Repository/Actions administration; BWS_ACCESS_TOKEN in GitHub environments",
+              "Source code, CI logs and workflow secrets",
+              "Gabriel Duraye",
+              "Active",
+            ]
+          - [
+              "Tigris",
+              "Public media bucket and private backups/exports",
+              "S3 keys from Bitwarden; public media through the bucket custom domain",
+              "Images, documents, database backups and exports",
+              "Gabriel Duraye",
+              "Active",
+            ]
+          - [
+              "GetPronto",
+              "File and image upload API",
+              "API key and secret stored encrypted in Wagtail settings",
+              "Uploaded files and metadata",
+              "Gabriel Duraye",
+              "Active",
+            ]
+          - [
+              "Whereby",
+              "Video meeting rooms",
+              "API key, secret and webhook secret stored encrypted in Wagtail settings",
+              "Meeting metadata, join URLs and attendance",
+              "NEUROMANCERS",
+              "Active",
+            ]
+          - [
+              "Stripe",
+              "Payments, subscriptions and Connect payouts",
+              "Secret key and webhook secret stored encrypted in Wagtail settings; Stripe-hosted KYC",
+              "Payment data, identity/KYC data and payout details",
+              "NEUROMANCERS",
+              "Active",
+            ]
+          - [
+              "Daily.co",
+              "Video meeting rooms (alternative provider)",
+              "No credentials configured",
+              "None",
+              "Unassigned",
+              "Not set up",
+            ]
+          - [
+              "Cloudflare",
+              "DNS, CDN and edge protection",
+              "Dashboard/API access with DNS zone control",
+              "DNS records, traffic metadata and TLS",
+              "NEUROMANCERS",
+              "Active",
+            ]
+          - [
+              "IONOS",
+              "Domain registration",
+              "Registrar account for renewals and transfer lock",
+              "Domain registration and contact data",
+              "NEUROMANCERS",
+              "Active",
+            ]
+          - [
+              "Bitwarden",
+              "Secrets manager",
+              "BWS_ACCESS_TOKEN in GitHub/Coolify; bws secret list and bws run at runtime",
+              "Platform secrets (encrypted) and access metadata",
+              "NEUROMANCERS",
+              "Active",
+            ]
+          - [
+              "Coolify",
+              "Self-hosted PaaS on the Hetzner host",
+              "Admin UI over Tailscale; API token used by Ansible",
+              "Deployment configuration, environment variables and container logs",
+              "NEUROMANCERS (self-hosted)",
+              "Active",
+            ]
       - type: rich_text
         text: |-
           <p>Review ownership and access when staff or suppliers change, and at least once a year. Provider names and contracts can change; this register records the current operational owner, not the billing contact.</p>
@@ -1366,15 +1513,43 @@ articles:
         headers: ["Cost line", "Daily Video SDK", "Whereby Embedded (Build)"]
         rows:
           - ["Monthly platform fee", "$0 (pay-as-you-go)", "$10.99/month"]
-          - ["Included participant minutes", "10,000/month free", "2,000/month included"]
-          - ["Additional participant minute", "$0.0040 (10,001–100,000; graduated to $0.0015 at 50M+)", "$0.0042"]
-          - ["Cloud recording", "$0.01349/recorded min + $0.003/min storage", "$0.01/recorded min"]
-          - ["Transcription", "$0.0059/unmuted participant min realtime; $0.0043/recorded min post-call", "From $0.0065/unmuted participant min; $0.024/recorded min"]
+          - [
+              "Included participant minutes",
+              "10,000/month free",
+              "2,000/month included",
+            ]
+          - [
+              "Additional participant minute",
+              "$0.0040 (10,001–100,000; graduated to $0.0015 at 50M+)",
+              "$0.0042",
+            ]
+          - [
+              "Cloud recording",
+              "$0.01349/recorded min + $0.003/min storage",
+              "$0.01/recorded min",
+            ]
+          - [
+              "Transcription",
+              "$0.0059/unmuted participant min realtime; $0.0043/recorded min post-call",
+              "From $0.0065/unmuted participant min; $0.024/recorded min",
+            ]
           - ["Live streaming", "$0.015/min RTMP; $0.03/min HLS", "$0.01/min"]
-          - ["Included storage", "None listed; recording storage $0.003/min", "30 GB-days; then $0.0015/GB-day"]
+          - [
+              "Included storage",
+              "None listed; recording storage $0.003/min",
+              "30 GB-days; then $0.0015/GB-day",
+            ]
           - ["HIPAA", "$500/month add-on", "$16.99/month add-on"]
-          - ["Scale limits", "Up to 100,000 concurrent calls with a card on file", "200 participants, 24 active videos"]
-          - ["Support", "Free developer support; enterprise SLAs", "Email, 1 business day; enterprise TSM"]
+          - [
+              "Scale limits",
+              "Up to 100,000 concurrent calls with a card on file",
+              "200 participants, 24 active videos",
+            ]
+          - [
+              "Support",
+              "Free developer support; enterprise SLAs",
+              "Email, 1 business day; enterprise TSM",
+            ]
       - type: header
         text: Worked examples
       - type: rich_text

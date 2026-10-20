@@ -131,9 +131,7 @@ class RefundRequest(FSMModelMixin, Timestamped):
         is issued against the peer's connected account per the charge type.
         """
         from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
-        from neuromancers_network.payments.charges import (  # noqa: PLC0415
-            build_refund_kwargs,
-        )
+        from neuromancers_network.payments.charges import build_refund_kwargs  # noqa: PLC0415
 
         stripe_settings = StripeSettings.load()
         if not stripe_settings.secret_key:

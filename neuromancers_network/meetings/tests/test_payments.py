@@ -338,9 +338,7 @@ class TestPerItemStripeAmounts:
         )
 
     def _session_kwargs(self, bookings, request=None):
-        from neuromancers_network.meetings.models.booking import (  # noqa: PLC0415
-            _peer_session_kwargs,
-        )
+        from neuromancers_network.meetings.models.booking import _peer_session_kwargs  # noqa: PLC0415
 
         return _peer_session_kwargs(
             bookings,
@@ -558,16 +556,10 @@ class TestMultiPeerCart:
 
     def test_action_shows_error_for_mixed_peers(self):
         from django.contrib.messages import get_messages  # noqa: PLC0415
-        from django.contrib.messages.middleware import (  # noqa: PLC0415
-            MessageMiddleware,
-        )
-        from django.contrib.sessions.middleware import (  # noqa: PLC0415
-            SessionMiddleware,
-        )
+        from django.contrib.messages.middleware import MessageMiddleware  # noqa: PLC0415
+        from django.contrib.sessions.middleware import SessionMiddleware  # noqa: PLC0415
 
-        from neuromancers_network.meetings.actions import (  # noqa: PLC0415
-            bookings_checkout_many,
-        )
+        from neuromancers_network.meetings.actions import bookings_checkout_many  # noqa: PLC0415
 
         seeker = UserFactory()
         first = self._booking(

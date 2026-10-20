@@ -80,9 +80,7 @@ def sync_availability(window) -> None:
 
 def sync_request(request) -> None:
     """(Re)build the calendar event for an approved or paid 1:1 request."""
-    from neuromancers_network.meetings.models import (  # noqa: PLC0415
-        MeetingRequestStatus,
-    )
+    from neuromancers_network.meetings.models import MeetingRequestStatus  # noqa: PLC0415
 
     remove_events("request", request.pk)
     if request.status not in {

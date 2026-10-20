@@ -241,9 +241,7 @@ def create_subscription_checkout(profile: PaymentProfile, request) -> str:
     Uses the price IDs configured on ``PeerRequirementsSettings``. Intended for
     Stripe test mode during development.
     """
-    from neuromancers_network.peers.models import (  # noqa: PLC0415
-        PeerRequirementsSettings,
-    )
+    from neuromancers_network.peers.models import PeerRequirementsSettings  # noqa: PLC0415
 
     stripe_settings = StripeSettings.load(request)
     if not stripe_settings.is_ready:

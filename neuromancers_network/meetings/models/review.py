@@ -56,12 +56,8 @@ class Review(Timestamped):
     def get_absolute_url(self) -> str:
         from django.contrib.contenttypes.models import ContentType  # noqa: PLC0415
 
-        from neuromancers_network.core.models.pages import (  # noqa: PLC0415
-            ReviewDetailPage,
-        )
-        from neuromancers_network.core.models.pages import (  # noqa: PLC0415
-            ReviewIndexPage,
-        )
+        from neuromancers_network.core.models.pages import ReviewDetailPage  # noqa: PLC0415
+        from neuromancers_network.core.models.pages import ReviewIndexPage  # noqa: PLC0415
 
         page = ReviewDetailPage.objects.filter(
             source_content_type=ContentType.objects.get_for_model(type(self)),

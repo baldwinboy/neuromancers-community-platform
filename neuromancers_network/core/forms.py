@@ -51,9 +51,7 @@ class NotificationSettingsForm(WagtailAdminModelForm):
     def __init__(self, *args, **kwargs):
         # Imported lazily: the field lives with the inbox app to avoid a
         # core.models <-> inbox.models import cycle.
-        from neuromancers_network.inbox.forms import (  # noqa: PLC0415
-            EventTypeMultipleChoiceField,
-        )
+        from neuromancers_network.inbox.forms import EventTypeMultipleChoiceField  # noqa: PLC0415
 
         super().__init__(*args, **kwargs)
         self.fields["default_disabled_event_types"] = EventTypeMultipleChoiceField(

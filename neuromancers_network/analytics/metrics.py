@@ -257,9 +257,7 @@ def bookings_by_status(*, period, now=None) -> dict[str, int]:
 
 def published_review_rate(*, period, now=None) -> Decimal:
     from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
-    from neuromancers_network.meetings.models import (  # noqa: PLC0415
-        MeetingRequestStatus,
-    )
+    from neuromancers_network.meetings.models import MeetingRequestStatus  # noqa: PLC0415
     from neuromancers_network.meetings.models import Review  # noqa: PLC0415
     from neuromancers_network.meetings.models import ReviewStatus  # noqa: PLC0415
 

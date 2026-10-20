@@ -85,9 +85,7 @@ def _unpublish_meetings(user) -> None:
 
 def _cancel_bookings_for_peer(user) -> None:
     """Cancel the departing peer's active bookings and refund paid sessions."""
-    from neuromancers_network.meetings.services import (  # noqa: PLC0415
-        cancel_and_refund_for_peer,
-    )
+    from neuromancers_network.meetings.services import cancel_and_refund_for_peer  # noqa: PLC0415
 
     try:
         cancel_and_refund_for_peer(user)
@@ -138,9 +136,7 @@ def deactivate_account(user, *, actor=None, request=None, reason: str = "") -> N
 
 def _cancel_pending_deletion(user) -> bool:
     """Cancel a pending account deletion, returning whether one existed."""
-    from neuromancers_network.moderation.models import (  # noqa: PLC0415
-        AccountDeletionRequest,
-    )
+    from neuromancers_network.moderation.models import AccountDeletionRequest  # noqa: PLC0415
     from neuromancers_network.moderation.models import DeletionStatus  # noqa: PLC0415
 
     deletion = AccountDeletionRequest.objects.filter(

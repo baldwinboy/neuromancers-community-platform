@@ -138,9 +138,7 @@ def join_url_for(user, target: JoinTarget) -> str:
         message = "The meeting room is not ready"
         raise PermissionDenied(message)
 
-    from neuromancers_network.core.meeting_providers import (  # noqa: PLC0415
-        get_provider,
-    )
+    from neuromancers_network.core.meeting_providers import get_provider  # noqa: PLC0415
 
     provider = get_provider(_provider_name(target))
     return provider.join_url(

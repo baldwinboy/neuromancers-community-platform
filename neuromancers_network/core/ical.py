@@ -11,9 +11,7 @@ DEFAULT_DURATION_MINUTES = 60
 
 
 def _session_window(booking):
-    from neuromancers_network.meetings.models import (  # noqa: PLC0415
-        MeetingRequestStatus,
-    )
+    from neuromancers_network.meetings.models import MeetingRequestStatus  # noqa: PLC0415
 
     meeting = booking.meeting
     active = {MeetingRequestStatus.APPROVED, MeetingRequestStatus.PAID}

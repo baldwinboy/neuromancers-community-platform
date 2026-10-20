@@ -154,9 +154,7 @@ def _cancel_stripe_subscription(user) -> None:
     peer_subscription = getattr(profile, "peer_subscription", None)
     if peer_subscription is None or not peer_subscription.subscription_id:
         return
-    from neuromancers_network.payments.services import (  # noqa: PLC0415
-        cancel_subscription,
-    )
+    from neuromancers_network.payments.services import cancel_subscription  # noqa: PLC0415
 
     try:
         cancel_subscription(profile, at_period_end=False)
@@ -168,9 +166,7 @@ def _disconnect_stripe(user) -> None:
     profile = getattr(user, "payment_profile", None)
     if profile is None or not profile.stripe_connect_account_id_id:
         return
-    from neuromancers_network.payments.services import (  # noqa: PLC0415
-        disconnect_stripe_account,
-    )
+    from neuromancers_network.payments.services import disconnect_stripe_account  # noqa: PLC0415
 
     try:
         disconnect_stripe_account(profile)

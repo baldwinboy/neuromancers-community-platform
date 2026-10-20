@@ -279,9 +279,7 @@ class MeetingRequest(FSMModelMixin, Timestamped):
     ) -> None:
         """Synchronize local payment fields after checkout completion."""
         from neuromancers_network.core.currency import base_conversion  # noqa: PLC0415
-        from neuromancers_network.payments.services import (  # noqa: PLC0415
-            receipt_url_for,
-        )
+        from neuromancers_network.payments.services import receipt_url_for  # noqa: PLC0415
 
         self.stripe_checkout_session_id = session_id
         if payment_intent_id:
@@ -323,9 +321,7 @@ class MeetingRequest(FSMModelMixin, Timestamped):
         applicable to 1:1 meetings.
         """
         from neuromancers_network.core.apis import meeting_room_prefix  # noqa: PLC0415
-        from neuromancers_network.core.meeting_providers import (  # noqa: PLC0415
-            get_provider,
-        )
+        from neuromancers_network.core.meeting_providers import get_provider  # noqa: PLC0415
 
         start = self.requested_start_time
         duration = self.requested_duration_minutes

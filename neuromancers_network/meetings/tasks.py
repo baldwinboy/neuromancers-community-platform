@@ -93,9 +93,7 @@ def mark_completed_sessions():
             continue
         session.complete()
         session.save(validate=False, update_fields=["status", "updated_at"])
-        from neuromancers_network.analytics.services import (  # noqa: PLC0415
-            record_session,
-        )
+        from neuromancers_network.analytics.services import record_session  # noqa: PLC0415
 
         record_session(
             meeting_request=session,

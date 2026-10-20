@@ -31,9 +31,7 @@ def get_provider(name: str | None = None) -> MeetingProvider:
         :data:`DEFAULT_PROVIDER`.
     """
     if name is None:
-        from neuromancers_network.core.models import (  # noqa: PLC0415
-            IntegrationSettings,
-        )
+        from neuromancers_network.core.models import IntegrationSettings  # noqa: PLC0415
 
         name = IntegrationSettings.load().meeting_provider or DEFAULT_PROVIDER
 

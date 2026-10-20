@@ -126,12 +126,8 @@ def sync_peer_subscription(sender, event, **kwargs):
 @djstripe_receiver(["invoice.payment_succeeded", "invoice.paid"])
 def record_subscription_invoice(sender, event, **kwargs):
     """Record paid invoices on the subscription-revenue ledger."""
-    from neuromancers_network.analytics.services import (  # noqa: PLC0415
-        occurred_at_from,
-    )
-    from neuromancers_network.analytics.services import (  # noqa: PLC0415
-        record_subscription_payment,
-    )
+    from neuromancers_network.analytics.services import occurred_at_from  # noqa: PLC0415
+    from neuromancers_network.analytics.services import record_subscription_payment  # noqa: PLC0415
 
     data = event.data.get("object", {})
     invoice_id = data.get("id")

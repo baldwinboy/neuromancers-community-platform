@@ -60,9 +60,7 @@ def profile_save_visibility(request, data):
 
 def profile_save_notification_preferences(request, data):
     """Persist the member's notification opt-out list."""
-    from neuromancers_network.inbox.models import (  # noqa: PLC0415
-        NotificationPreference,
-    )
+    from neuromancers_network.inbox.models import NotificationPreference  # noqa: PLC0415
 
     user = require_authenticated(request)
     preference, _created = NotificationPreference.objects.get_or_create(user=user)

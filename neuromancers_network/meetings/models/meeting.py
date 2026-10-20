@@ -285,12 +285,8 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
     def get_absolute_url(self) -> str:
         from django.contrib.contenttypes.models import ContentType  # noqa: PLC0415
 
-        from neuromancers_network.core.models.pages import (  # noqa: PLC0415
-            MeetingDetailPage,
-        )
-        from neuromancers_network.core.models.pages import (  # noqa: PLC0415
-            MeetingIndexPage,
-        )
+        from neuromancers_network.core.models.pages import MeetingDetailPage  # noqa: PLC0415
+        from neuromancers_network.core.models.pages import MeetingIndexPage  # noqa: PLC0415
 
         page = MeetingDetailPage.objects.filter(
             source_content_type=ContentType.objects.get_for_model(type(self)),
@@ -424,9 +420,7 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
           already exists.
         """
         from neuromancers_network.core.apis import meeting_room_prefix  # noqa: PLC0415
-        from neuromancers_network.core.meeting_providers import (  # noqa: PLC0415
-            get_provider,
-        )
+        from neuromancers_network.core.meeting_providers import get_provider  # noqa: PLC0415
 
         if (
             not self.scheduled_at

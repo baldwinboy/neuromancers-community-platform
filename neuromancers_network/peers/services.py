@@ -107,9 +107,7 @@ def _has_paid_participants(meeting) -> bool:
     from neuromancers_network.meetings.models import Booking  # noqa: PLC0415
     from neuromancers_network.meetings.models import BookingStatus  # noqa: PLC0415
     from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
-    from neuromancers_network.meetings.models import (  # noqa: PLC0415
-        MeetingRequestStatus,
-    )
+    from neuromancers_network.meetings.models import MeetingRequestStatus  # noqa: PLC0415
 
     return (
         MeetingRequest.objects.filter(
@@ -243,9 +241,7 @@ def _booked_ranges(
     exclude_request=None,
 ) -> Iterator[tuple[datetime, datetime]]:
     from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
-    from neuromancers_network.meetings.models import (  # noqa: PLC0415
-        MeetingRequestStatus,
-    )
+    from neuromancers_network.meetings.models import MeetingRequestStatus  # noqa: PLC0415
     from neuromancers_network.meetings.models import MeetingType  # noqa: PLC0415
 
     queryset = MeetingRequest.objects.filter(

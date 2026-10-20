@@ -278,9 +278,7 @@ class PublishMeetingBulkAction(ConfirmBulkAction):
 
     @classmethod
     def execute_action(cls, objects, **kwargs):
-        from neuromancers_network.meetings.services import (  # noqa: PLC0415
-            publish_meeting,
-        )
+        from neuromancers_network.meetings.services import publish_meeting  # noqa: PLC0415
 
         published = 0
         for meeting in objects:

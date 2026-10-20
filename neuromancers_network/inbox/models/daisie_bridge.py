@@ -24,9 +24,7 @@ class DaisieBridgeSubscriber(EventSubscriber):
         verbose_name_plural = _("Email notifications")
 
     def handle_event(self, log_entry):
-        from wagtail_daisIE.notifications.bridges import (  # noqa: PLC0415
-            UnknownBridgeError,
-        )
+        from wagtail_daisIE.notifications.bridges import UnknownBridgeError  # noqa: PLC0415
         from wagtail_daisIE.notifications.bridges import dispatch  # noqa: PLC0415
 
         source = {

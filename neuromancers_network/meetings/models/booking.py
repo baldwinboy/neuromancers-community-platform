@@ -95,9 +95,7 @@ class Booking(FSMModelMixin, Timestamped):
 
     def record_receipt(self) -> None:
         """Store the Stripe hosted receipt URL for the paid booking, if any."""
-        from neuromancers_network.payments.services import (  # noqa: PLC0415
-            receipt_url_for,
-        )
+        from neuromancers_network.payments.services import receipt_url_for  # noqa: PLC0415
 
         url = receipt_url_for(self.stripe_payment_intent_id)
         if url and url != self.receipt_url:

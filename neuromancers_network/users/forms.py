@@ -50,9 +50,7 @@ class UserSignupForm(SignupForm):
 
     def save(self, request):
         from neuromancers_network.core.audit import record_audit  # noqa: PLC0415
-        from neuromancers_network.moderation.banning import (  # noqa: PLC0415
-            email_is_banned,
-        )
+        from neuromancers_network.moderation.banning import email_is_banned  # noqa: PLC0415
 
         user = super().save(request)
         user.name = self.cleaned_data["name"]

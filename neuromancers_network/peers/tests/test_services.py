@@ -491,12 +491,8 @@ class TestPeerApplicationTransitions:
 class TestStripeDisconnectAction:
     def test_balance_blocks_disconnect_with_message(self):
         from django.contrib.messages import get_messages  # noqa: PLC0415
-        from django.contrib.messages.middleware import (  # noqa: PLC0415
-            MessageMiddleware,
-        )
-        from django.contrib.sessions.middleware import (  # noqa: PLC0415
-            SessionMiddleware,
-        )
+        from django.contrib.messages.middleware import MessageMiddleware  # noqa: PLC0415
+        from django.contrib.sessions.middleware import SessionMiddleware  # noqa: PLC0415
 
         config = StripeSettings.load()
         config.secret_key = "sk_test_123"  # noqa: S105

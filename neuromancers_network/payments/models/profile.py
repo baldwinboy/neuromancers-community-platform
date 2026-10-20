@@ -65,9 +65,7 @@ class PaymentProfile(Timestamped):
         return_url: str,
     ) -> StripeConnectOnboardingLink:
         from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
-        from neuromancers_network.payments.services import (  # noqa: PLC0415
-            ensure_stripe_account,
-        )
+        from neuromancers_network.payments.services import ensure_stripe_account  # noqa: PLC0415
 
         stripe_settings = StripeSettings.load()
         if not stripe_settings.secret_key:

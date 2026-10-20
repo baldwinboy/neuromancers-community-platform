@@ -197,9 +197,7 @@ def _ensure_slot_available(meeting: Meeting, start, duration_minutes) -> None:
     Containment also excludes times already booked, so approved requests cannot
     be double-booked.
     """
-    from neuromancers_network.peers.models.availability import (  # noqa: PLC0415
-        PeerAvailability,
-    )
+    from neuromancers_network.peers.models.availability import PeerAvailability  # noqa: PLC0415
     from neuromancers_network.peers.services import available_slots  # noqa: PLC0415
 
     from .models import MeetingType  # noqa: PLC0415
@@ -249,9 +247,7 @@ def create_booking(  # noqa: PLR0913
         message = _("This care provider is not currently available for bookings.")
         raise ValidationError(message)
 
-    from neuromancers_network.moderation.visibility import (  # noqa: PLC0415
-        is_blocked_pair,
-    )
+    from neuromancers_network.moderation.visibility import is_blocked_pair  # noqa: PLC0415
 
     if is_blocked_pair(seeker, meeting.peer):
         message = _("This care provider is not available for bookings.")

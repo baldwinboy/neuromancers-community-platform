@@ -146,9 +146,7 @@ class User(FSMModelMixin, index.Indexed, AbstractUser):
 
     @property
     def is_peer(self) -> bool:
-        from neuromancers_network.peers.services import (  # noqa: PLC0415
-            is_eligible_peer,
-        )
+        from neuromancers_network.peers.services import is_eligible_peer  # noqa: PLC0415
 
         return is_eligible_peer(self)
 

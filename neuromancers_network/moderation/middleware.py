@@ -23,9 +23,7 @@ class BanMiddleware:
     @staticmethod
     def _should_block(request) -> bool:
         from neuromancers_network.core.audit import client_ip  # noqa: PLC0415
-        from neuromancers_network.moderation.banning import (  # noqa: PLC0415
-            ip_is_banned,
-        )
+        from neuromancers_network.moderation.banning import ip_is_banned  # noqa: PLC0415
         from neuromancers_network.moderation.models import BanSettings  # noqa: PLC0415
 
         try:

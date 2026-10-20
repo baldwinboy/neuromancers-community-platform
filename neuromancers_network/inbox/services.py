@@ -46,9 +46,7 @@ def should_notify(user, event_type: str) -> bool:
     transactional = set(TRANSACTIONAL_EVENT_TYPES)
     default_disabled: set[str] = set()
     try:
-        from neuromancers_network.core.models import (  # noqa: PLC0415
-            NotificationSettings,
-        )
+        from neuromancers_network.core.models import NotificationSettings  # noqa: PLC0415
 
         settings_obj = NotificationSettings.load()
         transactional |= set(settings_obj.transactional_events or [])

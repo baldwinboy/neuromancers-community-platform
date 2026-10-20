@@ -77,8 +77,6 @@ def blocked_user_ids(user) -> set[int]:
     Thin alias for :func:`neuromancers_network.moderation.visibility.hidden_user_ids`;
     a block hides each party's content from the other.
     """
-    from neuromancers_network.moderation.visibility import (  # noqa: PLC0415
-        hidden_user_ids,
-    )
+    from neuromancers_network.moderation.visibility import hidden_user_ids  # noqa: PLC0415
 
     return hidden_user_ids(user)

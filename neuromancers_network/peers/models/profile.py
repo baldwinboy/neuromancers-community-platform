@@ -180,12 +180,8 @@ class PeerProfile(index.Indexed, Timestamped):  # type: ignore[django-manager-mi
     def get_absolute_url(self) -> str:
         from django.contrib.contenttypes.models import ContentType  # noqa: PLC0415
 
-        from neuromancers_network.core.models.pages import (  # noqa: PLC0415
-            PeerIndexPage,
-        )
-        from neuromancers_network.core.models.pages import (  # noqa: PLC0415
-            PeerProfileDetailPage,
-        )
+        from neuromancers_network.core.models.pages import PeerIndexPage  # noqa: PLC0415
+        from neuromancers_network.core.models.pages import PeerProfileDetailPage  # noqa: PLC0415
 
         page = PeerProfileDetailPage.objects.filter(
             source_content_type=ContentType.objects.get_for_model(type(self)),

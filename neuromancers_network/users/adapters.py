@@ -18,9 +18,7 @@ class AccountAdapter(DaisyUIAccountAdapterMixin, DefaultAccountAdapter):
         return getattr(settings, "ACCOUNT_ALLOW_REGISTRATION", True)
 
     def save_user(self, request, user, form, commit=True):  # noqa: FBT002
-        from neuromancers_network.moderation.banning import (  # noqa: PLC0415
-            email_is_banned,
-        )
+        from neuromancers_network.moderation.banning import email_is_banned  # noqa: PLC0415
 
         if email_is_banned(getattr(form, "cleaned_data", {}).get("email")):
             user.is_active = False

@@ -55,9 +55,7 @@ class MetricChartBlock(blocks.StructBlock):
     settings = ChartSettingsBlock()
 
     def get_context(self, value, parent_context=None):
-        from neuromancers_network.analytics.metrics import (  # noqa: PLC0415
-            series_for_metric,
-        )
+        from neuromancers_network.analytics.metrics import series_for_metric  # noqa: PLC0415
 
         context = super().get_context(value, parent_context)
         series = series_for_metric(value["metric"], months=int(value["months"]))

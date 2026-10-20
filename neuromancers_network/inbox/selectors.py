@@ -8,9 +8,7 @@ def user_notification_preference(request=None, page=None):
     user = getattr(request, "user", None)
     if user is None or not getattr(user, "is_authenticated", False):
         return None
-    from neuromancers_network.inbox.models import (  # noqa: PLC0415
-        NotificationPreference,
-    )
+    from neuromancers_network.inbox.models import NotificationPreference  # noqa: PLC0415
 
     return NotificationPreference.objects.filter(user=user).first()
 

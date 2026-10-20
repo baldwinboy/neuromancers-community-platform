@@ -91,9 +91,7 @@ def peer_connect_stripe(request, data):
 def peer_subscribe(request, data):
     """Start the peer subscription checkout (Stripe test mode)."""
     from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
-    from neuromancers_network.payments.services import (  # noqa: PLC0415
-        create_subscription_checkout,
-    )
+    from neuromancers_network.payments.services import create_subscription_checkout  # noqa: PLC0415
 
     user = require_authenticated(request)
     if not StripeSettings.load(request).subscription_enabled:
@@ -106,9 +104,7 @@ def peer_subscribe(request, data):
 
 def peer_open_stripe_dashboard(request, data):
     """Open the peer's Stripe Express dashboard, onboarding the account first."""
-    from neuromancers_network.payments.services import (  # noqa: PLC0415
-        ensure_stripe_account,
-    )
+    from neuromancers_network.payments.services import ensure_stripe_account  # noqa: PLC0415
 
     user = require_authenticated(request)
     _require_provider_agreement(user)
@@ -144,9 +140,7 @@ def peer_accept_provider_agreement(request, data):
 
 def peer_stripe_disconnect(request, data):
     """Delete the peer's connected Stripe account and unlink the local profile."""
-    from neuromancers_network.payments.services import (  # noqa: PLC0415
-        disconnect_stripe_account,
-    )
+    from neuromancers_network.payments.services import disconnect_stripe_account  # noqa: PLC0415
 
     user = require_authenticated(request)
     payment_profile = getattr(user, "payment_profile", None)
@@ -182,9 +176,7 @@ def _payment_profile_or_denied(user):
 
 def peer_subscription_pause(request, data):
     """Pause collection on the signed-in provider's subscription."""
-    from neuromancers_network.payments.services import (  # noqa: PLC0415
-        pause_subscription,
-    )
+    from neuromancers_network.payments.services import pause_subscription  # noqa: PLC0415
 
     user = require_authenticated(request)
     _require_provider_agreement(user)
@@ -194,9 +186,7 @@ def peer_subscription_pause(request, data):
 
 def peer_subscription_resume(request, data):
     """Resume a paused subscription for the signed-in provider."""
-    from neuromancers_network.payments.services import (  # noqa: PLC0415
-        resume_subscription,
-    )
+    from neuromancers_network.payments.services import resume_subscription  # noqa: PLC0415
 
     user = require_authenticated(request)
     _require_provider_agreement(user)
@@ -206,9 +196,7 @@ def peer_subscription_resume(request, data):
 
 def peer_subscription_cancel(request, data):
     """Cancel the provider's subscription, at the period end by default."""
-    from neuromancers_network.payments.services import (  # noqa: PLC0415
-        cancel_subscription,
-    )
+    from neuromancers_network.payments.services import cancel_subscription  # noqa: PLC0415
 
     user = require_authenticated(request)
     _require_provider_agreement(user)

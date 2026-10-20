@@ -211,9 +211,7 @@ class TestEnsurePaymentProfile:
 
 class TestStripeClientConfiguration:
     def test_default_http_client_has_bounded_timeout(self):
-        from neuromancers_network.payments.apps import (  # noqa: PLC0415
-            STRIPE_TIMEOUT_SECONDS,
-        )
+        from neuromancers_network.payments.apps import STRIPE_TIMEOUT_SECONDS  # noqa: PLC0415
 
         assert stripe.default_http_client is not None
         assert (
@@ -413,9 +411,7 @@ class TestAccountUpdatedSignal:
         with patch(
             "neuromancers_network.payments.signals.StripeAccount.sync_from_stripe_data",
         ):
-            from neuromancers_network.payments.signals import (  # noqa: PLC0415
-                handle_account_updated,
-            )
+            from neuromancers_network.payments.signals import handle_account_updated  # noqa: PLC0415
 
             handle_account_updated(sender=None, event=event)
 
@@ -442,9 +438,7 @@ class TestAccountUpdatedSignal:
             },
         )
 
-        from neuromancers_network.payments.signals import (  # noqa: PLC0415
-            handle_account_updated,
-        )
+        from neuromancers_network.payments.signals import handle_account_updated  # noqa: PLC0415
 
         with patch(
             "neuromancers_network.payments.signals.StripeAccount.sync_from_stripe_data",
@@ -474,9 +468,7 @@ class TestAccountUpdatedSignal:
             },
         )
 
-        from neuromancers_network.payments.signals import (  # noqa: PLC0415
-            handle_account_updated,
-        )
+        from neuromancers_network.payments.signals import handle_account_updated  # noqa: PLC0415
 
         with patch(
             "neuromancers_network.payments.signals.StripeAccount.sync_from_stripe_data",

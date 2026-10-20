@@ -49,12 +49,8 @@ def peer_calendar_events(request=None, page=None):
     from django.db.models import Value  # noqa: PLC0415
     from django.db.models import When  # noqa: PLC0415
 
-    from neuromancers_network.peers.models.calendar_event import (  # noqa: PLC0415
-        CalendarEvent,
-    )
-    from neuromancers_network.peers.models.choices import (  # noqa: PLC0415
-        CalendarEventKind,
-    )
+    from neuromancers_network.peers.models.calendar_event import CalendarEvent  # noqa: PLC0415
+    from neuromancers_network.peers.models.choices import CalendarEventKind  # noqa: PLC0415
 
     owner = _calendar_owner(request)
     if owner is None:

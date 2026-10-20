@@ -153,9 +153,7 @@ class SearchPage(ReservedSlugPage):
     subpage_types: list[str] = []
 
     def get_context(self, request, *args, **kwargs):
-        from neuromancers_network.core.search_service import (  # noqa: PLC0415
-            search_site,
-        )
+        from neuromancers_network.core.search_service import search_site  # noqa: PLC0415
 
         context = super().get_context(request, *args, **kwargs)
         context.update(
@@ -228,9 +226,7 @@ class MeetingDetailPage(SourceBoundDetailPage):
     subpage_types: list[str] = []
 
     def get_context(self, request, *args, **kwargs):
-        from neuromancers_network.meetings.selectors import (  # noqa: PLC0415
-            review_stats,
-        )
+        from neuromancers_network.meetings.selectors import review_stats  # noqa: PLC0415
 
         context = super().get_context(request, *args, **kwargs)
         if self.source is not None:
@@ -246,9 +242,7 @@ class PeerProfileDetailPage(SourceBoundDetailPage):
     subpage_types: list[str] = []
 
     def get_context(self, request, *args, **kwargs):
-        from neuromancers_network.meetings.selectors import (  # noqa: PLC0415
-            review_stats,
-        )
+        from neuromancers_network.meetings.selectors import review_stats  # noqa: PLC0415
 
         context = super().get_context(request, *args, **kwargs)
         if self.source is not None:
@@ -304,9 +298,7 @@ class TagDetailPage(SourceBoundDetailPage):
     subpage_types: list[str] = []
 
     def get_context(self, request, *args, **kwargs):
-        from neuromancers_network.core.selectors import (  # noqa: PLC0415
-            pages_tagged_with,
-        )
+        from neuromancers_network.core.selectors import pages_tagged_with  # noqa: PLC0415
 
         context = super().get_context(request, *args, **kwargs)
         context["tagged_pages"] = pages_tagged_with(self.source)
