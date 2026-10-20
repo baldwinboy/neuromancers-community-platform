@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from django.db.models import Prefetch
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
@@ -9,6 +10,7 @@ from wagtail.admin.auth import require_admin_access
 from wagtail.admin.views.generic.base import WagtailAdminTemplateMixin
 
 from neuromancers_network.core.models import GlossaryTerm
+from neuromancers_network.core.models import HelpArticle
 from neuromancers_network.core.models import HelpCategory
 
 
@@ -22,11 +24,15 @@ class HelpGuideView(WagtailAdminTemplateMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        groups = []
-        categories = HelpCategory.objects.filter(is_active=True)
-        for category in categories:
-            articles = category.articles.filter(is_published=True)
-            groups.append({"category": category, "articles": articles})
-        context["help_groups"] = groups
+        categories = HelpCategory.objects.filter(is_active=True).prefetch_related(
+            Prefetch(
+                "articles",
+                queryset=HelpArticle.objects.filter(is_published=True),
+            ),
+        )
+        context["help_groups"] = [
+            {"category": category, "articles": category.articles.all()}
+            for category in categories
+        ]
         context["glossary_terms"] = GlossaryTerm.objects.all()
         return context

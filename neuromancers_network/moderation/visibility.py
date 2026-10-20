@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 """Viewer-scoped visibility for user-owned records and generated detail pages.
 
 Feeds (selectors, APIs, the search page) and the ``before_serve_page`` guard
@@ -22,6 +23,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from django.contrib.auth.base_user import AbstractBaseUser
+from django.db.models import Q
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -58,15 +60,19 @@ def hidden_user_ids(viewer) -> set[int]:
     """
     if not _is_authenticated(viewer):
         return set()
-    from neuromancers_network.moderation.models import UserBlock  # noqa: PLC0415
+    from neuromancers_network.moderation.models import UserBlock
 
-    made = set(
-        UserBlock.objects.filter(blocker=viewer).values_list("blocked_id", flat=True),
-    )
-    received = set(
-        UserBlock.objects.filter(blocked=viewer).values_list("blocker_id", flat=True),
-    )
-    return made | received
+    hidden = set()
+    viewer_pk = viewer.pk
+    rows = UserBlock.objects.filter(
+        Q(blocker=viewer) | Q(blocked=viewer),
+    ).values_list("blocker_id", "blocked_id")
+    for blocker_id, blocked_id in rows:
+        if blocker_id == viewer_pk:
+            hidden.add(blocked_id)
+        if blocked_id == viewer_pk:
+            hidden.add(blocker_id)
+    return hidden
 
 
 def is_blocked_pair(viewer, owner) -> bool:
@@ -87,8 +93,8 @@ def source_participant_ids(source) -> set[int]:
     """
     if source is None:
         return set()
-    from neuromancers_network.meetings.models import Booking  # noqa: PLC0415
-    from neuromancers_network.meetings.models import RefundRequest  # noqa: PLC0415
+    from neuromancers_network.meetings.models import Booking
+    from neuromancers_network.meetings.models import RefundRequest
 
     if isinstance(source, Booking):
         ids = {source.support_seeker_id, source.meeting.peer_id}
@@ -121,9 +127,7 @@ def source_owner(source):
 
 
 def _detail_config(source):
-    from wagtail_daisIE.detail_pages.registry import (  # noqa: PLC0415
-        detail_page_for_instance,
-    )
+    from wagtail_daisIE.detail_pages.registry import detail_page_for_instance
 
     return detail_page_for_instance(source)
 
@@ -152,9 +156,7 @@ def _owner_policy(source) -> str | None:
 
 def _active_visible(owner, viewer) -> bool:
     """Active account whose profile visibility admits *viewer*."""
-    from neuromancers_network.users.models.choices import (  # noqa: PLC0415
-        ProfileVisibility,
-    )
+    from neuromancers_network.users.models.choices import ProfileVisibility
 
     if not getattr(owner, "is_active", False) or getattr(
         owner,
@@ -195,9 +197,7 @@ def viewer_can_view_source(source, viewer) -> bool:  # noqa: PLR0911
         return False
     policy = _owner_policy(source)
     if policy == "eligible_peer":
-        from neuromancers_network.peers.services import (  # noqa: PLC0415
-            is_eligible_peer,
-        )
+        from neuromancers_network.peers.services import is_eligible_peer
 
         return is_eligible_peer(owner)
     if policy == "active_visible":

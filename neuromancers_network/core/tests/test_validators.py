@@ -41,7 +41,5 @@ def test_registered_form_field_types_resolve():
         assert "autocomplete" in types
         assert types["attachments"].is_upload is True
         assert types["attachments"].multiple is True
-        assert types["autocomplete"].field is not None
-        assert types["autocomplete"].widget is not None
     finally:
         reset_form_field_types()

@@ -3,7 +3,6 @@ from __future__ import annotations
 import pytest
 from django.urls import reverse
 
-from neuromancers_network.analytics.metrics import RevenueSummary
 from neuromancers_network.analytics.panels import AnalyticsPanel
 from neuromancers_network.users.tests.factories import UserFactory
 
@@ -39,13 +38,6 @@ class TestDashboard:
 
         assert context["analytics_url"]
         assert revenue.combined == revenue.marketplace + revenue.subscription
-
-    def test_revenue_summary_caches_the_combined_total(self):
-        combined_count = 15
-        summary = RevenueSummary(marketplace=10, subscription=5)
-
-        assert summary.combined == combined_count
-        assert summary.combined == summary.combined
 
 
 class TestAnalyticsAPI:

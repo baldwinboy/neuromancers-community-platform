@@ -13,6 +13,7 @@ from neuromancers_network.meetings.models import Review
 from neuromancers_network.meetings.models import ReviewStatus
 from neuromancers_network.meetings.search import search_meetings
 from neuromancers_network.moderation.visibility import exclude_hidden
+from neuromancers_network.moderation.visibility import hidden_user_ids
 from neuromancers_network.peers.services import eligible_peer_q
 
 
@@ -44,8 +45,10 @@ def published_reviews(request=None, page=None):
         .select_related("peer", "reviewer")
     )
     viewer = getattr(request, "user", None)
-    queryset = exclude_hidden(queryset, viewer, owner_field="peer")
-    return exclude_hidden(queryset, viewer, owner_field="reviewer")
+    hidden = hidden_user_ids(viewer)
+    if hidden:
+        queryset = queryset.exclude(peer__in=hidden).exclude(reviewer__in=hidden)
+    return queryset
 
 
 def _viewer(request):

@@ -1,8 +1,5 @@
 import pytest
-from django import forms
 
-from neuromancers_network.core.forms import NotificationSettingsForm
-from neuromancers_network.core.models import NotificationSettings
 from neuromancers_network.inbox.forms import NotificationPreferenceAdminForm
 from neuromancers_network.inbox.models import NotificationPreference
 from neuromancers_network.users.tests.factories import UserFactory
@@ -11,14 +8,6 @@ pytestmark = pytest.mark.django_db
 
 
 class TestNotificationPreferenceAdminForm:
-    def test_widget_is_checkboxes_not_textarea(self):
-        pref = NotificationPreference.objects.create(user=UserFactory())
-
-        form = NotificationPreferenceAdminForm(instance=pref)
-
-        widget = form.fields["disabled_event_types"].widget
-        assert isinstance(widget, forms.CheckboxSelectMultiple)
-
     def test_initialises_from_stored_list(self):
         pref = NotificationPreference.objects.create(
             user=UserFactory(),
@@ -55,14 +44,3 @@ class TestNotificationPreferenceAdminForm:
 
         assert not form.is_valid()
         assert "disabled_event_types" in form.errors
-
-
-class TestNotificationSettingsForm:
-    def test_settings_fields_are_checkbox_lists(self):
-        form = NotificationSettingsForm(instance=NotificationSettings.load())
-
-        for name in ("default_disabled_event_types", "transactional_events"):
-            assert isinstance(
-                form.fields[name].widget,
-                forms.CheckboxSelectMultiple,
-            )

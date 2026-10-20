@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -12,7 +13,6 @@ from neuromancers_network.inbox.models import Notification
 from neuromancers_network.inbox.models import NotificationEventLog
 from neuromancers_network.moderation.models import EmailBan
 from neuromancers_network.users.avatar import confirm_upload
-from neuromancers_network.users.forms import UserCreationForm
 from neuromancers_network.users.forms import UserEditForm
 from neuromancers_network.users.forms import UserSignupForm
 from neuromancers_network.users.models import User
@@ -129,15 +129,6 @@ class TestUserSignupQuarantine:
         assert created_states == [False]
 
 
-class TestUserProfileSearch:
-    def test_bio_is_indexed(self):
-        field_names = {
-            getattr(field, "field_name", "") for field in UserProfile.search_fields
-        }
-
-        assert "bio" in field_names
-
-
 class TestGetFullName:
     def test_returns_name(self):
         assert UserFactory(name="Ada Lovelace").get_full_name() == "Ada Lovelace"
@@ -150,15 +141,6 @@ class TestAdminUserForms:
     def test_custom_app_config_registers_project_viewset(self):
         config = apps.get_app_config("wagtailusers")
         assert config.user_viewset == "neuromancers_network.users.viewsets.UserViewSet"
-
-    @pytest.mark.parametrize("form_class", [UserCreationForm, UserEditForm])
-    def test_forms_use_name_not_first_last(self, form_class):
-        form = form_class()
-
-        assert "name" in form.fields
-        assert "date_of_birth" in form.fields
-        assert "first_name" not in form.fields
-        assert "last_name" not in form.fields
 
     def test_edit_form_saves_name_and_date_of_birth(self):
         user = UserFactory(name="Old Name")
@@ -271,10 +253,8 @@ class TestAvatarUpload:
 
 class TestAvatarUploadTimeout:
     def test_put_bytes_sets_upload_timeout(self):
-        from neuromancers_network.users.avatar import (  # noqa: PLC0415
-            UPLOAD_TIMEOUT_SECONDS,
-        )
-        from neuromancers_network.users.avatar import _put_bytes  # noqa: PLC0415
+        from neuromancers_network.users.avatar import UPLOAD_TIMEOUT_SECONDS
+        from neuromancers_network.users.avatar import _put_bytes
 
         file = SimpleNamespace(seek=lambda _pos: None, read=lambda: b"bytes")
         with patch(

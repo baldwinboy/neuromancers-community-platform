@@ -7,6 +7,8 @@ first; registrations must stay import-order sensitive.
 
 from __future__ import annotations
 
+from collections import defaultdict
+
 from django.utils.translation import gettext_lazy as _
 from wagtail import blocks
 from wagtail_daisIE.blocks.content import ALL_CONTENT_BLOCKS
@@ -23,9 +25,13 @@ class CookieRegistryBlock(blocks.StaticBlock):
         from neuromancers_network.core.models import CookieCategory  # noqa: PLC0415
 
         context = super().get_context(value, parent_context)
+        rows_by_category = defaultdict(list)
+        for row in Cookie.objects.filter(is_active=True).order_by("category", "name"):
+            rows_by_category[row.category].append(row)
+
         groups = []
         for category, label in CookieCategory.choices:
-            rows = list(Cookie.objects.filter(is_active=True, category=category))
+            rows = rows_by_category[category]
             if rows:
                 groups.append(
                     {"value": category, "label": label, "cookies": rows},

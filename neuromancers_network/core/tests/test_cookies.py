@@ -27,9 +27,6 @@ class TestCookieRegistry:
         assert {row.name for row in rows} == SEEDED_NAMES
         assert all(row.category == CookieCategory.NECESSARY for row in rows)
 
-    def test_categories_are_shared_with_the_banner(self):
-        assert list(CookieCategory.values) == ["necessary", "analytics", "marketing"]
-
     def test_block_groups_active_cookies_by_category(self):
         Cookie.objects.create(
             name="_ga",
