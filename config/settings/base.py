@@ -421,6 +421,7 @@ ACCOUNT_PRESERVE_USERNAME_CASING = False
 # Username badlist is admin-managed (ModerationSettings); keep this empty.
 ACCOUNT_USERNAME_BLACKLIST: list[str] = []
 ACCOUNT_CHANGE_EMAIL = True
+ACCOUNT_UNIQUE_EMAIL = True
 
 # Users can request email confirmation mails via the email management view, and, implicitly, when logging in with an unverified account. This rate limit prevents users from sending too many of these mails.
 # https://docs.allauth.org/en/latest/account/configuration.html

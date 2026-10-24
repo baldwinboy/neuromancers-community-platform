@@ -27,6 +27,7 @@ from neuromancers_network.taxonomy.models import Language
 from neuromancers_network.users.cooldown import ensure_username_change_allowed
 from neuromancers_network.users.models import UserProfile
 from neuromancers_network.users.services import record_username_change
+from neuromancers_network.users.utils import normalize_username
 from neuromancers_network.users.validators import validate_username_not_blocked
 
 User = get_user_model()
@@ -58,8 +59,12 @@ class AccountForm(forms.ModelForm):
         self._original_username = self.instance.username
 
     def clean_username(self):
-        value = self.cleaned_data["username"].lower()
-        if User.objects.filter(username=value).exclude(pk=self.instance.pk).exists():
+        value = normalize_username(self.cleaned_data["username"])
+        if (
+            User.objects.filter(username__iexact=value)
+            .exclude(pk=self.instance.pk)
+            .exists()
+        ):
             raise forms.ValidationError(_("A user with that username already exists."))
         validate_username_not_blocked(value)
         if value != self._original_username:

@@ -189,6 +189,9 @@ def _anonymize(user) -> None:
     user.email_changed_at = None
     user.is_superuser = False
     user.__dict__["staff_state"] = StaffState.INACTIVE
+    # The purge deletes EmailAddress rows below; do not let the User post_save
+    # sync recreate one for the tombstone address.
+    user.__dict__["_skip_email_sync"] = True
     user.save(
         update_fields=[
             "username",

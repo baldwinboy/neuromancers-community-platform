@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import os
 
-from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
+
+from neuromancers_network.users.services import sync_email_address
+from neuromancers_network.users.utils import normalize_email
+from neuromancers_network.users.utils import normalize_username
 
 
 class Command(BaseCommand):
@@ -22,8 +25,12 @@ class Command(BaseCommand):
             self.stdout.write("A superuser already exists; nothing to do.")
             return
 
-        username = os.environ.get("DJANGO_SUPERUSER_USERNAME", "").strip()
-        email = os.environ.get("DJANGO_SUPERUSER_EMAIL", "").strip()
+        username = normalize_username(
+            os.environ.get("DJANGO_SUPERUSER_USERNAME", "").strip(),
+        )
+        email = normalize_email(
+            os.environ.get("DJANGO_SUPERUSER_EMAIL", "").strip(),
+        )
         password = os.environ.get("DJANGO_SUPERUSER_PASSWORD", "")
         if not username or not password:
             self.stdout.write(
@@ -47,12 +54,10 @@ class Command(BaseCommand):
         )
 
     def _ensure_verified_email(self, user) -> None:
-        if not user.email:
+        address = sync_email_address(user)
+        if address is None:
             return
-        address, _ = EmailAddress.objects.get_or_create(
-            user=user,
-            email=user.email.lower(),
-        )
+
         if not address.set_verified():
             self.stderr.write(
                 f"Could not verify {address.email!r}: it is already verified "

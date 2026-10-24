@@ -6,12 +6,23 @@ from neuromancers_network.payments.models.profile import PaymentProfile
 from neuromancers_network.peers.models import PeerProfile
 from neuromancers_network.peers.models import PeerSubscription
 from neuromancers_network.users.models import User
+from neuromancers_network.users.utils import normalize_email
+from neuromancers_network.users.utils import normalize_username
 
 
 class UserFactory(DjangoModelFactory):
     username = factory.Sequence(lambda n: f"user{n}")
     email = factory.Sequence(lambda n: f"user{n}@example.com")
     name = factory.Faker("name")
+
+    @classmethod
+    def _generate(cls, strategy, params):
+        params = params.copy()
+        if isinstance(params.get("username"), str):
+            params["username"] = normalize_username(params["username"])
+        if isinstance(params.get("email"), str):
+            params["email"] = normalize_email(params["email"])
+        return super()._generate(strategy, params)
 
     class Meta:
         model = User

@@ -1,10 +1,14 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField
 from django_fsm import FSMModelMixin
 from django_fsm import transition
 from wagtail.search import index
+
+from neuromancers_network.users.utils import normalize_email
+from neuromancers_network.users.utils import normalize_username
 
 from .choices import StaffState
 
@@ -134,7 +138,35 @@ class User(FSMModelMixin, index.Indexed, AbstractUser):
     ]
 
     class Meta:
-        pass
+        constraints = [
+            models.UniqueConstraint(
+                Lower("username"),
+                name="users_user_username_ci_unique",
+            ),
+            models.UniqueConstraint(
+                Lower("email"),
+                condition=~models.Q(email=""),
+                name="users_user_email_ci_unique",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        self.username = normalize_username(self.username)
+        self.email = normalize_email(self.email)
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+        if update_fields is None:
+            self.username = normalize_username(self.username)
+            self.email = normalize_email(self.email)
+        else:
+            fields = set(update_fields)
+            if "username" in fields:
+                self.username = normalize_username(self.username)
+            if "email" in fields:
+                self.email = normalize_email(self.email)
+        super().save(*args, **kwargs)
 
     @property
     def is_moderator(self) -> bool:

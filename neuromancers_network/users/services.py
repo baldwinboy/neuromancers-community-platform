@@ -3,13 +3,22 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
+from django.db import transaction
 from django.utils import timezone
 
 from neuromancers_network.core.audit import record_audit
 from neuromancers_network.inbox.events import emit
 from neuromancers_network.inbox.payloads import account_lifecycle_payload
 from neuromancers_network.inbox.payloads import identity_change_payload
+from neuromancers_network.users.utils import normalize_email
+
+if TYPE_CHECKING:
+    from allauth.account.models import EmailAddress
+
+    from neuromancers_network.users.models import User as UserType
+
 
 logger = logging.getLogger(__name__)
 
@@ -194,3 +203,49 @@ def reactivate_account(user, *, actor=None, request=None) -> None:
         actor=actor,
         request=request,
     )
+
+
+def sync_email_address(user: UserType) -> EmailAddress | None:
+    """Ensure ``user.email`` has a canonical primary allauth EmailAddress row.
+
+    The matching address is made primary, demoting any other primary. Existing
+    verification state is never downgraded. Idempotent and serialized per user.
+    """
+    from allauth.account.models import EmailAddress  # noqa: PLC0415
+    from django.contrib.auth import get_user_model  # noqa: PLC0415
+
+    if user.pk is None:
+        return None
+
+    with transaction.atomic():
+        locked_user = get_user_model().objects.select_for_update().get(pk=user.pk)
+        email = normalize_email(locked_user.email)
+        if not email:
+            return None
+
+        address = (
+            EmailAddress.objects.filter(user_id=user.pk, email__iexact=email)
+            .order_by("-verified", "-primary", "pk")
+            .first()
+        )
+        if address is None:
+            address = EmailAddress.objects.create(
+                user_id=user.pk,
+                email=email,
+                verified=False,
+                primary=False,
+            )
+        elif address.email != email:
+            address.email = email
+            address.save(update_fields=["email"])
+
+        EmailAddress.objects.filter(
+            user_id=user.pk,
+            primary=True,
+        ).exclude(pk=address.pk).update(primary=False)
+
+        if not address.primary:
+            address.primary = True
+            address.save(update_fields=["primary"])
+
+        return address
