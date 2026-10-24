@@ -16,20 +16,20 @@ from typing import TYPE_CHECKING
 from neuromancers_network.peers.services import is_eligible_peer
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import AbstractBaseUser
     from django.http import HttpRequest
 
     from neuromancers_network.meetings.models import Meeting
+    from neuromancers_network.users.models import User as UserType
 
 
-def _request_user(request: HttpRequest) -> AbstractBaseUser | None:
+def _request_user(request: HttpRequest) -> UserType | None:
     user = getattr(request, "user", None)
     if user is not None and getattr(user, "is_authenticated", False):
         return user
     return None
 
 
-def _is_moderator(user: AbstractBaseUser | None) -> bool:
+def _is_moderator(user: UserType | None) -> bool:
     return user is not None and bool(user.is_staff or user.is_superuser)
 
 
@@ -46,7 +46,7 @@ def _path_params(request: HttpRequest) -> dict:
     return {}
 
 
-def _target_user(request: HttpRequest) -> AbstractBaseUser | None:
+def _target_user(request: HttpRequest) -> UserType | None:
     from django.contrib.auth import get_user_model  # noqa: PLC0415
 
     user_model = get_user_model()

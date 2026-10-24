@@ -22,23 +22,36 @@ application stack deployed via Coolify on the Hetzner VPS.
 Use when the application code is broken but the database schema is
 compatible with the previous release.
 
+### Via GitHub Actions (recommended)
+
+1. Go to the **Actions** tab in GitHub.
+2. Open **Deploy Infrastructure** and choose **Run workflow**.
+3. Run from `main` or `staging` and provide:
+   - the previous working commit SHA
+   - the matching branch
+   - the matching environment
+   - `require_health_revision=false` only if the target predates the
+     `/api/health` revision field
+4. The workflow verifies the image manifests, updates `DOCKER_TAG` to the
+   previous SHA, and deploys.
+5. Confirm the Ansible assertions: running app containers use `:{sha}` and
+   `/api/health.revision` matches.
+
+This is an **image-only rollback**. The Compose file still comes from the
+current branch head; it does not roll back Compose or infrastructure changes.
+
 ### Via Coolify UI
 
-1. Log into Coolify dashboard over Tailscale.
+1. Log into the Coolify dashboard over Tailscale.
 2. Navigate to the `neuromancers_network` application.
 3. Go to the **Environment variables** tab.
-4. Update `DOCKER_TAG` to the previous working tag or SHA:
-   - Production: previous `{sha}` (e.g. `abc123def456`), or `latest`
-   - Staging: previous `{sha}` (e.g. `abc123def456`), or `staging`
+4. Set `DOCKER_TAG` to the previous working commit SHA.
 5. Save the variable.
 6. Go to the **Deployments** tab and click **Redeploy**.
 
-### Via GitHub Actions (re-run)
-
-1. Go to the **Actions** tab in GitHub.
-2. Open the `Deploy Infrastructure` workflow run for the last known-good commit.
-3. Re-run the workflow. It deploys the tag Ansible sets (`latest`/`staging`).
-4. Confirm the Ansible playbook converges and Coolify redeploys.
+Do not change `git_commit_sha` to roll back. Coolify uses `git_branch`
+(the branch head) for the Compose checkout; `git_commit_sha` is a record of
+the last deployed commit.
 
 ### Identify the previous image tag
 
@@ -49,9 +62,13 @@ curl -s "https://ghcr.io/v2/baldwinboy/${PACKAGE}/tags/list" \
   | jq -r '.tags[]' | sort -V
 ```
 
-The `:latest` tag represents the last production deploy and `:staging`
-the last staging deploy. Every build is also pushed as a plain `{SHA}`
-tag, which you can use to pin to a specific version.
+Every build is pushed as a plain `{SHA}` tag. Use that SHA for rollback. The
+`:latest` and `:staging` tags are retained for compatibility but are not the
+deployment source of truth.
+
+Automated rollback requires that the target image was built by the current
+pipeline (content tags and health revision). For older commits, use the
+Coolify UI procedure or restore from a database backup as appropriate.
 
 ---
 
@@ -122,8 +139,8 @@ incident (security breach, data leak, total outage).
 
 1. **Disable Coolify auto-deploy:**
    - In Coolify, navigate to the application settings.
-   - Change the deployment branch to a non-existent branch.
-   - This prevents automatic redeployment on git push.
+   - Disable **Auto Deploy**.
+   - This prevents a webhook deployment racing the CI/CD path.
 
 2. **Stop application containers:**
    - In Coolify, stop the `neuromancers_network` application.
@@ -147,7 +164,7 @@ incident (security breach, data leak, total outage).
   bws run -- ansible-playbook infra/playbooks/site.yml \
     --inventory infra/inventory/hosts.yml \
     --private-key infra/inventory/ssh_key \
-    --extra-vars "git_environment=staging"
+    --extra-vars "git_branch=staging git_commit_sha=<40-char-sha> git_environment=staging postgres_tag=postgres-<tree-sha> require_health_revision=true verify_source_sha=false"
   ```
   Use the same extra-vars as the CI deploy. There is no `setup_coolify`
   tag — `--tags setup_coolify` would silently run nothing.

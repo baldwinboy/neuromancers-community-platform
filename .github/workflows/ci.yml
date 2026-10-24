@@ -25,7 +25,7 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      app: ${{ steps.filter.outputs.app }}
+      build_and_deploy: ${{ steps.filter.outputs.build_and_deploy }}
     steps:
       - name: Checkout Code Repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -37,7 +37,7 @@ jobs:
         id: filter
         with:
           filters: |
-            app:
+            build_and_deploy:
               - 'neuromancers_network/**'
               - 'config/**'
               - 'locale/**'
@@ -54,6 +54,9 @@ jobs:
               - 'compose/production/django/**'
               - 'compose/production/postgres/**'
               - 'docker-compose.production.yml'
+              - '.dockerignore'
+              - 'infra/**'
+              - 'docker-compose.coolify.yml'
 
   linter:
     runs-on: ubuntu-latest
@@ -108,9 +111,12 @@ jobs:
       - name: Run DB Migrations
         run: uv run python manage.py migrate
 
+      - name: Run health endpoint test
+        run: uv run pytest tests/test_health.py -q
+
   docker:
     needs: [changes, linter, migrations]
-    if: ${{ github.event_name == 'push' && needs.changes.outputs.app == 'true' }}
+    if: ${{ github.event_name == 'push' && needs.changes.outputs.build_and_deploy == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -121,6 +127,13 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Compute postgres content tag
+        id: image-meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "postgres_tag=postgres-$(git rev-parse HEAD:compose/production/postgres)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
@@ -139,7 +152,9 @@ jobs:
           files: docker-compose.production.yml
           targets: django,postgres
           set: |
+            django.args.GIT_COMMIT_SHA=${{ github.sha }}
             django.tags=ghcr.io/${{ github.repository_owner }}/neuromancers-network:${{ github.sha }}
             django.tags=ghcr.io/${{ github.repository_owner }}/neuromancers-network:${{ github.ref_name == 'main' && 'latest' || 'staging' }}
+            postgres.tags=ghcr.io/${{ github.repository_owner }}/neuromancers-network-postgres:${{ steps.image-meta.outputs.postgres_tag }}
             postgres.tags=ghcr.io/${{ github.repository_owner }}/neuromancers-network-postgres:${{ github.sha }}
             postgres.tags=ghcr.io/${{ github.repository_owner }}/neuromancers-network-postgres:${{ github.ref_name == 'main' && 'latest' || 'staging' }}

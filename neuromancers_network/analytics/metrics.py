@@ -358,20 +358,28 @@ SERIES_METRICS = (
 )
 
 
+def _subsctiption_revenue_value(start, stop) -> Decimal:
+    rows = SubscriptionLedger.objects.filter(
+        kind=SubscriptionKind.PAYMENT,
+        occurred_at__gte=start,
+        occurred_at__lt=stop,
+    )
+    return _quantize(rows.aggregate(total=Sum("presentment_amount"))["total"])
+
+
+def _session_minutes_value(start, stop) -> Decimal:
+    rows = SessionLedger.objects.filter(
+        occurred_at__gte=start,
+        occurred_at__lt=stop,
+    )
+    return Decimal(rows.aggregate(total=Sum("minutes"))["total"] or 0)
+
+
 def _series_value(metric, start, stop) -> Decimal:
     if metric == "subscription_revenue":
-        rows = SubscriptionLedger.objects.filter(
-            kind=SubscriptionKind.PAYMENT,
-            occurred_at__gte=start,
-            occurred_at__lt=stop,
-        )
-        return _quantize(rows.aggregate(total=Sum("presentment_amount"))["total"])
+        return _subsctiption_revenue_value(start, stop)
     if metric == "session_minutes":
-        rows = SessionLedger.objects.filter(
-            occurred_at__gte=start,
-            occurred_at__lt=stop,
-        )
-        return Decimal(rows.aggregate(total=Sum("minutes"))["total"] or 0)
+        return _session_minutes_value(start, stop)
     queryset = TransactionLedger.objects.filter(
         occurred_at__gte=start,
         occurred_at__lt=stop,

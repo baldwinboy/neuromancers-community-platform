@@ -22,14 +22,14 @@ from neuromancers_network.taxonomy.validators import validate_countries
 from neuromancers_network.taxonomy.validators import validate_languages
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import AbstractBaseUser
+    from neuromancers_network.users.models import User as UserType
 
     from .models import Meeting
 
 logger = logging.getLogger(__name__)
 
 
-def default_terms_for(peer: AbstractBaseUser) -> str:
+def default_terms_for(peer: UserType) -> str:
     """Return the peer's default terms, or an empty string."""
     profile = getattr(peer, "peer_profile", None)
     if profile is None:
@@ -37,7 +37,7 @@ def default_terms_for(peer: AbstractBaseUser) -> str:
     return profile.default_terms or ""
 
 
-def create_meeting(*, peer: AbstractBaseUser, **fields) -> Meeting:
+def create_meeting(*, peer: UserType, **fields) -> Meeting:
     """Create a meeting for *peer*, seeding terms from the peer's defaults."""
     from .models import Meeting  # noqa: PLC0415
 
@@ -169,7 +169,7 @@ def cancel_and_refund_for_meeting(meeting) -> int:
     )
 
 
-def default_access_needs_for(seeker: AbstractBaseUser) -> str:
+def default_access_needs_for(seeker: UserType) -> str:
     """Return the seeker's profile-level access needs, if any."""
     profile = getattr(seeker, "user_profile", None)
     if profile is None:
@@ -226,7 +226,7 @@ def _ensure_slot_available(meeting: Meeting, start, duration_minutes) -> None:
 def create_booking(  # noqa: PLR0913
     *,
     meeting: Meeting,
-    seeker: AbstractBaseUser,
+    seeker: UserType,
     sessions=None,
     access_needs: str | None = None,
     peer_terms: str = "",

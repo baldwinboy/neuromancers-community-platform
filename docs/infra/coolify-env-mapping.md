@@ -4,14 +4,15 @@ This file defines the runtime keys that application containers must resolve from
 
 ## Important
 
-After first Coolify application creation, these keys must be **manually added** to the Coolify application via the UI. Ansible only pushes `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `TS_APP_DOMAIN`, `TS_PAAS_DOMAIN`, `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_CLIENT_SECRET`.
+After first Coolify application creation, these keys must be **manually added** to the Coolify application via the UI. Ansible only pushes `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `POSTGRES_TAG`, `TS_APP_DOMAIN`, `TS_PAAS_DOMAIN`, `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_CLIENT_SECRET`.
 
 See [Operator Guide — First deployment](operator-guide.md#first-deployment) for the manual setup procedure.
 
 ## Coolify-provided variables (pushed by Ansible)
 
 - `BWS_ACCESS_TOKEN`
-- `DOCKER_TAG`
+- `DOCKER_TAG` — deployed commit SHA
+- `POSTGRES_TAG` — postgres content tag derived from `compose/production/postgres`
 - `TS_APP_DOMAIN`
 - `TS_PAAS_DOMAIN`
 - `TAILSCALE_TAG`

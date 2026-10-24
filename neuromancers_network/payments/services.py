@@ -90,7 +90,7 @@ def ensure_payment_profile(user) -> PaymentProfile:
 def ensure_stripe_account(user) -> StripeAccount:
     """Return the user's connected account, creating an express account if needed."""
     profile = ensure_payment_profile(user)
-    if profile.stripe_connect_account_id_id:
+    if profile.stripe_connect_account_id:
         try:
             existing = profile.stripe_connect_account_id
         except ObjectDoesNotExist:
@@ -189,7 +189,7 @@ def _cancel_active_subscription(profile: PaymentProfile) -> None:
 
 def disconnect_stripe_account(profile: PaymentProfile) -> None:
     """Cancel billing, then delete the peer's Stripe account and unlink it."""
-    account_id = profile.stripe_connect_account_id_id
+    account_id = profile.stripe_connect_account_id_id  # type: ignore[attr-defined]
     if not account_id:
         return
 

@@ -55,7 +55,7 @@ class PeerApplication(Timestamped):
     def submission_summary(self) -> str:
         return summary(self)
 
-    submission_summary.short_description = _("Answers")
+    submission_summary.short_description = _("Answers")  # type: ignore[attr-defined]
 
     def save(self, *args, **kwargs):
         # An explicit terminal status wins; otherwise approval promotes it.

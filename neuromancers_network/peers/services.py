@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Iterator
 
-    from django.contrib.auth.models import AbstractBaseUser
+    from neuromancers_network.users.models import User as UserType
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def peer_requirements() -> PeerRequirementsSettings:
     return PeerRequirementsSettings.load()
 
 
-def eligibility_failures(user: AbstractBaseUser) -> list[str]:
+def eligibility_failures(user: UserType) -> list[str]:
     """Return the reasons *user* is not (yet) an eligible peer."""
     failures: list[str] = []
 
@@ -62,7 +62,7 @@ def eligibility_failures(user: AbstractBaseUser) -> list[str]:
     return failures
 
 
-def is_eligible_peer(user: AbstractBaseUser | None) -> bool:
+def is_eligible_peer(user: UserType | None) -> bool:
     """Whether *user* is approved and meets the configured peer requirements."""
     if user is None or not getattr(user, "is_authenticated", False):
         return False
@@ -159,7 +159,10 @@ def window_occurrences(
     """Expand *window* into concrete ``(start, end)`` occurrences."""
     base_start = window.start
     base_end = window.end
-    if not window.occurrence:
+    if not window.occurrence or not isinstance(
+        window.occurrence,
+        AvailabilityOccurrence,
+    ):
         yield base_start, base_end
         return
 
@@ -237,7 +240,7 @@ def _subtract_bookings(
 
 
 def _booked_ranges(
-    user: AbstractBaseUser,
+    user: UserType,
     exclude_request=None,
 ) -> Iterator[tuple[datetime, datetime]]:
     from neuromancers_network.meetings.models import MeetingRequest  # noqa: PLC0415
@@ -255,11 +258,14 @@ def _booked_ranges(
         queryset = queryset.exclude(pk=exclude_request.pk)
     for request in queryset:
         start = request.requested_start_time
-        yield start, start + timedelta(minutes=request.requested_duration_minutes)
+        if not start or not request.requested_duration_minutes:
+            continue
+        end = start + timedelta(minutes=request.requested_duration_minutes)
+        yield start, end
 
 
 def available_slots(
-    user: AbstractBaseUser,
+    user: UserType,
     *,
     horizon_days: int = 90,
     until: datetime | None = None,

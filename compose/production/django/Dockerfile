@@ -83,6 +83,12 @@ RUN chmod +x /start-flower
 # Copy the application from the builder
 COPY --from=python-build-stage --chown=django:django ${APP_HOME} ${APP_HOME}
 
+# Bake the validated source revision into the image so /api/health can prove
+# which commit is running. CI passes this as a build argument.
+ARG GIT_COMMIT_SHA=unknown
+ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA}
+LABEL org.opencontainers.image.revision=${GIT_COMMIT_SHA}
+
 # make django owner of the WORKDIR directory as well.
 RUN chown django:django ${APP_HOME}
 # Create the logs directory
