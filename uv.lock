@@ -1206,11 +1206,11 @@ wheels = [
 
 [[package]]
 name = "filelock"
-version = "4.0.12"
+version = "4.2.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/53/e4/34efcb869715cf299e47d1ac7b2624d2bcb6f2d3dffc2f0abe8417f65ab2/filelock-4.0.12.tar.gz", hash = "sha256:cf42711a7ac791818b299fab0332a088c65aeeefa36290de98db92c434303b0c", size = 253880, upload-time = "2026-10-05T13:17:43.677Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/28/3893324bcadf8f89b1616637468d766af3f625008c0735bf704fdfa86617/filelock-4.2.4.tar.gz", hash = "sha256:c6d8663535e1650ee430507b4ffbac7b464dd64b7647ea0112a9f406499d163d", size = 652444, upload-time = "2026-10-19T01:57:51.001Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/da/a1/b047e1c486a2c66283633b7dbb73872ca16ca1ce6a426f70d4d037fc8e1c/filelock-4.0.12-py3-none-any.whl", hash = "sha256:5f17ee83ecee8a6f3e389c75822fb70a1c2f0506b99438a6dffa1d56793588c8", size = 111732, upload-time = "2026-10-05T13:17:42.361Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/1b/5e74289a1878e666bb4b65fe5805a04cafcac2aa5f519ef1ead67ef91c56/filelock-4.2.4-py3-none-any.whl", hash = "sha256:301241438c57936ef93f4243a94f2559022268bfcf9b375a9a72eb0f8db8358e", size = 162475, upload-time = "2026-10-19T01:57:49.419Z" },
 ]
 
 [[package]]
@@ -1895,7 +1895,7 @@ requires-dist = [
     { name = "sentry-sdk", specifier = "==2.72.0" },
     { name = "stripe", specifier = ">=15.6.1" },
     { name = "wagtail", specifier = ">=8.0,<8.1" },
-    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.5.1" },
+    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.6.0" },
     { name = "wagtailcharts", specifier = ">=0.7" },
     { name = "whitenoise", specifier = "==6.12.0" },
 ]
@@ -2915,7 +2915,7 @@ wheels = [
 
 [[package]]
 name = "virtualenv"
-version = "21.14.6"
+version = "21.14.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "distlib" },
@@ -2924,9 +2924,9 @@ dependencies = [
     { name = "platformdirs" },
     { name = "python-discovery" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/92/f3/589727d02bc832750cfa00ced4315d127535a22a6d7cfcb369b2fe219a2e/virtualenv-21.14.6.tar.gz", hash = "sha256:c6b74616e64bffa9532cfa9dfd54ffbab0dc9b999df2bb8ec0d75e559b983661", size = 5467961, upload-time = "2026-10-08T14:49:57.376Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/70/aa/bff50daee0488e16d611258a9b6c5a1d0c9e128f8ca424e9f4e1c0444ef2/virtualenv-21.14.13.tar.gz", hash = "sha256:de5307ba4b9a0001d9c8ea02832d38f63ca432880f416c1bface61c4323fd905", size = 5570301, upload-time = "2026-10-22T20:10:16.952Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c9/1f/e5182163bcee149dda4eec823d88b0f51f2c0c531b12da896f666f0b80c1/virtualenv-21.14.6-py3-none-any.whl", hash = "sha256:eb1a20c5878569b69667f6a1af03458a8512b3afa7be771a2dafe92fdca05bb9", size = 5487469, upload-time = "2026-10-08T14:49:54.988Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/a9/c10d8a44a29fb94a18b43fdf11f38caca53ae7c9406f11a72b1cb8f624f1/virtualenv-21.14.13-py3-none-any.whl", hash = "sha256:5fbb04138a4861580b78ba9110d529a26bc48fcc93c8ec36bc0202eeed96a788", size = 5557094, upload-time = "2026-10-22T20:10:15.096Z" },
 ]
 
 [[package]]
@@ -2963,7 +2963,7 @@ wheels = [
 
 [[package]]
 name = "wagtail-daisie"
-version = "3.5.1"
+version = "3.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cssutils" },
@@ -2976,9 +2976,9 @@ dependencies = [
     { name = "mjml-python" },
     { name = "wagtail" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ec/de/5ff39b7483c3bcecd55b317cd5e30921cf54c76b6cb576a4b495e7403a71/wagtail_daisie-3.5.1.tar.gz", hash = "sha256:a603e0265879260e5a65f41bf1f66e979f409a5f817f734ca64a1f3ba2946bfe", size = 370336, upload-time = "2026-10-19T18:37:21.101Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/29/a4/ddc4d064ead23aae0a29e610e338a6565e9b9ae31af687561706de889631/wagtail_daisie-3.6.0.tar.gz", hash = "sha256:ae1a27899ff8a7c00ad10d09c703e3e6b8ce828a85e00fecb881d8300e291ef4", size = 377703, upload-time = "2026-10-24T23:17:41.453Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2a/bb/71c904924114a38edbaab47747a9e1ddace326f1767271a3c8e28a3d87bf/wagtail_daisie-3.5.1-py3-none-any.whl", hash = "sha256:9846c310d4a6a34d054190368df12b0df9d8db185f9f8af686ad3da526b47815", size = 548494, upload-time = "2026-10-19T18:37:19.284Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/cd/42f173b83c8b85c6befd74ab4a978955cda7630311556e2d129ebb33ee85/wagtail_daisie-3.6.0-py3-none-any.whl", hash = "sha256:a87e7fd34fdf8b3bf10927cb2b6abd953ea6116f686408422ce7a6d07ed32a03", size = 559384, upload-time = "2026-10-24T23:17:39.257Z" },
 ]
 
 [package.optional-dependencies]
