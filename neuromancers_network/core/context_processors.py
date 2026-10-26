@@ -92,7 +92,7 @@ def consent_banner(request):
         }
     return {
         "consent": read_consent(request),
-        "consent_needs_update": consent_needs_update(request),
+        "consent_needs_update": consent_needs_update(request, settings_obj),
         "consent_settings": settings_obj,
         "consent_categories": [
             (value, label)

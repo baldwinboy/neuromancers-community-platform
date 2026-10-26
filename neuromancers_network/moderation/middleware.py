@@ -27,7 +27,7 @@ class BanMiddleware:
         from neuromancers_network.moderation.models import BanSettings  # noqa: PLC0415
 
         try:
-            settings_obj = BanSettings.load()
+            settings_obj = BanSettings.load(request)
         except Exception:  # noqa: BLE001 - table may not exist yet
             return False
         if not getattr(settings_obj, "ip_enforcement_enabled", False):
