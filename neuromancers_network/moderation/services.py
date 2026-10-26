@@ -17,6 +17,7 @@ from neuromancers_network.users.services import reactivate_account
 from .identity import record_deleted_identity
 from .models import AccountDeletionRequest
 from .models import DeletionStatus
+from .tokens import deletion_cancel_url
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ def _announce(  # noqa: PLR0913
     request=None,
     reason: str = "",
     scheduled_for=None,
+    cancel_url: str = "",
 ) -> None:
     try:
         emit(
@@ -70,6 +72,7 @@ def _announce(  # noqa: PLR0913
                 recipients=[user],
                 reason=reason,
                 deletion_scheduled_for=scheduled_for,
+                deletion_cancel_url=cancel_url,
             ),
             event_ref=f"user.{user.pk}.{event_type}.{timezone.now().isoformat()}",
         )
@@ -121,6 +124,7 @@ def request_account_deletion(
         request=request,
         reason=reason,
         scheduled_for=scheduled_for,
+        cancel_url=deletion_cancel_url(deletion, request=request),
     )
     return deletion
 
@@ -144,6 +148,27 @@ def cancel_account_deletion(user, *, actor=None, request=None) -> None:
         actor=actor,
         request=request,
     )
+
+
+def send_deletion_cancel_email(
+    deletion,
+    *,
+    actor=None,
+    request=None,
+) -> bool:
+    """Resend the signed cancellation link for a pending deletion."""
+    if deletion.status != DeletionStatus.PENDING:
+        return False
+    _announce(
+        "account_deletion_scheduled",
+        "account.deletion.resend",
+        deletion.user,
+        actor=actor,
+        request=request,
+        scheduled_for=deletion.scheduled_for,
+        cancel_url=deletion_cancel_url(deletion, request=request),
+    )
+    return True
 
 
 def _cancel_stripe_subscription(user) -> None:
@@ -189,6 +214,9 @@ def _anonymize(user) -> None:
     user.email_changed_at = None
     user.is_superuser = False
     user.__dict__["staff_state"] = StaffState.INACTIVE
+    # The purge deletes EmailAddress rows below; do not let the User post_save
+    # sync recreate one for the tombstone address.
+    user.__dict__["_skip_email_sync"] = True
     user.save(
         update_fields=[
             "username",

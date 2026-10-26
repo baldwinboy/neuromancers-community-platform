@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+  {% trans "Cancel account deletion" %}
+{% endblock title %}
+{% block content %}
+  <section class="mx-auto w-full max-w-xl py-12">
+    {% if state == "confirm" %}
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h1 class="card-title">{% trans "Cancel account deletion" %}</h1>
+          <p>
+            {% blocktrans with scheduled_for=deletion.scheduled_for %}
+              Your account is scheduled for deletion on {{ scheduled_for }}.
+            {% endblocktrans %}
+          </p>
+          <p>{% trans "Cancelling will reactivate your account." %}</p>
+          <form method="post" action="" class="mt-4">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">{% trans "Cancel account deletion" %}</button>
+          </form>
+        </div>
+      </div>
+    {% elif state == "cancelled" %}
+      <div class="alert alert-success" role="status">
+        {% trans "Your account deletion has been cancelled. Your account is active again." %}
+      </div>
+    {% else %}
+      <div class="alert alert-error" role="alert">{% trans "This cancellation link is no longer valid." %}</div>
+    {% endif %}
+  </section>
+{% endblock content %}

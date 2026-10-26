@@ -5,7 +5,7 @@
 - All deployment and runtime secrets are stored in Bitwarden Secrets Manager.
 - GitHub stores only `BWS_ACCESS_TOKEN`.
 - Workflows fetch secret data from Bitwarden during execution.
-- Ansible pushes only `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `TS_APP_DOMAIN`, `TS_PAAS_DOMAIN`, `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID`, and `TS_OAUTH_CLIENT_SECRET` to Coolify.
+- Ansible pushes only `BWS_ACCESS_TOKEN`, `DOCKER_TAG` (deployed commit SHA), `POSTGRES_TAG` (postgres content tag), `TS_APP_DOMAIN`, `TS_PAAS_DOMAIN`, `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID`, and `TS_OAUTH_CLIENT_SECRET` to Coolify.
 - All other secrets must be manually added to the Coolify application by a developer.
 - Application containers receive secrets from Coolify environment variables at startup.
 

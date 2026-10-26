@@ -1,0 +1,13 @@
+{% load i18n %}
+
+<div class="w-panel">
+  <h2 class="w-panel__heading">{% translate "Demo/test data" %}</h2>
+  <div class="w-panel__content">
+    {% if demo_enabled %}
+      <p>{% translate "Seed or clean deterministic demo users, meetings, and payments." %}</p>
+      <a class="button button-secondary" href="{{ demo_url }}">{% translate "Manage demo data" %}</a>
+    {% else %}
+      <p>{% translate "Demo data is disabled by configuration." %}</p>
+    {% endif %}
+  </div>
+</div>

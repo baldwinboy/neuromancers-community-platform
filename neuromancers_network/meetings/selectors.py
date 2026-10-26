@@ -33,7 +33,7 @@ def my_meetings(request=None, page=None):
     return (
         Meeting.objects.filter(peer=user)
         .select_related("peer")
-        .prefetch_related("languages", "countries", "tags")
+        .prefetch_related("languages", "countries", "tags")  # type: ignore[misc]
     )
 
 
@@ -362,11 +362,20 @@ def review_stats(peer_user, *, viewer=None):
         meeting__peer=peer_user,
         status=MeetingRequestStatus.COMPLETED,
     ).count()
-    if profile is not None and not profile.show_sessions_count:
-        sessions = None
-    return {
+
+    stats = {
         "rating": rating,
         "rating_count": rating_count,
-        "sessions": sessions,
         "review_count": aggregate["count"],
+    }
+
+    if profile is not None and not profile.show_sessions_count:
+        return {
+            **stats,
+            "sessions": None,
+        }
+
+    return {
+        **stats,
+        "sessions": sessions,
     }

@@ -1,6 +1,12 @@
+from typing import TYPE_CHECKING
+
+from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
 from ninja import NinjaAPI
 from ninja.security import SessionAuth
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
 
 staff_required = user_passes_test(lambda u: u.is_active and u.is_staff)
 
@@ -17,5 +23,5 @@ api.add_router("/analytics/", "neuromancers_network.analytics.api.router")
 
 
 @api.get("/health", auth=None)
-def health(request):
-    return {"status": "ok"}
+def health(request: HttpRequest) -> dict[str, str]:
+    return {"status": "ok", "revision": settings.GIT_COMMIT_SHA}

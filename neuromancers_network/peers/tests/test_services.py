@@ -558,7 +558,7 @@ class TestPeerSubscribe:
         config = StripeSettings.load()
         config.subscription_enabled = True
         config.save()
-        peer = make_peer()
+        peer = make_peer(subscription_status=None)
         profile = peer.peer_profile
         profile.provider_agreement_accepted_at = timezone.now()
         profile.provider_agreement_version = PROVIDER_AGREEMENT_VERSION
@@ -590,6 +590,8 @@ class TestConnectStripeRedirects:
     def _peer_with_agreement(self):
         peer = make_peer()
         peer_accept_provider_agreement(_post(peer), {})
+        peer.payment_profile.stripe_connect_account_id = None
+        peer.payment_profile.save(update_fields=["stripe_connect_account_id"])
         return peer
 
     def _link(self):

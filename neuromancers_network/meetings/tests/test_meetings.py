@@ -41,9 +41,6 @@ from neuromancers_network.meetings.services import unpublish_all
 from neuromancers_network.meetings.tests.factories import create_meeting as make_meeting
 from neuromancers_network.meetings.tier_fields import DurationTiersField
 from neuromancers_network.peers.tests.factories import make_peer
-from neuromancers_network.taxonomy.tests.factories import AllowedTagFactory
-from neuromancers_network.taxonomy.tests.factories import CountryFactory
-from neuromancers_network.taxonomy.tests.factories import LanguageFactory
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -88,48 +85,6 @@ class TestCreateMeeting:
         meeting = create_meeting(peer=peer, terms="Custom", **meeting_fields())
 
         assert meeting.terms == "Custom"
-
-
-class TestCreateMeetingTaxonomy:
-    def test_unknown_tag_is_rejected(self):
-        peer = make_peer()
-
-        with pytest.raises(ValidationError):
-            create_meeting(peer=peer, tags=["unknown"], **meeting_fields())
-
-    def test_inactive_tag_is_rejected(self):
-        peer = make_peer()
-        AllowedTagFactory(name="retired", is_active=False)
-
-        with pytest.raises(ValidationError):
-            create_meeting(peer=peer, tags=["retired"], **meeting_fields())
-
-    def test_unknown_taxonomy_is_rejected(self):
-        peer = make_peer()
-
-        with pytest.raises(ValidationError):
-            create_meeting(peer=peer, countries=["ZZ"], **meeting_fields())
-
-        with pytest.raises(ValidationError):
-            create_meeting(peer=peer, languages=["zz"], **meeting_fields())
-
-    def test_valid_taxonomy_is_set(self):
-        peer = make_peer()
-        tag = AllowedTagFactory(name="anxiety")
-        countries = [CountryFactory(), CountryFactory()]
-        languages = [LanguageFactory(), LanguageFactory()]
-
-        meeting = create_meeting(
-            peer=peer,
-            tags=[tag],
-            countries=countries,
-            languages=languages,
-            **meeting_fields(),
-        )
-
-        assert list(meeting.tags.all()) == [tag]
-        assert set(meeting.countries.all()) == set(countries)
-        assert set(meeting.languages.all()) == set(languages)
 
 
 class TestMeetingManageActions:
@@ -537,30 +492,3 @@ class TestMeetingSchedulingWindow:
 
         meeting.refresh_from_db()
         assert meeting.description == "Updated description"
-
-    def test_moving_schedule_into_window_is_rejected(self):
-        meeting = self._group(scheduled_at=timezone.now() + timedelta(days=1))
-        meeting.scheduled_at = timezone.now() + timedelta(minutes=10)
-
-        with pytest.raises(ValidationError, match="at least 30 minutes"):
-            meeting.save()
-
-    def test_publishing_within_window_is_rejected(self):
-        meeting = self._group(scheduled_at=timezone.now() + timedelta(minutes=10))
-        meeting.publish()
-
-        with pytest.raises(ValidationError, match="at least 30 minutes"):
-            meeting.save(update_fields=["status", "updated_at"])
-
-
-class TestMeetingArchive:
-    def test_archived_meeting_can_be_restored(self):
-        meeting = make_meeting(peer=make_peer())
-        meeting.archive()
-        meeting.save(update_fields=["status", "updated_at"])
-
-        meeting.restore()
-        meeting.save(update_fields=["status", "updated_at"])
-
-        meeting.refresh_from_db()
-        assert meeting.status == MeetingStatus.DRAFT

@@ -13,6 +13,7 @@ from neuromancers_network.core.views.provider_webhooks import daily_webhook
 from neuromancers_network.core.views.provider_webhooks import whereby_webhook
 from neuromancers_network.meetings.views import PaymentCancelledView
 from neuromancers_network.meetings.views import PaymentSuccessView
+from neuromancers_network.moderation.views import AccountDeletionCancelView
 from neuromancers_network.moderation.views import DataExportDownloadView
 
 from .api import api
@@ -30,6 +31,12 @@ urlpatterns = [
     path("consent/accept/", accept_consent, name="consent_accept"),
     path("consent/reset/", reset_consent, name="consent_reset"),
     path("webhooks/daily/", daily_webhook, name="daily_webhook"),
+    # Signed account-deletion cancellation link
+    path(
+        "account/deletion/cancel/<str:token>/",
+        AccountDeletionCancelView.as_view(),
+        name="account_deletion_cancel",
+    ),
     # Private data-export download (signed, owner/staff only)
     path(
         "exports/<int:pk>/<str:token>/",

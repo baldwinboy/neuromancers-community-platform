@@ -120,6 +120,7 @@ class HomePage(ReservedSlugPage):
         "core.SettingsPage",
         "core.SearchPage",
         "peers.PeerApplicationFormPage",
+        "peers.PeerApplicationEditFormPage",
         "meetings.MeetingFormPage",
         "meetings.MeetingEditFormPage",
         "meetings.BookingFormPage",
@@ -169,6 +170,7 @@ class SearchPage(ReservedSlugPage):
 class ProfileIndexPage(IndexPage):
     """Listing page for member profiles; its slug is reserved as ``u``."""
 
+    template = "core/index_page.html"
     subpage_types = ["core.UserProfilePage"]
 
 

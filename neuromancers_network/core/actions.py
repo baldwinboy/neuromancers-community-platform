@@ -56,7 +56,12 @@ def redirect_back(request) -> HttpResponseRedirect:
 
 def calendar_revoke_token(request, data):
     """Deactivate the signed-in member's read-only calendar feed token."""
+    from neuromancers_network.core.audience import can_revoke_calendar_feed  # noqa: PLC0415
+
     user = require_authenticated(request)
+    if not can_revoke_calendar_feed(request):
+        message = "No active calendar feed to revoke"
+        raise PermissionDenied(message)
     token = getattr(user, "calendar_feed_token", None)
     if token is not None and token.is_active:
         token.is_active = False
@@ -68,9 +73,13 @@ def calendar_rotate_token(request, data):
     """Issue a fresh calendar feed token for the signed-in member."""
     import uuid  # noqa: PLC0415
 
+    from neuromancers_network.core.audience import can_rotate_calendar_feed  # noqa: PLC0415
     from neuromancers_network.core.models import CalendarFeedToken  # noqa: PLC0415
 
     user = require_authenticated(request)
+    if not can_rotate_calendar_feed(request):
+        message = "Calendar feeds are not available"
+        raise PermissionDenied(message)
     token = getattr(user, "calendar_feed_token", None)
     if token is None:
         token = CalendarFeedToken(user=user)

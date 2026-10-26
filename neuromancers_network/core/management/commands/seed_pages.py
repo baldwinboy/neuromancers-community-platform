@@ -239,7 +239,6 @@ def _ensure_home_hero(home: HomePage, *, force: bool) -> None:
                 "value": {
                     "overlay": True,
                     "full_width": True,
-                    "align": "left",
                     "content": [
                         {
                             "type": "header",

@@ -8,6 +8,25 @@
     - ansible.posix
 
   tasks:
+    - name: Validate deployment inputs
+      ansible.builtin.assert:
+        that:
+          - git_branch is defined
+          - git_branch in ['main', 'staging']
+          - git_commit_sha is defined
+          - git_commit_sha is string
+          - git_commit_sha is match('^[0-9a-f]{40}$')
+          - git_environment is defined
+          - git_environment in ['production', 'staging']
+          - (git_environment == 'production') == (git_branch == 'main')
+          - postgres_tag is defined
+          - postgres_tag is string
+          - postgres_tag is match('^postgres-[0-9a-f]{40}$')
+        fail_msg: >-
+          Invalid deployment inputs. Required: git_branch (main|staging),
+          git_commit_sha (40 lowercase hex), git_environment (production|staging),
+          and postgres_tag (postgres-<40 lowercase hex>).
+
     # Preflight check
     - name: Check if Coolify API is enabled
       ansible.builtin.uri:
@@ -19,6 +38,7 @@
       ansible.builtin.set_fact:
         coolify_api_token: "{{ coolify_admin_token | default(lookup('env', 'COOLIFY_ADMIN_TOKEN', default='')) }}"
       when: coolify_health.status == 200
+      no_log: true
 
     - name: Set BWS access token
       ansible.builtin.set_fact:
@@ -26,10 +46,19 @@
       when: coolify_health.status == 200
       no_log: true
 
-    - name: Set Docker tag
+    - name: Assert Coolify API and tokens are available
+      ansible.builtin.assert:
+        that:
+          - (coolify_health.status | default(0)) == 200
+          - (coolify_api_token | default('') | length) > 0
+          - (bws_access_token | default('') | length) > 0
+        fail_msg: >-
+          Coolify API is not healthy or the required API/Bitwarden tokens are
+          missing. Check COOLIFY_ADMIN_TOKEN and BWS_ACCESS_TOKEN.
+
+    - name: Set Docker image tag
       ansible.builtin.set_fact:
-        docker_tag: "{{ 'staging' if git_environment == 'staging' else 'latest' }}"
-      when: coolify_health.status == 200
+        docker_tag: "{{ git_commit_sha }}"
 
     # Get the Coolify host server as JSON
     - name: List Coolify servers
@@ -161,6 +190,7 @@
           name: "neuromancers_network"
           description: "NEUROMANCERS Network"
           instant_deploy: false
+          is_auto_deploy_enabled: false
           git_commit_sha: "{{ git_commit_sha }}"
           docker_compose_location: "/docker-compose.coolify.yml"
           health_check_enabled: true
@@ -185,6 +215,24 @@
       ansible.builtin.set_fact:
         coolify_application_uuid: "{{ created_coolify_application.json.uuid }}"
       when: (coolify_application | default('')) == ''
+
+    - name: Assert Coolify application UUID is available
+      ansible.builtin.assert:
+        that:
+          - (coolify_application_uuid | default('') | length) > 0
+        fail_msg: "Coolify did not return an application UUID."
+
+    - name: Converge Coolify application source settings
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}"
+        method: PATCH
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        body_format: json
+        body:
+          git_branch: "{{ git_branch }}"
+          is_auto_deploy_enabled: false
+        status_code: 200
 
     # Get existing env vars
     - name: List existing envs for application
@@ -213,6 +261,10 @@
             is_literal: true
           - key: "DOCKER_TAG"
             value: "{{ docker_tag }}"
+            is_preview: false
+            is_literal: true
+          - key: "POSTGRES_TAG"
+            value: "{{ postgres_tag }}"
             is_preview: false
             is_literal: true
           - key: "TS_APP_DOMAIN"
@@ -303,7 +355,17 @@
     - name: Get deployment UUID
       ansible.builtin.set_fact:
         coolify_deployment_uuid: "{{ coolify_deploy_result.json.deployments[0].deployment_uuid | default('') }}"
-      when: coolify_deploy_result is defined and coolify_deploy_result.json.deployments | length > 0
+      when: >-
+        coolify_deploy_result is defined
+        and (coolify_deploy_result.json.deployments | default([]) | length) > 0
+
+    - name: Assert Coolify queued a deployment
+      ansible.builtin.assert:
+        that:
+          - coolify_deploy_result is defined
+          - (coolify_deploy_result.json.deployments | default([]) | length) > 0
+          - (coolify_deployment_uuid | default('') | length) > 0
+        fail_msg: "Coolify did not return a deployment UUID; refusing to report success."
 
     - name: Wait for deployment to complete
       ansible.builtin.uri:
@@ -314,9 +376,12 @@
         status_code: 200
         return_content: true
       register: coolify_deployment_result
-      retries: 7 # Retry 7 times
-      delay: 90 # Wait for 90 seconds before retrying
-      until: coolify_deployment_result.json.status in ['failed', 'finished', 'cancelled-by-user']
+      retries: 12
+      delay: 60
+      until: >-
+        ((coolify_deployment_result.json | default({})).status | default('unknown'))
+        in ['failed', 'finished', 'cancelled-by-user']
+      failed_when: false
       when: coolify_deployment_uuid | default('') != ''
 
     # Surface the Coolify deployment logs when it did not finish successfully
@@ -325,17 +390,83 @@
         msg: "{{ ((coolify_deployment_result.json.logs | from_json) | map(attribute='output') | select('string') | list)[-120:] }}"
       when: >-
         coolify_deployment_result is defined
-        and (coolify_deployment_result.json.status | default('')) != 'finished'
-        and coolify_deployment_result.json.logs is defined
-        and coolify_deployment_result.json.logs is string
+        and ((coolify_deployment_result.json | default({})).status | default('unknown')) != 'finished'
+        and (coolify_deployment_result.json | default({})).logs is defined
+        and (coolify_deployment_result.json | default({})).logs is string
 
     # Exit if Coolify deployment did not finish successfully
     - name: Fail if Coolify deployment failed
       ansible.builtin.fail:
         msg: >-
           Coolify deployment did not finish successfully (status:
-          {{ coolify_deployment_result.json.status | default('unknown') }}).
+          {{ (coolify_deployment_result.json | default({})).status | default('unknown') }}).
           Check the deployment logs printed above.
       when: >-
         coolify_deployment_uuid | default('') != ''
-        and (coolify_deployment_result.json.status | default('')) != 'finished'
+        and ((coolify_deployment_result.json | default({})).status | default('unknown')) != 'finished'
+
+    - name: Read deployed Coolify application
+      ansible.builtin.uri:
+        url: "{{ coolify_api_url }}/applications/{{ coolify_application_uuid }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ coolify_api_token }}"
+        status_code: 200
+        return_content: true
+      register: coolify_application_after
+      when: coolify_application_uuid | default('') != ''
+
+    - name: Assert Coolify deployed the validated source revision
+      ansible.builtin.assert:
+        that:
+          - coolify_application_after.json.git_commit_sha == git_commit_sha
+        fail_msg: >-
+          Coolify deployed source
+          {{ coolify_application_after.json.git_commit_sha | default('unknown') }},
+          expected {{ git_commit_sha }}. A newer push may have landed during
+          deployment.
+      when:
+        - coolify_application_uuid | default('') != ''
+        - verify_source_sha | default(true) | bool
+
+    - name: Assert running containers use the deployed image tags
+      ansible.builtin.command:
+        cmd: "docker ps --format '{% raw %}{{.Image}}{% endraw %}'"
+      register: running_images
+      changed_when: false
+      retries: 12
+      delay: 10
+      until: >-
+        (running_images.stdout_lines | select('search', ':' ~ git_commit_sha) | list | length) >= 3 and
+        (running_images.stdout_lines | select('search', ':' ~ postgres_tag) | list | length) >= 1
+
+    - name: Find running Django container for this revision
+      ansible.builtin.command:
+        cmd: >-
+          docker ps -q
+          --filter "label=com.docker.compose.service=django"
+          --filter "ancestor=ghcr.io/baldwinboy/neuromancers-network:{{ git_commit_sha }}"
+      register: django_container_id
+      changed_when: false
+      retries: 12
+      delay: 10
+      until: django_container_id.stdout_lines | length > 0
+
+    - name: Assert health endpoint reports the deployed revision
+      ansible.builtin.command:
+        argv:
+          - docker
+          - exec
+          - "{{ django_container_id.stdout_lines[0] }}"
+          - python
+          - -c
+          - >-
+            import json,urllib.request;
+            data=json.load(urllib.request.urlopen('http://127.0.0.1:5000/api/health', timeout=5));
+            assert data.get('revision') == '{{ git_commit_sha }}', data
+      register: health_revision
+      changed_when: false
+      retries: 12
+      delay: 10
+      until: health_revision.rc == 0
+      when: require_health_revision | default(true) | bool

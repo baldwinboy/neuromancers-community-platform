@@ -7,6 +7,7 @@ import logging
 from allauth.account.signals import email_changed
 from django.db.models.signals import post_save
 from django.db.models.signals import pre_delete
+from django.db.models.signals import pre_save
 from django.utils import timezone
 from django_fsm.signals import post_transition
 
@@ -14,6 +15,7 @@ from neuromancers_network.core.audit import record_audit
 from neuromancers_network.inbox.events import emit
 from neuromancers_network.inbox.payloads import account_lifecycle_payload
 from neuromancers_network.inbox.payloads import identity_change_payload
+from neuromancers_network.users.utils import normalize_email
 
 logger = logging.getLogger(__name__)
 
@@ -111,13 +113,52 @@ def handle_email_changed(
         logger.exception("Failed to audit email change for user %s", user.pk)
 
 
+def normalize_email_address(sender, instance, **kwargs) -> None:
+    """Keep allauth address rows canonical regardless of the write path."""
+    instance.email = normalize_email(instance.email)
+
+
+def sync_email_address_on_user_save(
+    sender,
+    instance,
+    created,
+    *,
+    raw: bool = False,
+    update_fields: frozenset[str] | None = None,
+    **kwargs,
+) -> None:
+    """Sync allauth after direct User email updates.
+
+    Signup creates the User before allauth calls ``setup_user_email()``, so
+    newly created rows must be skipped. Fixture loads and explicit purge saves
+    are skipped too.
+    """
+    if created or raw:
+        return
+    if getattr(instance, "_skip_email_sync", False):
+        return
+    if update_fields is not None and "email" not in update_fields:
+        return
+
+    from neuromancers_network.users.services import sync_email_address  # noqa: PLC0415
+
+    sync_email_address(instance)
+
+
 def connect_signals():
+    from allauth.account.models import EmailAddress  # noqa: PLC0415
+
     from neuromancers_network.users.models import User  # noqa: PLC0415
 
     post_save.connect(
         emit_account_created,
         sender=User,
         dispatch_uid="users.signals.account_created",
+    )
+    post_save.connect(
+        sync_email_address_on_user_save,
+        sender=User,
+        dispatch_uid="users.signals.sync_email_address_on_user_save",
     )
     pre_delete.connect(
         emit_account_deleted,
@@ -132,4 +173,9 @@ def connect_signals():
     email_changed.connect(
         handle_email_changed,
         dispatch_uid="users.signals.email_changed",
+    )
+    pre_save.connect(
+        normalize_email_address,
+        sender=EmailAddress,
+        dispatch_uid="users.signals.normalize_email_address",
     )

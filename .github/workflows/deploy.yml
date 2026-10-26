@@ -6,30 +6,198 @@ on:
     types:
       - completed
     branches: [main, staging]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Commit SHA to deploy
+        required: true
+        type: string
+      branch:
+        description: Branch
+        required: true
+        default: staging
+        type: choice
+        options: [main, staging]
+      environment:
+        description: GitHub environment
+        required: true
+        default: staging
+        type: choice
+        options: [production, staging]
+      require_health_revision:
+        description: Require /api/health revision (disable for pre-revision rollbacks)
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  actions: read
+  contents: read
 
 concurrency:
-  group: deploy-${{ github.event.workflow_run.head_branch }}
-  cancel-in-progress: true
+  group: deploy-${{ github.event.workflow_run.head_branch || github.ref_name }}
+  cancel-in-progress: ${{ (github.event.workflow_run.head_branch || github.ref_name) != 'main' }}
 
 jobs:
-  deploy:
+  gate:
     if: >-
-      github.event.workflow_run.event == 'push'
-      && github.event.workflow_run.conclusion == 'success'
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    outputs:
+      build_and_deploy: ${{ steps.resolve.outputs.build_and_deploy }}
+      sha: ${{ steps.resolve.outputs.sha }}
+      branch: ${{ steps.resolve.outputs.branch }}
+      environment: ${{ steps.resolve.outputs.environment }}
+      require_health_revision: ${{ steps.resolve.outputs.require_health_revision }}
+      verify_source_sha: ${{ steps.resolve.outputs.verify_source_sha }}
+    steps:
+      - name: Resolve deployment metadata
+        id: resolve
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_SHA: ${{ inputs.sha }}
+          INPUT_BRANCH: ${{ inputs.branch }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_REQUIRE_HEALTH_REVISION: ${{ inputs.require_health_revision }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ "$REF_NAME" != "main" && "$REF_NAME" != "staging" ]]; then
+              echo "::error::workflow_dispatch must run from main or staging"
+              exit 1
+            fi
+            if [[ "$REF_NAME" != "$INPUT_BRANCH" ]]; then
+              echo "::error::workflow ref must match the selected branch"
+              exit 1
+            fi
+            if [[ ! "$INPUT_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "::error::sha must be a 40-character lowercase commit SHA"
+              exit 1
+            fi
+            if [[ "$INPUT_BRANCH" != "main" && "$INPUT_BRANCH" != "staging" ]]; then
+              echo "::error::branch must be main or staging"
+              exit 1
+            fi
+            if [[ "$INPUT_ENVIRONMENT" != "production" && "$INPUT_ENVIRONMENT" != "staging" ]]; then
+              echo "::error::environment must be production or staging"
+              exit 1
+            fi
+            if [[ "$INPUT_BRANCH" == "main" && "$INPUT_ENVIRONMENT" != "production" ]] ||
+               [[ "$INPUT_BRANCH" == "staging" && "$INPUT_ENVIRONMENT" != "staging" ]]; then
+              echo "::error::branch and environment are inconsistent"
+              exit 1
+            fi
+
+            build_and_deploy=true
+            sha="$INPUT_SHA"
+            branch="$INPUT_BRANCH"
+            environment="$INPUT_ENVIRONMENT"
+            require_health_revision="${INPUT_REQUIRE_HEALTH_REVISION:-true}"
+            verify_source_sha=false
+          else
+            docker_conclusion="$(
+              gh api \
+                "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" \
+                --jq '[.jobs[] | select(.name == "docker") | .conclusion] | first // "missing"'
+            )"
+            if [[ "$docker_conclusion" != "success" ]]; then
+              echo "::notice::docker job conclusion: ${docker_conclusion}; skipping deployment"
+              build_and_deploy=false
+            else
+              build_and_deploy=true
+            fi
+            sha="$HEAD_SHA"
+            branch="$HEAD_BRANCH"
+            environment="$([[ "$branch" == "main" ]] && echo production || echo staging)"
+            require_health_revision=true
+            verify_source_sha=true
+          fi
+
+          {
+            echo "build_and_deploy=$build_and_deploy"
+            echo "sha=$sha"
+            echo "branch=$branch"
+            echo "environment=$environment"
+            echo "require_health_revision=$require_health_revision"
+            echo "verify_source_sha=$verify_source_sha"
+          } >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: gate
+    if: needs.gate.outputs.build_and_deploy == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    environment: ${{ github.event.workflow_run.head_branch == 'main' && 'production' || 'staging' }}
+      packages: read
+    environment: ${{ needs.gate.outputs.environment }}
     env:
-      DEPLOY_BRANCH: ${{ github.event.workflow_run.head_branch }}
-      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+      DEPLOY_BRANCH: ${{ needs.gate.outputs.branch }}
+      DEPLOY_SHA: ${{ needs.gate.outputs.sha }}
+      REQUIRE_HEALTH_REVISION: ${{ needs.gate.outputs.require_health_revision }}
+      VERIFY_SOURCE_SHA: ${{ needs.gate.outputs.verify_source_sha }}
       BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
     steps:
       - name: Checkout deployment revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || needs.gate.outputs.sha }}
           persist-credentials: false
+          fetch-depth: 0
+
+      - name: Compute postgres content tag
+        id: image-meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="${DEPLOY_SHA}"
+          if ! git cat-file -e "${target}^{commit}" 2>/dev/null; then
+            echo "::error::Target commit ${target} is not available in the repository checkout"
+            exit 1
+          fi
+          echo "postgres_tag=postgres-$(git rev-parse "${target}:compose/production/postgres")" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify image manifests exist
+        env:
+          TARGET_SHA: ${{ needs.gate.outputs.sha }}
+          POSTGRES_TAG: ${{ steps.image-meta.outputs.postgres_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          refs=(
+            "ghcr.io/${owner}/neuromancers-network:${TARGET_SHA}"
+            "ghcr.io/${owner}/neuromancers-network-postgres:${POSTGRES_TAG}"
+          )
+          for ref in "${refs[@]}"; do
+            for attempt in $(seq 1 10); do
+              if docker manifest inspect "$ref" >/dev/null 2>&1; then
+                echo "Found $ref"
+                break
+              fi
+              if [[ "$attempt" -eq 10 ]]; then
+                echo "::error::Missing image $ref for commit ${TARGET_SHA}"
+                exit 1
+              fi
+              sleep 6
+            done
+          done
+
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       - run: pip install ansible==14.5.*
       - name: Install latest Bitwarden Secrets Manager CLI
@@ -69,6 +237,7 @@ jobs:
             "COOLIFY_ADMIN_USERNAME"
             "COOLIFY_ADMIN_EMAIL"
             "COOLIFY_ADMIN_PASSWORD"
+            "COOLIFY_ADMIN_TOKEN"
             "GATUS_DISCORD_WEBHOOK_URL"
             "AWS_ENDPOINT_URL_S3"
             "AWS_S3_BUCKET_NAME"
@@ -138,8 +307,9 @@ jobs:
         env:
           ANSIBLE_HOST_KEY_CHECKING: "false"
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+          POSTGRES_TAG: ${{ steps.image-meta.outputs.postgres_tag }}
         run: |
-          EXTRA="BWS_ACCESS_TOKEN=$BWS_ACCESS_TOKEN git_branch=$DEPLOY_BRANCH git_commit_sha=$DEPLOY_SHA git_repository=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          EXTRA="BWS_ACCESS_TOKEN=$BWS_ACCESS_TOKEN git_branch=$DEPLOY_BRANCH git_commit_sha=$DEPLOY_SHA git_repository=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY postgres_tag=$POSTGRES_TAG require_health_revision=$REQUIRE_HEALTH_REVISION verify_source_sha=$VERIFY_SOURCE_SHA"
 
           if [[ "$DEPLOY_BRANCH" == "main" ]]; then
             EXTRA="$EXTRA git_environment=production"

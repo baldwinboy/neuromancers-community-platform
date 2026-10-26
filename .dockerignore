@@ -12,3 +12,12 @@ venv
 .envs/
 .venv/
 **/__pycache__/
+docs/
+tests/
+.agents/
+.devcontainer/
+node_modules/
+staticfiles/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/

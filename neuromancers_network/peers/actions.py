@@ -63,10 +63,14 @@ def _onboarding_url(request, candidate, fallback):
 
 
 def peer_connect_stripe(request, data):
+    from neuromancers_network.core.audience import can_connect_stripe  # noqa: PLC0415
     from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
 
     user = require_authenticated(request)
     _require_provider_agreement(user)
+    if not can_connect_stripe(request):
+        message = "Stripe is already connected or is not available yet"
+        raise PermissionDenied(message)
     payment_profile = ensure_payment_profile(user)
 
     stripe_settings = StripeSettings.load(request)
@@ -97,19 +101,27 @@ def peer_subscribe(request, data):
     if not StripeSettings.load(request).subscription_enabled:
         message = "Subscriptions are disabled"
         raise PermissionDenied(message)
+    from neuromancers_network.core.audience import can_start_plan  # noqa: PLC0415
+
     _require_provider_agreement(user)
+    if not can_start_plan(request):
+        message = "A plan is already active or the provider is not ready"
+        raise PermissionDenied(message)
     payment_profile = ensure_payment_profile(user)
     return HttpResponseRedirect(create_subscription_checkout(payment_profile, request))
 
 
 def peer_open_stripe_dashboard(request, data):
     """Open the peer's Stripe Express dashboard, onboarding the account first."""
+    from neuromancers_network.core.audience import can_open_stripe_dashboard  # noqa: PLC0415
     from neuromancers_network.payments.services import ensure_stripe_account  # noqa: PLC0415
 
     user = require_authenticated(request)
     _require_provider_agreement(user)
-    if not is_eligible_peer(user):
-        message = "Only eligible care providers can open the Stripe dashboard"
+    if not can_open_stripe_dashboard(request):
+        message = (
+            "Only eligible, connected care providers can open the Stripe dashboard"
+        )
         raise PermissionDenied(message)
 
     ensure_stripe_account(user)
@@ -121,7 +133,12 @@ def peer_open_stripe_dashboard(request, data):
 
 
 def peer_accept_provider_agreement(request, data):
+    from neuromancers_network.core.audience import can_accept_provider_agreement  # noqa: PLC0415
+
     user = require_authenticated(request)
+    if not can_accept_provider_agreement(request):
+        message = "The provider agreement cannot be accepted"
+        raise PermissionDenied(message)
     profile = getattr(user, "peer_profile", None)
     if profile is None:
         message = "Only care providers can accept the provider agreement"
@@ -140,13 +157,14 @@ def peer_accept_provider_agreement(request, data):
 
 def peer_stripe_disconnect(request, data):
     """Delete the peer's connected Stripe account and unlink the local profile."""
+    from neuromancers_network.core.audience import can_disconnect_stripe  # noqa: PLC0415
     from neuromancers_network.payments.services import disconnect_stripe_account  # noqa: PLC0415
 
     user = require_authenticated(request)
-    payment_profile = getattr(user, "payment_profile", None)
-    if payment_profile is None or not payment_profile.stripe_connect_account_id_id:
+    if not can_disconnect_stripe(request):
         message = "No connected Stripe account to disconnect"
         raise PermissionDenied(message)
+    payment_profile = getattr(user, "payment_profile", None)
     try:
         disconnect_stripe_account(payment_profile)
     except StripeBalanceError:
@@ -176,9 +194,13 @@ def _payment_profile_or_denied(user):
 
 def peer_subscription_pause(request, data):
     """Pause collection on the signed-in provider's subscription."""
+    from neuromancers_network.core.audience import can_pause_plan  # noqa: PLC0415
     from neuromancers_network.payments.services import pause_subscription  # noqa: PLC0415
 
     user = require_authenticated(request)
+    if not can_pause_plan(request):
+        message = "This plan cannot be paused"
+        raise PermissionDenied(message)
     _require_provider_agreement(user)
     pause_subscription(_payment_profile_or_denied(user))
     return redirect_back(request)
@@ -186,9 +208,13 @@ def peer_subscription_pause(request, data):
 
 def peer_subscription_resume(request, data):
     """Resume a paused subscription for the signed-in provider."""
+    from neuromancers_network.core.audience import can_resume_plan  # noqa: PLC0415
     from neuromancers_network.payments.services import resume_subscription  # noqa: PLC0415
 
     user = require_authenticated(request)
+    if not can_resume_plan(request):
+        message = "This plan cannot be resumed"
+        raise PermissionDenied(message)
     _require_provider_agreement(user)
     resume_subscription(_payment_profile_or_denied(user))
     return redirect_back(request)
@@ -196,9 +222,13 @@ def peer_subscription_resume(request, data):
 
 def peer_subscription_cancel(request, data):
     """Cancel the provider's subscription, at the period end by default."""
+    from neuromancers_network.core.audience import can_cancel_plan  # noqa: PLC0415
     from neuromancers_network.payments.services import cancel_subscription  # noqa: PLC0415
 
     user = require_authenticated(request)
+    if not can_cancel_plan(request):
+        message = "This plan cannot be cancelled"
+        raise PermissionDenied(message)
     _require_provider_agreement(user)
     at_period_end = True
     if hasattr(data, "get"):

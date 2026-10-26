@@ -33,10 +33,12 @@ Push to main/staging
 │  CD (GitHub Actions)           │
 │  Deploy Infrastructure         │
 │                                │
-│  1. Inject Bitwarden secrets   │
-│  2. Connect to Tailscale       │
-│  3. Write SSH key              │
-│  4. Run Ansible playbook       │
+│  0. Gate on docker success     │
+│  1. Verify image manifests     │
+│  2. Inject Bitwarden secrets   │
+│  3. Connect to Tailscale       │
+│  4. Write SSH key              │
+│  5. Run Ansible playbook       │
 │     ┌────────────────────┐     │
 │     │ site.yml            │     │
 │     │  ┌──────────────┐   │     │
@@ -53,9 +55,9 @@ Push to main/staging
 │                                │
 │  - Receives env vars via API   │
 │  - Pulls docker-compose.coolify│
-│    .yml from git commit        │
-│  - Pulls Docker images from    │
-│    ghcr.io with correct tag    │
+│    .yml from the branch head   │
+│  - Pulls immutable SHA-tagged  │
+│    images from ghcr.io         │
 │  - Starts the container stack  │
 │  - Containers resolve runtime  │
 │    secrets from Bitwarden via  │
@@ -70,34 +72,49 @@ Push to main/staging
 **Workflow file:** `.github/workflows/ci.yml`
 
 **Trigger:** Push or PR to `main`/`staging` (excluding `docs/` paths). The
-`docker` job additionally requires the `changes` filter to report
-application changes and runs only on push events.
+`docker` job runs only on push events and only when the `changes` filter
+reports `build_and_deploy` (application or deployment inputs). Docs-only
+pushes do not start CI at all; README/test-only pushes run CI but cannot
+reach the Docker or deploy jobs.
 
 ### Jobs
 
 | Job | Purpose |
 |-----|---------|
-| `changes` | Detects whether application/build files changed (`dorny/paths-filter`) |
+| `changes` | Detects whether application or deployment files changed (`dorny/paths-filter`) |
 | `linter` | Runs pre-commit hooks (ruff, djlint, mypy, etc.) |
-| `migrations` | Checks for missing migrations (`makemigrations --check`) and runs `migrate` |
-| `docker` | Builds and pushes images to GitHub Container Registry, only when app files changed and only on push |
+| `migrations` | Checks for missing migrations, runs `migrate`, and runs the health endpoint test |
+| `docker` | Builds and pushes immutable images to GitHub Container Registry on push when `build_and_deploy` is true |
 
-The test suite exists (`pytest`) but is not currently run by CI.
+The full `pytest` suite is not run by CI yet; the health endpoint contract is
+covered by a targeted test in the `migrations` job.
 
 ### Image tagging
 
 All images are pushed to a single repository per component under
-`ghcr.io/baldwinboy/`, with environment-specific tags:
+`ghcr.io/baldwinboy/`:
 
-| Branch | Django image tag | Postgres image tag |
-|--------|-----------------|-------------------|
-| `main` | `neuromancers-network:latest` | `neuromancers-network-postgres:latest` |
-| `main` | `neuromancers-network:{sha}` | `neuromancers-network-postgres:{sha}` |
-| `staging` | `neuromancers-network:staging` | `neuromancers-network-postgres:staging` |
-| `staging` | `neuromancers-network:{sha}` | `neuromancers-network-postgres:{sha}` |
+| Image | Tags |
+|-------|------|
+| `neuromancers-network` | `{sha}`, plus `latest`/`staging` for compatibility |
+| `neuromancers-network-postgres` | `postgres-{tree-sha}`, `{sha}`, plus `latest`/`staging` for compatibility |
 
-The `docker-compose.coolify.yml` file uses the `DOCKER_TAG` variable
-(resolved by Coolify at deploy time) to select the correct tag.
+Deployments use **immutable tags**, not branch tags:
+
+- `DOCKER_TAG` is the 40-character commit SHA.
+- `POSTGRES_TAG` is a content tag derived from
+  `compose/production/postgres` (`postgres-{git-tree-sha}`), so app-only
+  deploys do not recreate the database container.
+
+`docker-compose.coolify.yml` requires both variables:
+
+```yaml
+image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:?...}
+image: ghcr.io/baldwinboy/neuromancers-network-postgres:${POSTGRES_TAG:?...}
+```
+
+The branch tags remain for rollback compatibility, but they are not used by
+the deployment path.
 
 ---
 
@@ -106,27 +123,41 @@ The `docker-compose.coolify.yml` file uses the `DOCKER_TAG` variable
 **Workflow file:** `.github/workflows/deploy.yml`
 
 **Trigger:** Successful completion of the `CI` workflow on `main` or
-`staging` (`workflow_run` event).
+`staging` (`workflow_run` event). `workflow_run` uses the deploy workflow
+from the default branch (`main`), so changes to `deploy.yml` only take effect
+on staging after they reach `main`.
 
 ### Steps
 
-1. **Checkout** — Checks out the exact commit SHA from CI.
-2. **Ansible install** — Installs Ansible 13.6.x.
-3. **BWS CLI install** — Downloads the latest Bitwarden Secrets Manager
+1. **Gate** — Reads the triggering CI run and requires the `docker` job to
+   have concluded `success`. If it was skipped or missing, the deployment
+   job is skipped. This prevents a deploy without a new image.
+2. **Checkout** — Checks out the exact commit SHA from CI.
+3. **Postgres tag** — Computes `POSTGRES_TAG` from the target commit.
+4. **Manifest gate** — Confirms the app `{sha}` image and postgres
+   `postgres-{tree-sha}` image exist in GHCR. Fails before Ansible if
+   either is missing.
+5. **Ansible install** — Installs Ansible.
+6. **BWS CLI install** — Downloads the latest Bitwarden Secrets Manager
    CLI binary from GitHub releases.
-4. **BWS validation** — Confirms `BWS_ACCESS_TOKEN` is set in GitHub
+7. **BWS validation** — Confirms `BWS_ACCESS_TOKEN` is set in GitHub
    environment secrets.
-5. **Secret injection** — Uses `bws secret list` + `jq` to extract
+8. **Secret injection** — Uses `bws secret list` + `jq` to extract
    required secrets from Bitwarden. Masks and exports them as step
    outputs.
-6. **Tailscale connect** — Joins the GitHub runner to the tailnet using
+9. **Tailscale connect** — Joins the GitHub runner to the tailnet using
    OAuth credentials from Bitwarden.
-7. **SSH key setup** — Writes the Hetzner SSH private key for Ansible
-   connectivity.
-8. **Ansible Galaxy install** — Installs required collections.
-9. **Ansible playbook run** — Executes `infra/playbooks/site.yml` under
-   `bws run` with `git_branch`, `git_commit_sha`, `git_repository`, and
-   `git_environment` extra vars.
+10. **SSH key setup** — Writes the Hetzner SSH private key for Ansible
+    connectivity.
+11. **Ansible Galaxy install** — Installs required collections.
+12. **Ansible playbook run** — Executes `infra/playbooks/site.yml` under
+    `bws run` with `git_branch`, `git_commit_sha`, `git_repository`,
+    `git_environment`, `postgres_tag`, `require_health_revision`, and
+    `verify_source_sha`.
+
+A `workflow_dispatch` entry point supports image-only rollback. It validates
+the SHA, branch, and environment; checks the image manifests; and does not
+require the Compose source revision to equal the rolled-back image SHA.
 
 ### Environment awareness
 
@@ -158,15 +189,24 @@ separate Bitwarden projects for production and staging secrets.
 
 The `deploy_application.yml` playbook:
 
-1. Checks Coolify API health.
-2. Lists and identifies the host server.
-3. Creates the `neuromancers` project if missing.
-4. Creates or reuses the `neuromancers` environment.
-5. Creates or reuses the `neuromancers_network` application with
+1. Validates the SHA, branch, environment, and postgres tag.
+2. Checks Coolify API health and required tokens.
+3. Lists and identifies the host server.
+4. Creates the `neuromancers` project if missing.
+5. Creates or reuses the `neuromancers` environment.
+6. Creates or reuses the `neuromancers_network` application with
    `build_pack: dockercompose` pointing at `docker-compose.coolify.yml`.
-6. Pushes `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `TS_APP_DOMAIN`, `TS_PAAS_DOMAIN`,
-   `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID`, and `TS_OAUTH_CLIENT_SECRET` as
-   Coolify env vars.
+7. PATCHes `git_branch` and disables Coolify auto-deploy.
+8. Pushes `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `POSTGRES_TAG`, `TS_APP_DOMAIN`,
+   `TS_PAAS_DOMAIN`, `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID`, and
+   `TS_OAUTH_CLIENT_SECRET` as Coolify env vars.
+9. Triggers the deployment and asserts that Coolify returned a deployment UUID.
+10. Verifies the Coolify source SHA, running image tags, and `/api/health`
+    revision after deployment.
+
+Coolify resolves the Compose file from `git_branch` (the branch head). Its
+stored `git_commit_sha` is a record of the last deployed commit, not a pin.
+Do not PATCH `git_commit_sha` or `git_repository` to control a deployment.
 
 ---
 
@@ -182,7 +222,7 @@ accessible). It manages the Docker Compose stack defined in
 |---------|-------|----------|
 | `tsdproxy` | `almeidapaulopt/tsdproxy:dev` | Tailscale proxy/VIP services for the stack |
 | `django` | `ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG}` | Gunicorn WSGI server on port 5000 |
-| `postgres` | `ghcr.io/baldwinboy/neuromancers-network-postgres:${DOCKER_TAG}` | PostgreSQL 18 |
+| `postgres` | `ghcr.io/baldwinboy/neuromancers-network-postgres:${POSTGRES_TAG}` | PostgreSQL 18 |
 | `redis` | `docker.io/redis:8.8` | Message broker / cache |
 | `celeryworker` | `ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG}` | Celery async task worker |
 | `celerybeat` | `ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG}` | Celery periodic task scheduler |
@@ -190,9 +230,9 @@ accessible). It manages the Docker Compose stack defined in
 
 ### Runtime secret resolution
 
-Ansible pushes only `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `TS_APP_DOMAIN`,
-`TS_PAAS_DOMAIN`, `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID`, and
-`TS_OAUTH_CLIENT_SECRET` to Coolify.
+Ansible pushes only `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `POSTGRES_TAG`,
+`TS_APP_DOMAIN`, `TS_PAAS_DOMAIN`, `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID`,
+and `TS_OAUTH_CLIENT_SECRET` to Coolify.
 All other runtime secrets must be **manually added** to the Coolify
 application by a developer after first creation.
 
@@ -221,6 +261,16 @@ The `/start` script runs:
 3. `manage.py collectstatic --noinput` — Collects static files.
 4. `gunicorn config.wsgi` — Starts the WSGI server.
 
+The image is built with `GIT_COMMIT_SHA` as an environment variable.
+`/api/health` returns:
+
+```json
+{"status": "ok", "revision": "<commit-sha>"}
+```
+
+After deployment Ansible asserts that `revision` equals the deployed SHA and
+that the running Django/Celery/Postgres containers use the expected tags.
+
 ---
 
 ## Secrets architecture
@@ -244,7 +294,7 @@ Bitwarden Secrets Manager
   │         Application containers (receive secrets at startup)
   │
   └── BWS_ACCESS_TOKEN → pushed to Coolify by Ansible (along with DOCKER_TAG,
-        TS_*_DOMAIN, and TAILSCALE_TAG)
+        POSTGRES_TAG, TS_*_DOMAIN, and TAILSCALE_TAG)
 ```
 
 ---

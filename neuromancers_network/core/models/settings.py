@@ -1,3 +1,4 @@
+from django import forms
 from django.conf import settings
 from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
@@ -537,6 +538,7 @@ class ScriptBlock(blocks.StructBlock):
         choices=get_audience_rule_choices,
         required=False,
         help_text=_("Who may receive this script (empty = everyone)."),
+        widget=forms.CheckboxSelectMultiple,
     )
     code = blocks.TextBlock(help_text=_("Paste the full script markup."))
 

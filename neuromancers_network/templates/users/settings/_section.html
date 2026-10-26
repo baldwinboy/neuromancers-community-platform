@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n allauth_ui %}
 
 <div id="settings-section-{{ key }}" class="space-y-4">
   {% if saved %}
@@ -16,18 +16,7 @@
       <div class="alert alert-error">{{ form.non_field_errors }}</div>
     {% endif %}
     {% for field in form %}
-      <div class="form-control w-full">
-        <label class="label" for="{{ field.id_for_label }}">
-          <span class="label-text">{{ field.label }}</span>
-        </label>
-        {{ field }}
-        {% if field.help_text %}
-          <span class="label-text-alt">{{ field.help_text }}</span>
-        {% endif %}
-        {% for error in field.errors %}
-          <span class="text-error text-sm">{{ error }}</span>
-        {% endfor %}
-      </div>
+      <div class="form-control w-full">{% daisie_form_field field %}</div>
     {% endfor %}
     {{ form.media }}
     <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>

@@ -36,6 +36,8 @@ def get_fernet() -> Fernet:
 
 
 def is_encrypted(value: str | None) -> bool:
+    if not value:
+        return False
     return bool(value) and value.startswith(PREFIX)
 
 

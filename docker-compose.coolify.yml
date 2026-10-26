@@ -11,7 +11,7 @@ services:
       TSDPROXY_TAILSCALE_DEFAULT_CLIENTSECRET: ${TS_OAUTH_CLIENT_SECRET}
 
   django:
-    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
+    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:?DOCKER_TAG must be set to a commit SHA}
     depends_on:
       tsdproxy:
         condition: service_started
@@ -40,7 +40,7 @@ services:
       - /var/log/django:/var/log/django
 
   postgres:
-    image: ghcr.io/baldwinboy/neuromancers-network-postgres:${DOCKER_TAG:-latest}
+    image: ghcr.io/baldwinboy/neuromancers-network-postgres:${POSTGRES_TAG:?POSTGRES_TAG must be set}
     volumes:
       - postgres-data:/var/lib/postgresql/18/docker
       - postgres-backups:/backups
@@ -76,7 +76,7 @@ services:
     mem_limit: 192m
 
   celeryworker:
-    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
+    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:?DOCKER_TAG must be set to a commit SHA}
     depends_on:
       postgres:
         condition: service_healthy
@@ -90,7 +90,7 @@ services:
     mem_limit: 384m
 
   celerybeat:
-    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:-latest}
+    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:?DOCKER_TAG must be set to a commit SHA}
     depends_on:
       postgres:
         condition: service_healthy

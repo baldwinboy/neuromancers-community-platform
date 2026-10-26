@@ -45,6 +45,11 @@ The canonical, closed set of events lives in ``NotificationEventType``
   ``data_export_ready``, ``peer_published_meeting``, ``payment_succeeded``,
   ``payment_failed``.
 
+The ``account_deletion_scheduled`` payload includes
+``meta.deletion_cancel_url``. Include that value in the corresponding
+``EmailTemplate`` so members can cancel from the email. Admins can resend the
+link from the account-deletion request admin.
+
 How events get recorded
 ---------------------------------------------------------------------
 

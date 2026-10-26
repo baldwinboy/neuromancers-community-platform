@@ -58,18 +58,20 @@ def clear_consent(response):
     response.delete_cookie(COOKIE_NAME, samesite="Lax")
 
 
-def current_policy_version() -> str:
+def current_policy_version(settings_obj=None) -> str:
     from .models import ConsentSettings  # noqa: PLC0415
 
     try:
-        return ConsentSettings.load().policy_version or "1"
+        if settings_obj is None:
+            settings_obj = ConsentSettings.load()
     except DatabaseError:
         return "1"
+    return settings_obj.policy_version or "1"
 
 
-def consent_needs_update(request) -> bool:
+def consent_needs_update(request, settings_obj=None) -> bool:
     """Whether the banner should be shown (absent or stale policy version)."""
     payload = read_consent(request)
     if not payload:
         return True
-    return payload.get("version") != current_policy_version()
+    return payload.get("version") != current_policy_version(settings_obj)

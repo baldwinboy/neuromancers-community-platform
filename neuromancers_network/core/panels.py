@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 from django import forms
+from django.conf import settings
 from django.urls import reverse
 from wagtail.admin.panels import FieldPanel
 from wagtail.admin.panels import Panel
@@ -76,3 +77,17 @@ class HelpGuidePanel(Component):
 
     def get_context_data(self, parent_context):
         return {"help_url": reverse("help_guide")}
+
+
+class DemoDataPanel(Component):
+    """Dashboard panel linking to the demo/test data administration view."""
+
+    name = "demo_data"
+    order = 160
+    template_name = "core/demo_data_panel.html"
+
+    def get_context_data(self, parent_context):
+        return {
+            "demo_url": reverse("demo_data"),
+            "demo_enabled": settings.DEMO_DATA_ENABLED,
+        }
