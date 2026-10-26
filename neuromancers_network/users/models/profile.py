@@ -52,36 +52,6 @@ class UserProfile(index.Indexed, Timestamped):
         default=ProfileVisibility.MEMBERS,
     )
 
-    # Notification preferences
-    notify_meeting_request = models.BooleanField(
-        _("Meeting request alerts"),
-        default=True,
-    )
-    notify_meeting_approved = models.BooleanField(
-        _("Meeting approved alerts"),
-        default=True,
-    )
-    notify_meeting_reminder = models.BooleanField(
-        _("Meeting reminder alerts"),
-        default=True,
-    )
-    notify_review_received = models.BooleanField(
-        _("Review received alerts"),
-        default=True,
-    )
-    notify_refund_request = models.BooleanField(
-        _("Refund request alerts"),
-        default=True,
-    )
-    notify_peer_application_update = models.BooleanField(
-        _("Peer application update alerts"),
-        default=True,
-    )
-    notify_platform_announcements = models.BooleanField(
-        _("Platform announcements"),
-        default=True,
-    )
-
     # Calendar visibility (peers publish their calendar explicitly)
     show_calendar = models.BooleanField(
         _("Publish my calendar"),

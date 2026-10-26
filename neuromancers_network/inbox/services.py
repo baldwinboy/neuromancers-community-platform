@@ -34,15 +34,8 @@ TRANSACTIONAL_EVENT_TYPES = frozenset(
 )
 
 
-def should_notify(user, event_type: str) -> bool:
-    """Whether *user* should receive a notification for *event_type*.
-
-    Transactional events are always delivered. Otherwise a member's personal
-    opt-out list wins, falling back to the admin default disabled list.
-    """
-    if user is None or not getattr(user, "is_authenticated", False):
-        return False
-
+def _notification_policy() -> tuple[set[str], set[str]]:
+    """Return (transactional, default_disabled) for the current policy."""
     transactional = set(TRANSACTIONAL_EVENT_TYPES)
     default_disabled: set[str] = set()
     try:
@@ -53,7 +46,36 @@ def should_notify(user, event_type: str) -> bool:
         default_disabled = set(settings_obj.default_disabled_event_types or [])
     except DatabaseError:
         pass
+    return transactional, default_disabled
 
+
+def effective_transactional_event_types() -> set[str]:
+    """The fixed transactional events plus admin-added transactional events."""
+    return _notification_policy()[0]
+
+
+def member_optout_choices():
+    """Event choices a member can actually opt out of."""
+    from neuromancers_network.inbox.models import NotificationEventType  # noqa: PLC0415
+
+    transactional = effective_transactional_event_types()
+    return [
+        (value, label)
+        for value, label in NotificationEventType.choices
+        if value not in transactional
+    ]
+
+
+def should_notify(user, event_type: str) -> bool:
+    """Whether *user* should receive a notification for *event_type*.
+
+    Transactional events are always delivered. Otherwise a member's personal
+    opt-out list wins, falling back to the admin default disabled list.
+    """
+    if user is None or not getattr(user, "is_authenticated", False):
+        return False
+
+    transactional, default_disabled = _notification_policy()
     if event_type in transactional:
         return True
 

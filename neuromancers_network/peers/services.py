@@ -159,10 +159,7 @@ def window_occurrences(
     """Expand *window* into concrete ``(start, end)`` occurrences."""
     base_start = window.start
     base_end = window.end
-    if not window.occurrence or not isinstance(
-        window.occurrence,
-        AvailabilityOccurrence,
-    ):
+    if not window.occurrence or window.occurrence not in AvailabilityOccurrence.values:
         yield base_start, base_end
         return
 

@@ -22,6 +22,7 @@ from neuromancers_network.core.actions import redirect_back
 from neuromancers_network.core.actions import require_authenticated
 from neuromancers_network.inbox.forms import EventTypeMultipleChoiceField
 from neuromancers_network.inbox.models import NotificationPreference
+from neuromancers_network.inbox.services import member_optout_choices
 from neuromancers_network.taxonomy.models import Country
 from neuromancers_network.taxonomy.models import Language
 from neuromancers_network.users.cooldown import ensure_username_change_allowed
@@ -31,16 +32,6 @@ from neuromancers_network.users.utils import normalize_username
 from neuromancers_network.users.validators import validate_username_not_blocked
 
 User = get_user_model()
-
-_NOTIFY_FIELDS = (
-    "notify_meeting_request",
-    "notify_meeting_approved",
-    "notify_meeting_reminder",
-    "notify_review_received",
-    "notify_refund_request",
-    "notify_peer_application_update",
-    "notify_platform_announcements",
-)
 
 
 def profile_for(user) -> UserProfile:
@@ -108,32 +99,32 @@ class PrivacyForm(forms.ModelForm):
 
 class NotificationForm(forms.Form):
     disabled_event_types = EventTypeMultipleChoiceField(
-        label=_("Notifications to turn off"),
+        label=_("Email and inbox notifications to turn off"),
+        help_text=_(
+            "Applies to both email and in-app notifications. "
+            "Account, payment and security messages are always sent.",
+        ),
     )
 
     def __init__(self, *args, profile=None, **kwargs):
         self.profile = profile
         initial = kwargs.setdefault("initial", {})
+        choices = member_optout_choices()
+        selectable = {value for value, _label in choices}
         if profile is not None:
-            for field in _NOTIFY_FIELDS:
-                initial.setdefault(field, getattr(profile, field))
             preference = getattr(profile.user, "notification_preference", None)
             initial.setdefault(
                 "disabled_event_types",
-                list(preference.disabled_event_types) if preference else [],
+                [
+                    value
+                    for value in (preference.disabled_event_types if preference else [])
+                    if value in selectable
+                ],
             )
         super().__init__(*args, **kwargs)
-        for field in _NOTIFY_FIELDS:
-            self.fields[field] = forms.BooleanField(
-                required=False,
-                initial=initial.get(field, True),
-                label=UserProfile._meta.get_field(field).verbose_name,  # noqa: SLF001
-            )
+        self.fields["disabled_event_types"].choices = choices
 
     def save(self):
-        for field in _NOTIFY_FIELDS:
-            setattr(self.profile, field, self.cleaned_data[field])
-        self.profile.save()
         preference, _created = NotificationPreference.objects.get_or_create(
             user=self.profile.user,
         )

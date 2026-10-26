@@ -358,7 +358,8 @@ class Meeting(FSMModelMixin, index.Indexed, ClusterableModel, Timestamped):  # t
             )
             if (
                 self.scheduled_at
-                and (schedule_changed or publishing)
+                and schedule_changed
+                and publishing
                 and self.scheduled_at
                 < timezone.now() + timedelta(minutes=GROUP_MINIMUM_START_AHEAD_MINUTES)
             ):
