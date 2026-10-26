@@ -1,61 +1,59 @@
 {% load i18n %}
 
-{% if consent_settings %}
-  {% if consent_needs_update %}
-    <div class="fixed inset-x-0 bottom-0 border-t border-base-300 bg-base-100 shadow-lg"
-         role="dialog"
-         aria-labelledby="consent-title"
-         aria-describedby="consent-text"
-         style="z-index: 1000">
-      <div class="container mx-auto max-w-3xl p-4">
-        <h2 id="consent-title" class="text-lg font-semibold">{{ consent_settings.banner_title }}</h2>
-        {% if consent_settings.banner_text %}
-          <p id="consent-text" class="mt-1 text-sm">{{ consent_settings.banner_text|linebreaksbr }}</p>
-        {% endif %}
-        <form method="post"
-              action="{% url 'consent_accept' %}"
-              class="mt-3 space-y-3">
-          {% csrf_token %}
-          <input type="hidden"
-                 name="policy_version"
-                 value="{{ consent_settings.policy_version }}" />
-          <input type="hidden" name="return_to" value="{{ request.get_full_path }}" />
-          <fieldset>
-            <legend class="text-sm font-medium">{% trans "Optional cookies" %}</legend>
-            <div class="mt-1 flex flex-wrap gap-4">
-              {% for value, label in consent_categories %}
-                <label class="flex items-center gap-2">
-                  <input type="checkbox"
-                         name="categories"
-                         value="{{ value }}"
-                         class="checkbox checkbox-sm"
-                         {% if value in consent.categories %}checked{% endif %} />
-                  {{ label }}
-                </label>
-              {% endfor %}
-            </div>
-          </fieldset>
-          <div class="flex flex-wrap gap-2">
-            <button type="submit"
-                    name="choice"
-                    value="accept"
-                    class="btn btn-primary btn-sm">{{ consent_settings.accept_label }}</button>
-            <button type="submit"
-                    name="choice"
-                    value="necessary"
-                    class="btn btn-secondary btn-sm">{{ consent_settings.decline_label }}</button>
+{% if consent_settings and consent_needs_update %}
+  <div class="fixed inset-x-0 bottom-0 border-t border-base-300 bg-base-100 shadow-lg"
+       role="dialog"
+       aria-labelledby="consent-title"
+       aria-describedby="consent-text"
+       style="z-index: 1000">
+    <div class="container mx-auto max-w-3xl p-4">
+      <h2 id="consent-title" class="text-lg font-semibold">{{ consent_settings.banner_title }}</h2>
+      {% if consent_settings.banner_text %}
+        <p id="consent-text" class="mt-1 text-sm">{{ consent_settings.banner_text|linebreaksbr }}</p>
+      {% endif %}
+      <form method="post"
+            action="{% url 'consent_accept' %}"
+            class="mt-3 space-y-3">
+        {% csrf_token %}
+        <input type="hidden"
+               name="policy_version"
+               value="{{ consent_settings.policy_version }}" />
+        <input type="hidden" name="return_to" value="{{ request.get_full_path }}" />
+        <fieldset>
+          <legend class="text-sm font-medium">{% trans "Optional cookies" %}</legend>
+          <div class="mt-1 flex flex-wrap gap-4">
+            {% for value, label in consent_categories %}
+              <label class="flex items-center gap-2">
+                <input type="checkbox"
+                       name="categories"
+                       value="{{ value }}"
+                       class="checkbox checkbox-sm"
+                       {% if value in consent.categories %}checked{% endif %} />
+                {{ label }}
+              </label>
+            {% endfor %}
           </div>
-        </form>
-      </div>
+        </fieldset>
+        <div class="flex flex-wrap gap-2">
+          <button type="submit"
+                  name="choice"
+                  value="accept"
+                  class="btn btn-primary btn-sm">{{ consent_settings.accept_label }}</button>
+          <button type="submit"
+                  name="choice"
+                  value="necessary"
+                  class="btn btn-secondary btn-sm">{{ consent_settings.decline_label }}</button>
+        </div>
+      </form>
     </div>
-  {% else %}
-    <form method="post"
-          action="{% url 'consent_reset' %}"
-          class="fixed bottom-2 right-2"
-          style="z-index: 1000">
-      {% csrf_token %}
-      <input type="hidden" name="return_to" value="{{ request.get_full_path }}" />
-      <button type="submit" class="btn btn-ghost btn-xs">{% trans "Cookie settings" %}</button>
-    </form>
-  {% endif %}
+  </div>
+{% elif consent_settings %}
+  <form method="post"
+        action="{% url 'consent_reset' %}"
+        class="fixed bottom-2 right-2"
+        style="z-index: 1000">
+    {% csrf_token %}
+    <input type="hidden" name="return_to" value="{{ request.get_full_path }}" />
+    <button type="submit" class="btn btn-ghost btn-xs">{% trans "Cookie settings" %}</button>
+  </form>
 {% endif %}
