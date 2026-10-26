@@ -2,10 +2,11 @@
 
 {% if consent_settings %}
   {% if consent_needs_update %}
-    <div class="fixed inset-x-0 bottom-0 z-50 border-t border-base-300 bg-base-100 shadow-lg"
+    <div class="fixed inset-x-0 bottom-0 border-t border-base-300 bg-base-100 shadow-lg"
          role="dialog"
          aria-labelledby="consent-title"
-         aria-describedby="consent-text">
+         aria-describedby="consent-text"
+         style="z-index: 1000">
       <div class="container mx-auto max-w-3xl p-4">
         <h2 id="consent-title" class="text-lg font-semibold">{{ consent_settings.banner_title }}</h2>
         {% if consent_settings.banner_text %}
@@ -50,7 +51,8 @@
   {% else %}
     <form method="post"
           action="{% url 'consent_reset' %}"
-          class="fixed bottom-2 right-2 z-40">
+          class="fixed bottom-2 right-2"
+          style="z-index: 1000">
       {% csrf_token %}
       <input type="hidden" name="return_to" value="{{ request.get_full_path }}" />
       <button type="submit" class="btn btn-ghost btn-xs">{% trans "Cookie settings" %}</button>
