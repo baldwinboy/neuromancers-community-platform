@@ -231,6 +231,7 @@
         body_format: json
         body:
           git_branch: "{{ git_branch }}"
+          git_commit_sha: "{{ git_commit_sha }}"
           is_auto_deploy_enabled: false
         status_code: 200
 

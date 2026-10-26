@@ -7,14 +7,23 @@ and restricts the active locale to the admin-curated set from
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from django.conf import settings
+from django.http import HttpRequest
+from django.http import HttpResponse
+from django.http import HttpResponseBase
 from django.utils import translation
 from django.utils.cache import patch_vary_headers
 from django.utils.translation import get_language_from_path
 from django.utils.translation import get_language_from_request
 
+from .bootstrap_state import current_status
 from .i18n import available_language_choices
 from .i18n import get_localization
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class LocalizationMiddleware:
@@ -84,3 +93,43 @@ class ConsentVaryMiddleware:
         if "text/html" in response.get("Content-Type", ""):
             patch_vary_headers(response, ("Cookie",))
         return response
+
+
+class BootstrapGateMiddleware:
+    """Return 503 until the production bootstrap has completed."""
+
+    EXEMPT_PATHS = frozenset({"/api/health", "/api/ready"})
+    EXEMPT_PREFIXES = ("/static/", "/media/")
+
+    def __init__(
+        self,
+        get_response: Callable[[HttpRequest], HttpResponseBase],
+    ) -> None:
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponseBase:
+        if not getattr(settings, "BOOTSTRAP_GATE_ENABLED", False):
+            return self.get_response(request)
+        if self._is_exempt(request.path_info):
+            return self.get_response(request)
+        if current_status().serving_allowed:
+            return self.get_response(request)
+
+        response = HttpResponse(
+            "Service temporarily unavailable during deployment.\n",
+            status=503,
+            content_type="text/plain; charset=utf-8",
+        )
+        response["Retry-After"] = "30"
+        response["Cache-Control"] = "no-store"
+        return response
+
+    @classmethod
+    def _is_exempt(cls, path: str) -> bool:
+        normalized = path.rstrip("/") or "/"
+        if normalized in cls.EXEMPT_PATHS:
+            return True
+        return any(
+            path == prefix.rstrip("/") or path.startswith(prefix)
+            for prefix in cls.EXEMPT_PREFIXES
+        )

@@ -109,8 +109,8 @@ The root `AWS_*` keys back the private `exports` storage alias for member data e
 
 1. Rotate secret in source provider.
 2. Update Bitwarden entry value for the same key.
-3. Run a staging deploy and verify health checks.
-4. Run a production deploy and verify health checks.
+3. Run a staging deploy, verify health checks, and confirm `django-init` completed.
+4. Run a production deploy, verify health checks, and confirm `django-init` completed.
 5. Revoke old credential.
 
 ### Rotating `DJANGO_SECRET_KEY` (encrypted database settings)

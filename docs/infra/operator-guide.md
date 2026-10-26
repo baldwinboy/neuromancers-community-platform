@@ -34,6 +34,27 @@ After Ansible creates the Coolify application for the first time:
 
 This step cannot be automated because the set of secrets each developer wants is a manual decision.
 
+### Fresh database exception
+
+On a brand-new database, or after restoring an empty database, run the
+production bootstrap synchronously once before the first normal deployment:
+
+```bash
+# From the directory containing the rendered Coolify Compose file.
+docker compose run --rm django python manage.py bootstrap
+```
+
+If the rendered file still contains Coolify-only keys, run the same command from
+the Coolify terminal or a Compose copy without those keys.
+
+This is the same command the `django-init` service runs. Wait for exit code
+`0` before deploying or enabling traffic. This ensures the schema, superuser,
+and Wagtail page-tree seeds exist before the asynchronous init path is used.
+Subsequent deployments use the normal async init path.
+
+Use the direct `manage.py bootstrap` command for validation: the
+`django-init` service intentionally exits `0` even when bootstrap fails.
+
 ## GitHub environments
 
 Create two environments in GitHub:
@@ -129,6 +150,7 @@ bws secret list \
 - Uptime monitoring and the health dashboard run as the `gatus` service in the Coolify stack.
 - Gatus is reachable only over the tailnet at `https://<stage>-monitor.<tailnet>.ts.net` (the tsdproxy `-monitor` VIP); it is never exposed publicly.
 - Checks cover the Django health endpoint, PostgreSQL, the Django app over the tailnet VIP (including certificate expiry) and the Coolify API.
+- A dashboard-only `django-ready` check reflects bootstrap readiness. It is not alert-configured, so a failed init is visible on the dashboard but does not page.
 - Alerts are delivered to Discord via `GATUS_DISCORD_WEBHOOK_URL`, which must be manually added to the Coolify application environment.
 - Uptime history is persisted in the `gatus-data` volume.
 
@@ -139,15 +161,26 @@ The Coolify control plane is private to the tailnet:
 - Ansible (`tasks/configure_firewall.yml`) never opens ports `8000`
   (dashboard/API), `6001` (real-time) or `6002` (terminal) to the public
   internet, and deletes any legacy public allow rules on every run.
-- Those ports are reachable only over Tailscale, either at the host's
-  tailnet IP (`http://<tailscale-ip>:8000`) or through the Serve hostname
-  (`https://<stage>-paas.<tailnet>.ts.net`).
+- The Serve hostname (`https://<stage>-paas.<tailnet>.ts.net`) proxies only
+  these paths:
+
+  | Path | Upstream |
+  |------|----------|
+  | `/` | `localhost:8000` |
+  | `/app` | `127.0.0.1:6001/app` |
+  | `/apps` | `127.0.0.1:6001/apps` |
+  | `/terminal/ws` | `127.0.0.1:6002/terminal/ws` |
+
+- Ports `6001` and `6002` are not exposed directly by the Serve hostname.
+  They remain reachable over `tailscale0` only for the direct-IP fallback used
+  by Coolify when Serve path routing is unavailable. The direct-IP form is
+  `http://<tailscale-ip>:8000`, with `:6001` and `:6002` for the real-time and
+  terminal endpoints.
 - Docker publishes these ports through the FORWARD chain, so Ansible adds
   matching `ufw route` rules scoped to `tailscale0`, on top of the
   `ufw-docker` default-deny for public traffic.
-- Ports `6001` (real-time) and `6002` (terminal) must remain reachable over
-  the tailnet for the Coolify UI; the `ufw route` rules for them are
-  required and must not be removed.
+- Keep the `ufw route` rules for `6001` and `6002`; they are required for the
+  direct-IP fallback. Do not expose any of these ports publicly.
 
 Complete the following instance hardening once, in the Coolify UI:
 
@@ -167,8 +200,45 @@ Complete the following instance hardening once, in the Coolify UI:
 3. Confirm `Deploy Infrastructure` starts automatically.
 4. Confirm Ansible converge succeeds.
 5. Confirm the Coolify application has the secrets needed for runtime (added manually after first deploy).
-6. Confirm deployment finishes successfully.
+6. Confirm the Coolify deployment finishes successfully. This proves the web
+   container is running, not that migrations and seeds completed.
 7. Confirm the app health endpoint (`/api/health`) returns `200`.
+8. Check the `django-init` service: confirm it exited `0` and the seed commands
+   completed. Confirm `/api/ready` returns `{"status": "ready"}` before treating
+   the release as live.
+
+## Async bootstrap (migrations and seeds)
+
+Production bootstrap runs in the one-shot `django-init` Compose service, not in
+the web container. The `django` service starts Gunicorn after `collectstatic`;
+migrations, `ensure_superuser`, and the seed commands run concurrently in
+`django-init`. The init service is excluded from Coolify health.
+
+Consequences:
+
+- `/api/health` and the Compose health check prove only that Gunicorn is up.
+  They do **not** prove that migrations or seeds completed.
+- A deployment can finish while `django-init` is still running.
+- A failed `django-init` does not fail the deployment. The init service records
+  the failure in bootstrap state, logs it, and exits `0` so Coolify keeps the
+  deployment up for inspection.
+- Non-health traffic is gated with `503` until the full bootstrap completes, so
+  users do not see partially migrated or partially seeded content.
+- Celery worker and beat wait for bootstrap completion before starting. They
+  remain blocked and log while bootstrap is incomplete; they do not start
+  against a partial schema.
+- Container-level failures such as an image pull failure, OOM kill, or secret
+  injection failure can still fail the deployment; the exit-`0` policy applies
+  to the bootstrap command itself.
+
+Check after every deployment:
+
+1. Open the Coolify deployment logs or the `django-init` container logs.
+2. Confirm `django-init` exited `0` and all seeds completed.
+3. Confirm `/api/ready` reports `ready` before treating the release as live.
+4. If init failed, fix the cause and rerun the bootstrap command in a one-off
+   `django` container. The running web gate and Celery wait observe the state
+   change without a redeploy.
 
 ## Deployment Workflow
 
@@ -234,9 +304,15 @@ Task file `configure_coolify_api.yml` (imported by `setup_coolify.yml`):
 [Ansible] → deploy_application.yml: project / env / app creation
 ## Help content on deploy
 
-Both container start scripts run `seed_help_guide --force`, so every deploy
-overwrites the seeded Admin Guide rows from `core/help_seed.yaml`. This keeps
-the guide in step with the code, but **admin edits to seeded rows are lost on
-deploy**. Author lasting changes in the YAML file (and merge via the normal
-review process); the other seeders (`seed_pages`, `seed_account_selfservice`)
-remain non-force and never overwrite admin edits.
+Production seeds run in the `django-init` service via `manage.py bootstrap`,
+not in the production web `/start`. Local development seeds remain in
+`compose/local/django/start`.
+
+Every production deploy runs `seed_help_guide --force`, which overwrites the
+seeded Admin Guide rows from `core/help_seed.yaml`, and
+`seed_account_selfservice --force`, which overwrites the seeded Settings page
+body and account feed definitions. `seed_pages` is non-force and only creates
+missing pages, menus, and feeds. Admin edits to overwritten content are lost on
+deploy; author lasting changes in the YAML/code and merge via the normal review
+process. A failed init does not fail the deployment; confirm the init logs and
+readiness before assuming content was refreshed.

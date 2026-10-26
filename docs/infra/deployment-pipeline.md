@@ -83,11 +83,11 @@ reach the Docker or deploy jobs.
 |-----|---------|
 | `changes` | Detects whether application or deployment files changed (`dorny/paths-filter`) |
 | `linter` | Runs pre-commit hooks (ruff, djlint, mypy, etc.) |
-| `migrations` | Checks for missing migrations, runs `migrate`, and runs the health endpoint test |
+| `migrations` | Checks for missing migrations, runs `migrate`, and runs the bootstrap and health endpoint tests |
 | `docker` | Builds and pushes immutable images to GitHub Container Registry on push when `build_and_deploy` is true |
 
-The full `pytest` suite is not run by CI yet; the health endpoint contract is
-covered by a targeted test in the `migrations` job.
+The full `pytest` suite is not run by CI yet; the health, readiness, and
+bootstrap contracts are covered by targeted tests in the `migrations` job.
 
 ### Image tagging
 
@@ -196,7 +196,7 @@ The `deploy_application.yml` playbook:
 5. Creates or reuses the `neuromancers` environment.
 6. Creates or reuses the `neuromancers_network` application with
    `build_pack: dockercompose` pointing at `docker-compose.coolify.yml`.
-7. PATCHes `git_branch` and disables Coolify auto-deploy.
+7. PATCHes `git_branch` and `git_commit_sha`, and disables Coolify auto-deploy.
 8. Pushes `BWS_ACCESS_TOKEN`, `DOCKER_TAG`, `POSTGRES_TAG`, `TS_APP_DOMAIN`,
    `TS_PAAS_DOMAIN`, `TAILSCALE_TAG`, `TS_OAUTH_CLIENT_ID`, and
    `TS_OAUTH_CLIENT_SECRET` as Coolify env vars.
@@ -204,9 +204,12 @@ The `deploy_application.yml` playbook:
 10. Verifies the Coolify source SHA, running image tags, and `/api/health`
     revision after deployment.
 
-Coolify resolves the Compose file from `git_branch` (the branch head). Its
-stored `git_commit_sha` is a record of the last deployed commit, not a pin.
-Do not PATCH `git_commit_sha` or `git_repository` to control a deployment.
+Coolify resolves the Compose file from `git_branch` (the branch head).
+`git_commit_sha` is the deployed source commit when set: Ansible converges the
+application record to the validated target SHA via the application PATCH, and
+the post-deploy assertion verifies it. `git_commit_sha` does not choose the
+Compose source; use `git_branch` for that. Do not PATCH `git_repository` to
+control a deployment.
 
 ---
 
@@ -222,11 +225,22 @@ accessible). It manages the Docker Compose stack defined in
 |---------|-------|----------|
 | `tsdproxy` | `almeidapaulopt/tsdproxy:dev` | Tailscale proxy/VIP services for the stack |
 | `django` | `ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG}` | Gunicorn WSGI server on port 5000 |
+| `django-init` | `ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG}` | One-shot async bootstrap: migrations, superuser, and seeds; excluded from Coolify health |
 | `postgres` | `ghcr.io/baldwinboy/neuromancers-network-postgres:${POSTGRES_TAG}` | PostgreSQL 18 |
 | `redis` | `docker.io/redis:8.8` | Message broker / cache |
 | `celeryworker` | `ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG}` | Celery async task worker |
 | `celerybeat` | `ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG}` | Celery periodic task scheduler |
 | `gatus` | `ghcr.io/twin/gatus:stable` | Uptime monitoring, status page and alerts |
+
+`django-init` is a one-time Compose service with `exclude_from_hc: true`. It
+starts alongside `django`, not before it. A slow or failed init does not block
+or fail the Coolify deployment. The web health check is liveness only; check
+the init service logs and readiness after deployment.
+
+Docker Compose applications use the service-level `healthcheck` defined in
+`docker-compose.coolify.yml`. The application-level `health_check_*` fields
+sent by `deploy_application.yml` when creating the Coolify application are
+ignored for Docker Compose applications.
 
 ### Runtime secret resolution
 
@@ -247,29 +261,48 @@ environment variables.
 
 ## Stage 5 — Application startup
 
-The Django container entrypoint runs sequentially:
+Both the `django` and `django-init` services use the same entrypoint:
 
-1. Injects Bitwarden secrets via `bws run`.
-2. Sets `DATABASE_URL` from `POSTGRES_*` env vars.
-3. Waits for PostgreSQL to become available (`wait-for-it`).
-4. Executes the command (`/start`).
+1. Inject Bitwarden secrets via `bws run`.
+2. Set `DATABASE_URL` from `POSTGRES_*` env vars.
+3. Wait for PostgreSQL with `wait-for-it`.
+4. Execute the service command.
 
-The `/start` script runs:
+Web — `django`, command `/start`:
 
-1. `manage.py migrate --noinput` — Applies pending DB migrations.
-2. `manage.py ensure_superuser` — Ensures the bootstrap superuser exists.
-3. `manage.py collectstatic --noinput` — Collects static files.
-4. `gunicorn config.wsgi` — Starts the WSGI server.
+1. `manage.py collectstatic --noinput`
+2. `gunicorn config.wsgi`
 
-The image is built with `GIT_COMMIT_SHA` as an environment variable.
-`/api/health` returns:
+Init — `django-init`, command `/start-init`, one-shot:
+
+1. `manage.py bootstrap`, which runs:
+   - `migrate --noinput`
+   - `ensure_superuser`
+   - `seed_help_guide --force`
+   - `seed_pages`
+   - `seed_account_selfservice --force`
+2. Writes bootstrap state and exits.
+
+`django-init` is excluded from Coolify health. The web container becomes
+healthy as soon as Gunicorn listens; deployment success does not imply that
+migrations or seeds completed. A failed init does not fail the deployment.
+Non-health traffic is gated until bootstrap completes, and Celery worker/beat
+wait for completion.
+
+The image is built with `GIT_COMMIT_SHA`. `/api/health` reports it and is
+liveness-only:
 
 ```json
 {"status": "ok", "revision": "<commit-sha>"}
 ```
 
-After deployment Ansible asserts that `revision` equals the deployed SHA and
-that the running Django/Celery/Postgres containers use the expected tags.
+`/api/ready` reports bootstrap state and returns `200` only when the bootstrap
+is complete. After deployment Ansible still verifies the source SHA, running
+image tags, and `/api/health` revision.
+
+On a fresh or restored-empty database, run the bootstrap synchronously once
+before the first deployment. See
+[Operator Guide — Fresh database exception](operator-guide.md#fresh-database-exception).
 
 ---
 

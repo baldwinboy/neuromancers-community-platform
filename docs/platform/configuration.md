@@ -50,23 +50,26 @@ revision-enabled).
 | `ScriptsSetting` | Admin-authored head/body scripts. |
 | `ConsentSettings` | Banner copy and policy version. |
 
-## Seeds on container start
+## Migrations and seed data
 
-`compose/production/django/start` and `compose/local/django/start` run:
+Bootstrap is split by environment:
 
-```sh
-python /app/manage.py migrate --noinput
-python /app/manage.py ensure_superuser
-python /app/manage.py collectstatic --noinput
-python /app/manage.py seed_help_guide --force
-python /app/manage.py seed_pages
-python /app/manage.py seed_account_selfservice
-```
+| Context | Entry point | What runs |
+|---------|-------------|-----------|
+| Local development | `compose/local/django/start` | `migrate`, `ensure_superuser`, seeds, then `runserver_plus`. |
+| Production web | `compose/production/django/start` | `collectstatic --noinput`, then Gunicorn. |
+| Production init | `compose/production/django/start-init` → `manage.py bootstrap` | `migrate --noinput`, `ensure_superuser`, `seed_help_guide --force`, `seed_pages`, `seed_account_selfservice --force`. |
 
-`seed_help_guide --force` refreshes code-owned Admin Guide rows; admin edits to
-those rows are overwritten on deploy (see
-[operator guide](../infra/operator-guide.md#help-content-on-deploy)). The other
-seeders are non-force and never overwrite admin edits.
+Production `django-init` is a one-shot asynchronous Compose service. The web
+health check does not cover migrations or seeds; check the init service after
+deployment. A failed init does not fail the deployment. On a fresh database,
+run the init synchronously once before the first deployment (see
+[operator guide](../infra/operator-guide.md#fresh-database-exception)).
+
+`seed_help_guide --force` refreshes code-owned Admin Guide rows.
+`seed_account_selfservice --force` refreshes the seeded Settings page body and
+account feed definitions. `seed_pages` is non-force and only creates missing
+pages, menus, and feeds. Admin edits to overwritten content are lost on deploy.
 
 ## Feature flags and settings of note
 
