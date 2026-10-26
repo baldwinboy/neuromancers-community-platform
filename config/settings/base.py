@@ -788,6 +788,17 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "label": _("Peer application"),
         "model": "peers.PeerApplication",
         "source": "neuromancers_network.peers.selectors.user_peer_application",
+        "form_fields_exclude": [
+            "user",
+            "submission",
+            "submission_record",
+            "status",
+            "is_approved",
+            "reviewed_by",
+            "reviewed_at",
+            "created_at",
+            "updated_at",
+        ],
     },
     "refund_request": {
         "label": _("Refund request"),
@@ -1009,6 +1020,14 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
     "bookmark_owner": {
         "label": "Bookmark owner",
         "rule": "neuromancers_network.core.audience.is_bookmark_owner",
+    },
+    "has_form_submission": {
+        "label": "Members with a peer application",
+        "rule": "neuromancers_network.core.audience.has_form_submission",
+    },
+    "has_no_form_submission": {
+        "label": "Members without a peer application",
+        "rule": "neuromancers_network.core.audience.has_no_form_submission",
     },
 }
 WAGTAIL_DAISIE_FORM_FIELD_TYPES = {

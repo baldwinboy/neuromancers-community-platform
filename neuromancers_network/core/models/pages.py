@@ -120,6 +120,7 @@ class HomePage(ReservedSlugPage):
         "core.SettingsPage",
         "core.SearchPage",
         "peers.PeerApplicationFormPage",
+        "peers.PeerApplicationEditFormPage",
         "meetings.MeetingFormPage",
         "meetings.MeetingEditFormPage",
         "meetings.BookingFormPage",

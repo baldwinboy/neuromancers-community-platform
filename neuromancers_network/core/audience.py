@@ -197,6 +197,22 @@ def is_bookmark_owner(request: HttpRequest) -> bool:
     return str(owner_pk) == str(user.pk)
 
 
+def has_form_submission(request: HttpRequest) -> bool:
+    """Signed-in member has an existing peer application submission."""
+    user = _request_user(request)
+    if user is None:
+        return False
+    from neuromancers_network.peers.models import PeerApplication  # noqa: PLC0415
+
+    return PeerApplication.objects.filter(user=user).exists()
+
+
+def has_no_form_submission(request: HttpRequest) -> bool:
+    """Signed-in member has no existing peer application submission."""
+    user = _request_user(request)
+    return user is not None and not has_form_submission(request)
+
+
 # --- Queryset factories (request-less audiences: campaigns, resets) ----------
 
 

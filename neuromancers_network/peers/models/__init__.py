@@ -1,3 +1,5 @@
+from neuromancers_network.peers.forms_pages import PeerApplicationEditFormField
+from neuromancers_network.peers.forms_pages import PeerApplicationEditFormPage
 from neuromancers_network.peers.forms_pages import PeerApplicationFormField
 from neuromancers_network.peers.forms_pages import PeerApplicationFormPage
 
@@ -18,6 +20,8 @@ __all__ = [
     "CalendarEvent",
     "CalendarEventKind",
     "PeerApplication",
+    "PeerApplicationEditFormField",
+    "PeerApplicationEditFormPage",
     "PeerApplicationFormField",
     "PeerApplicationFormPage",
     "PeerApplicationStatus",

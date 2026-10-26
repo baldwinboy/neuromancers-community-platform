@@ -83,7 +83,7 @@ class MeetingEditFormPage(ProjectDaisieFormPage):
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
 
-    def update_instance_from_submission(self, form, instance):
+    def update_instance_from_submission(self, form, instance, submission=None):
         from neuromancers_network.meetings.services import apply_duration_tiers
 
         request = getattr(self, "_daisie_request", None)
@@ -93,7 +93,11 @@ class MeetingEditFormPage(ProjectDaisieFormPage):
         if instance.peer_id != user.pk and not getattr(user, "is_moderator", False):
             return None
 
-        result = super().update_instance_from_submission(form, instance)
+        result = super().update_instance_from_submission(
+            form,
+            instance,
+            submission=submission,
+        )
         if result is not None:
             rows = _tier_rows(self, form.cleaned_data)
             if rows:

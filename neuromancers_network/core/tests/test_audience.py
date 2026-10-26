@@ -138,3 +138,28 @@ class TestTosAcceptance:
         UserFactory(accepted_tos=True)
 
         assert list(audience.needs_tos_acceptance_users()) == [pending]
+
+
+class TestFormSubmissionPredicates:
+    def test_anonymous_has_no_submission(self, rf):
+        request = rf.get("/")
+        request.user = AnonymousUser()
+
+        assert audience.has_form_submission(request) is False
+        assert audience.has_no_form_submission(request) is False
+
+    def test_member_without_application(self, rf):
+        request = make_request(rf, UserFactory())
+
+        assert audience.has_form_submission(request) is False
+        assert audience.has_no_form_submission(request) is True
+
+    def test_member_with_application(self, rf):
+        from neuromancers_network.peers.models import PeerApplication  # noqa: PLC0415
+
+        user = UserFactory()
+        PeerApplication.objects.create(user=user, reason="Because")
+        request = make_request(rf, user)
+
+        assert audience.has_form_submission(request) is True
+        assert audience.has_no_form_submission(request) is False

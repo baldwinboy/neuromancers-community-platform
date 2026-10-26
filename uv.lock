@@ -260,11 +260,11 @@ wheels = [
 
 [[package]]
 name = "certifi"
-version = "2026.7.22"
+version = "2026.10.23"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a3/c2/24167ea9858356b47a87a50d39908bfdb72ceeefe0041586e704e5376b3a/certifi-2026.7.22.tar.gz", hash = "sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55", size = 138112, upload-time = "2026-07-22T03:35:12.644Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fd/11/b524cbd9bbdaca58608e4cf4053fd463417549e1959fa8d3aa18319f9555/certifi-2026.10.23.tar.gz", hash = "sha256:a9895e6e2758b371e0545e321a3a8fd1fcfd9829ada8824a936dfb16aaaf36cd", size = 136225, upload-time = "2026-10-23T11:36:16.478Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl", hash = "sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775", size = 136983, upload-time = "2026-07-22T03:35:11.276Z" },
+    { url = "https://files.pythonhosted.org/packages/32/d1/a3652fe2c19134d0d15922177821d863cbd7e842d53a21bbe7e8e3a1b5ac/certifi-2026.10.23-py3-none-any.whl", hash = "sha256:e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1", size = 135082, upload-time = "2026-10-23T11:36:14.763Z" },
 ]
 
 [[package]]
@@ -1895,7 +1895,7 @@ requires-dist = [
     { name = "sentry-sdk", specifier = "==2.72.0" },
     { name = "stripe", specifier = ">=15.6.1" },
     { name = "wagtail", specifier = ">=8.0,<8.1" },
-    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.6.0" },
+    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.6.2" },
     { name = "wagtailcharts", specifier = ">=0.7" },
     { name = "whitenoise", specifier = "==6.12.0" },
 ]
@@ -2963,7 +2963,7 @@ wheels = [
 
 [[package]]
 name = "wagtail-daisie"
-version = "3.6.0"
+version = "3.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cssutils" },
@@ -2976,9 +2976,9 @@ dependencies = [
     { name = "mjml-python" },
     { name = "wagtail" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/29/a4/ddc4d064ead23aae0a29e610e338a6565e9b9ae31af687561706de889631/wagtail_daisie-3.6.0.tar.gz", hash = "sha256:ae1a27899ff8a7c00ad10d09c703e3e6b8ce828a85e00fecb881d8300e291ef4", size = 377703, upload-time = "2026-10-24T23:17:41.453Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6a/30/5ab2330d5b3059a035d22afae571c2998b20071de2e29ddadbfe347d0408/wagtail_daisie-3.6.2.tar.gz", hash = "sha256:34ecef7abc3aab7c505c80bebf5348167dbcc0908b6bdb51268da273a5f094f4", size = 380180, upload-time = "2026-10-26T11:56:15.687Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/cd/42f173b83c8b85c6befd74ab4a978955cda7630311556e2d129ebb33ee85/wagtail_daisie-3.6.0-py3-none-any.whl", hash = "sha256:a87e7fd34fdf8b3bf10927cb2b6abd953ea6116f686408422ce7a6d07ed32a03", size = 559384, upload-time = "2026-10-24T23:17:39.257Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/33/9bc39657999dc682a4ade655cf4eed17865efb8e9259767d9e8aa3fa5a26/wagtail_daisie-3.6.2-py3-none-any.whl", hash = "sha256:1d88ae0f11b31c5c4269a8b203807b669c0fd4e864ed59feca346927d266fbfa", size = 562556, upload-time = "2026-10-26T11:56:14.08Z" },
 ]
 
 [package.optional-dependencies]
