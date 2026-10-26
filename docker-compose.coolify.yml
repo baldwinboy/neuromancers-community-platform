@@ -38,6 +38,30 @@ services:
     mem_limit: 512m
     volumes:
       - /var/log/django:/var/log/django
+      - bootstrap-state:/var/lib/bootstrap
+
+  django-init:
+    image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:?DOCKER_TAG must be set to a commit SHA}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
+      - TS_APP_DOMAIN=${TS_APP_DOMAIN}
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        if [ -x /start-init ]; then exec /start-init; fi;
+        echo "start-init absent (pre-bootstrap image); legacy /start owns bootstrap";
+        exit 0
+    exclude_from_hc: true
+    restart: "no"
+    mem_limit: 512m
+    volumes:
+      - bootstrap-state:/var/lib/bootstrap
 
   postgres:
     image: ghcr.io/baldwinboy/neuromancers-network-postgres:${POSTGRES_TAG:?POSTGRES_TAG must be set}
@@ -88,6 +112,8 @@ services:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
     command: /start-celeryworker
     mem_limit: 384m
+    volumes:
+      - bootstrap-state:/var/lib/bootstrap
 
   celerybeat:
     image: ghcr.io/baldwinboy/neuromancers-network:${DOCKER_TAG:?DOCKER_TAG must be set to a commit SHA}
@@ -102,6 +128,8 @@ services:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
     command: /start-celerybeat
     mem_limit: 128m
+    volumes:
+      - bootstrap-state:/var/lib/bootstrap
 
   gatus:
     image: ghcr.io/twin/gatus:stable
@@ -125,3 +153,4 @@ volumes:
   postgres-backups:
   redis-data:
   gatus-data:
+  bootstrap-state:

@@ -30,6 +30,10 @@ DEMO_DATA_PASSWORD = env("DEMO_DATA_PASSWORD", default="")
 # Build revision baked into the production image by CI. Exposed by /api/health
 # so a deployment can be proven to run the expected commit.
 GIT_COMMIT_SHA = env("GIT_COMMIT_SHA", default="unknown")
+# Deployment bootstrap state shared through a Docker volume. Production init
+# writes it; the web gate, readiness endpoint, and Celery wait read it.
+BOOTSTRAP_STATE_DIR = env("BOOTSTRAP_STATE_DIR", default="/var/lib/bootstrap")
+BOOTSTRAP_GATE_ENABLED = False
 # Local time zone. Choices are
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # though not all of them may be available with every OS.
@@ -204,6 +208,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "neuromancers_network.core.middleware.BootstrapGateMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

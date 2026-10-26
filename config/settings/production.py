@@ -20,6 +20,8 @@ from .base import env
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env("DJANGO_SECRET_KEY")
+# Gate non-health traffic until the production bootstrap is complete.
+BOOTSTRAP_GATE_ENABLED = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 SERVER_HOST = env("HETZNER_SSH_HOST", default=None)
 CUSTOM_DNS = env("CUSTOM_DNS", default="1.1.1.1")
@@ -70,7 +72,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 # Never redirect the in-container healthcheck, which is served over plain
 # HTTP on the container network.
-SECURE_REDIRECT_EXEMPT = [r"^api/health$"]
+SECURE_REDIRECT_EXEMPT = [r"^api/health$", r"^api/ready$"]
 # https://docs.djangoproject.com/en/dev/ref/settings/#session-cookie-secure
 SESSION_COOKIE_SECURE = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#session-cookie-name

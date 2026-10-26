@@ -15,6 +15,20 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
       - "[RESPONSE_TIME] < 1000"
+    alerts:
+      - type: discord
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true
+        description: "Django health check failed"
+
+  - name: django-ready
+    group: application
+    url: http://django:5000/api/ready
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].status == ready"
 
   - name: postgres
     group: application

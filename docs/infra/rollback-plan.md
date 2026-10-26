@@ -49,9 +49,22 @@ current branch head; it does not roll back Compose or infrastructure changes.
 5. Save the variable.
 6. Go to the **Deployments** tab and click **Redeploy**.
 
-Do not change `git_commit_sha` to roll back. Coolify uses `git_branch`
-(the branch head) for the Compose checkout; `git_commit_sha` is a record of
-the last deployed commit.
+Do not use `git_commit_sha` as the rollback selector. It does not choose the
+image; Coolify uses `git_branch` for the Compose checkout and `DOCKER_TAG` for
+the image. Ansible converges `git_commit_sha` to the validated target SHA so
+the post-deploy assertion is meaningful.
+
+### Async bootstrap after rollback
+
+After rollback, confirm `django-init` completed. Deployment success does not
+prove migrations/seeds completed, and a failed init does not fail the
+deployment. On a restored or empty database, run the bootstrap synchronously
+before enabling traffic (see
+[Operator Guide — Fresh database exception](operator-guide.md#fresh-database-exception)).
+
+Images built before the async bootstrap change have no `/start-init`; the
+Compose `django-init` service exits cleanly and the image's legacy `/start`
+performs the bootstrap instead.
 
 ### Identify the previous image tag
 
@@ -197,7 +210,8 @@ Is the app completely down?
 
 - Run full CI pipeline (lint + test + migration check) before merging.
 - Use the staging environment to validate changes before production.
-- Ensure `manage.py migrate` runs at container startup so schema
+- Ensure `manage.py migrate` runs in the dedicated production bootstrap
+  (`django-init` / `manage.py bootstrap`) before traffic is enabled, so schema
   changes are always applied in the correct order.
 - Test DB migrations against a copy of production data in staging.
 - Keep rollback-tolerant code patterns (backward-compatible

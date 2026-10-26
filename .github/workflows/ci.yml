@@ -111,8 +111,15 @@ jobs:
       - name: Run DB Migrations
         run: uv run python manage.py migrate
 
-      - name: Run health endpoint test
-        run: uv run pytest tests/test_health.py -q
+      - name: Run bootstrap and health tests
+        run: >-
+          uv run pytest
+          tests/test_health.py
+          tests/test_ready.py
+          neuromancers_network/core/tests/test_bootstrap_state.py
+          neuromancers_network/core/tests/test_bootstrap_commands.py
+          neuromancers_network/core/tests/test_bootstrap_gate.py
+          -q
 
   docker:
     needs: [changes, linter, migrations]

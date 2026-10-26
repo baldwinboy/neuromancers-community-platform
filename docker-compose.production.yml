@@ -4,6 +4,7 @@ volumes:
   production_traefik: {}
 
   production_redis_data: {}
+  production_bootstrap_state: {}
 
 services:
   django: &django
@@ -21,6 +22,19 @@ services:
     environment:
       BWS_ACCESS_TOKEN: "${BWS_ACCESS_TOKEN}"
     command: /start
+    volumes:
+      - production_bootstrap_state:/var/lib/bootstrap
+
+  django-init:
+    <<: *django
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        if [ -x /start-init ]; then exec /start-init; fi;
+        echo "start-init absent (pre-bootstrap image); legacy /start owns bootstrap";
+        exit 0
+    restart: "no"
 
   postgres:
     build:

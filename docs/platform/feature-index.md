@@ -21,4 +21,4 @@
 | Moderation (bans, tickets, exports, deletion) | `moderation/` (`banning.py`, `services.py`, `export.py`, `wagtail_hooks.py`, `views.py`) |
 | Admin guide content and reader | `core/help_seed.yaml`, `core/help_seed.py`, `core/views/help.py`, `core/templates/core/help_guide.html` |
 | Encrypted settings fields | `core/crypto.py`, `core/fields.py`, `core/forms.py`, `core/checks.py` |
-| Seed data at container start | `compose/*/django/start`; commands in `core/management/commands/` |
+| Bootstrap and seed data | `compose/production/django/start-init`, `compose/local/django/start`; `core/management/commands/bootstrap.py` and related commands |
