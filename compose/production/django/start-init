@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+# Bootstrap failures are recorded in state and logged. Exit 0 deliberately:
+# a failed one-shot init must not fail the Coolify deployment. The web gate,
+# readiness endpoint, Celery wait, and operator checks surface the failure.
+set +o errexit
+python /app/manage.py bootstrap
+status=$?
+set -o errexit
+
+if [ "$status" -ne 0 ]; then
+  >&2 echo "Bootstrap failed (exit ${status}); leaving deployment up for inspection."
+fi
+
+exit 0
