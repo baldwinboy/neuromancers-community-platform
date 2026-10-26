@@ -22,6 +22,11 @@ if READ_DOT_ENV_FILE:
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
 DEBUG = env.bool("DJANGO_DEBUG", False)
+
+# Demo/test data tooling. Enabled by default; disable explicitly in production
+# with DEMO_DATA_ENABLED=false when the operations panel is not wanted.
+DEMO_DATA_ENABLED = env.bool("DEMO_DATA_ENABLED", default=True)
+DEMO_DATA_PASSWORD = env("DEMO_DATA_PASSWORD", default="")
 # Build revision baked into the production image by CI. Exposed by /api/health
 # so a deployment can be proven to run the expected commit.
 GIT_COMMIT_SHA = env("GIT_COMMIT_SHA", default="unknown")

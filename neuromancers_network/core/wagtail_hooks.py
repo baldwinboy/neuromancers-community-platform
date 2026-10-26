@@ -14,7 +14,9 @@ from neuromancers_network.core.models import Cookie
 from neuromancers_network.core.models import GlossaryTerm
 from neuromancers_network.core.models import HelpArticle
 from neuromancers_network.core.models import HelpCategory
+from neuromancers_network.core.panels import DemoDataPanel
 from neuromancers_network.core.panels import HelpGuidePanel
+from neuromancers_network.core.views.demo_data import DemoDataView
 from neuromancers_network.core.views.email import SendTestEmailView
 from neuromancers_network.core.views.help import HelpGuideView
 from neuromancers_network.core.views.stripe import StripeSyncView
@@ -177,6 +179,7 @@ def register_core_admin_urls():
         path("stripe/sync/", StripeSyncView.as_view(), name="stripe_sync"),
         path("stripe/webhook/", StripeWebhookView.as_view(), name="stripe_webhook"),
         path("email/test/", SendTestEmailView.as_view(), name="send_test_email"),
+        path("demo-data/", DemoDataView.as_view(), name="demo_data"),
         path("help/", HelpGuideView.as_view(), name="help_guide"),
     ]
 
@@ -184,6 +187,7 @@ def register_core_admin_urls():
 @hooks.register("construct_homepage_panels")
 def add_help_guide_panel(request, panels):
     panels.append(HelpGuidePanel())
+    panels.append(DemoDataPanel())
 
 
 @hooks.register("before_serve_page")

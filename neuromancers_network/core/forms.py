@@ -122,3 +122,50 @@ class LocalizationSettingsForm(WagtailAdminModelForm):
     class Meta:
         model = LocalizationSettings
         fields = "__all__"
+
+
+class DemoSeedForm(forms.Form):
+    """Create demo/test users and related records."""
+
+    email_base = forms.EmailField(
+        label=_("Demo email base"),
+        help_text=_(
+            "Example: example@mail.com. Each account becomes "
+            "example+demo-peer-01@mail.com.",
+        ),
+    )
+    password = forms.CharField(
+        label=_("Demo account password"),
+        widget=forms.PasswordInput,
+        required=True,
+        min_length=8,
+        help_text=_("Used for every seeded demo account."),
+    )
+    include_paused_peer = forms.BooleanField(
+        required=False,
+        initial=True,
+        label=_("Include a paused peer"),
+    )
+    confirm = forms.BooleanField(
+        required=True,
+        label=_("I understand these are test accounts."),
+    )
+
+
+class DemoCleanupForm(forms.Form):
+    """Remove demo/test records for one email base."""
+
+    email_base = forms.EmailField(
+        label=_("Demo email base"),
+        help_text=_("Use the same base email that was used for seeding."),
+    )
+    dry_run = forms.BooleanField(
+        required=False,
+        initial=True,
+        label=_("Only show what would be deleted"),
+    )
+    confirmation = forms.CharField(
+        label=_("Type DELETE DEMO DATA to confirm"),
+        required=False,
+        help_text=_("Required for a real cleanup."),
+    )

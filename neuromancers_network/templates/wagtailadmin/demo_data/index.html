@@ -1,0 +1,55 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% load i18n %}
+
+{% block titletag %}
+  {% translate "Demo/test data" %}
+{% endblock titletag %}
+{% block content %}
+  {% translate "Demo/test data" as page_title %}
+  {% include "wagtailadmin/shared/header.html" with title=page_title icon="group" %}
+  <div class="nice-padding">
+    <h2>{% translate "Current demo data" %}</h2>
+    <table class="listing">
+      <tbody>
+        <tr><th>{% translate "Users" %}</th><td>{{ status.users }}</td></tr>
+        <tr><th>{% translate "Peers" %}</th><td>{{ status.peers }}</td></tr>
+        <tr><th>{% translate "Seekers" %}</th><td>{{ status.seekers }}</td></tr>
+        <tr><th>{% translate "Meetings" %}</th><td>{{ status.meetings }}</td></tr>
+        <tr><th>{% translate "Bookings" %}</th><td>{{ status.bookings }}</td></tr>
+        <tr><th>{% translate "Requests" %}</th><td>{{ status.requests }}</td></tr>
+        <tr><th>{% translate "Reviews" %}</th><td>{{ status.reviews }}</td></tr>
+        <tr><th>{% translate "Refunds" %}</th><td>{{ status.refunds }}</td></tr>
+        <tr>
+          <th>{% translate "Detected email bases" %}</th>
+          <td>{{ status.email_bases|join:", "|default:"—" }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <hr />
+    <h2>{% translate "Seed demo data" %}</h2>
+    <p>{% translate "Stripe must be configured with test/sandbox keys. No live Stripe calls are made." %}</p>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="seed" />
+      {{ seed_form.as_p }}
+      <button type="submit" class="button button-primary">{% translate "Seed demo data" %}</button>
+    </form>
+    <hr />
+    <h2>{% translate "Clean demo data" %}</h2>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="cleanup" />
+      {{ cleanup_form.as_p }}
+      <button type="submit" class="button button-secondary">{% translate "Run cleanup" %}</button>
+    </form>
+    {% if cleanup_result %}
+      <h3>{% translate "Cleanup result" %}</h3>
+      <ul>
+        {% for key, value in cleanup_result.items %}
+          <li><strong>{{ key }}</strong>: {{ value }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+{% endblock content %}
