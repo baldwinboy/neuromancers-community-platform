@@ -131,12 +131,14 @@
     - /certs/paas/
     - /etc/tailscale
 
-- name: Serve Coolify instance on tailnet
+- name: Serve Coolify dashboard and WebSocket paths on the tailnet service
   ansible.builtin.shell: |
+    set -euo pipefail
     tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --http=80 --yes localhost:{{ coolify_port }}
     tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --https=443 --yes localhost:{{ coolify_port }}
-    tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --https=6001 --yes localhost:6001
-    tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --https=6002 --yes localhost:6002
+    tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --https=443 --set-path=/app --yes http://127.0.0.1:6001/app
+    tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --https=443 --set-path=/apps --yes http://127.0.0.1:6001/apps
+    tailscale serve --bg --service="svc:{{ tailscale_stage }}-paas" --https=443 --set-path=/terminal/ws --yes http://127.0.0.1:6002/terminal/ws
   become: true
   changed_when: false
 

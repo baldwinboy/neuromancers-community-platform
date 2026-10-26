@@ -184,14 +184,14 @@
           environment_name: "neuromancers"
           git_repository: "{{ git_repository }}"
           git_branch: "{{ git_branch }}"
+          git_commit_sha: "{{ git_commit_sha }}"
+          is_auto_deploy_enabled: false
           build_pack: "dockercompose"
           ports_exposes: "5000"
           ports_mappings: "80:5000"
           name: "neuromancers_network"
           description: "NEUROMANCERS Network"
           instant_deploy: false
-          is_auto_deploy_enabled: false
-          git_commit_sha: "{{ git_commit_sha }}"
           docker_compose_location: "/docker-compose.coolify.yml"
           health_check_enabled: true
           health_check_path: "/api/health"
