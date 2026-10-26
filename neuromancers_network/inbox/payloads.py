@@ -19,13 +19,14 @@ def _account_reference(user) -> dict:
     }
 
 
-def account_lifecycle_payload(
+def account_lifecycle_payload(  # noqa: PLR0913
     user,
     *,
     actor=None,
     recipients=(),
     reason: str = "",
     deletion_scheduled_for=None,
+    deletion_cancel_url: str = "",
 ):
     """Payload for account deactivation/reactivation/deletion events."""
     meta = _account_reference(user)
@@ -33,6 +34,8 @@ def account_lifecycle_payload(
         meta["reason"] = reason
     if deletion_scheduled_for is not None:
         meta["deletion_scheduled_for"] = deletion_scheduled_for.isoformat()
+    if deletion_cancel_url:
+        meta["deletion_cancel_url"] = deletion_cancel_url
     return {
         "actor_user_id": user_id(actor),
         "recipient_user_ids": [user_id(u) for u in recipients if u is not None],

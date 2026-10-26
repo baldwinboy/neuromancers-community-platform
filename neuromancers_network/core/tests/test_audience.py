@@ -1,6 +1,7 @@
 import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
+from django.utils import timezone
 
 from neuromancers_network.core import audience
 from neuromancers_network.meetings.tests.factories import create_meeting
@@ -163,3 +164,55 @@ class TestFormSubmissionPredicates:
 
         assert audience.has_form_submission(request) is True
         assert audience.has_no_form_submission(request) is False
+
+
+class TestAccountStatePredicates:
+    def test_pending_deletion_rules(self, rf):
+        from neuromancers_network.moderation.services import request_account_deletion  # noqa: PLC0415
+
+        user = UserFactory()
+        request = make_request(rf, user)
+        assert audience.is_deleting_account(request) is False
+        assert audience.can_delete_account(request) is True
+
+        request_account_deletion(user)
+        user.refresh_from_db()
+        request = make_request(rf, user)
+
+        assert audience.is_deleting_account(request) is True
+        assert audience.can_delete_account(request) is False
+        assert audience.can_cancel_account_deletion(request) is True
+
+
+class TestProviderStatePredicates:
+    def test_non_provider_can_apply_but_cannot_manage_provider_settings(self, rf):
+        request = make_request(rf, UserFactory())
+
+        assert audience.can_apply_as_peer(request) is True
+        assert audience.provider_settings(request) is False
+        assert audience.can_connect_stripe(request) is False
+
+    def test_approved_provider_without_agreement_can_accept(self, rf):
+        peer = make_peer()
+        profile = peer.peer_profile
+        profile.provider_agreement_accepted_at = None
+        profile.save(update_fields=["provider_agreement_accepted_at"])
+        request = make_request(rf, peer)
+
+        assert audience.provider_settings(request) is True
+        assert audience.has_accepted_provider_agreement(request) is False
+        assert audience.can_accept_provider_agreement(request) is True
+        assert audience.can_start_plan(request) is False
+
+    def test_active_plan_state(self, rf):
+        peer = make_peer()
+        peer.peer_profile.provider_agreement_accepted_at = timezone.now()
+        peer.peer_profile.save(update_fields=["provider_agreement_accepted_at"])
+        request = make_request(rf, peer)
+
+        assert audience.has_plan(request) is True
+        assert audience.has_active_plan(request) is True
+        assert audience.can_start_plan(request) is False
+        assert audience.can_pause_plan(request) is True
+        assert audience.can_resume_plan(request) is False
+        assert audience.can_cancel_plan(request) is True

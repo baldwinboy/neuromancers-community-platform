@@ -10,7 +10,7 @@ python /app/manage.py ensure_superuser
 python /app/manage.py collectstatic --noinput
 python /app/manage.py seed_help_guide --force
 python /app/manage.py seed_pages
-python /app/manage.py seed_account_selfservice
+python /app/manage.py seed_account_selfservice --force
 
 exec gunicorn config.wsgi \
 --bind 0.0.0.0:5000 \

@@ -1029,6 +1029,150 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
         "label": "Members without a peer application",
         "rule": "neuromancers_network.core.audience.has_no_form_submission",
     },
+    "is_deleting_account": {
+        "label": "Members with a pending account deletion",
+        "rule": "neuromancers_network.core.audience.is_deleting_account",
+    },
+    "can_delete_account": {
+        "label": "Members who can delete their account",
+        "rule": "neuromancers_network.core.audience.can_delete_account",
+    },
+    "can_cancel_account_deletion": {
+        "label": "Members who can cancel a pending deletion",
+        "rule": "neuromancers_network.core.audience.can_cancel_account_deletion",
+    },
+    "can_deactivate_account": {
+        "label": "Members who can deactivate their account",
+        "rule": "neuromancers_network.core.audience.can_deactivate_account",
+    },
+    "can_reactivate_account": {
+        "label": "Members who can reactivate their account",
+        "rule": "neuromancers_network.core.audience.can_reactivate_account",
+    },
+    "can_accept_tos": {
+        "label": "Members yet to accept the Terms",
+        "rule": "neuromancers_network.core.audience.can_accept_tos",
+    },
+    "has_peer_profile": {
+        "label": "Care providers with a profile",
+        "rule": "neuromancers_network.core.audience.has_peer_profile",
+    },
+    "has_peer_application": {
+        "label": "Members with a provider application",
+        "rule": "neuromancers_network.core.audience.has_peer_application",
+    },
+    "peer_application_pending": {
+        "label": "Provider applications pending",
+        "rule": "neuromancers_network.core.audience.peer_application_pending",
+    },
+    "peer_application_rejected": {
+        "label": "Provider applications rejected",
+        "rule": "neuromancers_network.core.audience.peer_application_rejected",
+    },
+    "is_approved_provider": {
+        "label": "Approved care providers",
+        "rule": "neuromancers_network.core.audience.is_approved_provider",
+    },
+    "is_verified_provider": {
+        "label": "Verified care providers",
+        "rule": "neuromancers_network.core.audience.is_verified_provider",
+    },
+    "provider_settings": {
+        "label": "Care providers with a profile or application",
+        "rule": "neuromancers_network.core.audience.provider_settings",
+    },
+    "can_apply_as_peer": {
+        "label": "Members who can apply as a care provider",
+        "rule": "neuromancers_network.core.audience.can_apply_as_peer",
+    },
+    "has_accepted_provider_agreement": {
+        "label": "Care providers who accepted the agreement",
+        "rule": "neuromancers_network.core.audience.has_accepted_provider_agreement",
+    },
+    "can_accept_provider_agreement": {
+        "label": "Care providers who can accept the agreement",
+        "rule": "neuromancers_network.core.audience.can_accept_provider_agreement",
+    },
+    "has_connected_stripe": {
+        "label": "Care providers with a connected Stripe account",
+        "rule": "neuromancers_network.core.audience.has_connected_stripe",
+    },
+    "has_completed_kyc": {
+        "label": "Care providers with completed KYC",
+        "rule": "neuromancers_network.core.audience.has_completed_kyc",
+    },
+    "has_active_plan": {
+        "label": "Care providers with an active plan",
+        "rule": "neuromancers_network.core.audience.has_active_plan",
+    },
+    "has_paused_plan": {
+        "label": "Care providers with a paused plan",
+        "rule": "neuromancers_network.core.audience.has_paused_plan",
+    },
+    "has_past_due_plan": {
+        "label": "Care providers with a past-due plan",
+        "rule": "neuromancers_network.core.audience.has_past_due_plan",
+    },
+    "has_cancelled_plan": {
+        "label": "Care providers with a plan cancelling at period end",
+        "rule": "neuromancers_network.core.audience.has_cancelled_plan",
+    },
+    "has_plan": {
+        "label": "Care providers with a current plan",
+        "rule": "neuromancers_network.core.audience.has_plan",
+    },
+    "can_start_plan": {
+        "label": "Care providers who can start a plan",
+        "rule": "neuromancers_network.core.audience.can_start_plan",
+    },
+    "can_pause_plan": {
+        "label": "Care providers who can pause their plan",
+        "rule": "neuromancers_network.core.audience.can_pause_plan",
+    },
+    "can_resume_plan": {
+        "label": "Care providers who can resume their plan",
+        "rule": "neuromancers_network.core.audience.can_resume_plan",
+    },
+    "can_cancel_plan": {
+        "label": "Care providers who can cancel their plan",
+        "rule": "neuromancers_network.core.audience.can_cancel_plan",
+    },
+    "can_connect_stripe": {
+        "label": "Care providers who can connect Stripe",
+        "rule": "neuromancers_network.core.audience.can_connect_stripe",
+    },
+    "can_open_stripe_dashboard": {
+        "label": "Care providers who can open the Stripe dashboard",
+        "rule": "neuromancers_network.core.audience.can_open_stripe_dashboard",
+    },
+    "can_disconnect_stripe": {
+        "label": "Care providers who can disconnect Stripe",
+        "rule": "neuromancers_network.core.audience.can_disconnect_stripe",
+    },
+    "has_active_calendar_feed": {
+        "label": "Members with an active calendar feed",
+        "rule": "neuromancers_network.core.audience.has_active_calendar_feed",
+    },
+    "can_rotate_calendar_feed": {
+        "label": "Members who can rotate their calendar feed",
+        "rule": "neuromancers_network.core.audience.can_rotate_calendar_feed",
+    },
+    "can_revoke_calendar_feed": {
+        "label": "Members who can turn off their calendar feed",
+        "rule": "neuromancers_network.core.audience.can_revoke_calendar_feed",
+    },
+    "has_active_data_export": {
+        "label": "Members with an export in progress",
+        "rule": "neuromancers_network.core.audience.has_active_data_export",
+    },
+    "has_recent_data_export": {
+        "label": "Members with a recent data export",
+        "rule": "neuromancers_network.core.audience.has_recent_data_export",
+    },
+    "can_request_data_export": {
+        "label": "Members who can request a data export",
+        "rule": "neuromancers_network.core.audience.can_request_data_export",
+    },
 }
 WAGTAIL_DAISIE_FORM_FIELD_TYPES = {
     "document": {
@@ -1249,10 +1393,6 @@ WAGTAIL_DAISIE_ACTIONS = {
     "account.delete_request": {
         "label": _("Delete my account"),
         "handler": "neuromancers_network.moderation.actions.account_delete_request",
-    },
-    "account.delete_cancel": {
-        "label": _("Cancel account deletion"),
-        "handler": "neuromancers_network.moderation.actions.account_delete_cancel",
     },
     "user.block": {
         "label": _("Block member"),

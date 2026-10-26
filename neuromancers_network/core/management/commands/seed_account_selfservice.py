@@ -14,6 +14,8 @@ from django.core.management.base import CommandError
 from wagtail_daisIE.feeds.models import Feed
 
 from neuromancers_network.core.models.pages import SettingsPage
+from neuromancers_network.core.settings_audiences import ACTION_AUDIENCES
+from neuromancers_network.core.settings_audiences import TAB_AUDIENCES
 
 ACCOUNT_FEEDS = [
     ("blocked-users", "blocked_user"),
@@ -33,49 +35,75 @@ def _as_stream_data(value: Any) -> Any:
     return value
 
 
-def _button(text: str) -> dict:
+def _button(text: str, audience: list[str] | None = None) -> dict:
     return {
         "text": text,
         "icon": "",
         "icon_after": True,
         "make_parent_clickable": False,
         "design": {},
-        "audience": {},
+        "audience": {"audience": audience or []},
     }
 
 
-def _action(action: str, text: str) -> dict:
+def _action(
+    action: str,
+    text: str,
+    *,
+    audience: list[str] | None = None,
+) -> dict:
     return {
         "type": "action",
         "value": {
             "action": action,
             "target_expression": "",
-            "button": _button(text),
+            "button": _button(
+                text,
+                audience if audience is not None else ACTION_AUDIENCES.get(action),
+            ),
             "confirmation": {},
         },
     }
 
 
-def _action_form(action: str, text: str) -> dict:
+def _action_form(
+    action: str,
+    text: str,
+    *,
+    audience: list[str] | None = None,
+) -> dict:
     return {
         "type": "action_form",
         "value": {
             "action": action,
             "target_expression": "",
             "fields": [],
-            "button": _button(text),
+            "button": _button(
+                text,
+                audience if audience is not None else ACTION_AUDIENCES.get(action),
+            ),
             "behaviour": "inline",
             "confirmation": {},
         },
     }
 
 
-def _tab(label: str, key: str, content: list, *, audience: list | None = None) -> dict:
+def _tab(
+    label: str,
+    key: str,
+    content: list,
+    *,
+    audience: list[str] | None = None,
+) -> dict:
     return {
         "label": label,
         "key": key,
         "icon": None,
-        "audience": {"audience": audience or []},
+        "audience": {
+            "audience": (
+                audience if audience is not None else TAB_AUDIENCES.get(key, [])
+            ),
+        },
         "content": content,
     }
 
@@ -97,7 +125,6 @@ def settings_page_body() -> list:
             [
                 _action_form("settings.privacy", "Save privacy"),
                 _action("account.delete_request", "Delete my account"),
-                _action("account.delete_cancel", "Cancel account deletion"),
             ],
         ),
         _tab(
@@ -125,10 +152,10 @@ def settings_page_body() -> list:
                 _action("peer.subscription_pause", "Pause plan"),
                 _action("peer.subscription_resume", "Resume plan"),
                 _action("peer.subscription_cancel", "Cancel plan"),
+                _action("peer.connect_stripe", "Connect Stripe"),
                 _action("peer.open_stripe_dashboard", "Open Stripe dashboard"),
                 _action("peer.stripe_disconnect", "Disconnect Stripe"),
             ],
-            audience=["peer"],
         ),
     ]
     return [

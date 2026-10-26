@@ -22,6 +22,7 @@ from neuromancers_network.moderation.models import SupportStatus
 from neuromancers_network.moderation.models import SupportTicket
 from neuromancers_network.moderation.models import UserBlock
 from neuromancers_network.moderation.services import purge_account
+from neuromancers_network.moderation.services import send_deletion_cancel_email
 
 
 class AccountDeletionFilterSet(WagtailFilterSet):
@@ -73,6 +74,37 @@ class PurgeAccountsBulkAction(ConfirmBulkAction):
             purge_account(deletion.user)
             purged += 1
         return purged, 0
+
+
+class ResendDeletionCancelLinkBulkAction(ConfirmBulkAction):
+    models = [AccountDeletionRequest]
+    display_name = _("Resend cancellation link")
+    action_type = "resend_cancel_link"
+    aria_label = _("Resend cancellation links for selected requests")
+    icon = "mail"
+    confirm_message = _(
+        "Resend the signed cancellation link for the selected pending requests?",
+    )
+    action_button_text = _("Yes, resend")
+    no_action_button_text = _("No, go back")
+
+    def get_execution_context(self):
+        return {"actor": self.request.user, "request": self.request}
+
+    @classmethod
+    def execute_action(cls, objects, *, actor=None, request=None, **kwargs):
+        sent = 0
+        skipped = 0
+        for deletion in objects:
+            if send_deletion_cancel_email(
+                deletion,
+                actor=actor,
+                request=request,
+            ):
+                sent += 1
+            else:
+                skipped += 1
+        return sent, skipped
 
 
 class UserBlockViewSet(HiddenFromSnippetIndexMixin, SnippetViewSet):
@@ -247,6 +279,7 @@ class ModerationOperationsViewSetGroup(SnippetViewSetGroup):
 
 for action_class in (
     PurgeAccountsBulkAction,
+    ResendDeletionCancelLinkBulkAction,
     ResolveSupportTicketsBulkAction,
     RejectSupportTicketsBulkAction,
 ):

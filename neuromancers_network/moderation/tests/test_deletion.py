@@ -26,6 +26,10 @@ from neuromancers_network.users.tests.factories import UserFactory
 pytestmark = pytest.mark.django_db
 
 
+SUCCESS = 200
+GONE = 410
+
+
 class TestRequestDeletion:
     def test_schedules_and_deactivates(self):
         user = UserFactory()
@@ -271,3 +275,67 @@ class TestDeletedIdentitySweep:
 class TestIdentityBlock:
     def test_unknown_identity_is_not_blocked(self):
         assert is_identity_blocked(email="nobody@example.com") is False
+
+
+class TestDeletionCancelLink:
+    def _deletion(self):
+        user = UserFactory()
+        deletion = request_account_deletion(user)
+        return user, deletion
+
+    def test_valid_get_does_not_cancel(self, client):
+        from django.urls import reverse  # noqa: PLC0415
+
+        from neuromancers_network.moderation.tokens import deletion_cancel_token  # noqa: PLC0415
+
+        user, deletion = self._deletion()
+        token = deletion_cancel_token(deletion)
+
+        response = client.get(
+            reverse("account_deletion_cancel", args=[token]),
+        )
+
+        assert response.status_code == SUCCESS
+        deletion.refresh_from_db()
+        user.refresh_from_db()
+        assert deletion.status == DeletionStatus.PENDING
+        assert user.is_active is False
+
+    def test_post_cancels_and_reactivates(self, client):
+        from django.urls import reverse  # noqa: PLC0415
+
+        from neuromancers_network.moderation.tokens import deletion_cancel_token  # noqa: PLC0415
+
+        user, deletion = self._deletion()
+        token = deletion_cancel_token(deletion)
+
+        response = client.post(
+            reverse("account_deletion_cancel", args=[token]),
+        )
+
+        assert response.status_code == SUCCESS
+        deletion.refresh_from_db()
+        user.refresh_from_db()
+        assert deletion.status == DeletionStatus.CANCELLED
+        assert user.is_active is True
+
+    def test_token_is_one_time(self, client):
+        from django.urls import reverse  # noqa: PLC0415
+
+        from neuromancers_network.moderation.tokens import deletion_cancel_token  # noqa: PLC0415
+
+        _user, deletion = self._deletion()
+        token = deletion_cancel_token(deletion)
+        url = reverse("account_deletion_cancel", args=[token])
+
+        assert client.post(url).status_code == SUCCESS
+        assert client.post(url).status_code == GONE
+
+    def test_tampered_token_is_rejected(self, client):
+        from django.urls import reverse  # noqa: PLC0415
+
+        _user, _deletion = self._deletion()
+        url = reverse("account_deletion_cancel", args=["not-a-token"])
+
+        assert client.get(url).status_code == GONE
+        assert client.post(url).status_code == GONE
