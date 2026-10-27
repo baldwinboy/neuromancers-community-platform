@@ -27,13 +27,7 @@ services:
 
   django-init:
     <<: *django
-    command:
-      - /bin/sh
-      - -c
-      - >-
-        if [ -x /start-init ]; then exec /start-init; fi;
-        echo "start-init absent (pre-bootstrap image); legacy /start owns bootstrap";
-        exit 0
+    command: /start-init
     restart: "no"
 
   postgres:

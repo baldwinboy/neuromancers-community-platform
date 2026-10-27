@@ -50,13 +50,7 @@ services:
     environment:
       - BWS_ACCESS_TOKEN=${BWS_ACCESS_TOKEN}
       - TS_APP_DOMAIN=${TS_APP_DOMAIN}
-    command:
-      - /bin/sh
-      - -c
-      - >-
-        if [ -x /start-init ]; then exec /start-init; fi;
-        echo "start-init absent (pre-bootstrap image); legacy /start owns bootstrap";
-        exit 0
+    command: /start-init
     exclude_from_hc: true
     restart: "no"
     mem_limit: 512m

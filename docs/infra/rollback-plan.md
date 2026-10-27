@@ -62,9 +62,12 @@ deployment. On a restored or empty database, run the bootstrap synchronously
 before enabling traffic (see
 [Operator Guide — Fresh database exception](operator-guide.md#fresh-database-exception)).
 
-Images built before the async bootstrap change have no `/start-init`; the
-Compose `django-init` service exits cleanly and the image's legacy `/start`
-performs the bootstrap instead.
+Images built before the async bootstrap change have no `/start-init`. On such a
+rollback the `django-init` container fails to exec (`/start-init: not found`)
+and exits non-zero. This is non-fatal: the service is `exclude_from_hc: true`,
+`restart: "no"`, and nothing depends on it. The image's legacy `/start`
+performs the bootstrap synchronously; confirm `/api/ready` before enabling
+traffic.
 
 ### Identify the previous image tag
 
