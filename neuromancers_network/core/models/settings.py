@@ -12,6 +12,8 @@ from wagtail.contrib.settings.models import register_setting
 from wagtail.fields import StreamField
 from wagtail_daisIE.base_blocks.audience import get_audience_rule_choices
 
+from neuromancers_network.core.blocks.consent import ConsentDesignBlock
+from neuromancers_network.core.blocks.consent import ConsentSettingsDesignMixin
 from neuromancers_network.core.fields import EncryptedCharField
 from neuromancers_network.core.panels import SendTestEmailPanel
 from neuromancers_network.core.panels import StripeOpsPanel
@@ -569,7 +571,7 @@ class ScriptsSetting(BaseGenericSetting):
 
 
 @register_setting(icon="cog")
-class ConsentSettings(BaseGenericSetting):
+class ConsentSettings(BaseGenericSetting, ConsentSettingsDesignMixin):
     """Admin-authored cookie-consent banner copy and policy version."""
 
     policy_version = models.CharField(
@@ -595,12 +597,80 @@ class ConsentSettings(BaseGenericSetting):
         default="Necessary only",
     )
 
+    show_cookie_settings_button = models.BooleanField(
+        _("Show Cookie settings button after consent"),
+        default=False,
+        help_text=_(
+            "Show a persistent 'Cookie settings' control after a visitor has "
+            "chosen their cookie preferences.",
+        ),
+    )
+
+    reopen_label = models.CharField(
+        _("Cookie settings button label"),
+        max_length=100,
+        default="Cookie settings",
+        help_text=_("Label for the control that reopens the consent banner."),
+    )
+
+    optional_label = models.CharField(
+        _("Optional cookies label"),
+        max_length=100,
+        default="Optional cookies",
+    )
+    necessary_label = models.CharField(
+        _("Necessary cookies label"),
+        max_length=100,
+        default="Necessary",
+    )
+    necessary_description = models.CharField(
+        _("Necessary cookies description"),
+        max_length=255,
+        blank=True,
+        help_text=_(
+            "Optional helper text shown beneath the disabled necessary option.",
+        ),
+    )
+
+    design = StreamField(
+        [("design", ConsentDesignBlock())],
+        blank=True,
+        max_num=1,
+        use_json_field=True,
+        verbose_name=_("Design"),
+        help_text=_(
+            "Style the banner and the Cookie settings control with the daisIE "
+            "design system. Leave empty to inherit the site theme.",
+        ),
+    )
+
     panels = [
-        FieldPanel("policy_version"),
-        FieldPanel("banner_title"),
-        FieldPanel("banner_text"),
-        FieldPanel("accept_label"),
-        FieldPanel("decline_label"),
+        MultiFieldPanel(
+            [FieldPanel("policy_version")],
+            heading=_("Policy"),
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("banner_title"),
+                FieldPanel("banner_text"),
+                FieldPanel("accept_label"),
+                FieldPanel("decline_label"),
+            ],
+            heading=_("Banner copy"),
+        ),
+        MultiFieldPanel(
+            [FieldPanel("design")],
+            heading=_("Design"),
+            classname="collapsed",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("show_cookie_settings_button"),
+                FieldPanel("reopen_label"),
+            ],
+            heading=_("Cookie settings button"),
+            classname="collapsed",
+        ),
     ]
 
     class Meta:

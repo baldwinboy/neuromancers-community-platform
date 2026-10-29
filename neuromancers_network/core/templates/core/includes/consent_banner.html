@@ -1,59 +1,92 @@
-{% load i18n %}
-
 {% if consent_settings and consent_needs_update %}
-  <div class="fixed inset-x-0 bottom-0 border-t border-base-300 bg-base-100 shadow-lg"
+  <div class="toast {{ consent_settings.banner_position }}"
        role="dialog"
        aria-labelledby="consent-title"
-       aria-describedby="consent-text"
-       style="z-index: 1000">
-    <div class="container mx-auto max-w-3xl p-4">
-      <h2 id="consent-title" class="text-lg font-semibold">{{ consent_settings.banner_title }}</h2>
+       {% if consent_settings.banner_text %}aria-describedby="consent-text"{% endif %}>
+    <div class="{{ consent_settings.banner_css }}"
+         {% if consent_settings.banner_style %}style="{{ consent_settings.banner_style }}"{% endif %}>
+      <h2 id="consent-title"
+          class="{{ consent_settings.copy_title_css }}"
+          {% if consent_settings.copy_title_style %}style="{{ consent_settings.copy_title_style }}"{% endif %}>{{ consent_settings.banner_title }}</h2>
       {% if consent_settings.banner_text %}
-        <p id="consent-text" class="mt-1 text-sm">{{ consent_settings.banner_text|linebreaksbr }}</p>
+        <p id="consent-text"
+           class="{{ consent_settings.copy_body_css }}"
+           {% if consent_settings.copy_body_style %}style="{{ consent_settings.copy_body_style }}"{% endif %}>{{ consent_settings.banner_text|linebreaksbr }}</p>
       {% endif %}
       <form method="post"
             action="{% url 'consent_accept' %}"
-            class="mt-3 space-y-3">
+            class="{{ consent_settings.form_css }}"
+            {% if consent_settings.form_style %}style="{{ consent_settings.form_style }}"{% endif %}>
         {% csrf_token %}
         <input type="hidden"
                name="policy_version"
                value="{{ consent_settings.policy_version }}" />
         <input type="hidden" name="return_to" value="{{ request.get_full_path }}" />
-        <fieldset>
-          <legend class="text-sm font-medium">{% trans "Optional cookies" %}</legend>
-          <div class="mt-1 flex flex-wrap gap-4">
-            {% for value, label in consent_categories %}
-              <label class="flex items-center gap-2">
+        <fieldset class="{{ consent_settings.options_fieldset_css }}"
+                  {% if consent_settings.options_fieldset_style %}style="{{ consent_settings.options_fieldset_style }}"{% endif %}>
+          <legend class="{{ consent_settings.necessary_legend_css }}"
+                  {% if consent_settings.necessary_legend_style %}style="{{ consent_settings.necessary_legend_style }}"{% endif %}>{{ consent_settings.necessary_label }}</legend>
+          <div class="{{ consent_settings.necessary_row_css }}"
+               {% if consent_settings.necessary_row_style %}style="{{ consent_settings.necessary_row_style }}"{% endif %}>
+            <label class="label cursor-pointer justify-start gap-3">
+              <input type="checkbox"
+                     class="checkbox {{ consent_settings.necessary_color }} {{ consent_settings.necessary_size }}"
+                     checked
+                     disabled />
+              <span class="label-text">{{ consent_settings.necessary_label }}</span>
+            </label>
+            {% if consent_settings.necessary_description %}
+              <p class="label">{{ consent_settings.necessary_description }}</p>
+            {% endif %}
+          </div>
+        </fieldset>
+        <fieldset class="{{ consent_settings.options_fieldset_css }}"
+                  {% if consent_settings.options_fieldset_style %}style="{{ consent_settings.options_fieldset_style }}"{% endif %}>
+          <legend class="{{ consent_settings.optional_legend_css }}"
+                  {% if consent_settings.optional_legend_style %}style="{{ consent_settings.optional_legend_style }}"{% endif %}>{{ consent_settings.optional_label }}</legend>
+          {% for value, label in consent_categories %}
+            <div class="{{ consent_settings.option_row_css }}"
+                 {% if consent_settings.option_row_style %}style="{{ consent_settings.option_row_style }}"{% endif %}>
+              <label class="label cursor-pointer justify-start gap-3">
                 <input type="checkbox"
                        name="categories"
                        value="{{ value }}"
-                       class="checkbox checkbox-sm"
+                       class="checkbox {{ consent_settings.option_color }} {{ consent_settings.option_size }}"
                        {% if value in consent.categories %}checked{% endif %} />
-                {{ label }}
+                <span class="label-text">{{ label }}</span>
               </label>
-            {% endfor %}
-          </div>
+            </div>
+          {% endfor %}
         </fieldset>
-        <div class="flex flex-wrap gap-2">
+        <div class="{{ consent_settings.buttons_row_css }}"
+             {% if consent_settings.buttons_row_style %}style="{{ consent_settings.buttons_row_style }}"{% endif %}>
           <button type="submit"
                   name="choice"
                   value="accept"
-                  class="btn btn-primary btn-sm">{{ consent_settings.accept_label }}</button>
+                  class="{{ consent_settings.accept_button_css }}"
+                  {% if consent_settings.accept_button_style %}style="{{ consent_settings.accept_button_style }}"{% endif %}>{{ consent_settings.accept_label }}</button>
           <button type="submit"
                   name="choice"
                   value="necessary"
-                  class="btn btn-secondary btn-sm">{{ consent_settings.decline_label }}</button>
+                  class="{{ consent_settings.necessary_button_css }}"
+                  {% if consent_settings.necessary_button_style %}style="{{ consent_settings.necessary_button_style }}"{% endif %}>{{ consent_settings.decline_label }}</button>
         </div>
       </form>
     </div>
   </div>
-{% elif consent_settings %}
-  <form method="post"
-        action="{% url 'consent_reset' %}"
-        class="fixed bottom-2 right-2"
-        style="z-index: 1000">
-    {% csrf_token %}
-    <input type="hidden" name="return_to" value="{{ request.get_full_path }}" />
-    <button type="submit" class="btn btn-ghost btn-xs">{% trans "Cookie settings" %}</button>
-  </form>
+{% elif consent_settings and consent_settings.show_cookie_settings_button %}
+  <div class="toast {{ consent_settings.reopen_position }}">
+    <form method="post"
+          action="{% url 'consent_reset' %}"
+          id="consent-reopen"
+          data-consent-reopen
+          class="{{ consent_settings.reopen_container_css }}"
+          {% if consent_settings.reopen_container_style %}style="{{ consent_settings.reopen_container_style }}"{% endif %}>
+      {% csrf_token %}
+      <input type="hidden" name="return_to" value="{{ request.get_full_path }}" />
+      <button type="submit"
+              class="{{ consent_settings.reopen_button_css }}"
+              {% if consent_settings.reopen_button_style %}style="{{ consent_settings.reopen_button_style }}"{% endif %}>{{ consent_settings.reopen_label }}</button>
+    </form>
+  </div>
 {% endif %}
