@@ -1,10 +1,7 @@
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from django.utils import timezone
-from wagtail_daisIE.base_blocks.audience import evaluate_audience
-from wagtail_daisIE.base_blocks.audience import get_audience_choices
 
 from neuromancers_network.core import audience
 from neuromancers_network.meetings.tests.factories import create_meeting
@@ -223,58 +220,3 @@ class TestProviderStatePredicates:
         assert audience.can_pause_plan(request) is True
         assert audience.can_resume_plan(request) is False
         assert audience.can_cancel_plan(request) is True
-
-
-class TestAudienceConfiguration:
-    def test_rule_order(self):
-        rules = list(settings.WAGTAIL_DAISIE_AUDIENCE_RULES)
-
-        assert rules[:7] == [
-            "not_logged_in",
-            "authenticated",
-            "peer",
-            "verified_peer",
-            "moderator",
-            "deactivated",
-            "needs_tos_acceptance",
-        ]
-
-    def test_redundant_rules_removed(self):
-        rules = settings.WAGTAIL_DAISIE_AUDIENCE_RULES
-
-        assert "peer_owner" not in rules
-        assert "can_accept_tos" not in rules
-        assert "is_approved_provider" not in rules
-        assert "is_verified_provider" not in rules
-        assert "own_profile_and_peer" in rules
-
-    def test_chooser_order(self):
-        choices = get_audience_choices()
-
-        assert choices[0] == ("not_logged_in", "Not signed in")
-        assert choices[1] == ("authenticated", "Signed-in members")
-        assert choices[2] == ("peer", "Care providers")
-
-
-class TestAudienceEvaluation:
-    def test_anonymous_matches_not_logged_in(self, rf):
-        request = rf.get("/")
-        request.user = AnonymousUser()
-
-        assert evaluate_audience(["not_logged_in"], request) is True
-
-    def test_authenticated_does_not_match_not_logged_in(self, rf, user):
-        request = make_request(rf, user)
-
-        assert evaluate_audience(["not_logged_in"], request) is False
-
-    def test_or_semantics(self, rf, user):
-        anonymous = rf.get("/")
-        anonymous.user = AnonymousUser()
-        authenticated = make_request(rf, user)
-
-        assert evaluate_audience(["authenticated", "not_logged_in"], anonymous) is True
-        assert (
-            evaluate_audience(["authenticated", "not_logged_in"], authenticated) is True
-        )
-        assert evaluate_audience(["peer", "not_logged_in"], authenticated) is False

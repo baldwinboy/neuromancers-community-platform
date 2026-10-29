@@ -76,6 +76,14 @@ urlpatterns = [
     path("", include(wagtail_urls)),
 ]
 
+if getattr(settings, "DEBUG", False):
+    try:
+        import debug_toolbar
+
+        urlpatterns += [path("__debug__/", include(debug_toolbar.urls))]
+    except ImportError:
+        pass
+
 # Admin-designed error pages.
 handler400 = "wagtail_daisIE.errors.handlers.handler400"
 handler401 = "wagtail_daisIE.errors.handlers.handler401"

@@ -1,5 +1,10 @@
 {% load i18n %}
 
-<p>
-  <a class="button button-secondary" href="{{ help_url }}">{% trans "Open the Admin Guide" %}</a>
-</p>
+<div class="w-flex w-flex-row w-flex-wrap w-gap-4">
+  <p>
+    <a class="button button-secondary" href="{{ help_url }}">{% trans "Open the Admin Guide" %}</a>
+  </p>
+  {% if demo_enabled %}
+    <p><a class="button button-secondary" href="{{ demo_url }}">{% translate "Manage demo data" %}</a></p>
+  {% endif %}
+</div>

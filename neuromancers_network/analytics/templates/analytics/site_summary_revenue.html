@@ -1,0 +1,11 @@
+{% load i18n wagtailadmin_tags %}
+
+<li>
+  {% icon name="tag" %}
+  <a href="{{ analytics_url }}">
+    {% blocktrans with combined=revenue.combined|intcomma marketplace=revenue.marketplace|intcomma subscription=revenue.subscription|intcomma %}
+            Revenue this month: <strong>£{{ combined }}</strong> (sessions: £{{ marketplace }},
+            care providers: £{{ subscription }})
+        {% endblocktrans %}
+  </a>
+</li>

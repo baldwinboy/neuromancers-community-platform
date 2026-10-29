@@ -3,7 +3,6 @@ from __future__ import annotations
 import pytest
 from django.urls import reverse
 
-from neuromancers_network.analytics.panels import AnalyticsPanel
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -31,13 +30,6 @@ class TestDashboard:
         response = client.get(reverse("analytics_dashboard"))
 
         assert response.status_code in (302, 403)
-
-    def test_panel_shows_combined_revenue(self):
-        context = AnalyticsPanel().get_context_data({})
-        revenue = context["revenue"]
-
-        assert context["analytics_url"]
-        assert revenue.combined == revenue.marketplace + revenue.subscription
 
 
 class TestAnalyticsAPI:

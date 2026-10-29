@@ -14,7 +14,6 @@ from neuromancers_network.core.models import Cookie
 from neuromancers_network.core.models import GlossaryTerm
 from neuromancers_network.core.models import HelpArticle
 from neuromancers_network.core.models import HelpCategory
-from neuromancers_network.core.panels import DemoDataPanel
 from neuromancers_network.core.panels import HelpGuidePanel
 from neuromancers_network.core.views.demo_data import DemoDataView
 from neuromancers_network.core.views.email import SendTestEmailView
@@ -187,7 +186,6 @@ def register_core_admin_urls():
 @hooks.register("construct_homepage_panels")
 def add_help_guide_panel(request, panels):
     panels.append(HelpGuidePanel())
-    panels.append(DemoDataPanel())
 
 
 @hooks.register("before_serve_page")

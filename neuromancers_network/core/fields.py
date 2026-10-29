@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from django import forms
 from django.db import models
 
 from neuromancers_network.core.crypto import decrypt
 from neuromancers_network.core.crypto import encrypt
+from neuromancers_network.core.widgets import SecretInput
 
 
 class EncryptedTextField(models.TextField):
@@ -22,7 +22,7 @@ class EncryptedTextField(models.TextField):
         return encrypt(super().get_prep_value(value))
 
     def formfield(self, **kwargs):
-        kwargs.setdefault("widget", forms.PasswordInput(render_value=False))
+        kwargs.setdefault("widget", SecretInput(render_value=False))
         kwargs.setdefault("required", False)
         return super().formfield(**kwargs)
 

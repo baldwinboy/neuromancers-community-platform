@@ -1,19 +1,25 @@
 {% load i18n %}
 
-<div class="w-panel">
-  <h2 class="w-panel__heading">{% translate "Send test email" %}</h2>
-  <form method="post"
-        action="{% url 'send_test_email' %}"
-        class="w-flex w-items-end w-gap-2">
-    {% csrf_token %}
-    <label class="w-field">
-      <span class="w-field__label">{% translate "Recipient" %}</span>
-      <input class="w-field__input"
-             type="email"
-             name="email"
-             required
-             placeholder="you@example.com" />
-    </label>
-    <button type="submit" class="button button-secondary">{% translate "Send test email" %}</button>
-  </form>
+<div class="w-p-4 w-panel w-panel--dashboard">
+  <h2 class="w-panel__heading"
+      style="margin: 0;
+             padding: 0;
+             padding-block-end: 1em">{% translate "Send test email" %}</h2>
+  <div class="w-panel__content w-flex w-items-end w-gap-2">
+    <form method="post" action="{% url 'send_test_email' %}">
+      {% csrf_token %}
+      <label class="w-field">
+        <span class="w-field__label">{% translate "Recipient" %}</span>
+        <input class="w-field__input"
+               type="email"
+               name="email"
+               required
+               placeholder="you@example.com" />
+      </label>
+      <button type="submit"
+              class="button button-secondary"
+              style="margin-top: auto;
+                     margin-left: auto">{% translate "Send test email" %}</button>
+    </form>
+  </div>
 </div>

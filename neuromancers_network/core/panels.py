@@ -76,18 +76,8 @@ class HelpGuidePanel(Component):
     template_name = "core/help_panel.html"
 
     def get_context_data(self, parent_context):
-        return {"help_url": reverse("help_guide")}
-
-
-class DemoDataPanel(Component):
-    """Dashboard panel linking to the demo/test data administration view."""
-
-    name = "demo_data"
-    order = 160
-    template_name = "core/demo_data_panel.html"
-
-    def get_context_data(self, parent_context):
         return {
             "demo_url": reverse("demo_data"),
             "demo_enabled": settings.DEMO_DATA_ENABLED,
+            "help_url": reverse("help_guide"),
         }
