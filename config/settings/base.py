@@ -961,6 +961,10 @@ WAGTAIL_DAISIE_NOTIFICATION_BRIDGES = {
 # Labels must be JSON-serialisable: daisIE injects this dict into the admin via
 # json.dumps() (wagtail_daisIE/wagtail_hooks.py). Do not use gettext_lazy here.
 WAGTAIL_DAISIE_AUDIENCE_RULES = {
+    "not_logged_in": {
+        "label": "Not signed in",
+        "rule": "neuromancers_network.core.audience.is_not_logged_in",
+    },
     "authenticated": {
         "label": "Signed-in members",
         "rule": "neuromancers_network.core.audience.is_authenticated",
@@ -976,24 +980,20 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
         "rule": "neuromancers_network.core.audience.is_verified_peer",
         "queryset": "neuromancers_network.core.audience.verified_peer_users",
     },
-    "peer_owner": {
-        "label": "Care providers viewing their own profile",
-        "rule": "neuromancers_network.core.audience.is_peer_owner",
-    },
     "moderator": {
         "label": "Moderators",
         "rule": "neuromancers_network.core.audience.is_moderator",
         "queryset": "neuromancers_network.core.audience.moderator_users",
     },
-    "needs_tos_acceptance": {
-        "label": "Members yet to accept the Terms",
-        "rule": "neuromancers_network.core.audience.needs_tos_acceptance",
-        "queryset": ("neuromancers_network.core.audience.needs_tos_acceptance_users"),
-    },
     "deactivated": {
         "label": "Deactivated members",
         "rule": "neuromancers_network.core.audience.is_deactivated",
         "queryset": "neuromancers_network.core.audience.deactivated_users",
+    },
+    "needs_tos_acceptance": {
+        "label": "Members yet to accept the Terms",
+        "rule": "neuromancers_network.core.audience.needs_tos_acceptance",
+        "queryset": ("neuromancers_network.core.audience.needs_tos_acceptance_users"),
     },
     "meeting_host": {
         "label": "Meeting host",
@@ -1022,6 +1022,10 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
     "own_profile": {
         "label": "Own profile",
         "rule": "neuromancers_network.core.audience.is_own_profile",
+    },
+    "own_profile_and_peer": {
+        "label": "Care providers viewing their own profile",
+        "rule": "neuromancers_network.core.audience.is_peer_owner",
     },
     "own_profile_or_moderator": {
         "label": "Own profile or moderator",
@@ -1059,10 +1063,6 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
         "label": "Members who can reactivate their account",
         "rule": "neuromancers_network.core.audience.can_reactivate_account",
     },
-    "can_accept_tos": {
-        "label": "Members yet to accept the Terms",
-        "rule": "neuromancers_network.core.audience.can_accept_tos",
-    },
     "has_peer_profile": {
         "label": "Care providers with a profile",
         "rule": "neuromancers_network.core.audience.has_peer_profile",
@@ -1078,14 +1078,6 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
     "peer_application_rejected": {
         "label": "Provider applications rejected",
         "rule": "neuromancers_network.core.audience.peer_application_rejected",
-    },
-    "is_approved_provider": {
-        "label": "Approved care providers",
-        "rule": "neuromancers_network.core.audience.is_approved_provider",
-    },
-    "is_verified_provider": {
-        "label": "Verified care providers",
-        "rule": "neuromancers_network.core.audience.is_verified_provider",
     },
     "provider_settings": {
         "label": "Care providers with a profile or application",
