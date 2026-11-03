@@ -13,7 +13,6 @@ from django.db import connection
 from django.db import transaction
 from django.test import override_settings
 from django.utils import timezone
-from wagtail.coreutils import find_available_slug
 
 logger = logging.getLogger(__name__)
 
@@ -161,48 +160,12 @@ def _home_page():
     return home
 
 
-def _ensure_child(home, page_class, slug: str, title: str, **fields):
-    page = page_class.objects.child_of(home).order_by("path").first()
-    if page is not None:
-        return page
-    page = page_class(
-        title=title,
-        slug=find_available_slug(home, slug),
-        **fields,
-    )
-    home.add_child(instance=page)
-    page.save_revision().publish()
-    return page
-
-
 def _ensure_pages(home) -> None:
-    from neuromancers_network.core.models.pages import BookingDetailTemplate  # noqa: PLC0415
-    from neuromancers_network.core.models.pages import MeetingIndexPage  # noqa: PLC0415
-    from neuromancers_network.core.models.pages import PeerIndexPage  # noqa: PLC0415
-    from neuromancers_network.core.models.pages import RefundRequestDetailTemplate  # noqa: PLC0415
-    from neuromancers_network.core.models.pages import ReviewIndexPage  # noqa: PLC0415
-    from neuromancers_network.core.models.pages import TagIndexPage  # noqa: PLC0415
-
-    pages = (
-        (MeetingIndexPage, "meetings", "Meetings", {}),
-        (PeerIndexPage, "peers", "Care providers", {}),
-        (ReviewIndexPage, "reviews", "Reviews", {}),
-        (TagIndexPage, "tags", "Tags", {}),
-        (
-            BookingDetailTemplate,
-            "booking-detail",
-            "Booking detail",
-            {"detail_key": "booking"},
-        ),
-        (
-            RefundRequestDetailTemplate,
-            "refund-detail",
-            "Refund detail",
-            {"detail_key": "refund_request"},
-        ),
+    from neuromancers_network.core.detail_page_structure import (  # noqa: PLC0415
+        sync_detail_page_structure,
     )
-    for page_class, slug, title, fields in pages:
-        _ensure_child(home, page_class, slug, title, **fields)
+
+    sync_detail_page_structure(home)
 
 
 def _ensure_taxonomy():

@@ -122,7 +122,7 @@ def tag_page_children(request=None, page=None):
     host = _host_page(request, page)
     if host is None:
         return TagDetailPage.objects.none()
-    return TagDetailPage.objects.live().public().child_of(host).order_by("title")
+    return TagDetailPage.objects.live().public().descendant_of(host).order_by("title")
 
 
 def pages_tagged_with(tag):

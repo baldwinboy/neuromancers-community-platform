@@ -1444,7 +1444,12 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "model": "meetings.Meeting",
         "page_type": "neuromancers_network.core.models.pages.MeetingDetailPage",
         "parent": "neuromancers_network.core.models.pages.MeetingIndexPage",
-        "template_page": "neuromancers_network.core.models.pages.MeetingIndexPage",
+        "template_page": (
+            "neuromancers_network.core.models.pages.MeetingDetailTemplate"
+        ),
+        "generated_index": (
+            "neuromancers_network.core.models.pages.MeetingGeneratedPagesIndexPage"
+        ),
         "lookup_field": "pk",
         "publish_field": "is_live",
         "title_source": "title",
@@ -1456,7 +1461,10 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "model": "peers.PeerProfile",
         "page_type": "neuromancers_network.core.models.pages.PeerProfileDetailPage",
         "parent": "neuromancers_network.core.models.pages.PeerIndexPage",
-        "template_page": "neuromancers_network.core.models.pages.PeerIndexPage",
+        "template_page": "neuromancers_network.core.models.pages.PeerDetailTemplate",
+        "generated_index": (
+            "neuromancers_network.core.models.pages.PeerGeneratedPagesIndexPage"
+        ),
         "lookup_field": "pk",
         "publish_field": "is_live",
         "title_source": "display_title",
@@ -1468,7 +1476,12 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "model": "meetings.Review",
         "page_type": "neuromancers_network.core.models.pages.ReviewDetailPage",
         "parent": "neuromancers_network.core.models.pages.ReviewIndexPage",
-        "template_page": "neuromancers_network.core.models.pages.ReviewIndexPage",
+        "template_page": (
+            "neuromancers_network.core.models.pages.ReviewDetailTemplate"
+        ),
+        "generated_index": (
+            "neuromancers_network.core.models.pages.ReviewGeneratedPagesIndexPage"
+        ),
         "lookup_field": "pk",
         "publish_field": "is_live",
         "title_source": "display_title",
@@ -1480,7 +1493,12 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "model": "users.User",
         "page_type": "neuromancers_network.core.models.pages.UserProfilePage",
         "parent": "neuromancers_network.core.models.pages.ProfileIndexPage",
-        "template_page": "neuromancers_network.core.models.pages.ProfileIndexPage",
+        "template_page": (
+            "neuromancers_network.core.models.pages.UserProfileDetailTemplate"
+        ),
+        "generated_index": (
+            "neuromancers_network.core.models.pages.ProfileGeneratedPagesIndexPage"
+        ),
         "lookup_field": "username",
         "publish_field": "",
         "title_source": "display_name",
@@ -1494,6 +1512,9 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "parent": "neuromancers_network.core.models.pages.HomePage",
         "template_page": (
             "neuromancers_network.core.models.pages.BookingDetailTemplate"
+        ),
+        "generated_index": (
+            "neuromancers_network.core.models.pages.BookingGeneratedPagesIndexPage"
         ),
         "lookup_field": "pk",
         "publish_field": "",
@@ -1509,6 +1530,10 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "template_page": (
             "neuromancers_network.core.models.pages.RefundRequestDetailTemplate"
         ),
+        "generated_index": (
+            "neuromancers_network.core.models.pages."
+            "RefundRequestGeneratedPagesIndexPage"
+        ),
         "lookup_field": "pk",
         "publish_field": "",
         "title_source": "display_title",
@@ -1520,7 +1545,10 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "model": "taxonomy.AllowedTag",
         "page_type": "neuromancers_network.core.models.pages.TagDetailPage",
         "parent": "neuromancers_network.core.models.pages.TagIndexPage",
-        "template_page": "neuromancers_network.core.models.pages.TagIndexPage",
+        "template_page": "neuromancers_network.core.models.pages.TagDetailTemplate",
+        "generated_index": (
+            "neuromancers_network.core.models.pages.TagGeneratedPagesIndexPage"
+        ),
         "lookup_field": "slug",
         "lookup_in": "path",
         "publish_field": "is_active",

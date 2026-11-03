@@ -13,6 +13,9 @@ REVISION = "a" * 40
 BOOTSTRAP_COMMAND = (
     "neuromancers_network.core.management.commands.bootstrap.call_command"
 )
+BOOTSTRAP_VALIDATE = (
+    "neuromancers_network.core.management.commands.bootstrap.validate_detail_pages"
+)
 WAIT_COMMAND = (
     "neuromancers_network.core.management.commands.wait_for_bootstrap.current_status"
 )
@@ -27,17 +30,21 @@ def _configure(settings, tmp_path):
 def test_bootstrap_writes_phases_and_commands(settings, tmp_path):
     _configure(settings, tmp_path)
 
-    with patch(BOOTSTRAP_COMMAND) as call:
+    with (
+        patch(BOOTSTRAP_COMMAND) as call,
+        patch(BOOTSTRAP_VALIDATE) as validate,
+    ):
         call_command("bootstrap")
 
     assert read_status(tmp_path, REVISION).phase is BootstrapPhase.COMPLETE
     assert [item.args[0] for item in call.call_args_list] == [
         "migrate",
+        "seed_pages",
         "ensure_superuser",
         "seed_help_guide",
-        "seed_pages",
         "seed_account_selfservice",
     ]
+    validate.assert_called_once_with(records=True)
 
 
 def test_bootstrap_marks_migrate_failure(settings, tmp_path):

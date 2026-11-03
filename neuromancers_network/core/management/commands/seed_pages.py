@@ -12,9 +12,11 @@ from typing import Any
 
 from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
+from wagtail_daisIE.detail_pages.validation import validate_detail_pages
 from wagtail_daisIE.feeds.models import Feed
 from wagtail_daisIE.menus.models import DaisyUIMenu
 
+from neuromancers_network.core.detail_page_structure import sync_detail_page_structure
 from neuromancers_network.core.models import HomePage
 from neuromancers_network.core.models import StandardPage
 from neuromancers_network.moderation.models import SupportFormPage
@@ -270,6 +272,7 @@ def _ensure_home_hero(home: HomePage, *, force: bool) -> None:
 def seed_pages(*, force: bool = False) -> None:
     """Create the signed-in pages, home chrome, feeds and contact form."""
     home = _live_home()
+    sync_detail_page_structure(home)
     for slug, title in SIGNED_IN_PAGES:
         _ensure_signed_in_page(home, slug, title, force=force)
     _ensure_contact_page(home, force=force)
@@ -277,6 +280,7 @@ def seed_pages(*, force: bool = False) -> None:
     _ensure_menus(home, force=force)
     for name, context_model, header, text in FEEDS:
         _ensure_feed(name, context_model, header, text, force=force)
+    validate_detail_pages(records=True)
 
 
 class Command(BaseCommand):

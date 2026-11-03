@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import pytest
 from django.contrib.auth.models import AnonymousUser
+from django.http import Http404
 from django.test import RequestFactory
 from wagtail.models import Page
 
 from neuromancers_network.core.models import HomePage
 from neuromancers_network.core.models.pages import MeetingDetailPage
+from neuromancers_network.core.models.pages import MeetingDetailTemplate
+from neuromancers_network.core.models.pages import MeetingGeneratedPagesIndexPage
 from neuromancers_network.core.models.pages import MeetingIndexPage
 from neuromancers_network.core.models.pages import PeerProfileDetailPage
 from neuromancers_network.core.models.pages import ReviewDetailPage
@@ -69,17 +72,46 @@ class TestDetailContextBinding:
         assert "peer_profile" not in context
         assert "review" not in context
 
-    def test_owner_sees_unpublished_meeting(self):
+    def test_detail_page_lives_under_generated_index_with_stable_url(self):
+        _home()
+        meeting = create_meeting(peer=make_peer())
+        page = MeetingDetailPage.objects.get(source_object_id=meeting.pk).specific
+        index = MeetingIndexPage.objects.get()
+
+        assert isinstance(page.get_parent().specific, MeetingGeneratedPagesIndexPage)
+        assert page.get_url() == f"{index.get_url()}{page.slug}/"
+        assert "generated-meetings" not in page.get_url()
+
+        with pytest.raises(Http404):
+            index.route(
+                _request(),
+                ["generated-meetings", page.slug],
+            )
+
+    def test_detail_context_exposes_template_page(self):
+        _home()
+        meeting = create_meeting(peer=make_peer())
+        page = MeetingDetailPage.objects.get(source_object_id=meeting.pk).specific
+        template = MeetingDetailTemplate.objects.get(detail_key="meeting")
+
+        context = page.get_context(_request())
+
+        assert context["detail_template"] == template
+        assert context["detail_template_body"] == template.body
+
+    def test_unpublished_meeting_deletes_generated_page(self):
         _home()
         peer = make_peer()
         meeting = create_meeting(peer=peer)
+        assert MeetingDetailPage.objects.filter(source_object_id=meeting.pk).exists()
+
         meeting.status = MeetingStatus.DRAFT
         meeting.save(validate=False)
-        page = MeetingDetailPage.objects.get(source_object_id=meeting.pk).specific
 
-        context = page.get_context(_request(peer))
-
-        assert context["meeting"] == meeting
+        assert not MeetingDetailPage.objects.filter(
+            source_object_id=meeting.pk,
+        ).exists()
+        assert meeting.get_absolute_url() == MeetingIndexPage.objects.get().get_url()
 
     def test_peer_profile_detail_binds_peer(self):
         _home()
@@ -174,10 +206,8 @@ class TestDetailPageLifecycle:
 
 class TestAbsoluteUrlFallback:
     def test_meeting_falls_back_to_the_index(self):
-        home = _home()
-        index = MeetingIndexPage(title="Meetings", slug="meetings")
-        home.add_child(instance=index)
-        index.save_revision().publish()
+        _home()
+        index = MeetingIndexPage.objects.get()
         meeting = create_meeting(peer=make_peer())
         detail = MeetingDetailPage.objects.get(source_object_id=meeting.pk)
 

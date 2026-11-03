@@ -14,6 +14,7 @@ from neuromancers_network.core.demo_data import validate_test_stripe_keys
 from neuromancers_network.core.models import HomePage
 from neuromancers_network.core.models import StandardPage
 from neuromancers_network.core.models import StripeSettings
+from neuromancers_network.core.models.pages import MeetingGeneratedPagesIndexPage
 from neuromancers_network.core.models.pages import MeetingIndexPage
 from neuromancers_network.users.tests.factories import UserFactory
 
@@ -111,6 +112,7 @@ def test_seed_tolerates_an_existing_meetings_page():
 
     _configure_test_stripe()
     home = _home()
+    MeetingIndexPage.objects.all().delete()
     home.add_child(instance=StandardPage(title="Meetings", slug="meetings"))
 
     result = seed_demo_data(
@@ -121,6 +123,9 @@ def test_seed_tolerates_an_existing_meetings_page():
     assert result["users"] == user_count
     assert StandardPage.objects.filter(slug="meetings").exists()
     assert MeetingIndexPage.objects.child_of(home).exists()
+    assert MeetingGeneratedPagesIndexPage.objects.child_of(
+        MeetingIndexPage.objects.get(),
+    ).exists()
 
 
 @override_settings(DEMO_DATA_ENABLED=False)

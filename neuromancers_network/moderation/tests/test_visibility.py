@@ -7,9 +7,10 @@ from django.test import RequestFactory
 from djstripe.enums import SubscriptionStatus
 from wagtail.models import Page
 
+from neuromancers_network.core.detail_page_structure import ensure_detail_page_structure
 from neuromancers_network.core.models import HomePage
 from neuromancers_network.core.models.pages import MeetingDetailPage
-from neuromancers_network.core.models.pages import MeetingIndexPage
+from neuromancers_network.core.models.pages import MeetingGeneratedPagesIndexPage
 from neuromancers_network.core.wagtail_hooks import hide_inaccessible_detail_pages
 from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingStatus
@@ -163,12 +164,10 @@ def _detail_page(meeting):
     home = HomePage.objects.first() or HomePage(title="Home", slug="home")
     if home.pk is None:
         root.add_child(instance=home)
-    index = MeetingIndexPage.objects.first() or MeetingIndexPage(
-        title="Meetings",
-        slug="meetings",
-    )
-    if index.pk is None:
-        home.add_child(instance=index)
+    generated_index = MeetingGeneratedPagesIndexPage.objects.first()
+    if generated_index is None:
+        ensure_detail_page_structure(home)
+        generated_index = MeetingGeneratedPagesIndexPage.objects.first()
     page = MeetingDetailPage(
         title=meeting.title,
         slug=f"meeting-{meeting.pk}",
@@ -176,7 +175,7 @@ def _detail_page(meeting):
         source_content_type=ContentType.objects.get_for_model(Meeting),
         source_object_id=meeting.pk,
     )
-    index.add_child(instance=page)
+    generated_index.add_child(instance=page)
     page.save_revision().publish()
     return page.specific
 

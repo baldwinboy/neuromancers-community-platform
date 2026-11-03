@@ -24,8 +24,10 @@ authored in Wagtail.
   expose selectors such as `viewable_bookings`, `my_meetings`,
   `my_reviews` to admin-authored blocks/feeds.
 - **Detail pages** (`WAGTAIL_DAISIE_DETAIL_PAGES`) generate pages from models.
-  Project subclasses resolve their own source (`SourceBoundDetailPage`) and
-  delete pages with their source (`on_delete: "page"`).
+  Project subclasses resolve their own source (`SourceBoundDetailPage`), render
+  a shared `ModelDetailTemplate`, and delete pages with their source
+  (`on_delete: "page"`). Non-public records create no page. Each config requires
+  both `template_page` and `generated_index`; the generated index is admin-only.
 - **Feeds** use viewer-scoped selectors; model feeds retain the host page across
   AJAX via the hidden `page` input.
 - **Actions** are registered in `WAGTAIL_DAISIE_ACTIONS` and authorise inside
