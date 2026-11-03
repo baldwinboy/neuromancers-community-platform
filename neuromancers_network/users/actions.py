@@ -119,6 +119,15 @@ def account_reactivate(request, data):
     return redirect_back(request)
 
 
+def account_logout(request, data):
+    """Sign the member out and return to the home page."""
+    from django.contrib.auth import logout  # noqa: PLC0415
+    from django.shortcuts import redirect  # noqa: PLC0415
+
+    logout(request)
+    return redirect("/")
+
+
 def account_revoke_sessions(request, data):
     """Sign the member out of every device."""
     from neuromancers_network.users.sessions import revoke_sessions  # noqa: PLC0415

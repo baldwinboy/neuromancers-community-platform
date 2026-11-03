@@ -1813,6 +1813,7 @@ dependencies = [
     { name = "django-storages", extra = ["s3"] },
     { name = "django-taggit" },
     { name = "draftail-text-utils" },
+    { name = "faker" },
     { name = "flower" },
     { name = "gunicorn" },
     { name = "hiredis" },

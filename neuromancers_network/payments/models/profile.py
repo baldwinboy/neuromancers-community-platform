@@ -102,6 +102,22 @@ class PaymentProfile(Timestamped):
         link = stripe.Account.create_login_link(account_id)
         return link.url
 
+    def create_customer_portal_link(self, *, return_url: str) -> str:
+        """Create a Stripe Billing Portal session for this customer."""
+        from neuromancers_network.core.models import StripeSettings  # noqa: PLC0415
+
+        stripe_settings = StripeSettings.load()
+        if not stripe_settings.secret_key:
+            error_message = "Stripe secret key is not configured"
+            raise ValueError(error_message)
+
+        stripe.api_key = stripe_settings.secret_key
+        session = stripe.billing_portal.Session.create(
+            customer=self.stripe_customer_id_id,
+            return_url=return_url,
+        )
+        return session.url
+
     def sync_kyc_completed_from_stripe_account(
         self,
         stripe_account: StripeAccount,

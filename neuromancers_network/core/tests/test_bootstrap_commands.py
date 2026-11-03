@@ -42,7 +42,8 @@ def test_bootstrap_writes_phases_and_commands(settings, tmp_path):
         "seed_pages",
         "ensure_superuser",
         "seed_help_guide",
-        "seed_account_selfservice",
+        "seed_dashboard",
+        "seed_email_templates",
     ]
     validate.assert_called_once_with(records=True)
 

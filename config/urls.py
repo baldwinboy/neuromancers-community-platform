@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include
 from django.urls import path
+from django.views.generic import RedirectView
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
@@ -64,8 +65,18 @@ urlpatterns = [
         PaymentCancelledView.as_view(),
         name="payment_cancelled",
     ),
-    # App-owned settings section forms (loaded by the Settings page tabs)
-    path("settings/forms/", include("neuromancers_network.users.settings")),
+    # App-owned Dashboard section forms
+    path("dashboard/forms/", include("neuromancers_network.users.settings")),
+    path(
+        "settings/",
+        RedirectView.as_view(url="/dashboard/", permanent=True),
+        name="settings_redirect",
+    ),
+    path(
+        "signup/",
+        RedirectView.as_view(pattern_name="account_signup", permanent=False),
+        name="signup_shortcut",
+    ),
     # htmx fragments for meeting form pages (duration-tier repeater)
     path("meetings/", include("neuromancers_network.meetings.urls")),
     # Media

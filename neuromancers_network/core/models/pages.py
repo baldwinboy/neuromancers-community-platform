@@ -130,7 +130,6 @@ class HomePage(ReservedSlugPage):
         "core.PeerIndexPage",
         "core.ReviewIndexPage",
         "core.DashboardPage",
-        "core.SettingsPage",
         "core.SearchPage",
         "peers.PeerApplicationFormPage",
         "peers.PeerApplicationEditFormPage",
@@ -211,10 +210,27 @@ class DashboardPage(SignedInPage):
     template = "core/dashboard_page.html"
     subpage_types: list[str] = []
 
+    def get_context(self, request, *args, **kwargs):
+        from django.urls import reverse  # noqa: PLC0415
+
+        context = super().get_context(request, *args, **kwargs)
+        token = getattr(request.user, "calendar_feed_token", None)
+        if token is not None and token.is_active:
+            context["calendar_feed_url"] = request.build_absolute_uri(
+                reverse("calendar_feed", args=[token.token]),
+            )
+        else:
+            context["calendar_feed_url"] = ""
+        context["calendar_feed_active"] = bool(context["calendar_feed_url"])
+        return context
+
 
 class SettingsPage(SignedInPage):
+    """Retired settings page retained for historical migrations."""
+
     template = "core/settings_page.html"
     subpage_types: list[str] = []
+    is_creatable = False
 
 
 class UserProfilePage(SourceBoundDetailPage):
@@ -336,14 +352,29 @@ class MeetingDetailPage(SourceBoundDetailPage):
     subpage_types: list[str] = []
 
     def get_context(self, request, *args, **kwargs):
+        from neuromancers_network.meetings.forms_pages import BookingFormPage  # noqa: PLC0415
+        from neuromancers_network.meetings.models import MeetingsBookmark  # noqa: PLC0415
         from neuromancers_network.meetings.selectors import review_stats  # noqa: PLC0415
 
         context = super().get_context(request, *args, **kwargs)
+        context["is_bookmarked"] = False
+        context["booking_url"] = ""
         if self.source is not None:
             context["review_stats"] = review_stats(
                 self.source.peer,
                 viewer=getattr(request, "user", None),
             )
+            booking_page = BookingFormPage.objects.live().first()
+            if booking_page is not None:
+                url = booking_page.get_url(request)
+                if url:
+                    context["booking_url"] = f"{url}?meeting={self.source.pk}"
+            user = getattr(request, "user", None)
+            if user is not None and getattr(user, "is_authenticated", False):
+                context["is_bookmarked"] = MeetingsBookmark.objects.filter(
+                    user=user,
+                    meetings=self.source,
+                ).exists()
         return context
 
 
@@ -353,13 +384,21 @@ class PeerProfileDetailPage(SourceBoundDetailPage):
 
     def get_context(self, request, *args, **kwargs):
         from neuromancers_network.meetings.selectors import review_stats  # noqa: PLC0415
+        from neuromancers_network.peers.models import PeersBookmark  # noqa: PLC0415
 
         context = super().get_context(request, *args, **kwargs)
+        context["is_bookmarked"] = False
         if self.source is not None:
             context["review_stats"] = review_stats(
                 self.source.user,
                 viewer=getattr(request, "user", None),
             )
+            user = getattr(request, "user", None)
+            if user is not None and getattr(user, "is_authenticated", False):
+                context["is_bookmarked"] = PeersBookmark.objects.filter(
+                    user=user,
+                    peers=self.source,
+                ).exists()
         return context
 
     def daisie_source_params(self):

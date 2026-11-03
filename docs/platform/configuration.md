@@ -58,7 +58,7 @@ Bootstrap is split by environment:
 |---------|-------------|-----------|
 | Local development | `compose/local/django/start` | `migrate`, `ensure_superuser`, seeds, then `runserver_plus`. |
 | Production web | `compose/production/django/start` | `collectstatic --noinput`, then Gunicorn. |
-| Production init | `compose/production/django/start-init` → `manage.py bootstrap` | `migrate --noinput`, `ensure_superuser`, `seed_help_guide --force`, `seed_pages`, `seed_account_selfservice --force`. |
+| Production init | `compose/production/django/start-init` → `manage.py bootstrap` | `migrate --noinput`, `ensure_superuser`, `seed_help_guide --force`, `seed_pages`, `seed_dashboard --force`. |
 
 Production `django-init` is a one-shot asynchronous Compose service. The web
 health check does not cover migrations or seeds; check the init service after
@@ -67,7 +67,7 @@ run the init synchronously once before the first deployment (see
 [operator guide](../infra/operator-guide.md#fresh-database-exception)).
 
 `seed_help_guide --force` refreshes code-owned Admin Guide rows.
-`seed_account_selfservice --force` refreshes the seeded Settings page body and
+`seed_dashboard --force` refreshes the seeded Dashboard body and
 account feed definitions. `seed_pages` is non-force and only creates missing
 pages, menus, and feeds. Admin edits to overwritten content are lost on deploy.
 

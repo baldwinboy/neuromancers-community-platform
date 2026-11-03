@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 INDEX_PAGES = (
-    (MeetingIndexPage, "meetings", "Meetings"),
-    (PeerIndexPage, "peers", "Care providers"),
+    (MeetingIndexPage, "sessions", "Sessions"),
+    (PeerIndexPage, "care-providers", "Care Providers"),
     (ReviewIndexPage, "reviews", "Reviews"),
     (TagIndexPage, "tags", "Tags"),
     (ProfileIndexPage, "u", "Members"),
@@ -107,14 +107,30 @@ def _ensure_index(home, page_class, slug, title):
             slug=find_available_slug(home, slug),
         )
         home.add_child(instance=page)
+    else:
+        changed = False
+        if page.title != title:
+            page.title = title
+            changed = True
+        if page.slug != slug:
+            page.slug = slug
+            changed = True
+        if changed:
+            page.save()
+            page.save_revision().publish()
     return _publish(page)
 
 
-def _ensure_template(home, page_class, detail_key, title):
+def _ensure_template(home, page_class, detail_key, title, *, force=False):
+    from neuromancers_network.core.detail_template_seed import TEMPLATE_BODIES  # noqa: PLC0415
+
     page = page_class.objects.child_of(home).filter(detail_key=detail_key).first()
     if page is None:
         page = page_class(title=title, detail_key=detail_key)
         home.add_child(instance=page)
+    if (not page.body or force) and detail_key in TEMPLATE_BODIES:
+        page.body = TEMPLATE_BODIES[detail_key]()
+        page.save_revision().publish()
     return _publish(page)
 
 
@@ -129,14 +145,14 @@ def _ensure_generated_index(parent, page_class, slug, title):
     return _publish(page)
 
 
-def ensure_detail_page_structure(home) -> None:
+def ensure_detail_page_structure(home, *, force: bool = False) -> None:
     """Create the index, template and generated-index pages if missing."""
     indexes = {}
     for page_class, slug, title in INDEX_PAGES:
         indexes[page_class] = _ensure_index(home, page_class, slug, title)
 
     for page_class, detail_key, title in TEMPLATE_PAGES:
-        _ensure_template(home, page_class, detail_key, title)
+        _ensure_template(home, page_class, detail_key, title, force=force)
 
     for page_class, parent_class, slug, title in GENERATED_INDEX_PAGES:
         parent = home if parent_class is None else indexes[parent_class]
@@ -164,9 +180,9 @@ def reconcile_detail_pages() -> None:
                 page.move(generated_index, pos="last-child")
 
 
-def sync_detail_page_structure(home) -> None:
+def sync_detail_page_structure(home, *, force: bool = False) -> None:
     """Ensure the tree and reconcile existing pages."""
-    ensure_detail_page_structure(home)
+    ensure_detail_page_structure(home, force=force)
     reconcile_detail_pages()
 
 

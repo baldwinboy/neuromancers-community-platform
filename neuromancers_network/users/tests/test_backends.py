@@ -13,7 +13,7 @@ pytestmark = pytest.mark.django_db
 HTTP_OK = 200
 HTTP_FORBIDDEN = 403
 _LOGIN_VALUE = "correct-horse-battery-staple"
-SETTINGS_URL = "/settings/forms/settings.account/"
+SETTINGS_URL = "/dashboard/forms/settings.account/"
 
 
 class TestSigninGuardBackends:

@@ -280,7 +280,7 @@ Init — `django-init`, command `/start-init`, one-shot:
    - `ensure_superuser`
    - `seed_help_guide --force`
    - `seed_pages`
-   - `seed_account_selfservice --force`
+   - `seed_dashboard --force`
 2. Writes bootstrap state and exits.
 
 `django-init` is excluded from Coolify health. The web container becomes

@@ -48,7 +48,8 @@ class Command(BaseCommand):
         call_command("seed_pages")
         call_command("ensure_superuser")
         call_command("seed_help_guide", force=True)
-        call_command("seed_account_selfservice", force=True)
+        call_command("seed_dashboard", force=True)
+        call_command("seed_email_templates")
         validate_detail_pages(records=True)
 
     def _run_phase(

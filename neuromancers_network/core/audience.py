@@ -111,6 +111,12 @@ def is_peer(request: HttpRequest) -> bool:
     return _is_moderator(user) or is_eligible_peer(user)
 
 
+def is_not_peer(request: HttpRequest) -> bool:
+    """Signed-in member who is not currently an eligible care provider."""
+    user = _request_user(request)
+    return bool(user and not is_peer(request))
+
+
 def is_verified_peer(request: HttpRequest) -> bool:
     user = _request_user(request)
     if user is None:
@@ -308,10 +314,6 @@ def peer_application_rejected(request: HttpRequest) -> bool:
     return application.status == PeerApplicationStatus.REJECTED
 
 
-def provider_settings(request: HttpRequest) -> bool:
-    return has_peer_profile(request) or has_peer_application(request)
-
-
 def can_apply_as_peer(request: HttpRequest) -> bool:
     user = _request_user(request)
     return bool(
@@ -382,26 +384,6 @@ def can_start_plan(request: HttpRequest) -> bool:
         and profile.is_approved
         and has_accepted_provider_agreement(request)
         and not has_plan(request),
-    )
-
-
-def can_pause_plan(request: HttpRequest) -> bool:
-    return has_active_plan(request) and not has_cancelled_plan(request)
-
-
-def can_resume_plan(request: HttpRequest) -> bool:
-    return has_paused_plan(request)
-
-
-def can_cancel_plan(request: HttpRequest) -> bool:
-    return bool(
-        has_plan(request)
-        and not has_cancelled_plan(request)
-        and (
-            has_active_plan(request)
-            or has_paused_plan(request)
-            or has_past_due_plan(request)
-        ),
     )
 
 
