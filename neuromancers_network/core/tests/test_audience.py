@@ -30,12 +30,16 @@ class TestBasicPredicates:
         request = rf.get("/")
         request.user = AnonymousUser()
 
+        assert audience.is_not_logged_in(request) is True
         assert audience.is_authenticated(request) is False
         assert audience.is_peer(request) is False
         assert audience.is_moderator(request) is False
 
     def test_authenticated(self, rf, user):
-        assert audience.is_authenticated(make_request(rf, user)) is True
+        request = make_request(rf, user)
+
+        assert audience.is_not_logged_in(request) is False
+        assert audience.is_authenticated(request) is True
 
     def test_moderator(self, rf):
         staff = UserFactory(staff_state=StaffState.ACTIVE)
@@ -185,11 +189,12 @@ class TestAccountStatePredicates:
 
 
 class TestProviderStatePredicates:
-    def test_non_provider_can_apply_but_cannot_manage_provider_settings(self, rf):
+    def test_non_provider_can_apply_but_has_no_provider_profile(self, rf):
         request = make_request(rf, UserFactory())
 
         assert audience.can_apply_as_peer(request) is True
-        assert audience.provider_settings(request) is False
+        assert audience.has_peer_profile(request) is False
+        assert audience.is_not_peer(request) is True
         assert audience.can_connect_stripe(request) is False
 
     def test_approved_provider_without_agreement_can_accept(self, rf):
@@ -199,7 +204,8 @@ class TestProviderStatePredicates:
         profile.save(update_fields=["provider_agreement_accepted_at"])
         request = make_request(rf, peer)
 
-        assert audience.provider_settings(request) is True
+        assert audience.has_peer_profile(request) is True
+        assert audience.is_not_peer(request) is False
         assert audience.has_accepted_provider_agreement(request) is False
         assert audience.can_accept_provider_agreement(request) is True
         assert audience.can_start_plan(request) is False
@@ -213,6 +219,3 @@ class TestProviderStatePredicates:
         assert audience.has_plan(request) is True
         assert audience.has_active_plan(request) is True
         assert audience.can_start_plan(request) is False
-        assert audience.can_pause_plan(request) is True
-        assert audience.can_resume_plan(request) is False
-        assert audience.can_cancel_plan(request) is True

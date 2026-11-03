@@ -11,7 +11,7 @@
     <p>{% trans "Select the Stripe models to synchronise with dj-stripe." %}</p>
     <form method="post">
       {% csrf_token %}
-      <ul>
+      <ul class="listing">
         {% for name in stripe_models %}
           <li>
             <label>
@@ -21,7 +21,7 @@
           </li>
         {% endfor %}
       </ul>
-      <button type="submit" class="button button-longrunning">{% trans "Sync" %}</button>
+      <button type="submit" class="button button-longrunning w-mt-4">{% trans "Sync" %}</button>
     </form>
   </div>
 {% endblock content %}

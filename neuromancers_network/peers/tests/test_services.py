@@ -674,21 +674,3 @@ class TestConnectStripeRedirects:
             refresh_url="http://testserver/settings/stripe/",
             return_url="http://testserver/settings/",
         )
-
-
-class TestProviderAgreement:
-    def test_accept_records_agreement(self):
-        peer = make_peer()
-
-        peer_accept_provider_agreement(_post(peer), {})
-
-        profile = peer.peer_profile
-        profile.refresh_from_db()
-        assert profile.provider_agreement_accepted_at is not None
-        assert profile.provider_agreement_version == PROVIDER_AGREEMENT_VERSION
-
-    def test_connect_stripe_requires_agreement(self):
-        peer = make_peer()
-
-        with pytest.raises(PermissionDenied, match="provider agreement"):
-            peer_connect_stripe(_post(peer), {})

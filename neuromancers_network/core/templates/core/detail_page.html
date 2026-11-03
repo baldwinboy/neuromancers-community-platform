@@ -1,1 +1,9 @@
 {% extends "core/standard_page.html" %}
+
+{% load wagtailcore_tags %}
+
+{% block content %}
+  {% for block in detail_template.body %}
+    {% include_block block %}
+  {% endfor %}
+{% endblock content %}

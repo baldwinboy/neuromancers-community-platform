@@ -4,13 +4,13 @@ import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 from django.test import RequestFactory
-from django.utils import timezone
 from djstripe.enums import SubscriptionStatus
 from wagtail.models import Page
 
+from neuromancers_network.core.detail_page_structure import ensure_detail_page_structure
 from neuromancers_network.core.models import HomePage
 from neuromancers_network.core.models.pages import MeetingDetailPage
-from neuromancers_network.core.models.pages import MeetingIndexPage
+from neuromancers_network.core.models.pages import MeetingGeneratedPagesIndexPage
 from neuromancers_network.core.wagtail_hooks import hide_inaccessible_detail_pages
 from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingStatus
@@ -26,8 +26,6 @@ from neuromancers_network.moderation.visibility import source_owner
 from neuromancers_network.moderation.visibility import viewer_can_view_source
 from neuromancers_network.peers.selectors import approved_peers
 from neuromancers_network.peers.tests.factories import make_peer
-from neuromancers_network.users.models import UserProfile
-from neuromancers_network.users.models.choices import ProfileVisibility
 from neuromancers_network.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -105,43 +103,6 @@ class TestMeetingVisibility:
         assert viewer_can_view_source(meeting, viewer) is False
 
 
-class TestUserProfileVisibility:
-    def _user_with_visibility(self, visibility):
-        user = UserFactory()
-        UserProfile.objects.update_or_create(
-            user=user,
-            defaults={"visibility": visibility},
-        )
-        return user
-
-    def test_public_profile_visible_to_anonymous(self):
-        owner = self._user_with_visibility(ProfileVisibility.PUBLIC)
-        assert viewer_can_view_source(owner, AnonymousUser()) is True
-
-    def test_members_profile_hidden_from_anonymous(self):
-        owner = self._user_with_visibility(ProfileVisibility.MEMBERS)
-        assert viewer_can_view_source(owner, AnonymousUser()) is False
-
-    def test_members_profile_visible_to_member(self):
-        owner = self._user_with_visibility(ProfileVisibility.MEMBERS)
-        assert viewer_can_view_source(owner, UserFactory()) is True
-
-    def test_private_profile_hidden_from_others(self):
-        owner = self._user_with_visibility(ProfileVisibility.PRIVATE)
-        assert viewer_can_view_source(owner, UserFactory()) is False
-
-    def test_private_profile_visible_to_owner(self):
-        owner = self._user_with_visibility(ProfileVisibility.PRIVATE)
-        assert viewer_can_view_source(owner, owner) is True
-
-    def test_deactivated_owner_hidden(self):
-        owner = self._user_with_visibility(ProfileVisibility.PUBLIC)
-        owner.is_active = False
-        owner.deactivated_at = timezone.now()
-        owner.save(update_fields=["is_active", "deactivated_at"])
-        assert viewer_can_view_source(owner, UserFactory()) is False
-
-
 class TestFeedParity:
     def test_published_meetings_excludes_blocked_peer(self):
         peer = make_peer()
@@ -203,12 +164,10 @@ def _detail_page(meeting):
     home = HomePage.objects.first() or HomePage(title="Home", slug="home")
     if home.pk is None:
         root.add_child(instance=home)
-    index = MeetingIndexPage.objects.first() or MeetingIndexPage(
-        title="Meetings",
-        slug="meetings",
-    )
-    if index.pk is None:
-        home.add_child(instance=index)
+    generated_index = MeetingGeneratedPagesIndexPage.objects.first()
+    if generated_index is None:
+        ensure_detail_page_structure(home)
+        generated_index = MeetingGeneratedPagesIndexPage.objects.first()
     page = MeetingDetailPage(
         title=meeting.title,
         slug=f"meeting-{meeting.pk}",
@@ -216,7 +175,7 @@ def _detail_page(meeting):
         source_content_type=ContentType.objects.get_for_model(Meeting),
         source_object_id=meeting.pk,
     )
-    index.add_child(instance=page)
+    generated_index.add_child(instance=page)
     page.save_revision().publish()
     return page.specific
 

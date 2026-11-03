@@ -83,6 +83,11 @@ def is_authenticated(request: HttpRequest) -> bool:
     return _request_user(request) is not None
 
 
+def is_not_logged_in(request: HttpRequest) -> bool:
+    """Return True when the request has no authenticated user."""
+    return _request_user(request) is None
+
+
 def needs_tos_acceptance(request: HttpRequest) -> bool:
     """Signed-in members who have not yet accepted the Terms and Conditions."""
     user = _request_user(request)
@@ -104,6 +109,12 @@ def is_peer(request: HttpRequest) -> bool:
     if user is None:
         return False
     return _is_moderator(user) or is_eligible_peer(user)
+
+
+def is_not_peer(request: HttpRequest) -> bool:
+    """Signed-in member who is not currently an eligible care provider."""
+    user = _request_user(request)
+    return bool(user and not is_peer(request))
 
 
 def is_verified_peer(request: HttpRequest) -> bool:
@@ -273,10 +284,6 @@ def can_reactivate_account(request: HttpRequest) -> bool:
     return bool(user and getattr(user, "is_deactivated", False))
 
 
-def can_accept_tos(request: HttpRequest) -> bool:
-    return needs_tos_acceptance(request)
-
-
 def has_peer_profile(request: HttpRequest) -> bool:
     user = _request_user(request)
     return user is not None and _profile(user) is not None
@@ -305,25 +312,6 @@ def peer_application_rejected(request: HttpRequest) -> bool:
     from neuromancers_network.peers.models import PeerApplicationStatus  # noqa: PLC0415
 
     return application.status == PeerApplicationStatus.REJECTED
-
-
-def is_approved_provider(request: HttpRequest) -> bool:
-    user = _request_user(request)
-    profile = _profile(user) if user else None
-    return bool(profile and profile.is_approved)
-
-
-def is_verified_provider(request: HttpRequest) -> bool:
-    user = _request_user(request)
-    profile = _profile(user) if user else None
-    return bool(profile and profile.is_verified)
-
-
-def provider_settings(request: HttpRequest) -> bool:
-    user = _request_user(request)
-    return bool(
-        user and (_profile(user) is not None or _application(user) is not None),
-    )
 
 
 def can_apply_as_peer(request: HttpRequest) -> bool:
@@ -389,36 +377,22 @@ def has_plan(request: HttpRequest) -> bool:
 
 
 def can_start_plan(request: HttpRequest) -> bool:
+    user = _request_user(request)
+    profile = _profile(user) if user else None
     return bool(
-        is_approved_provider(request)
+        profile is not None
+        and profile.is_approved
         and has_accepted_provider_agreement(request)
         and not has_plan(request),
     )
 
 
-def can_pause_plan(request: HttpRequest) -> bool:
-    return has_active_plan(request) and not has_cancelled_plan(request)
-
-
-def can_resume_plan(request: HttpRequest) -> bool:
-    return has_paused_plan(request)
-
-
-def can_cancel_plan(request: HttpRequest) -> bool:
-    return bool(
-        has_plan(request)
-        and not has_cancelled_plan(request)
-        and (
-            has_active_plan(request)
-            or has_paused_plan(request)
-            or has_past_due_plan(request)
-        ),
-    )
-
-
 def can_connect_stripe(request: HttpRequest) -> bool:
+    user = _request_user(request)
+    profile = _profile(user) if user else None
     return bool(
-        is_approved_provider(request)
+        profile is not None
+        and profile.is_approved
         and has_accepted_provider_agreement(request)
         and not has_connected_stripe(request),
     )

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from django.conf import settings
 from django.core.management import BaseCommand
 from django.core.management import call_command
+from wagtail_daisIE.detail_pages.validation import validate_detail_pages
 
 from neuromancers_network.core.bootstrap_state import BootstrapPhase
 from neuromancers_network.core.bootstrap_state import write_status
@@ -43,10 +44,13 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Bootstrap complete."))
 
     def _seed(self) -> None:
+        # Detail-page structure must exist before creating any users.
+        call_command("seed_pages")
         call_command("ensure_superuser")
         call_command("seed_help_guide", force=True)
-        call_command("seed_pages")
-        call_command("seed_account_selfservice", force=True)
+        call_command("seed_dashboard", force=True)
+        call_command("seed_email_templates")
+        validate_detail_pages(records=True)
 
     def _run_phase(
         self,

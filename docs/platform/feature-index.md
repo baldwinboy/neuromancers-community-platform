@@ -2,7 +2,7 @@
 
 | Feature | Where |
 |---|---|
-| Detail pages (meeting, peer, review, profile, tag, booking, refund) | `core/models/pages.py`; `WAGTAIL_DAISIE_DETAIL_PAGES` and context models in `config/settings/base.py`; serve guard in `core/wagtail_hooks.py` |
+| Detail pages (meeting, peer, review, profile, tag, booking, refund) | `core/models/pages.py`; `core/detail_page_structure.py`; `WAGTAIL_DAISIE_DETAIL_PAGES` and context models in `config/settings/base.py`; serve guard in `core/wagtail_hooks.py` |
 | Owner/participant visibility and blocks | `moderation/visibility.py`; serve guard `core/wagtail_hooks.py` |
 | Unified site search | `core/search_service.py`; `SearchPage` in `core/models/pages.py`; template `core/templates/core/search_results.html`; `StandardPage.search_fields` |
 | Two-party feeds and selectors | `meetings/selectors.py`; context models in `config/settings/base.py`; `templates/wagtail_daisIE/blocks/data/feed.html` |

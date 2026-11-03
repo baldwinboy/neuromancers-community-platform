@@ -310,7 +310,7 @@ not in the production web `/start`. Local development seeds remain in
 
 Every production deploy runs `seed_help_guide --force`, which overwrites the
 seeded Admin Guide rows from `core/help_seed.yaml`, and
-`seed_account_selfservice --force`, which overwrites the seeded Settings page
+`seed_dashboard --force`, which overwrites the seeded Dashboard
 body and account feed definitions. `seed_pages` is non-force and only creates
 missing pages, menus, and feeds. Admin edits to overwritten content are lost on
 deploy; author lasting changes in the YAML/code and merge via the normal review

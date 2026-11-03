@@ -118,6 +118,33 @@ class BookingFormPage(ProjectDaisieFormPage):
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
 
+    def get_form(self, *args, **kwargs):
+        from neuromancers_network.meetings.models import Meeting
+        from neuromancers_network.meetings.models import MeetingStatus
+        from neuromancers_network.peers.services import is_eligible_peer
+
+        form = super().get_form(*args, **kwargs)
+        request = getattr(self, "_daisie_request", None)
+        if request is None or request.method != "GET":
+            return form
+
+        raw_pk = request.GET.get("meeting")
+        if not raw_pk:
+            return form
+        meeting = (
+            Meeting.objects.select_related("peer")
+            .filter(pk=raw_pk, status=MeetingStatus.PUBLISHED)
+            .first()
+        )
+        if meeting is None or not is_eligible_peer(meeting.peer):
+            return form
+
+        for name, target in self.get_model_field_map().items():
+            if target == "meeting" and name in form.fields:
+                form.fields[name].initial = str(meeting.pk)
+                break
+        return form
+
     def create_instance_from_submission(self, form, submission=None):
         from neuromancers_network.meetings.models import Meeting
         from neuromancers_network.meetings.models import MeetingStatus
@@ -129,11 +156,17 @@ class BookingFormPage(ProjectDaisieFormPage):
             return None
 
         data = form.cleaned_data
-        meeting = Meeting.objects.filter(
-            pk=data.get("meeting"),
-            status=MeetingStatus.PUBLISHED,
-        ).first()
-        if meeting is None:
+        from neuromancers_network.peers.services import is_eligible_peer
+
+        meeting = (
+            Meeting.objects.select_related("peer")
+            .filter(
+                pk=data.get("meeting"),
+                status=MeetingStatus.PUBLISHED,
+            )
+            .first()
+        )
+        if meeting is None or not is_eligible_peer(meeting.peer):
             return None
 
         session = {

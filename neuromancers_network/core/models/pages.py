@@ -2,9 +2,12 @@ from typing import TYPE_CHECKING
 
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
+from django.http import Http404
 from taggit.managers import TaggableManager
 from wagtail.admin.panels import FieldPanel
 from wagtail.search import index
+from wagtail_daisIE.detail_pages.models import GeneratedPagesIndexPage
+from wagtail_daisIE.detail_pages.models import GeneratedPagesRouteMixin
 from wagtail_daisIE.detail_pages.models import ModelDetailPage
 from wagtail_daisIE.detail_pages.models import ModelDetailTemplate
 from wagtail_daisIE.pages import StyledPageMixin
@@ -60,8 +63,8 @@ class SourceBoundDetailPage(ModelDetailPage):
         context = super().get_context(request, *args, **kwargs)
 
         models = get_context_models()
-        design = self.get_design_source()
-        explicit = set(parse_bindings(self)) | set(parse_bindings(design))
+        template = self.get_template_page()
+        explicit = set(parse_bindings(template))
         keep = {self.detail_key, *explicit}
         for key, config in models.items():
             if config.source_kind == "url" and key not in keep:
@@ -77,13 +80,23 @@ class SourceBoundDetailPage(ModelDetailPage):
         return context
 
 
-class ReservedSlugPage(StyledPageMixin):
+class ReservedSlugPage(GeneratedPagesRouteMixin, StyledPageMixin):
     """
     A page that cannot be created with a reserved slug.
     """
 
     class Meta:
         abstract = True
+
+    def route(self, request, path_components):
+        # The generated-index segment is an admin-only container. Reject it
+        # before GeneratedPagesRouteMixin can route through it.
+        if path_components:
+            first = path_components[0]
+            for child in self.get_children().specific():
+                if isinstance(child, GeneratedPagesIndexPage) and child.slug == first:
+                    raise Http404
+        return super().route(request, path_components)
 
     def clean(self):
         super().clean()
@@ -117,7 +130,6 @@ class HomePage(ReservedSlugPage):
         "core.PeerIndexPage",
         "core.ReviewIndexPage",
         "core.DashboardPage",
-        "core.SettingsPage",
         "core.SearchPage",
         "peers.PeerApplicationFormPage",
         "peers.PeerApplicationEditFormPage",
@@ -128,8 +140,15 @@ class HomePage(ReservedSlugPage):
         "meetings.ReviewFormPage",
         "users.ProfileEditFormPage",
         "moderation.SupportFormPage",
+        "core.MeetingDetailTemplate",
+        "core.PeerDetailTemplate",
+        "core.ReviewDetailTemplate",
+        "core.UserProfileDetailTemplate",
+        "core.TagDetailTemplate",
         "core.BookingDetailTemplate",
         "core.RefundRequestDetailTemplate",
+        "core.BookingGeneratedPagesIndexPage",
+        "core.RefundRequestGeneratedPagesIndexPage",
     ]
 
 
@@ -171,7 +190,8 @@ class ProfileIndexPage(IndexPage):
     """Listing page for member profiles; its slug is reserved as ``u``."""
 
     template = "core/index_page.html"
-    subpage_types = ["core.UserProfilePage"]
+    subpage_types = ["core.ProfileGeneratedPagesIndexPage"]
+    max_count = 1
 
 
 class SignedInPage(ReservedSlugPage):
@@ -190,14 +210,31 @@ class DashboardPage(SignedInPage):
     template = "core/dashboard_page.html"
     subpage_types: list[str] = []
 
+    def get_context(self, request, *args, **kwargs):
+        from django.urls import reverse  # noqa: PLC0415
+
+        context = super().get_context(request, *args, **kwargs)
+        token = getattr(request.user, "calendar_feed_token", None)
+        if token is not None and token.is_active:
+            context["calendar_feed_url"] = request.build_absolute_uri(
+                reverse("calendar_feed", args=[token.token]),
+            )
+        else:
+            context["calendar_feed_url"] = ""
+        context["calendar_feed_active"] = bool(context["calendar_feed_url"])
+        return context
+
 
 class SettingsPage(SignedInPage):
+    """Retired settings page retained for historical migrations."""
+
     template = "core/settings_page.html"
     subpage_types: list[str] = []
+    is_creatable = False
 
 
 class UserProfilePage(SourceBoundDetailPage):
-    parent_page_types = ["core.ProfileIndexPage"]
+    parent_page_types = ["core.ProfileGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
 
     def daisie_source_params(self):
@@ -212,46 +249,156 @@ class UserProfilePage(SourceBoundDetailPage):
 
 
 class MeetingIndexPage(IndexPage):
-    subpage_types = ["core.MeetingDetailPage"]
+    subpage_types = ["core.MeetingGeneratedPagesIndexPage"]
+    max_count = 1
 
 
 class PeerIndexPage(IndexPage):
-    subpage_types = ["core.PeerProfileDetailPage"]
+    subpage_types = ["core.PeerGeneratedPagesIndexPage"]
+    max_count = 1
 
 
 class ReviewIndexPage(IndexPage):
+    subpage_types = ["core.ReviewGeneratedPagesIndexPage"]
+    max_count = 1
+
+
+class MeetingGeneratedPagesIndexPage(GeneratedPagesIndexPage):
+    parent_page_types = ["core.MeetingIndexPage"]
+    subpage_types = ["core.MeetingDetailPage"]
+
+
+class PeerGeneratedPagesIndexPage(GeneratedPagesIndexPage):
+    parent_page_types = ["core.PeerIndexPage"]
+    subpage_types = ["core.PeerProfileDetailPage"]
+
+
+class ReviewGeneratedPagesIndexPage(GeneratedPagesIndexPage):
+    parent_page_types = ["core.ReviewIndexPage"]
     subpage_types = ["core.ReviewDetailPage"]
 
 
+class ProfileGeneratedPagesIndexPage(GeneratedPagesIndexPage):
+    parent_page_types = ["core.ProfileIndexPage"]
+    subpage_types = ["core.UserProfilePage"]
+
+
+class TagGeneratedPagesIndexPage(GeneratedPagesIndexPage):
+    parent_page_types = ["core.TagIndexPage"]
+    subpage_types = ["core.TagDetailPage"]
+
+
+class BookingGeneratedPagesIndexPage(GeneratedPagesIndexPage):
+    parent_page_types = ["core.HomePage"]
+    subpage_types = ["core.BookingDetailPage"]
+
+
+class RefundRequestGeneratedPagesIndexPage(GeneratedPagesIndexPage):
+    parent_page_types = ["core.HomePage"]
+    subpage_types = ["core.RefundRequestDetailPage"]
+
+
+class MeetingDetailTemplate(ModelDetailTemplate):
+    """Shared (non-navigable) content and design for meeting pages."""
+
+    parent_page_types = ["core.HomePage"]
+    subpage_types: list[str] = []
+
+
+class PeerDetailTemplate(ModelDetailTemplate):
+    """Shared (non-navigable) content and design for care-provider pages."""
+
+    parent_page_types = ["core.HomePage"]
+    subpage_types: list[str] = []
+
+
+class ReviewDetailTemplate(ModelDetailTemplate):
+    """Shared (non-navigable) content and design for review pages."""
+
+    parent_page_types = ["core.HomePage"]
+    subpage_types: list[str] = []
+
+
+class UserProfileDetailTemplate(ModelDetailTemplate):
+    """Shared (non-navigable) content and design for member-profile pages."""
+
+    parent_page_types = ["core.HomePage"]
+    subpage_types: list[str] = []
+
+
+class TagDetailTemplate(ModelDetailTemplate):
+    """Shared (non-navigable) content and design for tag pages."""
+
+    parent_page_types = ["core.HomePage"]
+    subpage_types: list[str] = []
+
+
+class BookingDetailTemplate(ModelDetailTemplate):
+    """Shared (non-navigable) content and design for booking pages."""
+
+    parent_page_types = ["core.HomePage"]
+    subpage_types: list[str] = []
+
+
+class RefundRequestDetailTemplate(ModelDetailTemplate):
+    """Shared (non-navigable) content and design for refund pages."""
+
+    parent_page_types = ["core.HomePage"]
+    subpage_types: list[str] = []
+
+
 class MeetingDetailPage(SourceBoundDetailPage):
-    parent_page_types = ["core.MeetingIndexPage"]
+    parent_page_types = ["core.MeetingGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
 
     def get_context(self, request, *args, **kwargs):
+        from neuromancers_network.meetings.forms_pages import BookingFormPage  # noqa: PLC0415
+        from neuromancers_network.meetings.models import MeetingsBookmark  # noqa: PLC0415
         from neuromancers_network.meetings.selectors import review_stats  # noqa: PLC0415
 
         context = super().get_context(request, *args, **kwargs)
+        context["is_bookmarked"] = False
+        context["booking_url"] = ""
         if self.source is not None:
             context["review_stats"] = review_stats(
                 self.source.peer,
                 viewer=getattr(request, "user", None),
             )
+            booking_page = BookingFormPage.objects.live().first()
+            if booking_page is not None:
+                url = booking_page.get_url(request)
+                if url:
+                    context["booking_url"] = f"{url}?meeting={self.source.pk}"
+            user = getattr(request, "user", None)
+            if user is not None and getattr(user, "is_authenticated", False):
+                context["is_bookmarked"] = MeetingsBookmark.objects.filter(
+                    user=user,
+                    meetings=self.source,
+                ).exists()
         return context
 
 
 class PeerProfileDetailPage(SourceBoundDetailPage):
-    parent_page_types = ["core.PeerIndexPage"]
+    parent_page_types = ["core.PeerGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
 
     def get_context(self, request, *args, **kwargs):
         from neuromancers_network.meetings.selectors import review_stats  # noqa: PLC0415
+        from neuromancers_network.peers.models import PeersBookmark  # noqa: PLC0415
 
         context = super().get_context(request, *args, **kwargs)
+        context["is_bookmarked"] = False
         if self.source is not None:
             context["review_stats"] = review_stats(
                 self.source.user,
                 viewer=getattr(request, "user", None),
             )
+            user = getattr(request, "user", None)
+            if user is not None and getattr(user, "is_authenticated", False):
+                context["is_bookmarked"] = PeersBookmark.objects.filter(
+                    user=user,
+                    peers=self.source,
+                ).exists()
         return context
 
     def daisie_source_params(self):
@@ -263,40 +410,27 @@ class PeerProfileDetailPage(SourceBoundDetailPage):
 
 
 class ReviewDetailPage(SourceBoundDetailPage):
-    parent_page_types = ["core.ReviewIndexPage"]
-    subpage_types: list[str] = []
-
-
-class BookingDetailTemplate(ModelDetailTemplate):
-    """Shared (non-navigable) design for generated booking pages."""
-
-    parent_page_types = ["core.HomePage"]
-    subpage_types: list[str] = []
-
-
-class RefundRequestDetailTemplate(ModelDetailTemplate):
-    """Shared (non-navigable) design for generated refund pages."""
-
-    parent_page_types = ["core.HomePage"]
+    parent_page_types = ["core.ReviewGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
 
 
 class BookingDetailPage(SourceBoundDetailPage):
-    parent_page_types: list[str] = []
+    parent_page_types = ["core.BookingGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
 
 
 class RefundRequestDetailPage(SourceBoundDetailPage):
-    parent_page_types: list[str] = []
+    parent_page_types = ["core.RefundRequestGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
 
 
 class TagIndexPage(IndexPage):
-    subpage_types = ["core.TagDetailPage"]
+    subpage_types = ["core.TagGeneratedPagesIndexPage"]
+    max_count = 1
 
 
 class TagDetailPage(SourceBoundDetailPage):
-    parent_page_types = ["core.TagIndexPage"]
+    parent_page_types = ["core.TagGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
 
     def get_context(self, request, *args, **kwargs):

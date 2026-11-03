@@ -518,7 +518,6 @@ WAGTAIL_RESERVED_ROUTES = [
     "stripe",
     "signup",
     "social",
-    "sessions",
     "token",
     "userinfo",
 ]
@@ -533,7 +532,7 @@ WAGTAIL_DAISIE_HTMX_VERSION = 2
 WAGTAIL_DAISIE_ALLAUTH_UI = True
 # Chrome used to render allauth pages (read by wagtail_daisIE >= 2.0.0).
 WAGTAIL_DAISIE_ALLAUTH_BASE_TEMPLATE = "base.html"
-WAGTAIL_DAISIE_HEADER_MENU = "Main navigation"
+WAGTAIL_DAISIE_HEADER_MENU = "Navigation"
 WAGTAIL_DAISIE_FOOTER_MENU = "Footer"
 # Content page types allowed in the generic page-tree feeds. Forms, indexes,
 # detail pages and system pages are implicitly excluded by this allowlist.
@@ -553,6 +552,16 @@ _PAGE_FEED_FILTERS = {
         "type": "date_range",
         "field": "first_published_at",
         "label": "Published",
+    },
+    "sort": {
+        "type": "sort",
+        "label": "Sort",
+        "choices": [
+            ("-first_published_at", "Newest first"),
+            ("first_published_at", "Oldest first"),
+            ("title", "Title A-Z"),
+            ("-title", "Title Z-A"),
+        ],
     },
 }
 # Feed filters for meetings and care-provider profiles. ISO codes/slugs are
@@ -622,6 +631,108 @@ _MEETING_FILTERS = {
         "label": "Price",
         "query": "neuromancers_network.taxonomy.selectors.meeting_amount_query",
     },
+    "sort": {
+        "type": "sort",
+        "label": "Sort",
+        "choices": [
+            ("-created_at", "Newest first"),
+            ("created_at", "Oldest first"),
+            ("title", "Title A-Z"),
+            ("-title", "Title Z-A"),
+            ("price", "Lowest price"),
+            ("-price", "Highest price"),
+        ],
+    },
+}
+_BOOKING_FILTERS = {
+    "status": {
+        "type": "choice",
+        "field": "status",
+        "multi": True,
+        "label": "Status",
+        "choices": [
+            ("pending", "Pending"),
+            ("paid", "Paid"),
+            ("cancelled", "Cancelled"),
+            ("refunded", "Refunded"),
+        ],
+    },
+    "sort": {
+        "type": "sort",
+        "label": "Sort",
+        "choices": [
+            ("-created_at", "Newest first"),
+            ("created_at", "Oldest first"),
+            ("total_amount", "Lowest amount"),
+            ("-total_amount", "Highest amount"),
+        ],
+    },
+}
+_REQUEST_FILTERS = {
+    "status": {
+        "type": "choice",
+        "field": "status",
+        "label": "Status",
+        "choices": [
+            ("pending_approval", "Pending approval"),
+            ("approved", "Approved"),
+            ("rejected", "Rejected"),
+            ("completed", "Completed"),
+            ("cancelled", "Cancelled"),
+            ("refunded", "Refunded"),
+        ],
+    },
+    "sort": {
+        "type": "sort",
+        "label": "Sort",
+        "choices": [
+            ("-created_at", "Newest first"),
+            ("created_at", "Oldest first"),
+        ],
+    },
+}
+_REVIEW_FILTERS = {
+    "status": {
+        "type": "choice",
+        "field": "status",
+        "label": "Status",
+        "choices": [
+            ("pending_approval", "Pending approval"),
+            ("published", "Published"),
+            ("hidden", "Hidden"),
+        ],
+    },
+    "sort": {
+        "type": "sort",
+        "label": "Sort",
+        "choices": [
+            ("-created_at", "Newest first"),
+            ("created_at", "Oldest first"),
+            ("rating", "Lowest rating"),
+            ("-rating", "Highest rating"),
+        ],
+    },
+}
+_REFUND_FILTERS = {
+    "status": {
+        "type": "choice",
+        "field": "status",
+        "label": "Status",
+        "choices": [
+            ("pending", "Pending"),
+            ("approved", "Approved"),
+            ("rejected", "Rejected"),
+            ("refunded", "Refunded"),
+        ],
+    },
+    "sort": {
+        "type": "sort",
+        "label": "Sort",
+        "choices": [
+            ("-created_at", "Newest first"),
+            ("created_at", "Oldest first"),
+        ],
+    },
 }
 _PEER_FILTERS = {
     "search": {
@@ -656,6 +767,16 @@ _PEER_FILTERS = {
         "label": "Tag",
         "choices": "neuromancers_network.taxonomy.selectors.tag_choices",
         "query": "neuromancers_network.taxonomy.selectors.peer_tag_query",
+    },
+    "sort": {
+        "type": "sort",
+        "label": "Sort",
+        "choices": [
+            ("-created_at", "Newest first"),
+            ("created_at", "Oldest first"),
+            ("user", "Member A-Z"),
+            ("-user", "Member Z-A"),
+        ],
     },
 }
 # Context models authors may bind into content (block fields, feeds, pages).
@@ -724,6 +845,15 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "source": "request.user",
         "queryset": "neuromancers_network.meetings.selectors.my_reviews",
         "select_related": ["reviewer", "meeting_request__meeting"],
+        "filters": _REVIEW_FILTERS,
+    },
+    "my_authored_reviews": {
+        "label": _("Reviews I wrote"),
+        "model": "meetings.Review",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.my_authored_reviews",
+        "select_related": ["peer", "meeting_request__meeting"],
+        "filters": _REVIEW_FILTERS,
     },
     "my_pending_reviews": {
         "label": _("My pending reviews"),
@@ -753,6 +883,24 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "lookup_field": "user__username",
         "select_related": ["user"],
     },
+    "bookmarked_peer": {
+        "label": _("Bookmarked care provider"),
+        "model": "peers.PeerProfile",
+        "source": "request.user",
+        "queryset": "neuromancers_network.peers.selectors.bookmarked_peers",
+        "select_related": ["user"],
+        "prefetch_related": ["languages", "countries", "tags"],
+        "filters": _PEER_FILTERS,
+    },
+    "bookmarked_meeting": {
+        "label": _("Bookmarked meeting"),
+        "model": "meetings.Meeting",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.bookmarked_meetings",
+        "select_related": ["peer"],
+        "prefetch_related": ["languages", "countries", "tags"],
+        "filters": _MEETING_FILTERS,
+    },
     "booking": {
         "label": _("Booking"),
         "model": "meetings.Booking",
@@ -761,12 +909,13 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "queryset": "neuromancers_network.meetings.selectors.bookings_for_context",
         "select_related": ["meeting", "meeting__peer", "support_seeker"],
     },
-    "payment_history": {
-        "label": _("Payment history"),
-        "model": "meetings.MeetingRequest",
+    "my_bookings": {
+        "label": _("My bookings"),
+        "model": "meetings.Booking",
         "source": "request.user",
-        "queryset": "neuromancers_network.meetings.selectors.user_payment_history",
-        "select_related": ["meeting"],
+        "queryset": "neuromancers_network.meetings.selectors.user_bookings",
+        "select_related": ["meeting", "meeting__peer"],
+        "filters": _BOOKING_FILTERS,
     },
     "unpaid_booking": {
         "label": _("Unpaid booking"),
@@ -780,6 +929,15 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "model": "meetings.Meeting",
         "source": "request.user",
         "queryset": "neuromancers_network.meetings.selectors.my_meetings",
+        "filters": _MEETING_FILTERS,
+    },
+    "host_bookings": {
+        "label": _("Provider bookings"),
+        "model": "meetings.Booking",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.host_bookings",
+        "select_related": ["meeting", "meeting__peer", "support_seeker"],
+        "filters": _BOOKING_FILTERS,
     },
     "host_request": {
         "label": _("Host booking request"),
@@ -787,12 +945,22 @@ WAGTAIL_DAISIE_CONTEXT_MODELS = {
         "source": "request.user",
         "queryset": "neuromancers_network.meetings.selectors.host_requests",
         "select_related": ["meeting", "support_seeker"],
+        "filters": _REQUEST_FILTERS,
     },
     "host_refund": {
         "label": _("Host refund request"),
         "model": "meetings.RefundRequest",
         "source": "request.user",
         "queryset": "neuromancers_network.meetings.selectors.host_refunds",
+        "filters": _REFUND_FILTERS,
+    },
+    "my_refunds": {
+        "label": _("My refund requests"),
+        "model": "meetings.RefundRequest",
+        "source": "request.user",
+        "queryset": "neuromancers_network.meetings.selectors.user_refunds",
+        "select_related": ["meeting_request__meeting"],
+        "filters": _REFUND_FILTERS,
     },
     "peer_application": {
         "label": _("Peer application"),
@@ -961,6 +1129,10 @@ WAGTAIL_DAISIE_NOTIFICATION_BRIDGES = {
 # Labels must be JSON-serialisable: daisIE injects this dict into the admin via
 # json.dumps() (wagtail_daisIE/wagtail_hooks.py). Do not use gettext_lazy here.
 WAGTAIL_DAISIE_AUDIENCE_RULES = {
+    "not_logged_in": {
+        "label": "Not signed in",
+        "rule": "neuromancers_network.core.audience.is_not_logged_in",
+    },
     "authenticated": {
         "label": "Signed-in members",
         "rule": "neuromancers_network.core.audience.is_authenticated",
@@ -971,29 +1143,29 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
         "rule": "neuromancers_network.core.audience.is_peer",
         "queryset": "neuromancers_network.core.audience.peer_users",
     },
+    "is_not_peer": {
+        "label": "Signed-in members who are not care providers",
+        "rule": "neuromancers_network.core.audience.is_not_peer",
+    },
     "verified_peer": {
         "label": "Verified care providers",
         "rule": "neuromancers_network.core.audience.is_verified_peer",
         "queryset": "neuromancers_network.core.audience.verified_peer_users",
-    },
-    "peer_owner": {
-        "label": "Care providers viewing their own profile",
-        "rule": "neuromancers_network.core.audience.is_peer_owner",
     },
     "moderator": {
         "label": "Moderators",
         "rule": "neuromancers_network.core.audience.is_moderator",
         "queryset": "neuromancers_network.core.audience.moderator_users",
     },
-    "needs_tos_acceptance": {
-        "label": "Members yet to accept the Terms",
-        "rule": "neuromancers_network.core.audience.needs_tos_acceptance",
-        "queryset": ("neuromancers_network.core.audience.needs_tos_acceptance_users"),
-    },
     "deactivated": {
         "label": "Deactivated members",
         "rule": "neuromancers_network.core.audience.is_deactivated",
         "queryset": "neuromancers_network.core.audience.deactivated_users",
+    },
+    "needs_tos_acceptance": {
+        "label": "Members yet to accept the Terms",
+        "rule": "neuromancers_network.core.audience.needs_tos_acceptance",
+        "queryset": ("neuromancers_network.core.audience.needs_tos_acceptance_users"),
     },
     "meeting_host": {
         "label": "Meeting host",
@@ -1022,6 +1194,10 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
     "own_profile": {
         "label": "Own profile",
         "rule": "neuromancers_network.core.audience.is_own_profile",
+    },
+    "own_profile_and_peer": {
+        "label": "Care providers viewing their own profile",
+        "rule": "neuromancers_network.core.audience.is_peer_owner",
     },
     "own_profile_or_moderator": {
         "label": "Own profile or moderator",
@@ -1059,10 +1235,6 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
         "label": "Members who can reactivate their account",
         "rule": "neuromancers_network.core.audience.can_reactivate_account",
     },
-    "can_accept_tos": {
-        "label": "Members yet to accept the Terms",
-        "rule": "neuromancers_network.core.audience.can_accept_tos",
-    },
     "has_peer_profile": {
         "label": "Care providers with a profile",
         "rule": "neuromancers_network.core.audience.has_peer_profile",
@@ -1078,18 +1250,6 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
     "peer_application_rejected": {
         "label": "Provider applications rejected",
         "rule": "neuromancers_network.core.audience.peer_application_rejected",
-    },
-    "is_approved_provider": {
-        "label": "Approved care providers",
-        "rule": "neuromancers_network.core.audience.is_approved_provider",
-    },
-    "is_verified_provider": {
-        "label": "Verified care providers",
-        "rule": "neuromancers_network.core.audience.is_verified_provider",
-    },
-    "provider_settings": {
-        "label": "Care providers with a profile or application",
-        "rule": "neuromancers_network.core.audience.provider_settings",
     },
     "can_apply_as_peer": {
         "label": "Members who can apply as a care provider",
@@ -1134,18 +1294,6 @@ WAGTAIL_DAISIE_AUDIENCE_RULES = {
     "can_start_plan": {
         "label": "Care providers who can start a plan",
         "rule": "neuromancers_network.core.audience.can_start_plan",
-    },
-    "can_pause_plan": {
-        "label": "Care providers who can pause their plan",
-        "rule": "neuromancers_network.core.audience.can_pause_plan",
-    },
-    "can_resume_plan": {
-        "label": "Care providers who can resume their plan",
-        "rule": "neuromancers_network.core.audience.can_resume_plan",
-    },
-    "can_cancel_plan": {
-        "label": "Care providers who can cancel their plan",
-        "rule": "neuromancers_network.core.audience.can_cancel_plan",
     },
     "can_connect_stripe": {
         "label": "Care providers who can connect Stripe",
@@ -1320,6 +1468,14 @@ WAGTAIL_DAISIE_ACTIONS = {
         "label": _("Request refund"),
         "handler": "neuromancers_network.meetings.actions.bookings_request_refund",
     },
+    "bookmark.toggle_peer": {
+        "label": _("Bookmark care provider"),
+        "handler": "neuromancers_network.bookmarks.actions.toggle_peer",
+    },
+    "bookmark.toggle_meeting": {
+        "label": _("Bookmark meeting"),
+        "handler": "neuromancers_network.bookmarks.actions.toggle_meeting",
+    },
     "peers.apply": {
         "label": _("Apply to be a care provider"),
         "handler": "neuromancers_network.peers.actions.peers_apply",
@@ -1332,21 +1488,13 @@ WAGTAIL_DAISIE_ACTIONS = {
         "label": _("Subscribe as a care provider"),
         "handler": "neuromancers_network.peers.actions.peer_subscribe",
     },
-    "peer.subscription_pause": {
-        "label": _("Pause plan"),
-        "handler": "neuromancers_network.peers.actions.peer_subscription_pause",
-    },
-    "peer.subscription_resume": {
-        "label": _("Resume plan"),
-        "handler": "neuromancers_network.peers.actions.peer_subscription_resume",
-    },
-    "peer.subscription_cancel": {
-        "label": _("Cancel plan"),
-        "handler": "neuromancers_network.peers.actions.peer_subscription_cancel",
-    },
     "peer.open_stripe_dashboard": {
-        "label": _("Open Stripe dashboard"),
+        "label": _("Manage finances"),
         "handler": "neuromancers_network.peers.actions.peer_open_stripe_dashboard",
+    },
+    "peer.open_customer_portal": {
+        "label": _("Manage subscription"),
+        "handler": "neuromancers_network.peers.actions.peer_open_customer_portal",
     },
     "peer.accept_provider_agreement": {
         "label": _("Accept provider agreement"),
@@ -1391,6 +1539,10 @@ WAGTAIL_DAISIE_ACTIONS = {
     "account.revoke_other_sessions": {
         "label": _("Sign out other devices"),
         "handler": "neuromancers_network.users.actions.account_revoke_other_sessions",
+    },
+    "account.logout": {
+        "label": _("Sign out"),
+        "handler": "neuromancers_network.users.actions.account_logout",
     },
     "calendar.revoke_token": {
         "label": _("Revoke calendar feed"),
@@ -1452,7 +1604,12 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "model": "meetings.Meeting",
         "page_type": "neuromancers_network.core.models.pages.MeetingDetailPage",
         "parent": "neuromancers_network.core.models.pages.MeetingIndexPage",
-        "template_page": "neuromancers_network.core.models.pages.MeetingIndexPage",
+        "template_page": (
+            "neuromancers_network.core.models.pages.MeetingDetailTemplate"
+        ),
+        "generated_index": (
+            "neuromancers_network.core.models.pages.MeetingGeneratedPagesIndexPage"
+        ),
         "lookup_field": "pk",
         "publish_field": "is_live",
         "title_source": "title",
@@ -1464,7 +1621,10 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "model": "peers.PeerProfile",
         "page_type": "neuromancers_network.core.models.pages.PeerProfileDetailPage",
         "parent": "neuromancers_network.core.models.pages.PeerIndexPage",
-        "template_page": "neuromancers_network.core.models.pages.PeerIndexPage",
+        "template_page": "neuromancers_network.core.models.pages.PeerDetailTemplate",
+        "generated_index": (
+            "neuromancers_network.core.models.pages.PeerGeneratedPagesIndexPage"
+        ),
         "lookup_field": "pk",
         "publish_field": "is_live",
         "title_source": "display_title",
@@ -1476,7 +1636,12 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "model": "meetings.Review",
         "page_type": "neuromancers_network.core.models.pages.ReviewDetailPage",
         "parent": "neuromancers_network.core.models.pages.ReviewIndexPage",
-        "template_page": "neuromancers_network.core.models.pages.ReviewIndexPage",
+        "template_page": (
+            "neuromancers_network.core.models.pages.ReviewDetailTemplate"
+        ),
+        "generated_index": (
+            "neuromancers_network.core.models.pages.ReviewGeneratedPagesIndexPage"
+        ),
         "lookup_field": "pk",
         "publish_field": "is_live",
         "title_source": "display_title",
@@ -1488,7 +1653,12 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "model": "users.User",
         "page_type": "neuromancers_network.core.models.pages.UserProfilePage",
         "parent": "neuromancers_network.core.models.pages.ProfileIndexPage",
-        "template_page": "neuromancers_network.core.models.pages.ProfileIndexPage",
+        "template_page": (
+            "neuromancers_network.core.models.pages.UserProfileDetailTemplate"
+        ),
+        "generated_index": (
+            "neuromancers_network.core.models.pages.ProfileGeneratedPagesIndexPage"
+        ),
         "lookup_field": "username",
         "publish_field": "",
         "title_source": "display_name",
@@ -1502,6 +1672,9 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "parent": "neuromancers_network.core.models.pages.HomePage",
         "template_page": (
             "neuromancers_network.core.models.pages.BookingDetailTemplate"
+        ),
+        "generated_index": (
+            "neuromancers_network.core.models.pages.BookingGeneratedPagesIndexPage"
         ),
         "lookup_field": "pk",
         "publish_field": "",
@@ -1517,6 +1690,10 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "template_page": (
             "neuromancers_network.core.models.pages.RefundRequestDetailTemplate"
         ),
+        "generated_index": (
+            "neuromancers_network.core.models.pages."
+            "RefundRequestGeneratedPagesIndexPage"
+        ),
         "lookup_field": "pk",
         "publish_field": "",
         "title_source": "display_title",
@@ -1528,7 +1705,10 @@ WAGTAIL_DAISIE_DETAIL_PAGES = {
         "model": "taxonomy.AllowedTag",
         "page_type": "neuromancers_network.core.models.pages.TagDetailPage",
         "parent": "neuromancers_network.core.models.pages.TagIndexPage",
-        "template_page": "neuromancers_network.core.models.pages.TagIndexPage",
+        "template_page": "neuromancers_network.core.models.pages.TagDetailTemplate",
+        "generated_index": (
+            "neuromancers_network.core.models.pages.TagGeneratedPagesIndexPage"
+        ),
         "lookup_field": "slug",
         "lookup_in": "path",
         "publish_field": "is_active",

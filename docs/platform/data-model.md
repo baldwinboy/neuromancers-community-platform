@@ -59,7 +59,11 @@ Secret fields are `EncryptedCharField`s (see [Configuration](configuration.md)).
 ## Invariants worth preserving
 
 - Detail pages are generated from a source; deleting the source deletes the page
-  (`on_delete: "page"`). Two-party records are participant-scoped.
+  (`on_delete: "page"`). Non-public records have no generated page. Two-party
+  records are participant-scoped.
+- Generated detail pages have no body or design fields. They render the single
+  shared `ModelDetailTemplate` for their detail type and are grouped under an
+  admin-only generated index; public URLs keep the listing prefix.
 - Ledger and notification writers are idempotent (unique keys / upserts).
 - Sessions are stored as UTC; reporting periods are UTC calendar months.
 - Financial records are anonymised, never deleted, when an account is purged.

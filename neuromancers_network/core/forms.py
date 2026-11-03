@@ -12,6 +12,7 @@ from neuromancers_network.core.models import LocalizationSettings
 from neuromancers_network.core.models import NotificationSettings
 from neuromancers_network.core.models import StripeSettings
 from neuromancers_network.core.widgets import KeyValueWidget
+from neuromancers_network.core.widgets import ScrollableCheckboxSelectMultiple
 from neuromancers_network.payments.services import DEFAULT_WEBHOOK_EVENTS
 
 
@@ -122,6 +123,9 @@ class LocalizationSettingsForm(WagtailAdminModelForm):
     class Meta:
         model = LocalizationSettings
         fields = "__all__"
+        widgets = {
+            "languages": ScrollableCheckboxSelectMultiple(),
+        }
 
 
 class DemoSeedForm(forms.Form):

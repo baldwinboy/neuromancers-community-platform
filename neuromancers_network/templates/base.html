@@ -36,7 +36,7 @@
   <body class="flex min-h-screen flex-col bg-base-100 text-base-content {% block body_class %}{% endblock body_class %}"
         {% if daisyui_page_background_css %}style="background: {{ daisyui_page_background_css }}"{% endif %}>
     {% block header %}
-      {% daisyui_menu "Main navigation" %}
+      {% daisyui_menu "Navigation" %}
     {% endblock header %}
     <main id="main-content"{% daisyui_main_attrs daisyui_theme %}>
       {% block messages %}

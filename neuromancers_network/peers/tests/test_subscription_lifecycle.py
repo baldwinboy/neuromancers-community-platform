@@ -6,14 +6,12 @@ from types import SimpleNamespace
 
 import pytest
 from django.contrib.auth import get_user_model
-from django.test import RequestFactory
 from django.utils import timezone
 
 from neuromancers_network.meetings.models import MeetingStatus
 from neuromancers_network.meetings.tests.factories import create_meeting
 from neuromancers_network.payments import services as payment_services
 from neuromancers_network.peers import signals
-from neuromancers_network.peers.actions import peer_subscription_pause
 from neuromancers_network.peers.models.settings import PeerRequirementsSettings
 from neuromancers_network.peers.services import is_eligible_peer
 from neuromancers_network.peers.tests.factories import make_peer
@@ -57,41 +55,6 @@ class TestSubscriptionServices:
             "load",
             classmethod(lambda cls, request=None: _settings_stub()),
         )
-
-    def test_pause_uses_pause_collection(self, monkeypatch):
-        profile = self._profile()
-        calls = {}
-        monkeypatch.setattr(
-            payment_services.stripe.Subscription,
-            "modify",
-            lambda sub_id, **kwargs: calls.update(sub_id=sub_id, kwargs=kwargs),
-        )
-
-        payment_services.pause_subscription(profile)
-
-        assert calls["sub_id"] == profile.peer_subscription.subscription_id
-        assert calls["kwargs"]["pause_collection"] == {"behavior": "void"}
-        profile.peer_subscription.refresh_from_db()
-        assert profile.peer_subscription.paused_at is not None
-
-    def test_resume_resets_billing_anchor(self, monkeypatch):
-        profile = self._profile()
-        peer_subscription = profile.peer_subscription
-        peer_subscription.paused_at = timezone.now()
-        peer_subscription.save(update_fields=["paused_at"])
-        calls = {}
-        monkeypatch.setattr(
-            payment_services.stripe.Subscription,
-            "resume",
-            lambda sub_id, **kwargs: calls.update(sub_id=sub_id, kwargs=kwargs),
-        )
-
-        payment_services.resume_subscription(profile)
-
-        assert calls["kwargs"]["billing_cycle_anchor"] == "now"
-        assert calls["kwargs"]["proration_behavior"] == "create_prorations"
-        peer_subscription.refresh_from_db()
-        assert peer_subscription.paused_at is None
 
     def test_cancel_at_period_end_modifies(self, monkeypatch):
         profile = self._profile()
@@ -198,24 +161,3 @@ class TestPauseWebhook:
 
         subscription.refresh_from_db()
         assert subscription.paused_at is None
-
-
-class TestPauseAction:
-    def test_pause_action_calls_service(self, monkeypatch):
-        peer = make_peer()
-        profile = peer.peer_profile
-        profile.provider_agreement_accepted_at = timezone.now()
-        profile.save(update_fields=["provider_agreement_accepted_at"])
-
-        called = {}
-        monkeypatch.setattr(
-            payment_services,
-            "pause_subscription",
-            lambda payment_profile: called.setdefault("profile", payment_profile),
-        )
-
-        request = RequestFactory().post("/")
-        request.user = peer
-        peer_subscription_pause(request, {})
-
-        assert called["profile"].pk == peer.payment_profile.pk

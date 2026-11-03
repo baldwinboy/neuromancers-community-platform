@@ -13,7 +13,6 @@ from django.db import connection
 from django.db import transaction
 from django.test import override_settings
 from django.utils import timezone
-from wagtail.coreutils import find_available_slug
 
 logger = logging.getLogger(__name__)
 
@@ -161,48 +160,12 @@ def _home_page():
     return home
 
 
-def _ensure_child(home, page_class, slug: str, title: str, **fields):
-    page = page_class.objects.child_of(home).order_by("path").first()
-    if page is not None:
-        return page
-    page = page_class(
-        title=title,
-        slug=find_available_slug(home, slug),
-        **fields,
-    )
-    home.add_child(instance=page)
-    page.save_revision().publish()
-    return page
-
-
 def _ensure_pages(home) -> None:
-    from neuromancers_network.core.models.pages import BookingDetailTemplate  # noqa: PLC0415
-    from neuromancers_network.core.models.pages import MeetingIndexPage  # noqa: PLC0415
-    from neuromancers_network.core.models.pages import PeerIndexPage  # noqa: PLC0415
-    from neuromancers_network.core.models.pages import RefundRequestDetailTemplate  # noqa: PLC0415
-    from neuromancers_network.core.models.pages import ReviewIndexPage  # noqa: PLC0415
-    from neuromancers_network.core.models.pages import TagIndexPage  # noqa: PLC0415
-
-    pages = (
-        (MeetingIndexPage, "meetings", "Meetings", {}),
-        (PeerIndexPage, "peers", "Care providers", {}),
-        (ReviewIndexPage, "reviews", "Reviews", {}),
-        (TagIndexPage, "tags", "Tags", {}),
-        (
-            BookingDetailTemplate,
-            "booking-detail",
-            "Booking detail",
-            {"detail_key": "booking"},
-        ),
-        (
-            RefundRequestDetailTemplate,
-            "refund-detail",
-            "Refund detail",
-            {"detail_key": "refund_request"},
-        ),
+    from neuromancers_network.core.detail_page_structure import (  # noqa: PLC0415
+        sync_detail_page_structure,
     )
-    for page_class, slug, title, fields in pages:
-        _ensure_child(home, page_class, slug, title, **fields)
+
+    sync_detail_page_structure(home)
 
 
 def _ensure_taxonomy():
@@ -316,6 +279,7 @@ def _seed_peer(  # noqa: PLR0913
     language,
     tag,
     paused=False,
+    bio=None,
 ):
     from neuromancers_network.peers.models import PeerApplication  # noqa: PLC0415
     from neuromancers_network.peers.models import PeerApplicationStatus  # noqa: PLC0415
@@ -326,13 +290,13 @@ def _seed_peer(  # noqa: PLR0913
         email=email,
         name=name,
         password=password,
-        bio=f"{name} is a demo care provider.",
+        bio=bio or f"{name} is a demo care provider.",
     )
     now = timezone.now()
     profile, _ = PeerProfile.objects.update_or_create(
         user=user,
         defaults={
-            "bio": f"{name} is a demo care provider.",
+            "bio": bio or f"{name} is a demo care provider.",
             "default_terms": "Demo terms for testing.",
             "provider_agreement_accepted_at": now,
             "provider_agreement_version": "1",
@@ -359,13 +323,13 @@ def _seed_peer(  # noqa: PLR0913
     return user
 
 
-def _seed_seeker(*, username, email, name, password, country, language):  # noqa: PLR0913
+def _seed_seeker(*, username, email, name, password, country, language, bio=None):  # noqa: PLR0913
     user = _seed_user(
         username=username,
         email=email,
         name=name,
         password=password,
-        bio=f"{name} is a demo support seeker.",
+        bio=bio or f"{name} is a demo support seeker.",
     )
     profile = user.user_profile
     profile.languages.set([language])
@@ -378,12 +342,13 @@ def _ensure_meeting(*, peer, title, meeting_type, approval_policy, **kwargs):
     from neuromancers_network.meetings.models import Meeting  # noqa: PLC0415
     from neuromancers_network.meetings.models import MeetingStatus  # noqa: PLC0415
 
+    description = kwargs.pop("description", "") or f"{title} — demo meeting."
     meeting = Meeting.objects.filter(peer=peer, title=title).first()
     if meeting is None:
         meeting = Meeting(
             peer=peer,
             title=title,
-            description=f"{title} — demo meeting.",
+            description=description,
             meeting_type=meeting_type,
             approval_policy=approval_policy,
             currency="GBP",
@@ -391,6 +356,7 @@ def _ensure_meeting(*, peer, title, meeting_type, approval_policy, **kwargs):
             **kwargs,
         )
     else:
+        meeting.description = description
         for key, value in kwargs.items():
             setattr(meeting, key, value)
         meeting.status = MeetingStatus.PUBLISHED
@@ -452,7 +418,16 @@ def _ensure_request(*, booking, start, status, amount, session_id):
     return request
 
 
-def _seed_activity(*, peer, seekers, language, country, tag, paused=False):  # noqa: PLR0913
+def _seed_activity(  # noqa: PLR0913
+    *,
+    peer,
+    seekers,
+    language,
+    country,
+    tag,
+    paused=False,
+    descriptions=None,
+):
     from neuromancers_network.meetings.models import ApprovalPolicy  # noqa: PLC0415
     from neuromancers_network.meetings.models import BookingStatus  # noqa: PLC0415
     from neuromancers_network.meetings.models import MeetingRequestStatus  # noqa: PLC0415
@@ -466,6 +441,7 @@ def _seed_activity(*, peer, seekers, language, country, tag, paused=False):  # n
     if paused:
         return 0
 
+    descriptions = descriptions or {}
     one_to_one = _ensure_meeting(
         peer=peer,
         title=f"{DEMO_TITLE_PREFIX}1:1 with {peer.username}",
@@ -473,6 +449,7 @@ def _seed_activity(*, peer, seekers, language, country, tag, paused=False):  # n
         approval_policy=ApprovalPolicy.PAY_AFTER_JOIN,
         pricing_type=PricingType.FIXED,
         price=DEMO_MEETING_PRICE,
+        description=descriptions.get("one_to_one", ""),
     )
     one_to_one.languages.set([language])
     one_to_one.countries.set([country])
@@ -488,6 +465,7 @@ def _seed_activity(*, peer, seekers, language, country, tag, paused=False):  # n
         scheduled_at=timezone.now() + timedelta(days=3),
         duration_minutes=60,
         max_participants=10,
+        description=descriptions.get("group", ""),
     )
     group.languages.set([language])
     group.countries.set([country])
@@ -500,6 +478,7 @@ def _seed_activity(*, peer, seekers, language, country, tag, paused=False):  # n
         approval_policy=ApprovalPolicy.APPROVAL_REQUIRED,
         pricing_type=PricingType.FIXED,
         price=DEMO_MEETING_PRICE,
+        description=descriptions.get("approval", ""),
     )
     approval_meeting.languages.set([language])
     approval_meeting.countries.set([country])
@@ -571,12 +550,14 @@ def _seed_activity(*, peer, seekers, language, country, tag, paused=False):  # n
     return 1
 
 
-def seed_demo_data(
+def seed_demo_data(  # noqa: PLR0913
     *,
     email_base: str,
     password: str,
     actor=None,
     include_paused_peer: bool = True,
+    peer_count: int = 2,
+    seeker_count: int = 2,
 ) -> dict:
     """Create deterministic demo users, content, and local Stripe rows."""
     if not settings.DEMO_DATA_ENABLED:
@@ -605,17 +586,23 @@ def seed_demo_data(
         _ensure_pages(home)
         country, language, tag = _ensure_taxonomy()
 
+        from faker import Faker  # noqa: PLC0415
+
+        fake = Faker()
+
         with override_settings(EMAIL_BACKEND=DEMO_EMAIL_BACKEND):
             peers = []
             pause_index = 2
-            for index in range(1, 3):
+            for index in range(1, peer_count + 1):
                 username = f"demo-peer-{index:02d}"
                 paused = include_paused_peer and index == pause_index
+                name = fake.name()
                 peers.append(
                     _seed_peer(
                         username=username,
                         email=demo_email(local, domain, username),
-                        name=f"Demo Peer {index}",
+                        name=name,
+                        bio=fake.paragraph(nb_sentences=2),
                         password=password,
                         country=country,
                         language=language,
@@ -627,12 +614,13 @@ def seed_demo_data(
                 _seed_seeker(
                     username=f"demo-seeker-{index:02d}",
                     email=demo_email(local, domain, f"demo-seeker-{index:02d}"),
-                    name=f"Demo Seeker {index}",
+                    name=fake.name(),
+                    bio=fake.paragraph(nb_sentences=2),
                     password=password,
                     country=country,
                     language=language,
                 )
-                for index in range(1, 3)
+                for index in range(1, seeker_count + 1)
             ]
             for index, peer in enumerate(peers, start=1):
                 _seed_activity(
@@ -642,6 +630,11 @@ def seed_demo_data(
                     country=country,
                     tag=tag,
                     paused=include_paused_peer and index == pause_index,
+                    descriptions={
+                        "one_to_one": fake.paragraph(nb_sentences=2),
+                        "group": fake.paragraph(nb_sentences=2),
+                        "approval": fake.paragraph(nb_sentences=2),
+                    },
                 )
 
     return demo_data_status(email_base=requested_base)

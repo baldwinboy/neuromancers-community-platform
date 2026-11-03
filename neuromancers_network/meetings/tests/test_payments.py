@@ -20,7 +20,7 @@ from neuromancers_network.meetings.models import MeetingRequestStatus
 from neuromancers_network.meetings.models import MeetingType
 from neuromancers_network.meetings.models import PricingType
 from neuromancers_network.meetings.models import RefundStatus
-from neuromancers_network.meetings.selectors import user_payment_history
+from neuromancers_network.meetings.selectors import user_bookings
 from neuromancers_network.meetings.services import create_booking
 from neuromancers_network.meetings.tests.factories import create_meeting
 from neuromancers_network.peers.tests.factories import make_peer
@@ -282,9 +282,9 @@ class TestPaymentHistory:
             sessions=[{"requested_duration_minutes": SESSION_DURATION}],
         )
 
-        results = user_payment_history(self._request(seeker))
+        results = user_bookings(self._request(seeker))
 
-        assert [row.pk for row in results] == [booking.sessions.first().pk]
+        assert [row.pk for row in results] == [booking.pk]
 
 
 class TestConnectedWebhooks:

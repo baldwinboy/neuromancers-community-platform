@@ -38,8 +38,10 @@ Settings are split under `config/settings/` (`base.py`, `local.py`, `test.py`,
    project `LocalizationMiddleware`, `ConsentVaryMiddleware`, htmx/daIsIE
    middleware.
 2. Wagtail serves pages; generated `ModelDetailPage` subclasses in
-   `core/models/pages.py` resolve their own source and enforce visibility in
-   `core/wagtail_hooks.py`.
+   `core/models/pages.py` live under admin-only `GeneratedPagesIndexPage`
+   containers, render the shared `ModelDetailTemplate` body, resolve their own
+   source and enforce visibility in `core/wagtail_hooks.py`. Public URLs omit
+   the generated-index segment.
 3. Admin-authored data components use daisIE feeds/actions; action handlers live
    in each app's `actions.py` (registered in `WAGTAIL_DAISIE_ACTIONS`).
 4. Domain writes go through models/services; side effects are emitted onto the

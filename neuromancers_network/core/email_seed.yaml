@@ -1,0 +1,71 @@
+allauth:
+  account/email/email_confirmation_signup:
+    subject: "Confirm your NEUROMANCERS email"
+    preheader: "One quick step to activate your account"
+    heading: "Welcome, {{ payload.user.name }}"
+    text: "Confirm your email address to finish creating your account."
+    button: "Confirm email"
+  account/email/password_reset_key:
+    subject: "Reset your NEUROMANCERS password"
+    preheader: "Use the link below to choose a new password"
+    heading: "Reset your password"
+    text: "If you requested a password reset, use the button below."
+    button: "Choose a new password"
+
+events:
+  account_created:
+    name: "Welcome Email"
+    subject: "Welcome to NEUROMANCERS"
+    preheader: "Your network starts here"
+    heading: "Welcome, {{ payload.user.name }}"
+    text: "Find support or offer your experience on the NEUROMANCERS network."
+    button: "Open your dashboard"
+  peer_approved:
+    name: "Congratulations — you are now a Care Provider"
+    subject: "Congratulations — you are now a Care Provider"
+    preheader: "Welcome to the provider network"
+    heading: "Congratulations, {{ payload.user.name }}"
+    text: "Your application has been approved. Set up your profile and sessions from your dashboard."
+    button: "Open your dashboard"
+  peer_application_approved:
+    name: "Your care provider application was approved"
+    subject: "Your care provider application was approved"
+    preheader: "You can now offer support"
+    heading: "Your application is approved"
+    text: "You can now complete your provider profile and publish sessions."
+    button: "Open your dashboard"
+  booking_requested:
+    name: "New booking request"
+    subject: "You have a new booking request"
+    preheader: "A member would like to book a session"
+    heading: "New booking request"
+    text: "Review the request and approve or reject it from your dashboard."
+    button: "Review booking"
+  booking_approved:
+    name: "Your booking was approved"
+    subject: "Your booking was approved"
+    preheader: "Your session is confirmed"
+    heading: "Your booking is approved"
+    text: "Your care provider approved your booking. You can view the details in My Bookings."
+    button: "View booking"
+  booking_rejected:
+    name: "Your booking was not approved"
+    subject: "Your booking request was not approved"
+    preheader: "The care provider could not take this booking"
+    heading: "Booking update"
+    text: "Your booking request was not approved. You can search for another session."
+    button: "Find a session"
+  booking_paid:
+    name: "Payment received"
+    subject: "Payment received"
+    preheader: "Your booking is paid"
+    heading: "Payment received"
+    text: "We have received your payment. Your booking details are in My Bookings."
+    button: "View booking"
+  booking_cancelled:
+    name: "Booking cancelled"
+    subject: "Your booking was cancelled"
+    preheader: "Booking update"
+    heading: "Booking cancelled"
+    text: "Your booking has been cancelled."
+    button: "View My Bookings"

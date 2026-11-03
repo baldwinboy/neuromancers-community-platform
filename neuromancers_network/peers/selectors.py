@@ -18,6 +18,21 @@ def approved_peers(request=None, page=None):
     return exclude_hidden(queryset, getattr(request, "user", None), owner_field="user")
 
 
+def bookmarked_peers(request=None, page=None):
+    """Peer profiles bookmarked by the signed-in member."""
+    from neuromancers_network.peers.models import PeerProfile  # noqa: PLC0415
+
+    user = getattr(request, "user", None)
+    if user is None or not getattr(user, "is_authenticated", False):
+        return PeerProfile.objects.none()
+    return (
+        PeerProfile.objects.filter(bookmarks__user=user)
+        .select_related("user")
+        .prefetch_related("languages", "countries", "tags")
+        .distinct()
+    )
+
+
 def my_availability(request=None, page=None):
     """The signed-in peer's availability windows."""
     user = getattr(request, "user", None)

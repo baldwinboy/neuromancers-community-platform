@@ -1,6 +1,6 @@
-"""App-owned settings sections loaded into an admin-authored Settings page.
+"""App-owned sections loaded into the Dashboard tabs.
 
-The Wagtail admin authors the page shell (``TabsBlock`` + ``ActionFormBlock``);
+The Wagtail admin authors the Dashboard shell (``TabsBlock`` + ``ActionFormBlock``);
 each ``settings.*`` action is intercepted by a project template override and
 htmx-loads the matching section form from here. Forms own validation and
 persistence; the plugin owns tabs, icons, audience gating and the ``?tab=``
@@ -23,6 +23,7 @@ from neuromancers_network.core.actions import require_authenticated
 from neuromancers_network.inbox.forms import EventTypeMultipleChoiceField
 from neuromancers_network.inbox.models import NotificationPreference
 from neuromancers_network.inbox.services import member_optout_choices
+from neuromancers_network.taxonomy.models import AllowedTag
 from neuromancers_network.taxonomy.models import Country
 from neuromancers_network.taxonomy.models import Language
 from neuromancers_network.users.cooldown import ensure_username_change_allowed
@@ -78,6 +79,17 @@ class ProfileForm(forms.ModelForm):
         label=_("Languages"),
         widget=DaisieAutocompleteSelectMultiple(placeholder=_("Languages")),
     )
+    tags = forms.ModelMultipleChoiceField(
+        queryset=AllowedTag.objects.none(),
+        required=False,
+        label=_("Tags"),
+        widget=DaisieAutocompleteSelectMultiple(placeholder=_("Tags")),
+    )
+    default_terms = forms.CharField(
+        required=False,
+        label=_("Default terms & conditions"),
+        widget=forms.Textarea(attrs={"rows": 6}),
+    )
 
     class Meta:
         model = UserProfile
@@ -89,6 +101,38 @@ class ProfileForm(forms.ModelForm):
             (country.code, country.name) for country in Country.objects.all()
         ]
         self.fields["languages"].queryset = Language.objects.filter(is_active=True)
+
+        user = getattr(self.instance, "user", None)
+        peer_profile = getattr(user, "peer_profile", None)
+        self.is_provider = peer_profile is not None
+        if self.is_provider:
+            self.fields["tags"].queryset = AllowedTag.objects.filter(is_active=True)
+            self.fields["tags"].initial = list(
+                peer_profile.tags.values_list("pk", flat=True),
+            )
+            self.fields["default_terms"].initial = peer_profile.default_terms
+        else:
+            self.fields.pop("tags", None)
+            self.fields.pop("default_terms", None)
+
+    def clean_tags(self):
+        if not self.is_provider:
+            return AllowedTag.objects.none()
+        tags = self.cleaned_data.get("tags")
+        if tags is None:
+            return AllowedTag.objects.none()
+        if tags.filter(is_active=False).exists():
+            raise forms.ValidationError(_("One or more tags are not available."))
+        return tags
+
+    def save(self, commit=True):  # noqa: FBT002 - required ModelForm signature
+        profile = super().save(commit=commit)
+        if commit and self.is_provider:
+            peer_profile = profile.user.peer_profile
+            peer_profile.tags.set(self.cleaned_data.get("tags") or [])
+            peer_profile.default_terms = self.cleaned_data.get("default_terms", "")
+            peer_profile.save(update_fields=["default_terms", "updated_at"])
+        return profile
 
 
 class PrivacyForm(forms.ModelForm):

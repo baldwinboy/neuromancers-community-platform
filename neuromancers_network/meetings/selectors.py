@@ -6,6 +6,7 @@ from django.db.models import Q
 
 from neuromancers_network.meetings.models import Booking
 from neuromancers_network.meetings.models import BookingStatus
+from neuromancers_network.meetings.models import Meeting
 from neuromancers_network.meetings.models import MeetingRequest
 from neuromancers_network.meetings.models import MeetingRequestStatus
 from neuromancers_network.meetings.models import RefundRequest
@@ -17,9 +18,20 @@ from neuromancers_network.moderation.visibility import hidden_user_ids
 from neuromancers_network.peers.services import eligible_peer_q
 
 
+def _page_peer_user(page):
+    """Return the peer user when *page* is a care-provider detail page."""
+    if page is None or getattr(page, "detail_key", "") != "peer_profile":
+        return None
+    source = getattr(page, "source", None)
+    return getattr(source, "user", None) or getattr(source, "user_id", None)
+
+
 def published_meetings(request=None, page=None):
-    """Published meetings from currently eligible peers (the default feed)."""
+    """Published meetings from eligible peers, scoped to a peer detail page."""
     queryset = search_meetings().filter(eligible_peer_q(prefix="peer__"))
+    peer_user = _page_peer_user(page)
+    if peer_user is not None:
+        queryset = queryset.filter(peer=peer_user)
     return exclude_hidden(queryset, getattr(request, "user", None), owner_field="peer")
 
 
@@ -37,6 +49,19 @@ def my_meetings(request=None, page=None):
     )
 
 
+def bookmarked_meetings(request=None, page=None):
+    """Meetings bookmarked by the signed-in member."""
+    user = _viewer(request)
+    if user is None:
+        return Meeting.objects.none()
+    return (
+        Meeting.objects.filter(bookmarks__user=user)
+        .select_related("peer")
+        .prefetch_related("languages", "countries", "tags")
+        .distinct()
+    )
+
+
 def published_reviews(request=None, page=None):
     """Published reviews from eligible peers, minus block-hidden parties."""
     queryset = (
@@ -44,6 +69,9 @@ def published_reviews(request=None, page=None):
         .filter(eligible_peer_q(prefix="peer__"))
         .select_related("peer", "reviewer")
     )
+    peer_user = _page_peer_user(page)
+    if peer_user is not None:
+        queryset = queryset.filter(peer=peer_user)
     viewer = getattr(request, "user", None)
     hidden = hidden_user_ids(viewer)
     if hidden:
@@ -248,17 +276,9 @@ def user_bookings(request=None, page=None):
     user = _viewer(request)
     if user is None:
         return Booking.objects.none()
-    return Booking.objects.filter(support_seeker=user).select_related("meeting")
-
-
-def user_payment_history(request=None, page=None):
-    """The signed-in member's payments (one row per meeting request)."""
-    user = getattr(request, "user", None)
-    if user is None or not getattr(user, "is_authenticated", False):
-        return MeetingRequest.objects.none()
     return (
-        MeetingRequest.objects.filter(support_seeker=user)
-        .select_related("meeting")
+        Booking.objects.filter(support_seeker=user)
+        .select_related("meeting", "meeting__peer")
         .order_by("-created_at")
     )
 
@@ -319,6 +339,21 @@ def peer_reviews(request=None, page=None, *, status=None):
 
 def my_reviews(request=None, page=None):
     return peer_reviews(request=request, page=page)
+
+
+def my_authored_reviews(request=None, page=None, *, status=None):
+    """Reviews written by the signed-in member."""
+    user = _viewer(request)
+    if user is None:
+        return Review.objects.none()
+    queryset = (
+        Review.objects.filter(reviewer=user)
+        .select_related("peer", "meeting_request__meeting")
+        .order_by("-created_at")
+    )
+    if status is not None:
+        queryset = queryset.filter(status=status)
+    return queryset
 
 
 def my_pending_reviews(request=None, page=None):
