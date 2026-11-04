@@ -1887,6 +1887,7 @@ requires-dist = [
     { name = "django-storages", extras = ["s3"], specifier = "==1.14.6" },
     { name = "django-taggit", specifier = "==6.1.0" },
     { name = "draftail-text-utils", specifier = "==3.0.4" },
+    { name = "faker", specifier = ">=40" },
     { name = "flower", specifier = "==2.2.0" },
     { name = "gunicorn", specifier = "==26.2.0" },
     { name = "hiredis", specifier = "==3.5.0" },
