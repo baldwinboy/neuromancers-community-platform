@@ -251,16 +251,19 @@ class UserProfilePage(SourceBoundDetailPage):
 class MeetingIndexPage(IndexPage):
     subpage_types = ["core.MeetingGeneratedPagesIndexPage"]
     max_count = 1
+    template = "core/index_page.html"
 
 
 class PeerIndexPage(IndexPage):
     subpage_types = ["core.PeerGeneratedPagesIndexPage"]
     max_count = 1
+    template = "core/index_page.html"
 
 
 class ReviewIndexPage(IndexPage):
     subpage_types = ["core.ReviewGeneratedPagesIndexPage"]
     max_count = 1
+    template = "core/index_page.html"
 
 
 class MeetingGeneratedPagesIndexPage(GeneratedPagesIndexPage):
@@ -350,6 +353,7 @@ class RefundRequestDetailTemplate(ModelDetailTemplate):
 class MeetingDetailPage(SourceBoundDetailPage):
     parent_page_types = ["core.MeetingGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
+    template = "core/detail_page.html"
 
     def get_context(self, request, *args, **kwargs):
         from neuromancers_network.meetings.forms_pages import BookingFormPage  # noqa: PLC0415
@@ -381,6 +385,7 @@ class MeetingDetailPage(SourceBoundDetailPage):
 class PeerProfileDetailPage(SourceBoundDetailPage):
     parent_page_types = ["core.PeerGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
+    template = "core/detail_page.html"
 
     def get_context(self, request, *args, **kwargs):
         from neuromancers_network.meetings.selectors import review_stats  # noqa: PLC0415
@@ -412,26 +417,31 @@ class PeerProfileDetailPage(SourceBoundDetailPage):
 class ReviewDetailPage(SourceBoundDetailPage):
     parent_page_types = ["core.ReviewGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
+    template = "core/detail_page.html"
 
 
 class BookingDetailPage(SourceBoundDetailPage):
     parent_page_types = ["core.BookingGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
+    template = "core/detail_page.html"
 
 
 class RefundRequestDetailPage(SourceBoundDetailPage):
     parent_page_types = ["core.RefundRequestGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
+    template = "core/detail_page.html"
 
 
 class TagIndexPage(IndexPage):
     subpage_types = ["core.TagGeneratedPagesIndexPage"]
     max_count = 1
+    template = "core/index_page.html"
 
 
 class TagDetailPage(SourceBoundDetailPage):
     parent_page_types = ["core.TagGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
+    template = "core/detail_page.html"
 
     def get_context(self, request, *args, **kwargs):
         from neuromancers_network.core.selectors import pages_tagged_with  # noqa: PLC0415
