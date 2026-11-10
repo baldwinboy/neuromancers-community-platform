@@ -236,6 +236,7 @@ class SettingsPage(SignedInPage):
 class UserProfilePage(SourceBoundDetailPage):
     parent_page_types = ["core.ProfileGeneratedPagesIndexPage"]
     subpage_types: list[str] = []
+    template = "core/detail_page.html"
 
     def daisie_source_params(self):
         username = getattr(self.source, "username", None) or self.slug
@@ -269,36 +270,43 @@ class ReviewIndexPage(IndexPage):
 class MeetingGeneratedPagesIndexPage(GeneratedPagesIndexPage):
     parent_page_types = ["core.MeetingIndexPage"]
     subpage_types = ["core.MeetingDetailPage"]
+    template = "core/index_page.html"
 
 
 class PeerGeneratedPagesIndexPage(GeneratedPagesIndexPage):
     parent_page_types = ["core.PeerIndexPage"]
     subpage_types = ["core.PeerProfileDetailPage"]
+    template = "core/index_page.html"
 
 
 class ReviewGeneratedPagesIndexPage(GeneratedPagesIndexPage):
     parent_page_types = ["core.ReviewIndexPage"]
     subpage_types = ["core.ReviewDetailPage"]
+    template = "core/index_page.html"
 
 
 class ProfileGeneratedPagesIndexPage(GeneratedPagesIndexPage):
     parent_page_types = ["core.ProfileIndexPage"]
     subpage_types = ["core.UserProfilePage"]
+    template = "core/index_page.html"
 
 
 class TagGeneratedPagesIndexPage(GeneratedPagesIndexPage):
     parent_page_types = ["core.TagIndexPage"]
     subpage_types = ["core.TagDetailPage"]
+    template = "core/index_page.html"
 
 
 class BookingGeneratedPagesIndexPage(GeneratedPagesIndexPage):
     parent_page_types = ["core.HomePage"]
     subpage_types = ["core.BookingDetailPage"]
+    template = "core/index_page.html"
 
 
 class RefundRequestGeneratedPagesIndexPage(GeneratedPagesIndexPage):
     parent_page_types = ["core.HomePage"]
     subpage_types = ["core.RefundRequestDetailPage"]
+    template = "core/index_page.html"
 
 
 class MeetingDetailTemplate(ModelDetailTemplate):
@@ -306,6 +314,7 @@ class MeetingDetailTemplate(ModelDetailTemplate):
 
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
+    template = "core/standard_page.html"
 
 
 class PeerDetailTemplate(ModelDetailTemplate):
@@ -313,6 +322,7 @@ class PeerDetailTemplate(ModelDetailTemplate):
 
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
+    template = "core/standard_page.html"
 
 
 class ReviewDetailTemplate(ModelDetailTemplate):
@@ -320,6 +330,7 @@ class ReviewDetailTemplate(ModelDetailTemplate):
 
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
+    template = "core/standard_page.html"
 
 
 class UserProfileDetailTemplate(ModelDetailTemplate):
@@ -327,6 +338,7 @@ class UserProfileDetailTemplate(ModelDetailTemplate):
 
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
+    template = "core/standard_page.html"
 
 
 class TagDetailTemplate(ModelDetailTemplate):
@@ -334,6 +346,7 @@ class TagDetailTemplate(ModelDetailTemplate):
 
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
+    template = "core/standard_page.html"
 
 
 class BookingDetailTemplate(ModelDetailTemplate):
@@ -341,6 +354,7 @@ class BookingDetailTemplate(ModelDetailTemplate):
 
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
+    template = "core/standard_page.html"
 
 
 class RefundRequestDetailTemplate(ModelDetailTemplate):
@@ -348,6 +362,7 @@ class RefundRequestDetailTemplate(ModelDetailTemplate):
 
     parent_page_types = ["core.HomePage"]
     subpage_types: list[str] = []
+    template = "core/standard_page.html"
 
 
 class MeetingDetailPage(SourceBoundDetailPage):
