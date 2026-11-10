@@ -1887,6 +1887,7 @@ requires-dist = [
     { name = "django-storages", extras = ["s3"], specifier = "==1.14.6" },
     { name = "django-taggit", specifier = "==6.1.0" },
     { name = "draftail-text-utils", specifier = "==3.0.4" },
+    { name = "faker", specifier = ">=40" },
     { name = "flower", specifier = "==2.2.0" },
     { name = "gunicorn", specifier = "==26.2.0" },
     { name = "hiredis", specifier = "==3.5.0" },
@@ -1900,7 +1901,7 @@ requires-dist = [
     { name = "sentry-sdk", specifier = "==2.73.0" },
     { name = "stripe", specifier = ">=15.6.1" },
     { name = "wagtail", specifier = ">=8.0,<8.1" },
-    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.7.0" },
+    { name = "wagtail-daisie", extras = ["allauth", "allauth-emails", "blocks", "notifications"], specifier = "==3.7.2" },
     { name = "wagtailcharts", specifier = ">=0.7" },
     { name = "whitenoise", specifier = "==6.12.0" },
 ]
@@ -2968,7 +2969,7 @@ wheels = [
 
 [[package]]
 name = "wagtail-daisie"
-version = "3.7.0"
+version = "3.7.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cssutils" },
@@ -2981,9 +2982,9 @@ dependencies = [
     { name = "mjml-python" },
     { name = "wagtail" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/1a/020ef46ec27a6e179a17dedbbcc8aea9d717f6ae2d0272cd043c7284e85c/wagtail_daisie-3.7.0.tar.gz", hash = "sha256:9ff9b107db84a8335f6691545548731a21bdb5d0b84d0a517891f59debae281b", size = 452479, upload-time = "2026-11-03T12:04:28.535Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7c/7e/9ca846e2932f5cd87949d4b98b8f9a7f3bd36dee60c3e518e4e1ab3be352/wagtail_daisie-3.7.2.tar.gz", hash = "sha256:2216f683ce02137f42e493b5dcbd0b2040a114c5700b27c7538ee5bb0b770246", size = 443249, upload-time = "2026-11-09T15:57:46.277Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/21/918bdf95ae51b87c545952ed73a1d3d92779569087c21084e7393ef8c116/wagtail_daisie-3.7.0-py3-none-any.whl", hash = "sha256:6309b2a8a2b392100380ceb59fe5c797cd11d51dea8b159546c562088c9d09c5", size = 647579, upload-time = "2026-11-03T12:04:26.814Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/8a/a0c0b344d4a9d067ef5e19e449eff9e0fef1ab63777f581afbf27fd13d1b/wagtail_daisie-3.7.2-py3-none-any.whl", hash = "sha256:a43a402bea42cd5193fd39f12c326eea511364486a17c8d40e0863e598c33492", size = 639639, upload-time = "2026-11-09T15:57:44.489Z" },
 ]
 
 [package.optional-dependencies]

@@ -26,6 +26,7 @@ from neuromancers_network.users.tests.factories import UserFactory
 pytestmark = pytest.mark.django_db
 
 NOT_FOUND = 404
+OK = 200
 
 
 def _home() -> HomePage:
@@ -143,6 +144,17 @@ class TestDetailContextBinding:
         context = page.get_context(_request())
 
         assert context["user_profile"] == profile
+
+    def test_user_profile_page_renders(self):
+        _home()
+        user = UserFactory()
+        UserProfile.objects.get_or_create(user=user)
+        page = UserProfilePage.objects.get(source_object_id=user.pk).specific
+
+        response = page.serve(_request(user))
+        response.render()
+
+        assert response.status_code == OK
 
     def test_path_params_are_replaced_not_merged(self):
         _home()
